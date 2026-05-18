@@ -4,7 +4,20 @@
       "Bash(npm install *)",
       "Bash(node *)",
       "mcp__claude_ai_Google_Drive__search_files",
-      "mcp__claude_ai_Google_Drive__read_file_content"
+      "mcp__claude_ai_Google_Drive__read_file_content",
+      "Bash(cp /Users/oscarpacheco/consultora/skills/copywriting.md /Users/oscarpacheco/.claude/skills/copywriting/SKILL.md)",
+      "Bash(cp /Users/oscarpacheco/consultora/skills/seo.md       /Users/oscarpacheco/.claude/skills/seo/SKILL.md)",
+      "Bash(cp /Users/oscarpacheco/consultora/skills/redes-sociales.md /Users/oscarpacheco/.claude/skills/redes-sociales/SKILL.md)",
+      "Bash(mkdir -p /Users/oscarpacheco/.claude/skills/reportes)",
+      "Bash(cp /Users/oscarpacheco/consultora/skills/reportes.md /Users/oscarpacheco/.claude/skills/reportes/SKILL.md)",
+      "WebFetch(domain:skills.sh)",
+      "Bash(npx skills *)",
+      "Bash(git -C /Users/oscarpacheco/consultora status)",
+      "Bash(git -C /Users/oscarpacheco/consultora log --oneline -5)",
+      "Bash(git -C /Users/oscarpacheco/consultora diff .gitignore)",
+      "Bash(git -C /Users/oscarpacheco/consultora diff .claude/settings.local.json)",
+      "Bash(git -C /Users/oscarpacheco/consultora add .gitignore .claude/settings.local.json .agents/ .claude/skills/ skills-lock.json)",
+      "Bash(git -C /Users/oscarpacheco/consultora rm -r --cached skills/)"
     ]
   }
 }
