@@ -1,0 +1,22 @@
+# Skill: Copywriting para Consultora
+
+## Objetivo
+Crear contenido de marketing persuasivo y profesional para clientes de consultoría.
+
+## Instrucciones
+- Usa un tono profesional pero cercano
+- Incluye siempre un CTA (call to action / llamada a la acción) claro
+- Adapta el mensaje al sector del cliente
+- Estructura: Problema → Solución → Beneficio → CTA
+
+## Formatos disponibles
+- Posts para Instagram/LinkedIn
+- Emails de prospección (outreach / contacto inicial)
+- Descripciones de servicios
+- Propuestas comerciales
+
+## Variables a completar
+- [CLIENTE]: nombre del cliente
+- [SECTOR]: industria del cliente
+- [SERVICIO]: servicio a promocionar
+- [BENEFICIO]: beneficio principal
