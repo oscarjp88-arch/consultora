@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentes Creditek</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0B1E3D;
+      color: #fff;
+      min-height: 100vh;
+    }
+    header {
+      background: #0B1E3D;
+      border-bottom: 2px solid #00C4CC;
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header .dot {
+      width: 12px; height: 12px;
+      background: #00C4CC;
+      border-radius: 50%;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.02em; }
+    header span { color: #00C4CC; }
+    main {
+      max-width: 860px;
+      margin: 60px auto;
+      padding: 0 24px;
+    }
+    .subtitle {
+      color: #a0b4cc;
+      font-size: 1rem;
+      margin-bottom: 40px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+    }
+    .card {
+      background: #132845;
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #00C4CC; }
+    .card .icon {
+      width: 44px; height: 44px;
+      background: #00C4CC22;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+    .card h2 { font-size: 1.2rem; font-weight: 600; }
+    .card p { color: #7a96b4; font-size: 0.9rem; line-height: 1.5; flex: 1; }
+    .card .tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      width: fit-content;
+    }
+    .tag.active { background: #00C4CC22; color: #00C4CC; }
+    .tag.soon { background: #ffffff11; color: #7a96b4; }
+    .card a {
+      display: inline-block;
+      margin-top: 8px;
+      background: #00C4CC;
+      color: #0B1E3D;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-align: center;
+      transition: opacity 0.2s;
+    }
+    .card a:hover { opacity: 0.85; }
+    .card a.disabled {
+      background: #1e3a5f;
+      color: #4a6480;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="dot"></div>
+    <h1>Agentes <span>Creditek</span></h1>
+  </header>
+  <main>
+    <p class="subtitle">Herramientas de marketing automatizadas para Creditek.</p>
+    <div class="grid">
+
+      <div class="card">
+        <div class="icon">📱</div>
+        <span class="tag active">Disponible</span>
+        <h2>Agente Redes Sociales</h2>
+        <p>Genera contenido y calendarios de publicaciones para las redes sociales de Creditek.</p>
+        <a href="creditek-agente-redes.html">Abrir agente →</a>
+      </div>
+
+      <div class="card">
+        <div class="icon">💬</div>
+        <span class="tag soon">Próximamente</span>
+        <h2>Agente Respuestas</h2>
+        <p>Automatiza respuestas a clientes y gestión de mensajes entrantes en todos los canales.</p>
+        <a class="disabled" href="creditek-agente-respuestas.html">Próximamente</a>
+      </div>
+
+    </div>
+  </main>
+</body>
+</html>
