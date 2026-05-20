@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fichas Google Business Profile — Creditek</title>
+  <style>
+    :root {
+      --azul: #0B1E3D;
+      --turquesa: #00C4CC;
+      --bg: #0B1E3D;
+      --bg2: #112444;
+      --bg3: #172d54;
+      --bord: rgba(0,196,204,0.15);
+      --bord2: rgba(0,196,204,0.35);
+      --txt: #F0EFEB;
+      --txt2: #9BB8CC;
+      --txt3: #567890;
+      --r: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--bg); color: var(--txt); min-height: 100vh; font-size: 14px; line-height: 1.6; }
+
+    /* HEADER */
+    header { background: var(--bg2); border-bottom: 2px solid var(--turquesa); padding: 20px 32px; display: flex; align-items: center; gap: 14px; }
+    header img { height: 36px; object-fit: contain; }
+    .header-text h1 { font-size: 1.1rem; font-weight: 800; letter-spacing: .03em; }
+    .header-text h1 span { color: var(--turquesa); }
+    .header-text p { font-size: 11px; color: var(--txt3); margin-top: 2px; }
+
+    /* ESTRATEGIA GLOBAL */
+    .estrategia { max-width: 960px; margin: 32px auto; padding: 0 24px; }
+    .section-title { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--turquesa); margin-bottom: 16px; }
+    .strategy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 40px; }
+    .strategy-card { background: var(--bg2); border: 1px solid var(--bord); border-radius: var(--r); padding: 16px; }
+    .strategy-card h3 { font-size: 11px; font-weight: 700; color: var(--turquesa); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+    .strategy-card ul { list-style: none; }
+    .strategy-card ul li { font-size: 12px; color: var(--txt2); padding: 3px 0; border-bottom: 1px solid var(--bord); }
+    .strategy-card ul li:last-child { border-bottom: none; }
+    .strategy-card ul li::before { content: "·"; color: var(--turquesa); margin-right: 6px; }
+
+    /* TABS DE CIUDAD */
+    .cities-nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .city-tab { background: var(--bg2); border: 1px solid var(--bord); border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 12px; color: var(--txt2); transition: all .15s; }
+    .city-tab.active, .city-tab:hover { border-color: var(--turquesa); color: var(--turquesa); background: rgba(0,196,204,.08); }
+
+    /* FICHA TIENDA */
+    .stores-container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+    .city-group { margin-bottom: 40px; }
+    .city-label { font-size: 13px; font-weight: 700; color: var(--txt); background: var(--bg2); border-left: 3px solid var(--turquesa); padding: 8px 16px; border-radius: 0 6px 6px 0; display: inline-block; margin-bottom: 16px; }
+
+    .store-card { background: var(--bg2); border: 1px solid var(--bord); border-radius: var(--r); margin-bottom: 20px; overflow: hidden; }
+    .store-header { background: var(--bg3); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--bord); }
+    .store-id { font-size: 10px; font-weight: 700; color: var(--turquesa); letter-spacing: .1em; background: rgba(0,196,204,.1); padding: 3px 10px; border-radius: 20px; border: 1px solid var(--bord2); }
+    .store-name { font-size: 15px; font-weight: 700; }
+    .store-body { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 640px) { .store-body { grid-template-columns: 1fr; } }
+
+    .field { margin-bottom: 14px; }
+    .field-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--turquesa); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .field-value { background: var(--bg3); border: 1px solid var(--bord); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--txt); line-height: 1.6; position: relative; }
+    .field-value.mono { font-family: 'Courier New', monospace; font-size: 12px; }
+    .copy-btn { position: absolute; top: 8px; right: 8px; background: transparent; border: 1px solid var(--bord2); border-radius: 5px; color: var(--txt3); font-size: 10px; padding: 2px 8px; cursor: pointer; transition: all .15s; }
+    .copy-btn:hover { border-color: var(--turquesa); color: var(--turquesa); }
+    .copy-btn.copied { color: var(--turquesa); border-color: var(--turquesa); }
+    .field-value.has-copy { padding-right: 60px; }
+
+    .qa-list { list-style: none; }
+    .qa-item { border-bottom: 1px solid var(--bord); padding: 8px 0; }
+    .qa-item:last-child { border-bottom: none; }
+    .qa-q { font-size: 12px; font-weight: 600; color: var(--txt); margin-bottom: 4px; }
+    .qa-a { font-size: 12px; color: var(--txt2); }
+
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { background: var(--bg3); border: 1px solid var(--bord); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--txt2); }
+
+    .col-full { grid-column: 1 / -1; }
+    .char-count { font-size: 10px; color: var(--txt3); margin-top: 4px; text-align: right; }
+
+    /* POST SUGERIDO */
+    .post-box { background: linear-gradient(135deg, rgba(0,196,204,.08), rgba(11,30,61,0)); border: 1px solid var(--bord2); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--txt); line-height: 1.7; white-space: pre-wrap; position: relative; }
+    .post-box .copy-btn { top: 10px; right: 10px; }
+
+    /* FOOTER */
+    .note { max-width: 960px; margin: 0 auto; padding: 0 24px 40px; }
+    .note-box { background: rgba(0,196,204,.05); border: 1px solid var(--bord2); border-radius: var(--r); padding: 16px 20px; }
+    .note-box h3 { font-size: 11px; font-weight: 700; color: var(--turquesa); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+    .note-box ol { padding-left: 18px; }
+    .note-box ol li { font-size: 12px; color: var(--txt2); padding: 3px 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="logo.png" alt="Creditek">
+  <div class="header-text">
+    <h1>Google Business Profile — <span>11 Tiendas</span></h1>
+    <p>Fichas optimizadas para tráfico físico · Caribe colombiano · SEO local orgánico</p>
+  </div>
+</header>
+
+<div class="estrategia">
+  <div class="section-title">Estrategia SEO Local</div>
+  <div class="strategy-grid">
+    <div class="strategy-card">
+      <h3>Categorías GBP</h3>
+      <ul>
+        <li>Principal: Tienda de teléfonos móviles</li>
+        <li>Secundaria: Tienda de electrónica</li>
+        <li>Secundaria: Institución financiera</li>
+        <li>Secundaria: Tienda de accesorios</li>
+      </ul>
+    </div>
+    <div class="strategy-card">
+      <h3>Keywords locales</h3>
+      <ul>
+        <li>celular a crédito [ciudad]</li>
+        <li>crédito para celular [ciudad]</li>
+        <li>Samsung a crédito [ciudad]</li>
+        <li>celular sin banco [ciudad]</li>
+        <li>Creditek [ciudad]</li>
+      </ul>
+    </div>
+    <div class="strategy-card">
+      <h3>Atributos a activar</h3>
+      <ul>
+        <li>Acepta pagos en efectivo</li>
+        <li>Compras en tienda disponibles</li>
+        <li>Accesible en silla de ruedas</li>
+        <li>Identificado por LGBTQ+</li>
+        <li>Servicio en español</li>
+      </ul>
+    </div>
+    <div class="strategy-card">
+      <h3>Horario unificado</h3>
+      <ul>
+        <li>Lunes a viernes: 8:00am–6:00pm</li>
+        <li>Sábados: 8:00am–6:00pm</li>
+        <li>Domingos: Cerrado</li>
+        <li>Festivos: Consultar tienda</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="stores-container">
+
+  <!-- ═══════════════════════════════════════════ TOLÚ ══════════════════════════════════════════ -->
+  <div class="city-group">
+    <div class="city-label">📍 Tolú — 2 tiendas</div>
+
+    <!-- CK-01 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Tolú Centro</div>
+        <div class="store-id">CK-01</div>
+      </div>
+      <div class="store-body">
+
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Tolú Centro — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Tolú Centro — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-01]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-01]')">Copiar</button>
+          </div>
+        </div>
+
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">En Creditek Tolú Centro te damos crédito para celular el mismo día, sin trámites complicados. Aprobación en minutos con solo tu cédula y una cuota inicial. Manejamos las mejores marcas: Samsung, Xiaomi, Infinix, Tecno y Motorola. Financiamos con PayJoy, Alo Credit, Krediya y Addi en plazos de 4, 6 u 8 meses. Sin intermediarios bancarios, sin fiador. Visítanos en Tolú y llévate tu celular nuevo hoy mismo.
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace(\'Copiar\',\'\').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~430 caracteres · Margen disponible para agregar dirección</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Servicios a listar</div>
+          <div class="field-value">
+            <div class="tag-list">
+              <span class="tag">Crédito para celular</span>
+              <span class="tag">Venta de celulares</span>
+              <span class="tag">Financiamiento PayJoy</span>
+              <span class="tag">Financiamiento Alo Credit</span>
+              <span class="tag">Financiamiento Krediya</span>
+              <span class="tag">Financiamiento Addi</span>
+              <span class="tag">Samsung a crédito</span>
+              <span class="tag">Xiaomi a crédito</span>
+              <span class="tag">Accesorios para celular</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">celular a crédito Tolú<br>crédito para celular Tolú<br>Samsung a crédito Tolú<br>celular sin banco Tolú<br>Creditek Tolú</div>
+        </div>
+
+        <div class="field col-full">
+          <div class="field-label">Preguntas y respuestas sugeridas (Q&A)</div>
+          <div class="field-value">
+            <ul class="qa-list">
+              <li class="qa-item">
+                <div class="qa-q">❓ ¿Qué necesito para el crédito?</div>
+                <div class="qa-a">Solo tu cédula de ciudadanía y la cuota inicial (aprox. 25% del valor del equipo). Sin fiador ni historial crediticio en bancos.</div>
+              </li>
+              <li class="qa-item">
+                <div class="qa-q">❓ ¿Cuánto tarda la aprobación?</div>
+                <div class="qa-a">La aprobación es en minutos. El mismo día te llevas tu celular.</div>
+              </li>
+              <li class="qa-item">
+                <div class="qa-q">❓ ¿Qué celulares tienen disponibles?</div>
+                <div class="qa-a">Manejamos Samsung, Xiaomi, Infinix, Tecno y Motorola. El inventario varía, escríbenos al WhatsApp para consultar disponibilidad.</div>
+              </li>
+              <li class="qa-item">
+                <div class="qa-q">❓ ¿Cuál es el horario de atención?</div>
+                <div class="qa-a">Lunes a sábado de 8:00am a 6:00pm en Tolú.</div>
+              </li>
+              <li class="qa-item">
+                <div class="qa-q">❓ ¿Puedo pagar las cuotas en efectivo?</div>
+                <div class="qa-a">Sí, aceptamos pago en efectivo y por medios digitales.</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="field col-full">
+          <div class="field-label">Primer post GBP (publicar al crear el perfil)</div>
+          <div class="post-box">📱 ¿Quieres estrenar celular en Tolú?
+
+En Creditek Tolú Centro te damos crédito el MISMO DÍA. Solo necesitas tu cédula y una cuota inicial.
+
+✅ Samsung, Xiaomi, Infinix y más
+✅ Aprobación en minutos
+✅ Sin trámites complicados
+✅ 4, 6 u 8 meses para pagar
+
+Visítanos 📍 [dirección Tolú] · Lun–Sáb 8am–6pm
+<button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /CK-01 -->
+
+    <!-- CK-10 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Tolú Norte</div>
+        <div class="store-id">CK-10</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Tolú Norte — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Tolú Norte — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-10]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-10]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">Creditek Tolú Norte es tu opción para estrenar celular a crédito sin banco ni fiador. Aprobamos tu crédito en minutos con solo tu cédula. Contamos con Samsung, Xiaomi, Infinix, Tecno y Motorola. Financiamos con PayJoy, Alo Credit, Krediya y Addi en cuotas cómodas a 4, 6 u 8 meses. Fácil, rápido y el mismo día. ¡Visítanos en Tolú!
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~380 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">celular a crédito Tolú norte<br>crédito celular Tolú<br>Creditek Tolú norte<br>celular Samsung Tolú</div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Primer post GBP</div>
+          <div class="post-box">🆕 Creditek llega al norte de Tolú
+
+Ahora más cerca de ti. Celulares a crédito con aprobación el mismo día.
+
+✅ Sin banco · Sin fiador · Sin complicaciones
+📱 Samsung, Xiaomi, Infinix, Tecno, Motorola
+
+Encuéntranos 📍 [dirección] · Lun–Sáb 8am–6pm
+<button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /CK-10 -->
+  </div><!-- /Tolú -->
+
+  <!-- ════════════════════════════════════════ COROZAL ═════════════════════════════════════════ -->
+  <div class="city-group">
+    <div class="city-label">📍 Corozal — 3 tiendas</div>
+
+    <!-- CK-02 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Corozal Centro</div>
+        <div class="store-id">CK-02</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Corozal Centro — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Corozal Centro — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-02]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-02]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">En Creditek Corozal Centro te financiamos tu celular nuevo el mismo día. Sin banco, sin fiador: solo necesitas tu cédula y una cuota inicial. Aprobación en minutos con PayJoy, Alo Credit, Krediya o Addi. Manejamos Samsung, Xiaomi, Infinix, Tecno y Motorola en cuotas a 4, 6 u 8 meses. Somos la opción más rápida para estrenar celular en Corozal. ¡Visítanos hoy!
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~400 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">celular a crédito Corozal<br>crédito para celular Corozal<br>Samsung a crédito Corozal<br>Creditek Corozal</div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Primer post GBP</div>
+          <div class="post-box">📲 Estrena celular en Corozal HOY MISMO
+
+En Creditek Corozal Centro te aprobamos en MINUTOS. Sin banco, sin fiador.
+
+✅ Samsung · Xiaomi · Infinix · Tecno · Motorola
+✅ Cuotas desde 4 meses
+✅ Solo tu cédula + cuota inicial
+
+📍 [dirección Corozal] · Lun–Sáb 8am–6pm
+<button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /CK-02 -->
+
+    <!-- CK-03 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Corozal Barrio Nuevo</div>
+        <div class="store-id">CK-03</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Corozal — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Corozal — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-03]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-03]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">Creditek Corozal te da crédito para celular sin complicaciones. Aprobación rápida, mismo día. Trabajamos con PayJoy, Alo Credit, Krediya y Addi para que elijas el plan que más te convenga: 4, 6 u 8 cuotas. Tenemos Samsung, Xiaomi, Infinix, Tecno y Motorola. Solo necesitas cédula y cuota inicial. Sin historial en banco. Visítanos en Corozal.
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~370 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">crédito celular Corozal<br>financiamiento celular Corozal<br>celular cuotas Corozal<br>PayJoy Corozal</div>
+        </div>
+      </div>
+    </div><!-- /CK-03 -->
+
+    <!-- CK-04 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Corozal Sur</div>
+        <div class="store-id">CK-04</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Corozal Sur — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Corozal Sur — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-04]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-04]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">¿Buscas celular a crédito en Corozal? En Creditek Corozal Sur te financiamos con PayJoy, Alo Credit, Krediya o Addi sin necesidad de cuenta bancaria ni fiador. Aprobación en minutos. Tenemos Samsung, Xiaomi, Infinix, Tecno y Motorola. Págalo en 4, 6 u 8 meses cómodas cuotas. Ven hoy a nuestra tienda en Corozal y llévate tu equipo nuevo.
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~380 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">celular a crédito Corozal sur<br>Samsung crédito Corozal<br>Creditek Corozal sur</div>
+        </div>
+      </div>
+    </div><!-- /CK-04 -->
+  </div><!-- /Corozal -->
+
+  <!-- ═══════════════════════════════════════════ CHINÚ ══════════════════════════════════════════ -->
+  <div class="city-group">
+    <div class="city-label">📍 Chinú — 3 tiendas</div>
+
+    <!-- CK-05 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Chinú Centro</div>
+        <div class="store-id">CK-05</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Chinú Centro — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Chinú Centro — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-05]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-05]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">En Creditek Chinú Centro ponemos un celular nuevo en tus manos el mismo día, a crédito y sin banco. Trabajamos con PayJoy, Alo Credit, Krediya y Addi para aprobarte en minutos. Solo necesitas tu cédula y la cuota inicial. Tenemos Samsung, Xiaomi, Infinix, Tecno y Motorola. Plazos de 4, 6 u 8 meses. La forma más fácil de estrenar celular en Chinú.
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~370 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">celular a crédito Chinú<br>crédito para celular Chinú<br>Samsung a crédito Chinú<br>Creditek Chinú</div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Primer post GBP</div>
+          <div class="post-box">📱 ¡Estrena celular en Chinú sin complicaciones!
+
+Creditek Chinú Centro · Aprobación en MINUTOS
+
+✅ Sin banco · Sin fiador
+✅ Samsung, Xiaomi, Infinix, Tecno, Motorola
+✅ Cuotas a 4, 6 u 8 meses
+
+Solo tu cédula + cuota inicial. ¡Ven hoy!
+📍 [dirección Chinú] · Lun–Sáb 8am–6pm
+<button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /CK-05 -->
+
+    <!-- CK-06 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Chinú</div>
+        <div class="store-id">CK-06</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Chinú — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Chinú — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-06]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-06]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">Creditek Chinú te financia tu celular nuevo rápido y fácil. Aprobamos con PayJoy, Alo Credit, Krediya o Addi en minutos. Sin necesitar banco ni historial crediticio. Samsung, Xiaomi, Infinix, Tecno y Motorola disponibles. Elige entre 4, 6 u 8 meses. Solo trae tu cédula y cuota inicial y llévate tu equipo el mismo día.
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~340 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">crédito celular Chinú<br>celular cuotas Chinú<br>financiamiento celular Chinú</div>
+        </div>
+      </div>
+    </div><!-- /CK-06 -->
+
+    <!-- CK-07 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Chinú Norte</div>
+        <div class="store-id">CK-07</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Chinú Norte — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Chinú Norte — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-07]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-07]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">¿Necesitas celular nuevo en Chinú? En Creditek Chinú Norte te aprobamos el crédito en minutos sin necesidad de banco ni fiador. Trabajamos con PayJoy, Alo Credit, Krediya y Addi. Tenemos Samsung, Xiaomi, Infinix, Tecno y Motorola a cuotas de 4, 6 u 8 meses. Solo tu cédula y la cuota inicial. Celular nuevo en tus manos el mismo día.
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~360 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">celular crédito Chinú norte<br>Creditek Chinú norte<br>Samsung cuotas Chinú</div>
+        </div>
+      </div>
+    </div><!-- /CK-07 -->
+  </div><!-- /Chinú -->
+
+  <!-- ══════════════════════════════════════ CIÉNAGA DE ORO ═════════════════════════════════════ -->
+  <div class="city-group">
+    <div class="city-label">📍 Ciénaga de Oro — 2 tiendas</div>
+
+    <!-- CK-08 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Ciénaga de Oro Centro</div>
+        <div class="store-id">CK-08</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Ciénaga de Oro — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Ciénaga de Oro — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-08]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-08]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">Creditek Ciénaga de Oro es la forma más rápida de estrenar celular en tu ciudad. Te aprobamos el crédito en minutos con PayJoy, Alo Credit, Krediya o Addi, sin banco ni fiador. Solo tu cédula y la cuota inicial. Tenemos Samsung, Xiaomi, Infinix, Tecno y Motorola en plazos de 4, 6 u 8 meses. Ven a visitarnos y llévate tu equipo hoy.
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~365 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">celular a crédito Ciénaga de Oro<br>crédito celular Ciénaga de Oro<br>Creditek Ciénaga de Oro<br>Samsung crédito Ciénaga</div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Primer post GBP</div>
+          <div class="post-box">📱 Creditek ya está en Ciénaga de Oro
+
+Celulares a crédito sin banco ni fiador. Aprobación el MISMO DÍA.
+
+✅ Samsung · Xiaomi · Infinix · Tecno · Motorola
+✅ 4, 6 u 8 meses · Solo cédula + inicial
+
+Visítanos hoy 📍 [dirección] · Lun–Sáb 8am–6pm
+<button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /CK-08 -->
+
+    <!-- CK-09 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Ciénaga de Oro Sur</div>
+        <div class="store-id">CK-09</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Ciénaga de Oro Sur — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Ciénaga de Oro Sur — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-09]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-09]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">En Creditek Ciénaga de Oro Sur financiamos tu celular nuevo sin trámites. Aprobación rápida en minutos con PayJoy, Alo Credit, Krediya o Addi. Sin banco, sin fiador. Elige entre Samsung, Xiaomi, Infinix, Tecno y Motorola y paga en 4, 6 u 8 meses cómodas. Solo necesitas tu cédula y una cuota inicial. Tu celular nuevo el mismo día.
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~355 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">celular crédito Ciénaga de Oro sur<br>Creditek Ciénaga sur<br>financiamiento celular Ciénaga</div>
+        </div>
+      </div>
+    </div><!-- /CK-09 -->
+  </div><!-- /Ciénaga de Oro -->
+
+  <!-- ══════════════════════════════════════════ COVEÑAS ════════════════════════════════════════ -->
+  <div class="city-group">
+    <div class="city-label">📍 Coveñas — 1 tienda</div>
+
+    <!-- CK-11 -->
+    <div class="store-card">
+      <div class="store-header">
+        <div class="store-name">Creditek Coveñas</div>
+        <div class="store-id">CK-11</div>
+      </div>
+      <div class="store-body">
+        <div class="field">
+          <div class="field-label">Nombre del negocio</div>
+          <div class="field-value has-copy">Creditek Coveñas — Celulares a Crédito
+            <button class="copy-btn" onclick="copyText(this,'Creditek Coveñas — Celulares a Crédito')">Copiar</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Número de teléfono (WhatsApp)</div>
+          <div class="field-value has-copy">+57 [número tienda CK-11]
+            <button class="copy-btn" onclick="copyText(this,'+57 [número tienda CK-11]')">Copiar</button>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Descripción (750 caracteres)</div>
+          <div class="field-value has-copy">En Creditek Coveñas tienes tu celular nuevo el mismo día, a crédito y sin banco. Te aprobamos en minutos con PayJoy, Alo Credit, Krediya o Addi. Solo necesitas tu cédula y la cuota inicial, sin fiador ni historial bancario. Manejamos Samsung, Xiaomi, Infinix, Tecno y Motorola. Págalo en 4, 6 u 8 cuotas cómodas. La solución más rápida para estrenar celular en Coveñas.
+            <button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+          <div class="char-count">~395 caracteres</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Palabras clave posicionamiento</div>
+          <div class="field-value mono">celular a crédito Coveñas<br>crédito para celular Coveñas<br>Creditek Coveñas<br>Samsung crédito Coveñas<br>celular sin banco Coveñas</div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Preguntas y respuestas (Q&A)</div>
+          <div class="field-value">
+            <ul class="qa-list">
+              <li class="qa-item">
+                <div class="qa-q">❓ ¿Tienen tienda física en Coveñas?</div>
+                <div class="qa-a">Sí, tenemos tienda en Coveñas. Escríbenos al WhatsApp para darte la dirección exacta. Atendemos lunes a sábado de 8am a 6pm.</div>
+              </li>
+              <li class="qa-item">
+                <div class="qa-q">❓ ¿Qué documentos necesito?</div>
+                <div class="qa-a">Solo tu cédula de ciudadanía y la cuota inicial (aprox. 25% del valor del equipo).</div>
+              </li>
+              <li class="qa-item">
+                <div class="qa-q">❓ ¿Hacen envíos a domicilio?</div>
+                <div class="qa-a">El trámite y entrega se hace directamente en nuestra tienda en Coveñas.</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="field col-full">
+          <div class="field-label">Primer post GBP</div>
+          <div class="post-box">🌊 Creditek Coveñas — Celulares a crédito, mismo día
+
+La forma más fácil de estrenar celular en Coveñas. Sin banco, sin fiador.
+
+✅ Aprobación en minutos
+✅ Samsung, Xiaomi, Infinix, Tecno, Motorola
+✅ 4, 6 u 8 meses · Solo cédula + inicial
+
+📍 [dirección Coveñas] · Lun–Sáb 8am–6pm
+<button class="copy-btn" onclick="copyText(this,this.parentElement.innerText.replace('Copiar','').trim())">Copiar</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /CK-11 -->
+  </div><!-- /Coveñas -->
+
+</div><!-- /stores-container -->
+
+<!-- INSTRUCCIONES -->
+<div class="note">
+  <div class="note-box">
+    <h3>Cómo crear o reclamar cada perfil GBP</h3>
+    <ol>
+      <li>Ir a <strong>business.google.com</strong> e iniciar sesión con el Gmail de Creditek</li>
+      <li>Buscar la tienda → si aparece, reclamarla; si no, crearla con el nombre exacto de esta ficha</li>
+      <li>Seleccionar categoría principal: <strong>Tienda de teléfonos móviles</strong></li>
+      <li>Agregar dirección física, teléfono WhatsApp y horario</li>
+      <li>Pegar la descripción de esta ficha en el campo "Descripción del negocio"</li>
+      <li>Activar los atributos: Acepta efectivo · Compras en tienda · Accesible</li>
+      <li>Agregar las preguntas y respuestas del Q&A en la sección Preguntas</li>
+      <li>Publicar el primer post de bienvenida copiado de esta ficha</li>
+      <li>Subir mínimo 5 fotos reales de la tienda (fachada, interior, productos, equipo)</li>
+      <li>Verificar con postal o llamada (Google envía código de verificación)</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+function copyText(btn, text) {
+  const clean = text.replace(/Copiar\s*$/,'').trim();
+  navigator.clipboard.writeText(clean).then(() => {
+    btn.textContent = '✓ Copiado';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
