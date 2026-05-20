@@ -309,6 +309,16 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <label for="chk-brief">Brief visual para Canva</label>
     </div>
   </div>
+  <div class="sidebar-section" style="padding-bottom:12px">
+    <div class="sidebar-label">API Key de Anthropic</div>
+    <div style="position:relative">
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off"
+        style="padding-right:52px;font-size:12px;font-family:monospace"
+        oninput="sessionStorage.setItem('ck_api_key',this.value)">
+      <button onclick="toggleKey('apiKeyInput',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:2px 4px">Ver</button>
+    </div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:5px;padding:0 2px">Se guarda solo en esta sesión del navegador. Se borra al cerrar el tab.</div>
+  </div>
   <button class="gen-btn" id="gen-btn" onclick="generarContenido()">
     <div class="spinner" id="spinner"></div>
     <span id="gen-label">✦ Generar piezas</span>
@@ -348,6 +358,12 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 </div>
 
 <script>
+// Precargar API key desde sessionStorage
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = sessionStorage.getItem('ck_api_key');
+  if (saved) document.getElementById('apiKeyInput').value = saved;
+});
+
 const PLATFORMS_META = {
   facebook:  { label:'Facebook', color:'#60A5FA', badge:'badge-fb', emoji:'📘' },
   instagram: { label:'Instagram', color:'#F472B6', badge:'badge-ig', emoji:'📸' },
@@ -364,7 +380,20 @@ let history = [];
 function togglePlatform(btn) { btn.classList.toggle('active'); }
 function getActivePlatforms() { return [...document.querySelectorAll('.platform-btn.active')].map(b => b.dataset.platform); }
 
+function toggleKey(inputId, btn) {
+  const el = document.getElementById(inputId);
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  btn.textContent = show ? 'Ocultar' : 'Ver';
+}
+
 async function generarContenido() {
+  const apiKey = sessionStorage.getItem('ck_api_key') || '';
+  if (!apiKey.startsWith('sk-ant-')) {
+    alert('Ingresa tu API key de Anthropic en el campo de la barra lateral (comienza con sk-ant-).');
+    document.getElementById('apiKeyInput').focus();
+    return;
+  }
   const ciudad = document.getElementById('ciudad').value;
   const tipo = document.getElementById('tipo').value;
   const producto = document.getElementById('producto').value.trim();
@@ -436,7 +465,12 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}`;
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': sessionStorage.getItem('ck_api_key') || '',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,

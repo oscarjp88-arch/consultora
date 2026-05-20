@@ -223,6 +223,17 @@ select option{background:var(--bg2)}
     </div>
   </div>
 
+  <div class="sec" style="padding-bottom:12px">
+    <span class="lbl">API Key de Anthropic</span>
+    <div style="position:relative">
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off"
+        style="padding-right:52px;font-size:12px;font-family:monospace"
+        oninput="sessionStorage.setItem('ck_api_key',this.value)">
+      <button onclick="toggleKey(this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:2px 4px">Ver</button>
+    </div>
+    <div style="font-size:10px;color:var(--txt3);margin-top:5px">Se guarda solo en esta sesión. Se borra al cerrar el tab.</div>
+  </div>
+
   <div class="progress-wrap" id="progressWrap">
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-lbl" id="progressLbl">Generando calendario...</div>
@@ -280,8 +291,20 @@ select option{background:var(--bg2)}
 </div><!-- /shell -->
 
 <script>
-const API_KEY = 'TU_API_KEY_AQUI';
-const MODEL   = 'claude-sonnet-4-6';
+const MODEL = 'claude-sonnet-4-6';
+function getApiKey() { return sessionStorage.getItem('ck_api_key') || ''; }
+
+// ── API Key ─────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = sessionStorage.getItem('ck_api_key');
+  if (saved) document.getElementById('apiKeyInput').value = saved;
+});
+function toggleKey(btn) {
+  const el = document.getElementById('apiKeyInput');
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  btn.textContent = show ? 'Ocultar' : 'Ver';
+}
 
 // ── Plataformas toggle ──────────────────────────────────────────
 document.querySelectorAll('.pbtn').forEach(b => {
@@ -440,6 +463,11 @@ async function generar() {
   const nota     = document.getElementById('nota').value.trim();
   const plats    = [...document.querySelectorAll('.pbtn.active')].map(b => b.dataset.plat);
 
+  if (!getApiKey().startsWith('sk-ant-')) {
+    alert('Ingresa tu API key de Anthropic en el campo de la barra lateral (comienza con sk-ant-).');
+    document.getElementById('apiKeyInput').focus();
+    return;
+  }
   if (!plats.length) { alert('Selecciona al menos una plataforma.'); return; }
 
   const btn = document.getElementById('genBtn');
@@ -539,7 +567,7 @@ Varía los productos mencionados entre Samsung, Xiaomi, Infinix, Tecno y Motorol
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'x-api-key': API_KEY,
+        'x-api-key': getApiKey(),
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
         'content-type': 'application/json'

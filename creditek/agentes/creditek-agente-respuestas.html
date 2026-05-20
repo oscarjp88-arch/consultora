@@ -116,6 +116,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
       <button class="tbtn" data-t="empatico" onclick="sT(this)">🤝 Empático</button>
     </div>
   </div>
+  <div class="sec" style="padding-bottom:12px">
+    <span class="lbl">API Key de Anthropic</span>
+    <div style="position:relative">
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off"
+        style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--txt);border-radius:var(--rs);font-family:monospace;font-size:12px;padding:8px 48px 8px 11px;outline:none"
+        oninput="sessionStorage.setItem('ck_api_key',this.value)">
+      <button onclick="toggleKey(this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px">Ver</button>
+    </div>
+    <div style="font-size:10px;color:var(--txt3);margin-top:5px">Se guarda solo en esta sesión. Se borra al cerrar el tab.</div>
+  </div>
   <button class="gbtn" id="gbtn" onclick="gen()"><div class="sp" id="sp"></div><span id="gl">✦ Generar respuesta</span></button>
 </aside>
 <main class="main">
@@ -135,6 +145,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
 </main>
 </div>
 <script>
+window.addEventListener('DOMContentLoaded',()=>{const s=sessionStorage.getItem('ck_api_key');if(s)document.getElementById('apiKeyInput').value=s});
+function toggleKey(btn){const el=document.getElementById('apiKeyInput');const show=el.type==='password';el.type=show?'text':'password';btn.textContent=show?'Ocultar':'Ver'}
 const CM={whatsapp:{label:'WhatsApp',color:'#25D366',emoji:'💬'},dm:{label:'DM Instagram',color:'#E1306C',emoji:'📸'},messenger:{label:'Messenger',color:'#0084FF',emoji:'💙'},comentario:{label:'Comentario',color:'#00C4CC',emoji:'💬'}};
 const TN={amigable:'amigable, cercano y costeño',formal:'formal y profesional sin perder calidez',urgente:'rápido, directo y orientado a la acción',empatico:'empático, comprensivo y resolutivo'};
 function setF(btn,txt){document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('consulta').value=txt}
@@ -145,6 +157,8 @@ function gAT(){const b=document.querySelector('.tbtn.active');return b?b.dataset
 async function gen(){
   const consulta=document.getElementById('consulta').value.trim();
   const ciudad=document.getElementById('ciudad').value;
+  const apiKey=sessionStorage.getItem('ck_api_key')||'';
+  if(!apiKey.startsWith('sk-ant-')){alert('Ingresa tu API key de Anthropic en el campo de la barra lateral (comienza con sk-ant-).');document.getElementById('apiKeyInput').focus();return}
   const channels=gAC();
   const tono=gAT();
   if(!consulta){alert('Escribe o selecciona la consulta del cliente.');return}
@@ -185,7 +199,7 @@ Formato EXACTO:
 
 etc.`;
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':sessionStorage.getItem('ck_api_key')||'','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     const d=await r.json();
     const txt=d.content?.find(b=>b.type==='text')?.text||'';
     document.getElementById('sc').style.display='none';
