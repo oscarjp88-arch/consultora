@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creditek · Calendario de Contenido</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--azul:#0B1E3D;--turquesa:#00C4CC;--bg:#0B1E3D;--bg2:#112444;--bg3:#172d54;--bord:rgba(0,196,204,0.15);--bord2:rgba(0,196,204,0.35);--txt:#F0EFEB;--txt2:#9BB8CC;--txt3:#567890;--r:12px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:15px;line-height:1.6}
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:296px;min-width:296px;background:var(--bg2);border-right:1px solid var(--bord);display:flex;flex-direction:column;overflow-y:auto}
+.logo-wrap{padding:18px 18px 14px;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:10px}
+.logo-img{height:36px;object-fit:contain}
+.logo-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px;color:var(--turquesa);letter-spacing:.04em}
+.logo-sub{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-top:1px}
+
+.sec{padding:14px 15px 8px}
+.lbl{font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;padding:0 3px 7px;display:block}
+.fg{margin-bottom:12px}
+.fl{font-size:11px;color:var(--txt2);margin-bottom:4px;display:block;padding:0 3px}
+select,input{width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--txt);border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 11px;outline:none;transition:border-color .2s;appearance:none}
+select:focus,input:focus{border-color:var(--turquesa)}
+select option{background:var(--bg2)}
+
+.plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.pbtn{background:var(--bg3);border:1px solid var(--bord);border-radius:var(--rs);padding:7px 9px;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;color:var(--txt2);transition:all .15s;font-family:'DM Sans',sans-serif}
+.pbtn.active{border-color:var(--turquesa);background:rgba(0,196,204,.1);color:var(--turquesa)}
+.pbtn:hover:not(.active){border-color:var(--bord2);color:var(--txt)}
+
+.prod-input{width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--txt);border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 10px;outline:none;transition:border-color .2s}
+.prod-input:focus{border-color:var(--turquesa)}
+.prod-input::placeholder{color:var(--txt3)}
+
+.gbtn{margin:8px 15px 18px;width:calc(100% - 30px);background:var(--turquesa);border:none;border-radius:var(--rs);color:var(--azul);font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;letter-spacing:.02em;padding:12px 15px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.gbtn:hover{background:#00e0e8;transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,196,204,.3)}
+.gbtn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.sp{width:14px;height:14px;border:2px solid rgba(11,30,61,.35);border-top-color:var(--azul);border-radius:50%;animation:spin .7s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.progress-wrap{margin:0 15px 14px;display:none}
+.progress-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--turquesa);border-radius:2px;width:0%;transition:width .4s}
+.progress-lbl{font-size:10px;color:var(--txt3);margin-top:5px;text-align:center}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:14px 24px 12px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ttl{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700}
+.tsub{font-size:11px;color:var(--txt3);margin-top:1px}
+.topbar-actions{display:flex;gap:8px}
+.abtn{background:var(--bg3);border:1px solid var(--bord);border-radius:var(--rs);color:var(--txt2);font-size:11px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.abtn:hover{border-color:var(--turquesa);color:var(--turquesa)}
+.abtn.primary{background:rgba(0,196,204,.1);border-color:var(--bord2);color:var(--turquesa)}
+
+/* FILTROS */
+.filters{padding:10px 24px;border-bottom:1px solid var(--bord);display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.ftag{background:var(--bg3);border:1px solid var(--bord);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--txt2);cursor:pointer;transition:all .15s}
+.ftag.active{border-color:var(--turquesa);color:var(--turquesa);background:rgba(0,196,204,.08)}
+
+/* CONTENT AREA */
+.ca{flex:1;overflow-y:auto;padding:20px 24px}
+
+/* EMPTY */
+.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;opacity:.45}
+.eico{width:64px;height:64px;border-radius:16px;background:var(--bg3);border:1px solid var(--bord);display:flex;align-items:center;justify-content:center;font-size:28px}
+.etit{font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700}
+.edsc{font-size:13px;color:var(--txt2);max-width:300px;line-height:1.5}
+
+/* CALENDAR GRID */
+.cal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.cal-header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.cal-title{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;color:var(--turquesa);letter-spacing:.04em;text-transform:uppercase}
+.cal-count{font-size:11px;color:var(--txt3)}
+
+/* DAY CARD */
+.dcard{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;transition:border-color .2s;animation:fi .3s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.dcard:hover{border-color:var(--bord2)}
+.dcard.hidden{display:none}
+
+.dcard-head{padding:10px 14px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between}
+.dcard-date{display:flex;align-items:center;gap:8px}
+.dnum{font-family:'Montserrat',sans-serif;font-weight:800;font-size:18px;color:var(--txt);min-width:28px}
+.dwrap{display:flex;flex-direction:column}
+.dsem{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em}
+.dtype{font-size:11px;color:var(--txt2)}
+
+.dtype-badge{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.badge-edu{background:rgba(99,179,237,.1);color:#63b3ed;border:1px solid rgba(99,179,237,.25)}
+.badge-prod{background:rgba(0,196,204,.1);color:var(--turquesa);border:1px solid var(--bord2)}
+.badge-test{background:rgba(154,230,180,.1);color:#9ae6b4;border:1px solid rgba(154,230,180,.25)}
+.badge-story{background:rgba(183,148,246,.1);color:#b794f6;border:1px solid rgba(183,148,246,.25)}
+.badge-cta{background:rgba(252,129,74,.1);color:#fc814a;border:1px solid rgba(252,129,74,.25)}
+.badge-tip{background:rgba(255,213,79,.1);color:#ffd54f;border:1px solid rgba(255,213,79,.25)}
+.badge-ref{background:rgba(255,255,255,.06);color:var(--txt3);border:1px solid rgba(255,255,255,.1)}
+
+.dcard-title{padding:10px 14px 4px;font-size:13px;font-weight:600;color:var(--txt);line-height:1.4}
+
+.dcard-plats{padding:0 14px 8px;display:flex;gap:5px}
+.plat-tag{font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--bord);color:var(--txt3);background:var(--bg3)}
+
+.dcard-copy{padding:10px 14px;border-top:1px solid var(--bord);position:relative}
+.copy-text{font-size:12px;color:var(--txt2);line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:120px;overflow:hidden;transition:max-height .3s}
+.copy-text.expanded{max-height:600px}
+.dcard-actions{display:flex;gap:6px;margin-top:8px}
+.cpbtn{background:transparent;border:1px solid var(--bord);border-radius:6px;color:var(--txt3);font-size:11px;padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.cpbtn:hover{border-color:var(--turquesa);color:var(--turquesa)}
+.cpbtn.copied{border-color:var(--turquesa);color:var(--turquesa)}
+.expbtn{background:transparent;border:none;color:var(--txt3);font-size:11px;cursor:pointer;padding:4px 6px;font-family:'DM Sans',sans-serif;transition:color .15s}
+.expbtn:hover{color:var(--turquesa)}
+
+/* SKELETON */
+.sk-card{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--r);padding:16px;display:none}
+.sk-line{height:12px;background:linear-gradient(90deg,var(--bg3) 25%,rgba(0,196,204,.08) 50%,var(--bg3) 75%);background-size:200% 100%;border-radius:6px;animation:sh 1.4s infinite;margin-bottom:8px}
+@keyframes sh{to{background-position:-200% 0}}
+.sk-line.s{width:45%}.sk-line.m{width:70%}.sk-line.l{width:90%}
+
+/* STATS BAR */
+.stats-bar{display:none;padding:10px 24px;border-bottom:1px solid var(--bord);gap:20px;flex-shrink:0;flex-wrap:wrap}
+.stat{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2)}
+.stat-num{font-weight:700;color:var(--txt);font-family:'Montserrat',sans-serif}
+.stat-dot{width:8px;height:8px;border-radius:50%}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bord);border-radius:2px}
+
+/* PRINT */
+@media print{
+  .sidebar,.topbar,.filters,.stats-bar,.dcard-actions{display:none!important}
+  .ca{overflow:visible;padding:10px}
+  .cal-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .dcard{break-inside:avoid;border:1px solid #ccc}
+  .copy-text{max-height:none!important}
+  body{background:#fff;color:#000}
+  .dcard{background:#f9f9f9}
+  .dcard-head{background:#eee}
+  .dcard-copy{border-top:1px solid #ddd}
+  .copy-text{color:#333}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ══════════════════════════ SIDEBAR ══════════════════════════ -->
+<aside class="sidebar">
+  <div class="logo-wrap">
+    <img class="logo-img" src="logo.png" alt="Creditek">
+    <div>
+      <div class="logo-title">CREDITEK</div>
+      <div class="logo-sub">Agente 3 · Calendario</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <span class="lbl">Tienda</span>
+    <div class="fg">
+      <label class="fl">Ciudad / Sucursal</label>
+      <select id="ciudad">
+        <option value="Tolú Centro (CK-01)">Tolú Centro (CK-01)</option>
+        <option value="Tolú Norte (CK-10)">Tolú Norte (CK-10)</option>
+        <option value="Corozal Centro (CK-02)">Corozal Centro (CK-02)</option>
+        <option value="Corozal (CK-03)">Corozal (CK-03)</option>
+        <option value="Corozal Sur (CK-04)">Corozal Sur (CK-04)</option>
+        <option value="Chinú Centro (CK-05)">Chinú Centro (CK-05)</option>
+        <option value="Chinú (CK-06)">Chinú (CK-06)</option>
+        <option value="Chinú Norte (CK-07)">Chinú Norte (CK-07)</option>
+        <option value="Ciénaga de Oro (CK-08)">Ciénaga de Oro (CK-08)</option>
+        <option value="Ciénaga de Oro Sur (CK-09)">Ciénaga de Oro Sur (CK-09)</option>
+        <option value="Coveñas (CK-11)">Coveñas (CK-11)</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">Mes</label>
+      <select id="mes">
+        <option value="Enero">Enero</option>
+        <option value="Febrero">Febrero</option>
+        <option value="Marzo">Marzo</option>
+        <option value="Abril">Abril</option>
+        <option value="Mayo" selected>Mayo</option>
+        <option value="Junio">Junio</option>
+        <option value="Julio">Julio</option>
+        <option value="Agosto">Agosto</option>
+        <option value="Septiembre">Septiembre</option>
+        <option value="Octubre">Octubre</option>
+        <option value="Noviembre">Noviembre</option>
+        <option value="Diciembre">Diciembre</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">Año</label>
+      <select id="anio">
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sec">
+    <span class="lbl">Plataformas</span>
+    <div class="plat-grid" id="plats">
+      <button class="pbtn active" data-plat="Facebook">📘 Facebook</button>
+      <button class="pbtn active" data-plat="Instagram">📸 Instagram</button>
+      <button class="pbtn active" data-plat="WhatsApp">💬 WhatsApp</button>
+      <button class="pbtn" data-plat="TikTok">🎵 TikTok</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <span class="lbl">Producto estrella del mes (opcional)</span>
+    <input class="prod-input" id="producto" type="text" placeholder="Ej: Samsung Galaxy A17 5G 128GB">
+    <div style="margin-top:6px">
+      <label class="fl">Cuota mensual (opcional)</label>
+      <input class="prod-input" id="cuota" type="text" placeholder="Ej: $157.000/mes">
+    </div>
+    <div style="margin-top:6px">
+      <label class="fl">Nota especial del mes (opcional)</label>
+      <input class="prod-input" id="nota" type="text" placeholder="Ej: Día de la madre, feria local...">
+    </div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-lbl" id="progressLbl">Generando calendario...</div>
+  </div>
+
+  <button class="gbtn" id="genBtn" onclick="generar()">
+    <div class="sp" id="sp"></div>
+    <span id="btnTxt">📅 Generar Calendario</span>
+  </button>
+</aside>
+
+<!-- ══════════════════════════ MAIN ══════════════════════════ -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="ttl" id="topTitle">Calendario Mensual de Contenido</div>
+      <div class="tsub" id="topSub">Configura la tienda y el mes, luego genera</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="abtn" id="copyAllBtn" onclick="copiarTodo()" style="display:none">Copiar todo</button>
+      <button class="abtn primary" id="printBtn" onclick="window.print()" style="display:none">Imprimir / PDF</button>
+    </div>
+  </div>
+
+  <div class="filters" id="filtersBar" style="display:none">
+    <span class="ftag active" data-filter="todos" onclick="filtrar(this)">Todos</span>
+    <span class="ftag" data-filter="Educativo" onclick="filtrar(this)">📚 Educativo</span>
+    <span class="ftag" data-filter="Producto" onclick="filtrar(this)">📱 Producto</span>
+    <span class="ftag" data-filter="Testimonio" onclick="filtrar(this)">⭐ Testimonio</span>
+    <span class="ftag" data-filter="Storytelling" onclick="filtrar(this)">💛 Storytelling</span>
+    <span class="ftag" data-filter="CTA" onclick="filtrar(this)">⚡ CTA Directo</span>
+    <span class="ftag" data-filter="Tip" onclick="filtrar(this)">💡 Tip</span>
+    <span class="ftag" data-filter="Reflexión" onclick="filtrar(this)">🌅 Reflexión</span>
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat"><div class="stat-dot" style="background:#63b3ed"></div>Educativo: <span class="stat-num" id="cEdu">0</span></div>
+    <div class="stat"><div class="stat-dot" style="background:var(--turquesa)"></div>Producto: <span class="stat-num" id="cProd">0</span></div>
+    <div class="stat"><div class="stat-dot" style="background:#9ae6b4"></div>Testimonio: <span class="stat-num" id="cTest">0</span></div>
+    <div class="stat"><div class="stat-dot" style="background:#b794f6"></div>Story: <span class="stat-num" id="cStory">0</span></div>
+    <div class="stat"><div class="stat-dot" style="background:#fc814a"></div>CTA: <span class="stat-num" id="cCta">0</span></div>
+    <div class="stat"><div class="stat-dot" style="background:#ffd54f"></div>Tip/Ref: <span class="stat-num" id="cTip">0</span></div>
+  </div>
+
+  <div class="ca" id="ca">
+    <div class="empty" id="emptyState">
+      <div class="eico">📅</div>
+      <div class="etit">Sin calendario generado</div>
+      <div class="edsc">Selecciona la tienda, el mes y las plataformas. Luego presiona "Generar Calendario".</div>
+    </div>
+    <div class="cal-grid" id="calGrid" style="display:none"></div>
+  </div>
+</div>
+
+</div><!-- /shell -->
+
+<script>
+const API_KEY = 'TU_API_KEY_AQUI';
+const MODEL   = 'claude-sonnet-4-6';
+
+// ── Plataformas toggle ──────────────────────────────────────────
+document.querySelectorAll('.pbtn').forEach(b => {
+  b.onclick = () => {
+    b.classList.toggle('active');
+    // Asegurar al menos una activa
+    const activas = document.querySelectorAll('.pbtn.active');
+    if (activas.length === 0) b.classList.add('active');
+  };
+});
+
+// ── Badge class según tipo ──────────────────────────────────────
+function badgeClass(tipo) {
+  const t = tipo.toLowerCase();
+  if (t.includes('edu')) return 'badge-edu';
+  if (t.includes('prod') || t.includes('servicio')) return 'badge-prod';
+  if (t.includes('test')) return 'badge-test';
+  if (t.includes('story')) return 'badge-story';
+  if (t.includes('cta')) return 'badge-cta';
+  if (t.includes('tip') || t.includes('entre')) return 'badge-tip';
+  return 'badge-ref';
+}
+
+function filterKey(tipo) {
+  const t = tipo.toLowerCase();
+  if (t.includes('edu')) return 'Educativo';
+  if (t.includes('prod') || t.includes('servicio')) return 'Producto';
+  if (t.includes('test')) return 'Testimonio';
+  if (t.includes('story')) return 'Storytelling';
+  if (t.includes('cta')) return 'CTA';
+  if (t.includes('tip') || t.includes('entre')) return 'Tip';
+  return 'Reflexión';
+}
+
+// ── Filtrar por tipo ────────────────────────────────────────────
+function filtrar(el) {
+  document.querySelectorAll('.ftag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const f = el.dataset.filter;
+  document.querySelectorAll('.dcard').forEach(c => {
+    if (f === 'todos' || c.dataset.tipo === f) c.classList.remove('hidden');
+    else c.classList.add('hidden');
+  });
+}
+
+// ── Copiar todo ─────────────────────────────────────────────────
+function copiarTodo() {
+  const cards = document.querySelectorAll('.dcard:not(.hidden)');
+  let txt = '';
+  cards.forEach(c => {
+    const date = c.querySelector('.dnum')?.textContent;
+    const sem  = c.querySelector('.dsem')?.textContent;
+    const tipo = c.querySelector('.dtype')?.textContent;
+    const tit  = c.querySelector('.dcard-title')?.textContent.trim();
+    const copy = c.querySelector('.copy-text')?.textContent.trim();
+    txt += `═══ Día ${date} · ${sem} · ${tipo} ═══\n${tit}\n\n${copy}\n\n`;
+  });
+  navigator.clipboard.writeText(txt.trim()).then(() => {
+    const btn = document.getElementById('copyAllBtn');
+    btn.textContent = '✓ Copiado todo';
+    setTimeout(() => btn.textContent = 'Copiar todo', 2500);
+  });
+}
+
+// ── Copiar un post ──────────────────────────────────────────────
+function copiar(btn, idx) {
+  const copy = document.getElementById('copy-' + idx)?.textContent.trim();
+  navigator.clipboard.writeText(copy).then(() => {
+    btn.textContent = '✓ Copiado';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Expandir/contraer copy ──────────────────────────────────────
+function expandir(btn, idx) {
+  const ct = document.getElementById('copy-' + idx);
+  const exp = ct.classList.toggle('expanded');
+  btn.textContent = exp ? 'Ver menos ▲' : 'Ver más ▼';
+}
+
+// ── Estadísticas ────────────────────────────────────────────────
+function actualizarStats(dias) {
+  const counts = {Educativo:0,Producto:0,Testimonio:0,Storytelling:0,CTA:0,Tip:0};
+  dias.forEach(d => {
+    const k = filterKey(d.tipo);
+    if (k === 'Reflexión') counts.Tip++;
+    else if (counts[k] !== undefined) counts[k]++;
+    else counts.Tip++;
+  });
+  document.getElementById('cEdu').textContent   = counts.Educativo;
+  document.getElementById('cProd').textContent  = counts.Producto;
+  document.getElementById('cTest').textContent  = counts.Testimonio;
+  document.getElementById('cStory').textContent = counts.Storytelling;
+  document.getElementById('cCta').textContent   = counts.CTA;
+  document.getElementById('cTip').textContent   = counts.Tip;
+}
+
+// ── Renderizar calendario ───────────────────────────────────────
+function renderCalendario(dias, ciudad, mes, anio) {
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'cal-header';
+  hdr.innerHTML = `<span class="cal-title">📅 ${ciudad} — ${mes} ${anio}</span><span class="cal-count">${dias.length} publicaciones</span>`;
+  grid.appendChild(hdr);
+
+  dias.forEach((d, i) => {
+    const fk = filterKey(d.tipo);
+    const card = document.createElement('div');
+    card.className = 'dcard';
+    card.dataset.tipo = fk;
+
+    const platsHtml = (d.plataformas || []).map(p => `<span class="plat-tag">${p}</span>`).join('');
+
+    card.innerHTML = `
+      <div class="dcard-head">
+        <div class="dcard-date">
+          <div class="dnum">${d.dia}</div>
+          <div class="dwrap">
+            <div class="dsem">${d.diaSemana || ''}</div>
+            <div class="dtype">${d.tipo}</div>
+          </div>
+        </div>
+        <span class="dtype-badge ${badgeClass(d.tipo)}">${d.emoji || ''} ${filterKey(d.tipo)}</span>
+      </div>
+      <div class="dcard-title">${d.titulo || ''}</div>
+      <div class="dcard-plats">${platsHtml}</div>
+      <div class="dcard-copy">
+        <div class="copy-text" id="copy-${i}">${escapeHtml(d.copy || '')}</div>
+        <div class="dcard-actions">
+          <button class="cpbtn" onclick="copiar(this,${i})">Copiar</button>
+          <button class="expbtn" onclick="expandir(this,${i})">Ver más ▼</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  actualizarStats(dias);
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Generar ─────────────────────────────────────────────────────
+async function generar() {
+  const ciudad   = document.getElementById('ciudad').value;
+  const mes      = document.getElementById('mes').value;
+  const anio     = document.getElementById('anio').value;
+  const producto = document.getElementById('producto').value.trim();
+  const cuota    = document.getElementById('cuota').value.trim();
+  const nota     = document.getElementById('nota').value.trim();
+  const plats    = [...document.querySelectorAll('.pbtn.active')].map(b => b.dataset.plat);
+
+  if (!plats.length) { alert('Selecciona al menos una plataforma.'); return; }
+
+  const btn = document.getElementById('genBtn');
+  const sp  = document.getElementById('sp');
+  const pw  = document.getElementById('progressWrap');
+  btn.disabled = true;
+  document.getElementById('btnTxt').textContent = 'Generando...';
+  sp.style.display = 'block';
+  pw.style.display = 'block';
+
+  const pFill = document.getElementById('progressFill');
+  const pLbl  = document.getElementById('progressLbl');
+  let prog = 0;
+  const progTimer = setInterval(() => {
+    prog = Math.min(prog + 2, 90);
+    pFill.style.width = prog + '%';
+    if (prog < 30) pLbl.textContent = 'Planificando el mes...';
+    else if (prog < 60) pLbl.textContent = 'Escribiendo contenido por día...';
+    else pLbl.textContent = 'Finalizando el calendario...';
+  }, 400);
+
+  // Mostrar skeletons
+  document.getElementById('emptyState').style.display = 'none';
+  const grid = document.getElementById('calGrid');
+  grid.style.display = 'grid';
+  grid.innerHTML = '';
+  const hdrSk = document.createElement('div');
+  hdrSk.className = 'cal-header';
+  hdrSk.innerHTML = `<span class="cal-title" style="opacity:.4">Generando ${mes} ${anio}...</span>`;
+  grid.appendChild(hdrSk);
+  for (let i = 0; i < 8; i++) {
+    const sk = document.createElement('div');
+    sk.className = 'sk-card';
+    sk.style.display = 'block';
+    sk.innerHTML = `<div class="sk-line s"></div><div class="sk-line l"></div><div class="sk-line m"></div><div class="sk-line" style="width:30%"></div>`;
+    grid.appendChild(sk);
+  }
+
+  const productoInfo = producto ? `\n- Producto estrella: ${producto}${cuota ? ` — cuota: ${cuota}` : ''}` : '';
+  const notaInfo = nota ? `\n- Contexto especial del mes: ${nota}` : '';
+
+  const systemPrompt = `Eres el estratega de contenido de Creditek, empresa colombiana de celulares a crédito con tiendas en el Caribe colombiano.
+
+CONTEXTO DE MARCA:
+- Producto: Celulares a crédito (Samsung, Xiaomi, Infinix, Tecno, Motorola)
+- Plataformas de crédito: PayJoy, Alo Credit, Krediya, Addi
+- Requisitos: Cédula + cuota inicial (~25%). Sin banco. Sin fiador.
+- Aprobación: Mismo día, en minutos
+- Plazos: 4, 6 u 8 meses
+- Público: NSE 2-3, Caribe colombiano, lenguaje cercano y costeño
+- Colores marca: azul #0B1E3D, turquesa #00C4CC
+- CTA siempre lleva a visitar la tienda física o escribir al WhatsApp
+- Tono: Humano, directo, sin sonar corporativo. Costeño sin ser informal.
+
+ROTACIÓN SEMANAL OBLIGATORIA (del skill redes-sociales):
+- Lunes → Educativo: cómo funciona el crédito, qué es PayJoy/AloCredit/Krediya/Addi, mitos sobre el crédito
+- Martes → Producto/Servicio: presentar un celular con precio de cuota, beneficios
+- Miércoles → Testimonio: historia realista de cliente que compró a crédito
+- Jueves → Storytelling: historia humana de Creditek, equipo, valores
+- Viernes → CTA Directo: urgencia, oferta, acción inmediata a tienda
+- Sábado → Tip: consejo de tecnología, cómo elegir celular, cuidado del equipo
+- Domingo → Reflexión (breve, humanización de marca) o CTA suave
+
+ESTRUCTURA DE CADA TIPO:
+- Educativo: Dato/pregunta llamativa → Explicación simple → Aprendizaje → CTA suave
+- Producto: Problema del cliente → Celular como solución → 3 beneficios en bullets → CTA a tienda
+- Testimonio: Cita del cliente → Contexto → Resultado → CTA
+- Storytelling: Escena humana → Desafío → Resolución → Valores Creditek
+- CTA Directo: Urgencia clara → Beneficio inmediato → Instrucción → CTA explícito
+- Tip: Titular con número → Lista breve → Invitación a guardar
+
+RESPONDE ÚNICAMENTE con un array JSON válido. Sin markdown, sin explicaciones, sin texto antes o después del JSON.`;
+
+  const userPrompt = `Genera el calendario de contenido de 30 días para:
+- Tienda: ${ciudad}
+- Mes: ${mes} ${anio}
+- Plataformas: ${plats.join(', ')}${productoInfo}${notaInfo}
+
+Devuelve exactamente 30 objetos JSON con esta estructura:
+[
+  {
+    "dia": 1,
+    "diaSemana": "Lunes",
+    "tipo": "Educativo",
+    "emoji": "📚",
+    "titulo": "Título corto del post (max 60 chars)",
+    "plataformas": ["Facebook","Instagram"],
+    "copy": "Copy COMPLETO listo para publicar. Incluye emojis naturales y hashtags al final para Instagram. El copy debe mencionar la ciudad ${ciudad.split('(')[0].trim()} cuando sea relevante. Termina siempre con CTA a visitar la tienda o escribir al WhatsApp."
+  }
+]
+
+El calendario empieza el día 1 de ${mes}. Calcula el día de la semana correcto para ${mes} ${anio}.
+Incluye exactamente 30 entradas. Cada post debe tener copy completo y publicable, no un borrador.
+Varía los productos mencionados entre Samsung, Xiaomi, Infinix, Tecno y Motorola.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 16000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    const data = await res.json();
+    let raw = data.content?.[0]?.text || '';
+
+    // Limpiar posible markdown
+    raw = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+
+    let dias;
+    try {
+      dias = JSON.parse(raw);
+    } catch(e) {
+      // Intentar extraer JSON del texto
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (match) dias = JSON.parse(match[0]);
+      else throw new Error('No se pudo parsear el JSON');
+    }
+
+    clearInterval(progTimer);
+    pFill.style.width = '100%';
+    pLbl.textContent = '¡Calendario listo!';
+    setTimeout(() => { pw.style.display = 'none'; pFill.style.width = '0%'; }, 1200);
+
+    renderCalendario(dias, ciudad, mes, anio);
+
+    document.getElementById('topTitle').textContent = `${ciudad} — ${mes} ${anio}`;
+    document.getElementById('topSub').textContent = `${dias.length} publicaciones · ${plats.join(', ')}`;
+    document.getElementById('filtersBar').style.display = 'flex';
+    document.getElementById('statsBar').style.display = 'flex';
+    document.getElementById('copyAllBtn').style.display = '';
+    document.getElementById('printBtn').style.display = '';
+
+  } catch(err) {
+    clearInterval(progTimer);
+    pw.style.display = 'none';
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:30px;text-align:center;color:#fc814a;font-size:13px;">
+      ⚠️ Error al generar: ${err.message}<br><span style="color:var(--txt3);font-size:11px;margin-top:6px;display:block;">Revisa la API key en el código fuente (línea 3 del script)</span>
+    </div>`;
+    document.getElementById('emptyState').style.display = '';
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btnTxt').textContent = '📅 Generar Calendario';
+    sp.style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>
