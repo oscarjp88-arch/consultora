@@ -460,8 +460,7 @@ function toggleKey(inputId, btn) {
 async function generarContenido() {
   const apiKey = sessionStorage.getItem('ck_api_key') || '';
   if (!apiKey.startsWith('sk-ant-')) {
-    alert('Ingresa tu API key de Anthropic en el campo de la barra lateral (comienza con sk-ant-).');
-    document.getElementById('apiKeyInput').focus();
+    abrirModal();
     return;
   }
   const ciudad = document.getElementById('ciudad').value;
@@ -520,7 +519,7 @@ Genera el copy para CADA plataforma solicitada, adaptando tono y formato.
 - TikTok: gancho brutal en línea 1, muy corto
 
 ${inclHashtags ? 'Después añade:\nHASHTAGS: 10-12 hashtags con ciudad, producto, crédito, Colombia' : ''}
-${inclBrief ? '''Después añade:\nBRIEF VISUAL CANVA:\n- Fondo:\n- Texto principal:\n- Texto secundario:\n- Imagen:\n- Color CTA: (usar #00C4CC para CTAs y acentos)''' : ''}
+${inclBrief ? 'Después añade:\nBRIEF VISUAL CANVA:\n- Fondo:\n- Texto principal:\n- Texto secundario:\n- Imagen:\n- Color CTA: (usar #00C4CC para CTAs y acentos)' : ''}
 
 Formato EXACTO:
 [PLATAFORMA: Facebook]

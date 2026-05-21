@@ -207,7 +207,7 @@ async function gen(){
   const consulta=document.getElementById('consulta').value.trim();
   const ciudad=document.getElementById('ciudad').value;
   const apiKey=sessionStorage.getItem('ck_api_key')||'';
-  if(!apiKey.startsWith('sk-ant-')){alert('Ingresa tu API key de Anthropic en el campo de la barra lateral (comienza con sk-ant-).');document.getElementById('apiKeyInput').focus();return}
+  if(!apiKey.startsWith('sk-ant-')){abrirModal();return}
   const channels=gAC();
   const tono=gAT();
   if(!consulta){alert('Escribe o selecciona la consulta del cliente.');return}

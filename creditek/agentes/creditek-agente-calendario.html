@@ -528,8 +528,7 @@ async function generar() {
   const plats    = [...document.querySelectorAll('.pbtn.active')].map(b => b.dataset.plat);
 
   if (!getApiKey().startsWith('sk-ant-')) {
-    alert('Ingresa tu API key de Anthropic en el campo de la barra lateral (comienza con sk-ant-).');
-    document.getElementById('apiKeyInput').focus();
+    abrirModal();
     return;
   }
   if (!plats.length) { alert('Selecciona al menos una plataforma.'); return; }
