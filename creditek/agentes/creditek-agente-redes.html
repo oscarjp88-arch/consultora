@@ -258,6 +258,38 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .breadcrumb .cur{color:#9BB8CC}
 .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:500;color:#fff}
 .toast.show{opacity:1;transform:translateY(0)}
+/* ── Módulo generador de imágenes ──────────────────────────────── */
+.img-section{margin-top:20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:none;animation:fadeIn .3s ease}
+.img-section.visible{display:block}
+.img-hdr{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.img-hdr-title{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700}
+.img-hdr-badge{font-size:10px;background:rgba(0,196,204,.12);color:var(--turquesa);padding:2px 8px;border-radius:12px;letter-spacing:.04em}
+.engine-row{display:flex;gap:8px;padding:14px 18px 8px}
+.engine-btn{flex:1;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;font-family:'DM Sans',sans-serif}
+.engine-btn.active{background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
+.engine-btn:hover:not(.active){border-color:var(--border-hover);color:var(--text)}
+.img-key-row{padding:0 18px 10px;display:flex;align-items:center;gap:8px}
+.img-key-status{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px;flex:1}
+.img-key-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0}
+.img-key-dot.ok{background:#22c55e}
+.img-key-btn{font-size:11px;background:none;border:none;color:var(--turquesa);cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif}
+.img-prompt-wrap{padding:0 18px 14px}
+.img-prompt-lbl{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.img-prompt-reset{background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif}
+.img-prompt-reset:hover{color:var(--turquesa)}
+.img-prompt-ta{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:12px;line-height:1.65;padding:10px 12px;resize:vertical;min-height:108px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
+.img-prompt-ta:focus{border-color:var(--turquesa)}
+.img-gen-btn{margin:0 18px 16px;width:calc(100% - 36px);background:var(--bg3);border:1px solid rgba(0,196,204,.3);color:var(--turquesa);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;padding:11px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em}
+.img-gen-btn:hover{background:rgba(0,196,204,.1);border-color:var(--turquesa)}
+.img-gen-btn:disabled{opacity:.4;cursor:not-allowed}
+.img-result{padding:0 18px 18px;display:none}
+.img-output{width:100%;border-radius:10px;border:1px solid var(--border);display:block}
+.img-dl-btn{display:block;margin-top:10px;background:var(--turquesa);color:var(--azul);text-align:center;padding:10px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;cursor:pointer;border:none;width:100%;font-family:'Montserrat',sans-serif;letter-spacing:.02em;transition:opacity .2s}
+.img-dl-btn:hover{opacity:.85}
+.img-err{font-size:12px;color:#ff6b6b;padding:0 18px 16px;line-height:1.6;display:none}
+/* Modal keys imagen */
+#imgKeyModal{position:fixed;inset:0;background:rgba(5,12,26,.93);display:flex;align-items:center;justify-content:center;z-index:9998;backdrop-filter:blur(6px)}
+#imgKeyModal.hidden{display:none}
 </style>
 </head>
 <body>
@@ -288,6 +320,29 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
   </div>
 </div>
+<!-- ══ MODAL API KEY IMAGEN ═══════════════════════════════════════ -->
+<div id="imgKeyModal" class="hidden">
+  <div class="m-card">
+    <div class="m-logo">
+      <span id="imgKeyIcon" style="font-size:22px;line-height:1">✦</span>
+      <span class="m-logo-name" id="imgKeyTitle">GEMINI API KEY</span>
+    </div>
+    <div class="m-title" id="imgKeyHeading">API Key de Google Gemini</div>
+    <div class="m-desc" id="imgKeyDesc">Necesitas una API key de Google AI Studio para generar imágenes con Gemini Imagen 4.</div>
+    <div class="m-field">
+      <input class="m-input" id="imgModalKey" type="password" placeholder="AIzaSy..." autocomplete="off" onkeydown="if(event.key==='Enter')submitImgKey()">
+      <button class="m-eye" onclick="toggleImgKey(this)">Ver</button>
+    </div>
+    <div class="m-error" id="imgModalError">Verifica el formato de la key e intenta de nuevo.</div>
+    <button class="m-submit" onclick="submitImgKey()">Guardar key →</button>
+    <div class="m-note">
+      Gemini: <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a><br>
+      OpenAI: <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>
+    </div>
+    <button onclick="cerrarImgKeyModal()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;padding-top:2px">Cancelar</button>
+  </div>
+</div>
+
 <div class="shell">
 <aside class="sidebar">
   <div class="logo-wrap">
@@ -415,6 +470,42 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <div class="shimmer-line medium"></div>
     </div>
     <div class="piezas-grid" id="piezas-grid"></div>
+
+    <!-- ══ MÓDULO GENERADOR DE IMÁGENES ════════════════════════════ -->
+    <div class="img-section" id="img-section">
+      <div class="img-hdr">
+        <span>🖼️</span>
+        <span class="img-hdr-title">Generar imagen con IA</span>
+        <span class="img-hdr-badge">Beta</span>
+      </div>
+      <div class="engine-row">
+        <button class="engine-btn active" id="eng-gemini" onclick="selectEngine('gemini')">✦ Gemini Imagen 4</button>
+        <button class="engine-btn" id="eng-dalle" onclick="selectEngine('dalle')">⬡ DALL-E 3</button>
+      </div>
+      <div class="img-key-row">
+        <div class="img-key-status">
+          <div class="img-key-dot" id="img-key-dot"></div>
+          <span id="img-key-label">Key no configurada</span>
+        </div>
+        <button class="img-key-btn" onclick="abrirImgKeyModal()">Configurar key</button>
+      </div>
+      <div class="img-prompt-wrap">
+        <div class="img-prompt-lbl">
+          <span>Prompt de imagen</span>
+          <button class="img-prompt-reset" onclick="buildImgPrompt()">↺ Restablecer</button>
+        </div>
+        <textarea class="img-prompt-ta" id="img-prompt-ta" placeholder="El prompt se genera automáticamente al producir los copies..."></textarea>
+      </div>
+      <button class="img-gen-btn" id="img-gen-btn" onclick="generarImagen()">
+        <div class="spinner" id="img-spinner"></div>
+        <span id="img-gen-label">🖼 Generar imagen</span>
+      </button>
+      <div class="img-result" id="img-result">
+        <img class="img-output" id="img-output" src="" alt="Imagen generada">
+        <button class="img-dl-btn" onclick="descargarImagen()">⬇ Descargar PNG</button>
+      </div>
+      <div class="img-err" id="img-err"></div>
+    </div>
   </div>
 </main>
 </div>
@@ -621,6 +712,7 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}`;
     document.getElementById('copy-all-btn').style.display = 'block';
     document.getElementById('regen-btn').style.display = 'block';
     showToast('✓ Piezas generadas correctamente');
+    showImgSection();
   } catch(err) {
     document.getElementById('loading-card').style.display = 'none';
     document.getElementById('piezas-grid').innerHTML = `<div style="color:#ff6b6b;font-size:13px;padding:20px 0;line-height:1.6">${err.message || 'Error de conexión. Intenta de nuevo.'}</div>`;
@@ -688,6 +780,160 @@ function copiarTexto(btn,texto){ navigator.clipboard.writeText(texto).then(()=>{
 function copiarTodo(){ const cards=document.querySelectorAll('.pieza-content,.hashtag-block,.brief-block'); let all=''; cards.forEach(c=>{all+=c.innerText+'\n\n---\n\n';}); navigator.clipboard.writeText(all.trim()).then(()=>{ const btn=document.getElementById('copy-all-btn'); btn.textContent='✓ Copiado todo'; setTimeout(()=>{btn.textContent='Copiar todo';},2000); }); }
 function renderHistory(){ const wrap=document.getElementById('history-wrap'); const list=document.getElementById('history-list'); if(!history.length){wrap.style.display='none';return;} wrap.style.display='block'; list.innerHTML=history.map((h,i)=>`<div class="history-item" onclick="restoreHistory(${i})"><div class="history-title">${h.tipo} · ${h.ciudad}</div><div class="history-meta">${h.producto} · ${h.timestamp}</div></div>`).join(''); }
 function restoreHistory(idx){ const h=history[idx]; if(!h) return; document.getElementById('empty-state').style.display='none'; document.getElementById('piezas-grid').innerHTML=''; renderPiezas(h.raw,h.platforms,Object.keys(TIPO_META).find(k=>TIPO_META[k]===h.tipo)||'oferta_semana',h.ciudad,document.getElementById('chk-hashtags').checked,document.getElementById('chk-brief').checked); document.getElementById('top-subtitle').textContent=h.tipo+' · '+h.ciudad; document.getElementById('copy-all-btn').style.display='block'; }
+
+// ── Módulo generador de imágenes ────────────────────────────────
+let currentEngine = 'gemini';
+
+function selectEngine(engine) {
+  currentEngine = engine;
+  document.getElementById('eng-gemini').classList.toggle('active', engine === 'gemini');
+  document.getElementById('eng-dalle').classList.toggle('active', engine === 'dalle');
+  updateImgKeyStatus();
+}
+
+function updateImgKeyStatus() {
+  const key = localStorage.getItem(currentEngine === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key');
+  const ok = key && key.length > 10;
+  document.getElementById('img-key-dot').className = 'img-key-dot' + (ok ? ' ok' : '');
+  document.getElementById('img-key-label').textContent = ok ? 'Key configurada' : 'Key no configurada';
+}
+
+function buildImgPrompt() {
+  const producto = document.getElementById('producto').value.trim() || 'smartphone';
+  const cuota    = document.getElementById('cuota').value.trim();
+  const ciudad   = document.getElementById('ciudad').value || 'Colombia';
+  const titular  = cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!';
+  const precio   = cuota || 'Cuotas desde $150.000/mes';
+  const p = `Commercial advertisement for Creditek, a Colombian fintech brand. ${producto} smartphone, clean product shot with soft shadow, no background, floating on solid deep navy blue #0B1E3D background. Large bold white text '${titular}' in Montserrat font, upper left area. Turquoise #00C4CC accent color for price text '${precio}' in large bold font. Bottom CTA button in turquoise #00C4CC with dark text 'Visítanos en ${ciudad}'. Creditek logo top right corner. Style: modern fintech, clean, high contrast, professional Colombian market. Format: 1080x1080px square, no watermarks, no text errors, no extra elements.`;
+  document.getElementById('img-prompt-ta').value = p;
+}
+
+function showImgSection() {
+  document.getElementById('img-section').classList.add('visible');
+  buildImgPrompt();
+  updateImgKeyStatus();
+}
+
+function abrirImgKeyModal() {
+  const isGemini = currentEngine === 'gemini';
+  document.getElementById('imgKeyIcon').textContent   = isGemini ? '✦' : '⬡';
+  document.getElementById('imgKeyTitle').textContent  = isGemini ? 'GEMINI API KEY' : 'OPENAI API KEY';
+  document.getElementById('imgKeyHeading').textContent = isGemini ? 'API Key de Google Gemini' : 'API Key de OpenAI';
+  document.getElementById('imgKeyDesc').textContent   = isGemini
+    ? 'Necesitas una API key de Google AI Studio para generar imágenes con Gemini Imagen 4.'
+    : 'Necesitas una API key de OpenAI para generar imágenes con DALL-E 3 (HD).';
+  document.getElementById('imgModalKey').placeholder  = isGemini ? 'AIzaSy...' : 'sk-proj-...';
+  document.getElementById('imgModalKey').value = '';
+  document.getElementById('imgModalError').style.display = 'none';
+  document.getElementById('imgKeyModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('imgModalKey').focus(), 80);
+}
+
+function cerrarImgKeyModal() {
+  document.getElementById('imgKeyModal').classList.add('hidden');
+}
+
+function toggleImgKey(btn) {
+  const el = document.getElementById('imgModalKey');
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  btn.textContent = show ? 'Ocultar' : 'Ver';
+}
+
+function submitImgKey() {
+  const val = document.getElementById('imgModalKey').value.trim();
+  const err = document.getElementById('imgModalError');
+  if (val.length < 10) { err.style.display = 'block'; document.getElementById('imgModalKey').focus(); return; }
+  err.style.display = 'none';
+  localStorage.setItem(currentEngine === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key', val);
+  cerrarImgKeyModal();
+  updateImgKeyStatus();
+}
+
+async function generarImagen() {
+  const keyName = currentEngine === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key';
+  const key = localStorage.getItem(keyName);
+  if (!key || key.length < 10) { abrirImgKeyModal(); return; }
+
+  const prompt = document.getElementById('img-prompt-ta').value.trim();
+  if (!prompt) return;
+
+  const btn = document.getElementById('img-gen-btn');
+  const spinner = document.getElementById('img-spinner');
+  const label = document.getElementById('img-gen-label');
+  const resultDiv = document.getElementById('img-result');
+  const errDiv = document.getElementById('img-err');
+
+  btn.disabled = true; spinner.style.display = 'block'; label.textContent = 'Generando imagen...';
+  resultDiv.style.display = 'none'; errDiv.style.display = 'none';
+
+  try {
+    const src = currentEngine === 'gemini'
+      ? await generarConGemini(key, prompt)
+      : await generarConDalle(key, prompt);
+    document.getElementById('img-output').src = src;
+    resultDiv.style.display = 'block';
+    showToast('✓ Imagen generada correctamente');
+  } catch(err) {
+    errDiv.textContent = err.message || 'Error al generar imagen. Verifica tu API key.';
+    errDiv.style.display = 'block';
+    showToast(err.message || 'Error al generar imagen', '#ef4444');
+  }
+
+  btn.disabled = false; spinner.style.display = 'none'; label.textContent = '🖼 Generar imagen';
+}
+
+async function generarConGemini(key, prompt) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/imagen-4-0-generate-001:predict?key=${encodeURIComponent(key)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ instances: [{ prompt }], parameters: { sampleCount: 1 } })
+    }
+  );
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(
+      res.status === 401 || res.status === 403
+        ? 'API key de Gemini inválida o sin permisos de Imagen.'
+        : e.error?.message || `Error Gemini ${res.status}`
+    );
+  }
+  const data = await res.json();
+  const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+  if (!b64) throw new Error('Gemini no devolvió imagen. Verifica que Imagen 4 esté habilitado en tu proyecto.');
+  return 'data:image/png;base64,' + b64;
+}
+
+async function generarConDalle(key, prompt) {
+  const res = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', quality: 'hd', response_format: 'b64_json' })
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(
+      res.status === 401 ? 'API key de OpenAI inválida.' :
+      res.status === 429 ? 'Límite de uso OpenAI alcanzado. Espera un momento.' :
+      e.error?.message || `Error OpenAI ${res.status}`
+    );
+  }
+  const data = await res.json();
+  const b64 = data.data?.[0]?.b64_json;
+  if (!b64) throw new Error('OpenAI no devolvió imagen. Intenta de nuevo.');
+  return 'data:image/png;base64,' + b64;
+}
+
+function descargarImagen() {
+  const src = document.getElementById('img-output').src;
+  if (!src || !src.startsWith('data:')) return;
+  const a = document.createElement('a');
+  a.href = src;
+  a.download = `creditek-imagen-${Date.now()}.png`;
+  a.click();
+}
 </script>
 </body>
 </html>
