@@ -227,9 +227,58 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── MODAL API KEY ─────────────────────────────────────────────── */
+#apiModal{position:fixed;inset:0;background:rgba(5,12,26,.93);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
+#apiModal.hidden{display:none}
+.m-card{background:#112444;border:1px solid rgba(0,196,204,.3);border-radius:16px;padding:36px 32px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;box-shadow:0 24px 64px rgba(0,0,0,.6)}
+.m-logo{display:flex;align-items:center;gap:12px}
+.m-logo img{height:34px;object-fit:contain}
+.m-logo-name{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:#00C4CC;letter-spacing:.05em}
+.m-title{font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.05rem;color:#F0EFEB;margin-bottom:3px}
+.m-desc{font-size:13px;color:#9BB8CC;line-height:1.6}
+.m-field{position:relative}
+.m-input{width:100%;background:#172d54;border:1px solid rgba(0,196,204,.2);color:#F0EFEB;border-radius:8px;font-family:monospace;font-size:13px;padding:12px 52px 12px 14px;outline:none;transition:border-color .2s;letter-spacing:.02em}
+.m-input:focus{border-color:#00C4CC;box-shadow:0 0 0 3px rgba(0,196,204,.1)}
+.m-input::placeholder{color:#567890;font-family:'DM Sans',sans-serif;letter-spacing:0;font-size:12px}
+.m-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#567890;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;padding:4px;transition:color .15s}
+.m-eye:hover{color:#00C4CC}
+.m-error{font-size:12px;color:#fc814a;display:none;padding:2px 0}
+.m-submit{background:#00C4CC;border:none;border-radius:8px;color:#0B1E3D;font-family:'Montserrat',sans-serif;font-weight:700;font-size:14px;letter-spacing:.02em;padding:13px;cursor:pointer;transition:all .2s;width:100%}
+.m-submit:hover{background:#00dde6;transform:translateY(-1px);box-shadow:0 6px 22px rgba(0,196,204,.35)}
+.m-note{font-size:11px;color:#567890;text-align:center;line-height:1.6}
+.m-note a{color:#00C4CC;text-decoration:none}
+.m-note a:hover{text-decoration:underline}
+.key-status{display:flex;align-items:center;justify-content:space-between;padding:6px 3px}
+.key-dot{width:7px;height:7px;border-radius:50%;background:#00C4CC;display:inline-block;margin-right:5px}
 </style>
 </head>
 <body>
+
+<!-- ══ MODAL API KEY ══════════════════════════════════════════════ -->
+<div id="apiModal">
+  <div class="m-card">
+    <div class="m-logo">
+      <img src="logo.png" alt="Creditek">
+      <span class="m-logo-name">CREDITEK</span>
+    </div>
+    <div>
+      <div class="m-title">Ingresa tu API Key de Anthropic</div>
+      <div class="m-desc">Para usar este agente necesitas una API key de Anthropic. Se guarda solo en esta sesión del navegador y se borra automáticamente al cerrar el tab.</div>
+    </div>
+    <div class="m-field">
+      <input class="m-input" id="modalKey" type="password" placeholder="sk-ant-api03-..." autocomplete="off"
+        onkeydown="if(event.key==='Enter')submitKey()">
+      <button class="m-eye" id="modalEye" onclick="toggleModalKey()">Ver</button>
+    </div>
+    <div class="m-error" id="modalError">La key debe comenzar con <strong>sk-ant-</strong>. Verifica e intenta de nuevo.</div>
+    <button class="m-submit" onclick="submitKey()">Continuar →</button>
+    <div class="m-note">
+      Obtén tu key en <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a><br>
+      Esta key nunca se sube al repositorio ni se comparte.
+    </div>
+  </div>
+</div>
 <div class="shell">
 <aside class="sidebar">
   <div class="logo-wrap">
@@ -309,15 +358,12 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <label for="chk-brief">Brief visual para Canva</label>
     </div>
   </div>
-  <div class="sidebar-section" style="padding-bottom:12px">
-    <div class="sidebar-label">API Key de Anthropic</div>
-    <div style="position:relative">
-      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off"
-        style="padding-right:52px;font-size:12px;font-family:monospace"
-        oninput="sessionStorage.setItem('ck_api_key',this.value)">
-      <button onclick="toggleKey('apiKeyInput',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:2px 4px">Ver</button>
+  <div class="sidebar-section" style="padding-bottom:10px">
+    <div class="sidebar-label">API Key</div>
+    <div class="key-status">
+      <span style="font-size:12px;color:var(--text-secondary)"><span class="key-dot"></span>Configurada esta sesión</span>
+      <button onclick="abrirModal()" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0">Cambiar</button>
     </div>
-    <div style="font-size:10px;color:var(--text-muted);margin-top:5px;padding:0 2px">Se guarda solo en esta sesión del navegador. Se borra al cerrar el tab.</div>
   </div>
   <button class="gen-btn" id="gen-btn" onclick="generarContenido()">
     <div class="spinner" id="spinner"></div>
@@ -358,10 +404,34 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 </div>
 
 <script>
-// Precargar API key desde sessionStorage
+// ── Modal API Key ───────────────────────────────────────────────
+function toggleModalKey() {
+  const el = document.getElementById('modalKey');
+  const btn = document.getElementById('modalEye');
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  btn.textContent = show ? 'Ocultar' : 'Ver';
+}
+function submitKey() {
+  const val = document.getElementById('modalKey').value.trim();
+  const err = document.getElementById('modalError');
+  if (!val.startsWith('sk-ant-')) { err.style.display = 'block'; document.getElementById('modalKey').focus(); return; }
+  err.style.display = 'none';
+  sessionStorage.setItem('ck_api_key', val);
+  document.getElementById('apiModal').classList.add('hidden');
+}
+function abrirModal() {
+  document.getElementById('modalKey').value = '';
+  document.getElementById('modalError').style.display = 'none';
+  document.getElementById('apiModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('modalKey').focus(), 80);
+}
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = sessionStorage.getItem('ck_api_key');
-  if (saved) document.getElementById('apiKeyInput').value = saved;
+  if (!sessionStorage.getItem('ck_api_key')) {
+    setTimeout(() => document.getElementById('modalKey').focus(), 80);
+  } else {
+    document.getElementById('apiModal').classList.add('hidden');
+  }
 });
 
 const PLATFORMS_META = {
