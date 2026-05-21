@@ -357,6 +357,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <input type="checkbox" id="chk-brief" checked>
       <label for="chk-brief">Brief visual para Canva</label>
     </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="chk-direccion">
+      <label for="chk-direccion">Incluir dirección de la tienda</label>
+    </div>
   </div>
   <div class="sidebar-section" style="padding-bottom:10px">
     <div class="sidebar-label">API Key</div>
@@ -445,6 +449,13 @@ const TIPO_META = {
   testimonio:'Testimonio de cliente', educativo:'Educación financiera',
   promo_urgencia:'Promo con urgencia', detras_camara:'Detrás de cámara'
 };
+const DIRECCIONES = {
+  'Tolú':           'CK-01: Calle 15 Carrera 3-30 Local 1 / CK-10: Calle 16 Carrera 8-5 Piso 1 Local 3',
+  'Corozal':        'CK-02: Carrera 25 #29-15 Local 3 Barrio San Miguel / CK-03: Carrera 25 #30-40 Centro / CK-04: Calle 30 25-57 Centro',
+  'Chinú':          'CK-05: Carrera 7 #19-24 / CK-06: Carrera 7 #17-44 Centro / CK-07: Calle 18 Carrera 7-23',
+  'Ciénaga de Oro': 'CK-08: Carrera 15 #6-37 Centro / CK-09: Carrera 15 #7 Centro',
+  'Coveñas':        'CK-11: Carrera 2 #9A-22 Barrio Guayabal',
+};
 let history = [];
 
 function togglePlatform(btn) { btn.classList.toggle('active'); }
@@ -472,6 +483,8 @@ async function generarContenido() {
   const platforms = getActivePlatforms();
   const inclHashtags = document.getElementById('chk-hashtags').checked;
   const inclBrief = document.getElementById('chk-brief').checked;
+  const inclDireccion = document.getElementById('chk-direccion').checked;
+  const direccion = inclDireccion ? (DIRECCIONES[ciudad] || null) : null;
 
   if (!ciudad) { alert('Selecciona una ciudad o tienda.'); return; }
   if (!platforms.length) { alert('Selecciona al menos una plataforma.'); return; }
@@ -510,6 +523,7 @@ ${producto ? '- Producto: ' + producto : ''}
 ${cuota ? '- Precio cuota mensual: ' + cuota : ''}
 ${inicial ? '- Cuota inicial: ' + inicial : ''}
 ${nota ? '- Nota especial: ' + nota : ''}
+${direccion ? '- Dirección(es) de tienda: ' + direccion : ''}
 - Plataformas: ${platformsList}
 
 INSTRUCCIONES:
@@ -518,6 +532,7 @@ Genera el copy para CADA plataforma solicitada, adaptando tono y formato.
 - Instagram: copy corto y visual, gancho fuerte en primera línea
 - WhatsApp: directo, informal, máximo 5 líneas
 - TikTok: gancho brutal en línea 1, muy corto
+${direccion ? '- IMPORTANTE: Incluye la dirección de la tienda en el CTA o al final de cada copy, de forma natural según el tono de cada plataforma.' : ''}
 
 ${inclHashtags ? 'Después añade:\nHASHTAGS: 10-12 hashtags con ciudad, producto, crédito, Colombia' : ''}
 ${inclBrief ? `Después añade un BRIEF VISUAL CANVA capa por capa con estas especificaciones exactas del manual de marca Creditek:
@@ -540,7 +555,7 @@ CAPA 3 - IMAGEN PRODUCTO: cómo buscar el celular sin fondo (ej: "buscar en Goog
 CAPA 4 - TEXTO TITULAR: texto exacto, fuente Montserrat/Poppins Bold, color, tamaño sugerido en pt
 CAPA 5 - PRECIO CUOTA: texto exacto con la cuota mensual, Montserrat Bold, color #00C4CC, tamaño grande (60-80pt)
 CAPA 6 - CTA: texto del botón o llamada a acción, color fondo #00C4CC, texto #0B1E3D, posición
-CAPA 7 - CIUDAD: nombre de la ciudad/tienda, tamaño pequeño, color blanco o turquesa, posición` : ''}
+CAPA 7 - CIUDAD Y DIRECCIÓN: nombre de la ciudad/tienda${direccion ? ', dirección física (' + direccion + ')' : ''}, tamaño pequeño, color blanco o turquesa, posición inferior` : ''}
 
 Formato EXACTO:
 [PLATAFORMA: Facebook]
