@@ -489,8 +489,9 @@ async function generarContenido() {
   const prompt = `Eres el Agente de Marketing de Creditek SAS, empresa colombiana de venta de celulares a crédito con 11 tiendas propias en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
 
 IDENTIDAD DE MARCA CREDITEK:
-- Colores: Azul profundo #0B1E3D + Turquesa #00C4CC + Blanco
-- Tipografía: Montserrat Bold para titulares
+- Logo: check circular + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro.
+- Colores: Azul profundo #0B1E3D (fondos/títulos) · Turquesa #00C4CC (CTA/acentos) · Blanco #FFFFFF (textos sobre azul)
+- Tipografía: Montserrat o Poppins — Bold titulares, Medium subtítulos, Regular textos
 - Esencia: moderna, confiable, cercana, clara y resolutiva
 - Promesa: crédito fácil, mismo día, sin trámites complicados
 - Tono: comercial sin sonar informal; humano, seguro y costeño
@@ -519,7 +520,27 @@ Genera el copy para CADA plataforma solicitada, adaptando tono y formato.
 - TikTok: gancho brutal en línea 1, muy corto
 
 ${inclHashtags ? 'Después añade:\nHASHTAGS: 10-12 hashtags con ciudad, producto, crédito, Colombia' : ''}
-${inclBrief ? 'Después añade:\nBRIEF VISUAL CANVA:\n- Fondo:\n- Texto principal:\n- Texto secundario:\n- Imagen:\n- Color CTA: (usar #00C4CC para CTAs y acentos)' : ''}
+${inclBrief ? `Después añade un BRIEF VISUAL CANVA capa por capa con estas especificaciones exactas del manual de marca Creditek:
+
+MANUAL DE MARCA CREDITEK (usa estos datos, no inventes nada):
+- Logo: símbolo de check circular + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA logos alternativos.
+- Colores oficiales: Azul profundo #0B1E3D (fondos, títulos), Turquesa #00C4CC (CTA, checks, acentos), Blanco #FFFFFF (textos sobre azul)
+- Tipografía: Montserrat o Poppins — Titulares Bold, Subtítulos Medium, Textos Regular
+- Formatos: Feed 1080×1080px · Stories/Reels 1080×1920px
+- Jerarquía obligatoria: título fuerte → beneficio/precio → CTA
+- Máximo 3 colores por diseño. Fondos SOLO azul oscuro o blanco
+- Fotografía de celular: recorte limpio sin fondo, buena iluminación, sombra suave
+- SIEMPRE mostrar precio de cuota mensual en texto grande
+- NUNCA texto placeholder tipo "en implosión" o similares
+
+El brief debe tener exactamente estas 7 capas:
+CAPA 1 - FONDO: color exacto (#0B1E3D o #FFFFFF), formato (1080×1080 o 1080×1920)
+CAPA 2 - LOGO: versión a usar, posición en el diseño, tamaño sugerido (% del ancho)
+CAPA 3 - IMAGEN PRODUCTO: cómo buscar el celular sin fondo (ej: "buscar en Google: [modelo] PNG sin fondo"), dónde posicionarlo
+CAPA 4 - TEXTO TITULAR: texto exacto, fuente Montserrat/Poppins Bold, color, tamaño sugerido en pt
+CAPA 5 - PRECIO CUOTA: texto exacto con la cuota mensual, Montserrat Bold, color #00C4CC, tamaño grande (60-80pt)
+CAPA 6 - CTA: texto del botón o llamada a acción, color fondo #00C4CC, texto #0B1E3D, posición
+CAPA 7 - CIUDAD: nombre de la ciudad/tienda, tamaño pequeño, color blanco o turquesa, posición` : ''}
 
 Formato EXACTO:
 [PLATAFORMA: Facebook]
