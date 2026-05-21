@@ -6,137 +6,160 @@
   <title>Agentes Creditek</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0B1E3D;
-      color: #fff;
-      min-height: 100vh;
-    }
-    header {
-      background: #0B1E3D;
-      border-bottom: 2px solid #00C4CC;
-      padding: 24px 40px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    header .dot {
-      width: 12px; height: 12px;
-      background: #00C4CC;
-      border-radius: 50%;
-    }
-    header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.02em; }
-    header span { color: #00C4CC; }
-    main {
-      max-width: 860px;
-      margin: 60px auto;
-      padding: 0 24px;
-    }
-    .subtitle {
-      color: #a0b4cc;
-      font-size: 1rem;
-      margin-bottom: 40px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 24px;
-    }
-    .card {
-      background: #132845;
-      border: 1px solid #1e3a5f;
-      border-radius: 12px;
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      transition: border-color 0.2s;
-    }
-    .card:hover { border-color: #00C4CC; }
-    .card .icon {
-      width: 44px; height: 44px;
-      background: #00C4CC22;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.4rem;
-    }
-    .card h2 { font-size: 1.2rem; font-weight: 600; }
-    .card p { color: #7a96b4; font-size: 0.9rem; line-height: 1.5; flex: 1; }
-    .card .tag {
-      display: inline-block;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 3px 10px;
-      border-radius: 20px;
-      width: fit-content;
-    }
-    .tag.active { background: #00C4CC22; color: #00C4CC; }
-    .tag.soon { background: #ffffff11; color: #7a96b4; }
-    .card a {
-      display: inline-block;
-      margin-top: 8px;
-      background: #00C4CC;
-      color: #0B1E3D;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 0.9rem;
-      padding: 10px 20px;
-      border-radius: 8px;
-      text-align: center;
-      transition: opacity 0.2s;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0B1E3D; color: #fff; min-height: 100vh; display: flex; flex-direction: column; }
+    header { background: #0B1E3D; border-bottom: 1px solid rgba(0,196,204,0.2); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .hdr-left { display: flex; align-items: center; gap: 14px; }
+    .hdr-logo { height: 44px; object-fit: contain; }
+    .hdr-brand { font-size: 17px; font-weight: 700; color: #00C4CC; letter-spacing: 0.04em; }
+    .hdr-sub { font-size: 11px; color: #567890; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+    .hdr-right { display: flex; align-items: center; gap: 12px; }
+    .key-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; transition: background 0.3s; }
+    .key-dot.on { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .key-dot.off { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+    .key-label { font-size: 12px; color: #9BB8CC; }
+    .btn-config { background: #00C4CC; color: #0B1E3D; border: none; border-radius: 8px; font-weight: 700; font-size: 12px; padding: 8px 16px; cursor: pointer; letter-spacing: 0.02em; transition: all 0.2s; white-space: nowrap; }
+    .btn-config:hover { background: #00dde6; }
+    main { flex: 1; max-width: 920px; margin: 52px auto; padding: 0 24px; width: 100%; }
+    .page-sub { color: #7a96b4; font-size: 0.9rem; margin-bottom: 36px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; }
+    .card { background: #112444; border: 1px solid rgba(0,196,204,0.15); border-radius: 14px; padding: 28px; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.2s, transform 0.2s; }
+    .card:hover { border-color: #00C4CC; transform: translateY(-2px); }
+    .card-icon { width: 44px; height: 44px; background: rgba(0,196,204,0.12); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+    .card-tag { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; width: fit-content; background: rgba(0,196,204,0.15); color: #00C4CC; }
+    .card h2 { font-size: 1.05rem; font-weight: 700; }
+    .card p { color: #7a96b4; font-size: 0.875rem; line-height: 1.6; flex: 1; }
+    .card a { display: inline-block; margin-top: 10px; background: #00C4CC; color: #0B1E3D; text-decoration: none; font-weight: 700; font-size: 0.875rem; padding: 10px 20px; border-radius: 8px; text-align: center; transition: opacity 0.2s; }
     .card a:hover { opacity: 0.85; }
-    .card a.disabled {
-      background: #1e3a5f;
-      color: #4a6480;
-      pointer-events: none;
-    }
+    footer { border-top: 1px solid rgba(0,196,204,0.1); padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; }
+    .foot-txt { font-size: 11px; color: #567890; }
+    /* Modal */
+    #keyModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; }
+    #keyModal.open { display: flex; }
+    .mbox { background: #112444; border: 1px solid rgba(0,196,204,0.25); border-radius: 16px; padding: 36px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
+    .mlogo { display: flex; align-items: center; gap: 10px; }
+    .mlogo img { height: 36px; }
+    .mlogo span { font-weight: 800; color: #00C4CC; font-size: 15px; letter-spacing: 0.04em; }
+    .mtitle { font-size: 18px; font-weight: 700; }
+    .mdesc { font-size: 13px; color: #7a96b4; line-height: 1.6; }
+    .mfield { position: relative; }
+    .minput { width: 100%; background: #172d54; border: 1px solid rgba(0,196,204,0.2); color: #F0EFEB; border-radius: 8px; font-family: monospace; font-size: 13px; padding: 12px 52px 12px 14px; outline: none; transition: border-color 0.2s; }
+    .minput:focus { border-color: #00C4CC; }
+    .meye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #567890; cursor: pointer; font-size: 11px; }
+    .merr { font-size: 12px; color: #fc814a; display: none; }
+    .msub { background: #00C4CC; border: none; border-radius: 8px; color: #0B1E3D; font-weight: 700; font-size: 14px; padding: 13px; cursor: pointer; transition: all 0.2s; }
+    .msub:hover { background: #00dde6; }
+    .mcancel { background: none; border: 1px solid rgba(0,196,204,0.2); color: #7a96b4; border-radius: 8px; font-size: 13px; padding: 10px; cursor: pointer; transition: all 0.2s; }
+    .mcancel:hover { border-color: #00C4CC; color: #00C4CC; }
+    .mnote { font-size: 11px; color: #567890; text-align: center; line-height: 1.6; }
+    .mnote a { color: #00C4CC; text-decoration: none; }
   </style>
 </head>
 <body>
   <header>
-    <div class="dot"></div>
-    <h1>Agentes <span>Creditek</span></h1>
+    <div class="hdr-left">
+      <img class="hdr-logo" src="logo.png" alt="Creditek">
+      <div>
+        <div class="hdr-brand">CREDITEK</div>
+        <div class="hdr-sub">Sistema de marketing automatizado · Creditek SAS</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="key-dot off" id="keyDot"></div>
+      <span class="key-label" id="keyLabel">Key requerida</span>
+      <button class="btn-config" id="btnConfig" onclick="abrirModal()">Configurar API Key</button>
+    </div>
   </header>
-  <main>
-    <p class="subtitle">Herramientas de marketing automatizadas para Creditek.</p>
-    <div class="grid">
 
+  <div id="keyModal">
+    <div class="mbox">
+      <div class="mlogo"><img src="logo.png" alt="Creditek"><span>CREDITEK</span></div>
+      <div class="mtitle">API Key de Anthropic</div>
+      <div class="mdesc">Configura tu API key una sola vez. Se guarda de forma segura en este navegador y se comparte entre todos los agentes Creditek.</div>
+      <div class="mfield">
+        <input class="minput" id="modalKey" type="password" placeholder="sk-ant-api03-..." autocomplete="off" onkeydown="if(event.key==='Enter')guardarKey()">
+        <button class="meye" onclick="toggleEye(this)">Ver</button>
+      </div>
+      <div class="merr" id="modalErr">La key debe comenzar con <strong>sk-ant-</strong>.</div>
+      <button class="msub" onclick="guardarKey()">Guardar →</button>
+      <button class="mcancel" onclick="cerrarModal()">Cancelar</button>
+      <div class="mnote">Obtén tu key en <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a><br>Esta key nunca se sube al repositorio.</div>
+    </div>
+  </div>
+
+  <main>
+    <p class="page-sub">Herramientas de marketing automatizadas para Creditek SAS · Caribe colombiano</p>
+    <div class="grid">
       <div class="card">
-        <div class="icon">📱</div>
-        <span class="tag active">Disponible</span>
+        <div class="card-icon">📱</div>
+        <span class="card-tag">Disponible</span>
         <h2>Agente Redes Sociales</h2>
-        <p>Genera contenido y calendarios de publicaciones para las redes sociales de Creditek.</p>
+        <p>Genera copies listos para publicar en Facebook, Instagram, WhatsApp y TikTok. Adapta el tono por plataforma, incluye hashtags y genera el brief visual capa a capa para Canva.</p>
         <a href="creditek-agente-redes.html">Abrir agente →</a>
       </div>
-
       <div class="card">
-        <div class="icon">💬</div>
-        <span class="tag active">Disponible</span>
+        <div class="card-icon">💬</div>
+        <span class="card-tag">Disponible</span>
         <h2>Agente Respuestas</h2>
-        <p>Automatiza respuestas a clientes y gestión de mensajes entrantes en todos los canales.</p>
+        <p>Respuestas perfectas para clientes en WhatsApp, DM de Instagram, Messenger y comentarios. Con tono de Creditek: amigable, costeño y resolutivo.</p>
         <a href="creditek-agente-respuestas.html">Abrir agente →</a>
       </div>
-
       <div class="card">
-        <div class="icon">📅</div>
-        <span class="tag active">Disponible</span>
+        <div class="card-icon">📅</div>
+        <span class="card-tag">Disponible</span>
         <h2>Agente Calendario</h2>
-        <p>Genera 30 días de publicaciones listas para cada tienda: fecha, tipo de pieza y copy completo por plataforma.</p>
+        <p>Genera 30 días de publicaciones listas para cada tienda: fecha, tipo de pieza y copy completo por plataforma. Exportable para programar en Meta Business Suite.</p>
         <a href="creditek-agente-calendario.html">Abrir agente →</a>
       </div>
-
       <div class="card">
-        <div class="icon">📍</div>
-        <span class="tag active">Disponible</span>
+        <div class="card-icon">📍</div>
+        <span class="card-tag">Disponible</span>
         <h2>Fichas Google Business</h2>
-        <p>Fichas optimizadas para SEO local con nombres, descripciones, Q&A y primer post para las 11 tiendas.</p>
+        <p>Fichas optimizadas para SEO local con nombres, descripciones, preguntas frecuentes y primer post para las 11 tiendas del Caribe colombiano.</p>
         <a href="creditek-gbp-fichas.html">Ver fichas →</a>
       </div>
-
     </div>
   </main>
+
+  <footer>
+    <span class="foot-txt">Creditek SAS · Sistema de agentes de marketing</span>
+    <span class="foot-txt">v2.0 · Mayo 2026</span>
+  </footer>
+
+  <script>
+    function checkKey() {
+      const key = localStorage.getItem('ck_api_key');
+      const dot = document.getElementById('keyDot');
+      const label = document.getElementById('keyLabel');
+      const btn = document.getElementById('btnConfig');
+      const ok = key && key.startsWith('sk-ant-');
+      dot.className = 'key-dot ' + (ok ? 'on' : 'off');
+      label.textContent = ok ? 'Key configurada' : 'Key requerida';
+      btn.textContent = ok ? 'Cambiar key' : 'Configurar API Key';
+    }
+    function abrirModal() {
+      document.getElementById('modalKey').value = '';
+      document.getElementById('modalErr').style.display = 'none';
+      document.getElementById('keyModal').classList.add('open');
+      setTimeout(() => document.getElementById('modalKey').focus(), 80);
+    }
+    function cerrarModal() { document.getElementById('keyModal').classList.remove('open'); }
+    function toggleEye(btn) {
+      const el = document.getElementById('modalKey');
+      const show = el.type === 'password';
+      el.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'Ocultar' : 'Ver';
+    }
+    function guardarKey() {
+      const val = document.getElementById('modalKey').value.trim();
+      const err = document.getElementById('modalErr');
+      if (!val.startsWith('sk-ant-')) { err.style.display = 'block'; document.getElementById('modalKey').focus(); return; }
+      err.style.display = 'none';
+      localStorage.setItem('ck_api_key', val);
+      cerrarModal();
+      checkKey();
+    }
+    document.addEventListener('DOMContentLoaded', checkKey);
+    document.getElementById('keyModal').addEventListener('click', e => { if (e.target.id === 'keyModal') cerrarModal(); });
+  </script>
 </body>
 </html>

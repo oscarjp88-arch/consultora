@@ -165,12 +165,18 @@ select option{background:var(--bg2)}
   .dcard-copy{border-top:1px solid #ddd}
   .copy-text{color:#333}
 }
-.btn-back{position:fixed;top:14px;left:14px;z-index:200;display:flex;align-items:center;gap:6px;background:#0B1E3D;border:1px solid rgba(0,196,204,.35);color:#00C4CC;font-family:inherit;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;padding:7px 14px;border-radius:20px;transition:all .2s;backdrop-filter:blur(4px)}
-.btn-back:hover{background:#00C4CC;color:#0B1E3D;border-color:#00C4CC}
+.breadcrumb{position:fixed;top:14px;left:14px;z-index:200;display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(11,30,61,0.92);border:1px solid rgba(0,196,204,.25);border-radius:20px;padding:6px 14px;backdrop-filter:blur(4px)}
+.breadcrumb a{color:#00C4CC;text-decoration:none;font-weight:600}
+.breadcrumb a:hover{text-decoration:underline}
+.breadcrumb .sep{color:#567890}
+.breadcrumb .cur{color:#9BB8CC}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:500;color:#fff}
+.toast.show{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
-<a class="btn-back" href="index.html">← Agentes</a>
+<nav class="breadcrumb"><a href="index.html">Agentes</a><span class="sep">›</span><span class="cur">Calendario</span></nav>
+<div id="toast" class="toast"></div>
 
 <!-- ══ MODAL API KEY ══════════════════════════════════════════════ -->
 <div id="apiModal">
@@ -181,7 +187,7 @@ select option{background:var(--bg2)}
     </div>
     <div>
       <div class="m-title">Ingresa tu API Key de Anthropic</div>
-      <div class="m-desc">Para usar este agente necesitas una API key de Anthropic. Se guarda solo en esta sesión del navegador y se borra automáticamente al cerrar el tab.</div>
+      <div class="m-desc">Para usar este agente necesitas una API key de Anthropic. Se guarda de forma segura en este navegador y se comparte entre todos los agentes Creditek.</div>
     </div>
     <div class="m-field">
       <input class="m-input" id="modalKey" type="password" placeholder="sk-ant-api03-..." autocomplete="off"
@@ -340,8 +346,10 @@ select option{background:var(--bg2)}
 </div><!-- /shell -->
 
 <script>
+function showToast(msg, color='#22c55e'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
 const MODEL = 'claude-sonnet-4-6';
-function getApiKey() { return sessionStorage.getItem('ck_api_key') || ''; }
+function getApiKey() { return localStorage.getItem('ck_api_key') || ''; }
 
 // ── Modal API Key ───────────────────────────────────────────────
 function toggleModalKey() {
@@ -356,7 +364,7 @@ function submitKey() {
   const err = document.getElementById('modalError');
   if (!val.startsWith('sk-ant-')) { err.style.display = 'block'; document.getElementById('modalKey').focus(); return; }
   err.style.display = 'none';
-  sessionStorage.setItem('ck_api_key', val);
+  localStorage.setItem('ck_api_key', val);
   document.getElementById('apiModal').classList.add('hidden');
 }
 function abrirModal() {
@@ -366,7 +374,7 @@ function abrirModal() {
   setTimeout(() => document.getElementById('modalKey').focus(), 80);
 }
 window.addEventListener('DOMContentLoaded', () => {
-  if (!sessionStorage.getItem('ck_api_key')) {
+  if (!localStorage.getItem('ck_api_key')) {
     setTimeout(() => document.getElementById('modalKey').focus(), 80);
   } else {
     document.getElementById('apiModal').classList.add('hidden');
@@ -646,7 +654,13 @@ Varía los productos mencionados entre Samsung, Xiaomi, Infinix, Tecno y Motorol
       })
     });
 
-    if (!res.ok) throw new Error(`API error ${res.status}`);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const msg = res.status === 401 ? 'API key inválida. Presiona "Cambiar key" y verifica.' :
+                  res.status === 429 ? 'Límite de uso alcanzado. Espera un momento e intenta de nuevo.' :
+                  errData.error?.message || `Error ${res.status}`;
+      throw new Error(msg);
+    }
     const data = await res.json();
     let raw = data.content?.[0]?.text || '';
 
@@ -676,13 +690,15 @@ Varía los productos mencionados entre Samsung, Xiaomi, Infinix, Tecno y Motorol
     document.getElementById('statsBar').style.display = 'flex';
     document.getElementById('copyAllBtn').style.display = '';
     document.getElementById('printBtn').style.display = '';
+    showToast('✓ Calendario generado correctamente');
 
   } catch(err) {
     clearInterval(progTimer);
     pw.style.display = 'none';
     grid.innerHTML = `<div style="grid-column:1/-1;padding:30px;text-align:center;color:#fc814a;font-size:13px;">
-      ⚠️ Error al generar: ${err.message}<br><span style="color:var(--txt3);font-size:11px;margin-top:6px;display:block;">Revisa la API key en el código fuente (línea 3 del script)</span>
+      ⚠️ ${err.message}<br><span style="color:var(--txt3);font-size:11px;margin-top:6px;display:block;">Verifica tu API key y vuelve a intentarlo.</span>
     </div>`;
+    showToast(err.message || 'Error al generar', '#ef4444');
     document.getElementById('emptyState').style.display = '';
   } finally {
     btn.disabled = false;

@@ -251,12 +251,18 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .m-note a:hover{text-decoration:underline}
 .key-status{display:flex;align-items:center;justify-content:space-between;padding:6px 3px}
 .key-dot{width:7px;height:7px;border-radius:50%;background:#00C4CC;display:inline-block;margin-right:5px}
-.btn-back{position:fixed;top:14px;left:14px;z-index:200;display:flex;align-items:center;gap:6px;background:#0B1E3D;border:1px solid rgba(0,196,204,.35);color:#00C4CC;font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;padding:7px 14px;border-radius:20px;transition:all .2s;backdrop-filter:blur(4px)}
-.btn-back:hover{background:#00C4CC;color:#0B1E3D;border-color:#00C4CC}
+.breadcrumb{position:fixed;top:14px;left:14px;z-index:200;display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(11,30,61,0.92);border:1px solid rgba(0,196,204,.25);border-radius:20px;padding:6px 14px;backdrop-filter:blur(4px)}
+.breadcrumb a{color:#00C4CC;text-decoration:none;font-weight:600}
+.breadcrumb a:hover{text-decoration:underline}
+.breadcrumb .sep{color:#567890}
+.breadcrumb .cur{color:#9BB8CC}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:500;color:#fff}
+.toast.show{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
-<a class="btn-back" href="index.html">← Agentes</a>
+<nav class="breadcrumb"><a href="index.html">Agentes</a><span class="sep">›</span><span class="cur">Redes Sociales</span></nav>
+<div id="toast" class="toast"></div>
 
 <!-- ══ MODAL API KEY ══════════════════════════════════════════════ -->
 <div id="apiModal">
@@ -267,7 +273,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <div>
       <div class="m-title">Ingresa tu API Key de Anthropic</div>
-      <div class="m-desc">Para usar este agente necesitas una API key de Anthropic. Se guarda solo en esta sesión del navegador y se borra automáticamente al cerrar el tab.</div>
+      <div class="m-desc">Para usar este agente necesitas una API key de Anthropic. Se guarda de forma segura en este navegador y se comparte entre todos los agentes Creditek.</div>
     </div>
     <div class="m-field">
       <input class="m-input" id="modalKey" type="password" placeholder="sk-ant-api03-..." autocomplete="off"
@@ -388,7 +394,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <div class="top-title">Piezas generadas</div>
       <div class="top-sub" id="top-subtitle">Configura los parámetros y presiona generar</div>
     </div>
-    <button class="copy-all-btn" onclick="copiarTodo()" id="copy-all-btn" style="display:none">Copiar todo</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="copy-all-btn" onclick="generarContenido()" id="regen-btn" style="display:none;background:#172d54;color:#00C4CC;border:1px solid rgba(0,196,204,0.3)">↺ Regenerar</button>
+      <button class="copy-all-btn" onclick="copiarTodo()" id="copy-all-btn" style="display:none">Copiar todo</button>
+    </div>
   </div>
   <div class="content-area" id="content-area">
     <div class="empty-state" id="empty-state">
@@ -411,6 +420,8 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 </div>
 
 <script>
+function showToast(msg, color='#22c55e'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
 // ── Modal API Key ───────────────────────────────────────────────
 function toggleModalKey() {
   const el = document.getElementById('modalKey');
@@ -424,7 +435,7 @@ function submitKey() {
   const err = document.getElementById('modalError');
   if (!val.startsWith('sk-ant-')) { err.style.display = 'block'; document.getElementById('modalKey').focus(); return; }
   err.style.display = 'none';
-  sessionStorage.setItem('ck_api_key', val);
+  localStorage.setItem('ck_api_key', val);
   document.getElementById('apiModal').classList.add('hidden');
 }
 function abrirModal() {
@@ -434,7 +445,7 @@ function abrirModal() {
   setTimeout(() => document.getElementById('modalKey').focus(), 80);
 }
 window.addEventListener('DOMContentLoaded', () => {
-  if (!sessionStorage.getItem('ck_api_key')) {
+  if (!localStorage.getItem('ck_api_key')) {
     setTimeout(() => document.getElementById('modalKey').focus(), 80);
   } else {
     document.getElementById('apiModal').classList.add('hidden');
@@ -472,7 +483,7 @@ function toggleKey(inputId, btn) {
 }
 
 async function generarContenido() {
-  const apiKey = sessionStorage.getItem('ck_api_key') || '';
+  const apiKey = localStorage.getItem('ck_api_key') || '';
   if (!apiKey.startsWith('sk-ant-')) {
     abrirModal();
     return;
@@ -489,7 +500,14 @@ async function generarContenido() {
   const inclDireccion = document.getElementById('chk-direccion').checked;
   const direccion = inclDireccion ? (DIRECCIONES[ciudad] || null) : null;
 
-  if (!ciudad) { alert('Selecciona una ciudad o tienda.'); return; }
+  if (!ciudad) {
+    const sel = document.getElementById('ciudad');
+    sel.style.borderColor = '#ef4444';
+    sel.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.2)';
+    sel.focus();
+    setTimeout(() => { sel.style.borderColor = ''; sel.style.boxShadow = ''; }, 2500);
+    return;
+  }
   if (!platforms.length) { alert('Selecciona al menos una plataforma.'); return; }
 
   const btn = document.getElementById('gen-btn');
@@ -575,7 +593,7 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': sessionStorage.getItem('ck_api_key') || '',
+        'x-api-key': localStorage.getItem('ck_api_key') || '',
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
@@ -585,6 +603,13 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}`;
         messages: [{ role: 'user', content: prompt }]
       })
     });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const msg = response.status === 401 ? 'API key inválida. Presiona "Cambiar key" y verifica.' :
+                  response.status === 429 ? 'Límite de uso alcanzado. Espera un momento e intenta de nuevo.' :
+                  errData.error?.message || `Error ${response.status}`;
+      throw new Error(msg);
+    }
     const data = await response.json();
     const text = data.content?.find(b => b.type === 'text')?.text || '';
     document.getElementById('loading-card').style.display = 'none';
@@ -594,9 +619,12 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}`;
     renderHistory();
     document.getElementById('top-subtitle').textContent = TIPO_META[tipo]+' · '+ciudad+' · '+platforms.length+' plataforma'+(platforms.length>1?'s':'');
     document.getElementById('copy-all-btn').style.display = 'block';
+    document.getElementById('regen-btn').style.display = 'block';
+    showToast('✓ Piezas generadas correctamente');
   } catch(err) {
     document.getElementById('loading-card').style.display = 'none';
-    document.getElementById('piezas-grid').innerHTML = `<div style="color:#ff6b6b;font-size:13px;padding:20px 0">Error: ${err.message || 'Intenta de nuevo.'}</div>`;
+    document.getElementById('piezas-grid').innerHTML = `<div style="color:#ff6b6b;font-size:13px;padding:20px 0;line-height:1.6">${err.message || 'Error de conexión. Intenta de nuevo.'}</div>`;
+    showToast(err.message || 'Error al generar', '#ef4444');
     console.error('API error:', err);
   }
   btn.disabled = false; spinner.style.display = 'none'; label.textContent = '✦ Generar piezas';
@@ -627,6 +655,7 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
       <div class="pieza-footer">
         <span class="pieza-tag">${ciudad}</span>
         <span class="pieza-tag">${lk}</span>
+        <span class="pieza-tag" style="margin-left:auto;color:#567890">${copy.length} car.</span>
       </div>`;
     grid.appendChild(card);
   });
