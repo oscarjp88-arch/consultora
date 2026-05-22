@@ -864,16 +864,18 @@ function populateCiudadDropdown() {
   grupos.forEach(([ciudad, meta]) => {
     const grp = document.createElement('optgroup');
     grp.label = ciudad;
-    const optCity = document.createElement('option');
-    optCity.value = `ciudad:${ciudad}`;
-    optCity.textContent = `${ciudad} (todas las tiendas)`;
-    grp.appendChild(optCity);
+    // Tiendas individuales PRIMERO — evita que browser auto-seleccione "ciudad:X"
     meta.tiendas.forEach(t => {
       const opt = document.createElement('option');
       opt.value = `${ciudad} · ${t.nombre}`;
       opt.textContent = `${ciudad} · ${t.nombre}`;
       grp.appendChild(opt);
     });
+    // Opción de ciudad completa AL FINAL del grupo
+    const optCity = document.createElement('option');
+    optCity.value = `ciudad:${ciudad}`;
+    optCity.textContent = `— ${ciudad} (todas las tiendas)`;
+    grp.appendChild(optCity);
     sel.appendChild(grp);
   });
 }
