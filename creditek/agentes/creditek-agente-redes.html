@@ -162,6 +162,13 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .badge-wa { background: rgba(37,211,102,0.15); color: #25D366; }
 .badge-tt { background: rgba(255,255,255,0.08); color: #E4E4E7; }
 .badge-gen { background: rgba(0,196,204,0.15); color: var(--turquesa); }
+.char-counter { font-size: 11px; padding: 2px 9px; border-radius: 10px; font-weight: 600; margin-left: auto; white-space: nowrap; }
+.char-ok   { background: rgba(34,197,94,0.12);  color: #22c55e; }
+.char-warn { background: rgba(234,179,8,0.15);  color: #eab308; }
+.char-over { background: rgba(239,68,68,0.15);  color: #ef4444; }
+.fmt-toggle { display: flex; gap: 6px; padding: 0 18px 10px; }
+.fmt-btn { flex: 1; padding: 8px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text2); font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; transition: all .15s; font-family: 'DM Sans', sans-serif; }
+.fmt-btn.active { background: rgba(0,196,204,.1); border-color: var(--turquesa); color: var(--turquesa); }
 .copy-btn {
   background: transparent; border: 1px solid var(--border);
   border-radius: 6px; color: var(--text3); font-size: 11px;
@@ -588,6 +595,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <button class="engine-btn active" id="eng-gemini" onclick="selectEngine('gemini')">✦ Gemini Imagen 4</button>
         <button class="engine-btn" id="eng-dalle" onclick="selectEngine('dalle')">⬡ GPT Image 2</button>
       </div>
+      <div class="fmt-toggle">
+        <button class="fmt-btn active" id="fmt-feed" onclick="selectFormat('feed')">📱 Feed (1080×1080)</button>
+        <button class="fmt-btn" id="fmt-stories" onclick="selectFormat('stories')">📲 Stories (1080×1920)</button>
+      </div>
       <div class="img-key-row">
         <div class="img-key-status">
           <div class="img-key-dot" id="img-key-dot"></div>
@@ -782,7 +793,11 @@ CONTEXTO:
 - Plataformas: PayJoy, Alo Credit, Krediya, Addi
 - Plazos: 4, 6 u 8 meses
 - Diferenciador: aprobación fácil donde el banco dice que no
-- NSE objetivo: 2-3 (Caribe colombiano)`;
+- NSE objetivo: 2-3 (Caribe colombiano)
+- Objeción principal del cliente: "¿Me van a aprobar? / Tengo miedo al endeudamiento"
+- Argumento de cierre: aprobación el mismo día con solo la cédula, sin tanto papeleo, sin importar el historial crediticio
+- El copy debe responder esta objeción de forma natural, sin sonar a publicidad. Ejemplo: "Sin miedo, con la cédula es suficiente."`;
+
   } else if (modo === 'promo') {
     contextoBlock = `Eres el Agente de Marketing de Creditek SAS, tienda colombiana de celulares con 11 locales propios en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
 
@@ -972,7 +987,7 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
       <div class="pieza-footer">
         <span class="pieza-tag">${ciudad}</span>
         <span class="pieza-tag">${lk}</span>
-        <span class="pieza-tag" style="margin-left:auto;color:#567890">${copy.length} car.</span>
+        ${charCounterHTML(platform, copy.length)}
       </div>`;
     grid.appendChild(card);
   });
@@ -1031,7 +1046,22 @@ function selectTitular(btn, text) {
 // ── Módulo generador de imágenes ────────────────────────────────
 let currentEngine = 'gemini';
 let currentEstilo = 'formal';
+let currentFormat = 'feed';
 let productoImgBase64 = null;
+
+const CHAR_LIMITS = { facebook: 400, instagram: 200, whatsapp: 160, tiktok: 100 };
+function charCounterHTML(platform, len) {
+  const max = CHAR_LIMITS[platform] || 400;
+  const pct = len / max;
+  const cls = pct > 1 ? 'char-over' : pct >= 0.8 ? 'char-warn' : 'char-ok';
+  return `<span class="char-counter ${cls}">${pct > 1 ? '⚠ ' : ''}${len}/${max} car.</span>`;
+}
+function selectFormat(fmt) {
+  currentFormat = fmt;
+  document.getElementById('fmt-feed').classList.toggle('active', fmt === 'feed');
+  document.getElementById('fmt-stories').classList.toggle('active', fmt === 'stories');
+  buildImgPrompt();
+}
 let logoBase64 = null;
 const financierasCache = {};
 
@@ -1201,10 +1231,16 @@ function buildImgPrompt() {
     ? ` Seasonal theme — ${fechaData2.label}: incorporate secondary palette (${fechaData2.colores}) and subtle decorative elements (${fechaData2.elementos}). These seasonal accents complement the Creditek brand identity without replacing it.`
     : '';
 
-  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays.`;
+  const isStories = currentFormat === 'stories';
+  const sizeSpec = isStories ? '1080×1920px vertical Stories format' : '1080×1080px square Feed format';
+  const layoutGuide = isStories
+    ? 'Vertical Stories composition: Creditek logo centered at top (top 15% of canvas). Main product or visual element centered in the middle third. Bold headline text below center. Price accent and CTA button near the bottom (bottom 25%). Use the full vertical height with generous spacing between zones.'
+    : 'Square Feed composition: balanced horizontal layout, strong center focal point.';
+
+  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays. QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
 
   const precioSegment = precio ? `Turquoise #00C4CC accent for '${precio}' in large bold numerals. ` : '';
-  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. Square 1080×1080px, crisp high contrast.${negativePrompt}`;
+  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. ${sizeSpec}, crisp high contrast.${negativePrompt}`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
