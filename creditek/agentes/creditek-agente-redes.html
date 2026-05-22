@@ -1583,10 +1583,13 @@ function buildImgPrompt() {
   const isStories = currentFormat === 'stories';
   const sizeSpec = isStories ? '1080×1920px vertical Stories format' : '1080×1080px square Feed format';
   const layoutGuide = isStories
-    ? 'Vertical Stories composition: Creditek logo centered at top (top 15% of canvas). Main product or visual element centered in the middle third. Bold headline text below center. Price accent and CTA button near the bottom (bottom 25%). Use the full vertical height with generous spacing between zones.'
+    ? `Vertical Stories composition: Creditek logo centered at top (top 15% of canvas). Main product or visual element centered in the middle third. Bold headline text below center.${precio ? ' Price accent and' : ''} CTA button near the bottom (bottom 25%). Use the full vertical height with generous spacing between zones.`
     : 'Square Feed composition: balanced horizontal layout, strong center focal point.';
 
-  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays. DO NOT invent any price, number, or monetary amount not explicitly specified. QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
+  const priceWarning = precio || inicial
+    ? ''
+    : ' DO NOT show any price, number with dollar sign, currency symbol, or monetary amount anywhere in the image — no "$", no "COP", no numeric prices, no installment amounts. Leave all price areas blank or omit them entirely.';
+  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays. DO NOT invent any price, number with dollar sign, or monetary amount unless explicitly specified in this prompt.${priceWarning} QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
 
   const precioSegment  = precio  ? `Turquoise #00C4CC accent for '${precio}' in large bold numerals. ` : '';
   const inicialSegment = inicial ? `Show initial payment badge: 'Inicial desde ${inicial}' in turquoise #00C4CC, prominent position near the CTA button. ` : '';
