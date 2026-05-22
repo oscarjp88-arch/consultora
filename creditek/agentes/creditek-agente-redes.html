@@ -300,6 +300,21 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .img-dl-btn{display:block;margin-top:10px;background:var(--turquesa);color:var(--azul);text-align:center;padding:10px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;cursor:pointer;border:none;width:100%;font-family:'Montserrat',sans-serif;letter-spacing:.02em;transition:opacity .2s}
 .img-dl-btn:hover{opacity:.85}
 .img-err{font-size:12px;color:#ff6b6b;padding:0 18px 16px;line-height:1.6;display:none}
+.img-editor{padding:0 18px 18px;display:none;border-top:1px solid var(--border);margin-top:4px}
+.img-editor-hdr{font-size:12px;font-weight:700;color:var(--text2);padding:14px 0 10px;letter-spacing:.04em;text-transform:uppercase}
+.img-editor-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.img-nav-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;padding:5px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.img-nav-btn:hover:not(:disabled){border-color:var(--turquesa);color:var(--turquesa)}
+.img-nav-btn:disabled{opacity:.35;cursor:not-allowed}
+.img-version-lbl{font-size:11px;color:var(--text3);margin-left:auto}
+.img-edit-ta{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:13px;padding:10px 12px;resize:vertical;min-height:56px;outline:none;font-family:'DM Sans',sans-serif;box-sizing:border-box;transition:border-color .2s;margin-bottom:8px}
+.img-edit-ta:focus{border-color:var(--turquesa)}
+.img-edit-btn{width:100%;background:rgba(0,196,204,.1);border:1px solid rgba(0,196,204,.35);color:var(--turquesa);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;padding:10px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em}
+.img-edit-btn:hover{background:rgba(0,196,204,.18);border-color:var(--turquesa)}
+.img-edit-btn:disabled{opacity:.4;cursor:not-allowed}
+.img-edit-err{font-size:12px;color:#ff6b6b;padding:8px 0 0;line-height:1.6;display:none}
+@keyframes imgFadeIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+.img-output.fade-in{animation:imgFadeIn .35s ease}
 /* Modal keys imagen */
 #imgKeyModal{position:fixed;inset:0;background:rgba(5,12,26,.93);display:flex;align-items:center;justify-content:center;z-index:9998;backdrop-filter:blur(6px)}
 #imgKeyModal.hidden{display:none}
@@ -502,7 +517,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <label for="chk-brief">Brief visual para Canva</label>
     </div>
     <div class="checkbox-row">
-      <input type="checkbox" id="chk-direccion">
+      <input type="checkbox" id="chk-direccion" onchange="resetPreviewFields()">
       <label for="chk-direccion">Incluir dirección de la tienda</label>
     </div>
   </div>
@@ -645,6 +660,20 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <button class="img-dl-btn" onclick="descargarImagen()">⬇ Descargar PNG</button>
       </div>
       <div class="img-err" id="img-err"></div>
+      <div class="img-editor" id="img-editor">
+        <div class="img-editor-hdr">✏️ Editar imagen</div>
+        <div class="img-editor-nav" id="img-editor-nav">
+          <button class="img-nav-btn" id="img-nav-prev" onclick="navegarImgHistory(-1)" disabled>← Versión anterior</button>
+          <button class="img-nav-btn" id="img-nav-next" onclick="navegarImgHistory(1)" disabled>Versión siguiente →</button>
+          <span class="img-version-lbl" id="img-version-lbl"></span>
+        </div>
+        <textarea class="img-edit-ta" id="img-edit-prompt" placeholder="Ej: cambia el fondo a blanco, elimina las flores, agrega el precio $157.000/mes, hazlo más alegre..."></textarea>
+        <button class="img-edit-btn" id="img-edit-btn" onclick="aplicarCambioImagen()">
+          <div class="spinner" id="img-edit-spinner" style="display:none"></div>
+          <span id="img-edit-label">Aplicar cambio</span>
+        </button>
+        <div class="img-edit-err" id="img-edit-err"></div>
+      </div>
     </div>
   </div>
 </main>
@@ -1095,6 +1124,8 @@ let currentEngine = 'gemini';
 let currentEstilo = 'formal';
 let currentFormat = 'feed';
 let productoImgBase64 = null;
+let imgHistory = [];
+let imgHistoryIdx = 0;
 
 const CHAR_LIMITS = { facebook: 400, instagram: 200, whatsapp: 160, tiktok: 100 };
 function charCounterHTML(platform, len) {
@@ -1221,7 +1252,10 @@ function resetPreviewFields() {
   };
   document.getElementById('img-titular').value = titularDefaults[modo] || titularDefaults.credito;
   document.getElementById('img-precio').value  = precioDefaults[modo]  || precioDefaults.credito;
-  document.getElementById('img-cta').value     = ciudad ? `Visítanos en ${ciudad}` : 'Visítanos hoy';
+  const inclDirImg = document.getElementById('chk-direccion').checked;
+  const dirImg = inclDirImg ? (DIRECCIONES[ciudad] || null) : null;
+  const ctaBase = ciudad ? `Visítanos en ${ciudad}` : 'Visítanos hoy';
+  document.getElementById('img-cta').value = dirImg ? `${ctaBase} · ${dirImg}` : ctaBase;
   buildImgPrompt();
 }
 
@@ -1246,7 +1280,10 @@ function buildImgPrompt() {
   const inicial   = document.getElementById('inicial').value.trim();
   const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${ciudad}!`);
   const precio    = precioEl?.value.trim()  || cuota || '';
-  const cta       = ctaEl?.value.trim()     || `Visítanos en ${ciudad}`;
+  const inclDirBuild = document.getElementById('chk-direccion').checked;
+  const dirBuild     = inclDirBuild ? (DIRECCIONES[ciudad] || null) : null;
+  const ctaFallback  = dirBuild ? `Visítanos en ${ciudad} · ${dirBuild}` : `Visítanos en ${ciudad}`;
+  const cta          = ctaEl?.value.trim() || ctaFallback;
 
   // Style modifier
   const estiloMap = {
@@ -1370,8 +1407,12 @@ async function generarImagen() {
     const src = currentEngine === 'gemini'
       ? await generarConGemini(key, prompt)
       : await generarConDalle(key, prompt);
-    document.getElementById('img-output').src = src;
+    imgHistory = [src];
+    imgHistoryIdx = 0;
+    mostrarImgVersion(src);
     resultDiv.style.display = 'block';
+    document.getElementById('img-editor').style.display = 'block';
+    renderImgHistoryNav();
     showToast('✓ Imagen generada correctamente');
   } catch(err) {
     errDiv.textContent = err.message || 'Error al generar imagen. Verifica tu API key.';
@@ -1452,8 +1493,85 @@ async function generarConDalle(key, prompt) {
   return 'data:image/png;base64,' + b64;
 }
 
+function mostrarImgVersion(src) {
+  const el = document.getElementById('img-output');
+  el.classList.remove('fade-in');
+  void el.offsetWidth;
+  el.src = src;
+  el.classList.add('fade-in');
+}
+
+function renderImgHistoryNav() {
+  const total = imgHistory.length;
+  const idx = imgHistoryIdx;
+  document.getElementById('img-nav-prev').disabled = idx <= 0;
+  document.getElementById('img-nav-next').disabled = idx >= total - 1;
+  document.getElementById('img-version-lbl').textContent = total > 1 ? `Versión ${idx + 1} de ${total}` : '';
+  document.getElementById('img-editor-nav').style.display = total > 1 ? 'flex' : 'none';
+}
+
+function navegarImgHistory(dir) {
+  const newIdx = imgHistoryIdx + dir;
+  if (newIdx < 0 || newIdx >= imgHistory.length) return;
+  imgHistoryIdx = newIdx;
+  mostrarImgVersion(imgHistory[imgHistoryIdx]);
+  renderImgHistoryNav();
+}
+
+async function aplicarCambioImagen() {
+  const key = localStorage.getItem('ck_openai_key');
+  if (!key || key.length < 10) { showToast('Configura la API key de GPT Image 2 para editar', '#ef4444'); return; }
+  const instruccion = document.getElementById('img-edit-prompt').value.trim();
+  if (!instruccion) { showToast('Escribe qué quieres cambiar', '#ef4444'); return; }
+  const currentSrc = imgHistory[imgHistoryIdx];
+  if (!currentSrc) return;
+
+  const btn = document.getElementById('img-edit-btn');
+  const spinner = document.getElementById('img-edit-spinner');
+  const label = document.getElementById('img-edit-label');
+  const errEl = document.getElementById('img-edit-err');
+  btn.disabled = true; spinner.style.display = 'block'; label.textContent = 'Aplicando...'; errEl.style.display = 'none';
+
+  try {
+    const promptBase = document.getElementById('img-prompt-ta').value.trim();
+    const editPrompt = `${promptBase}\n\nEDIT INSTRUCTION: ${instruccion}`;
+    const content = [
+      { type: 'input_image', image_url: currentSrc },
+      { type: 'input_text', text: editPrompt }
+    ];
+    const res = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content }], tools: [{ type: 'image_generation', size: '1024x1024' }] })
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(res.status === 401 ? 'API key de OpenAI inválida.' : e.error?.message || `Error OpenAI ${res.status}`);
+    }
+    const data = await res.json();
+    const imageCall = data.output?.find(o => o.type === 'image_generation_call');
+    const b64 = imageCall?.result;
+    if (!b64) throw new Error('OpenAI no devolvió imagen editada.');
+    const newSrc = 'data:image/png;base64,' + b64;
+    // Insert after current position, drop oldest if over 3
+    imgHistory = imgHistory.slice(0, imgHistoryIdx + 1);
+    imgHistory.push(newSrc);
+    if (imgHistory.length > 3) imgHistory.shift();
+    imgHistoryIdx = imgHistory.length - 1;
+    mostrarImgVersion(newSrc);
+    renderImgHistoryNav();
+    document.getElementById('img-edit-prompt').value = '';
+    showToast('✓ Imagen editada correctamente');
+  } catch(e) {
+    errEl.textContent = e.message || 'Error al editar la imagen.';
+    errEl.style.display = 'block';
+    showToast(e.message || 'Error al editar', '#ef4444');
+  }
+  btn.disabled = false; spinner.style.display = 'none'; label.textContent = 'Aplicar cambio';
+}
+
 function descargarImagen() {
-  const src = document.getElementById('img-output').src;
+  const src = imgHistory[imgHistoryIdx] || document.getElementById('img-output').src;
   if (!src) return;
   const a = document.createElement('a');
   a.href = src;
