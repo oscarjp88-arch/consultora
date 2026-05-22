@@ -293,6 +293,28 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 /* Modal keys imagen */
 #imgKeyModal{position:fixed;inset:0;background:rgba(5,12,26,.93);display:flex;align-items:center;justify-content:center;z-index:9998;backdrop-filter:blur(6px)}
 #imgKeyModal.hidden{display:none}
+/* Producto toggle texto/foto */
+.prod-toggle{display:flex;gap:4px;margin-bottom:8px}
+.prod-tab{flex:1;padding:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;font-family:'DM Sans',sans-serif}
+.prod-tab.active{background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
+.prod-file{width:100%;background:var(--bg3);border:2px dashed var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;padding:10px 12px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.prod-file:hover{border-color:var(--turquesa)}
+.prod-preview-img{width:100%;border-radius:var(--radius-sm);border:1px solid var(--border);margin-top:6px;display:none;max-height:120px;object-fit:contain}
+/* Selector estilo visual */
+.estilo-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.estilo-btn{padding:8px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:11px;cursor:pointer;text-align:center;transition:all .15s;font-family:'DM Sans',sans-serif;line-height:1.4}
+.estilo-btn.active{background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
+.estilo-custom-ta{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:12px;padding:8px 12px;resize:vertical;min-height:60px;outline:none;font-family:'DM Sans',sans-serif;display:none;transition:border-color .2s}
+.estilo-custom-ta:focus{border-color:var(--turquesa)}
+/* Panel preview antes de imagen */
+.img-preview-panel{padding:14px 18px 8px;border-bottom:1px solid var(--border)}
+.img-preview-lbl-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;display:block}
+.img-prev-field{margin-bottom:10px}
+.img-prev-fl{font-size:11px;color:var(--text2);margin-bottom:4px;display:block}
+.img-prev-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:13px;padding:8px 12px;outline:none;transition:border-color .2s;font-family:'DM Sans',sans-serif}
+.img-prev-input:focus{border-color:var(--turquesa)}
+.img-confirm-btn{width:calc(100% - 36px);margin:12px 18px 4px;background:rgba(0,196,204,.1);border:1px solid var(--turquesa);color:var(--turquesa);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;padding:11px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;letter-spacing:.02em;display:block}
+.img-confirm-btn:hover{background:rgba(0,196,204,.2)}
 </style>
 </head>
 <body>
@@ -370,6 +392,15 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </select>
     </div>
     <div class="field-group">
+      <label class="field-label">Modo de publicidad</label>
+      <select id="modo">
+        <option value="credito">📱 Celular a crédito</option>
+        <option value="promo">🎁 Promoción especial</option>
+        <option value="tienda">🏪 Contenido de tienda</option>
+        <option value="servicio">✅ Servicio / beneficio</option>
+      </select>
+    </div>
+    <div class="field-group">
       <label class="field-label">Tipo de pieza</label>
       <select id="tipo">
         <option value="oferta_semana">🎯 Oferta de la semana</option>
@@ -382,7 +413,15 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <div class="field-group">
       <label class="field-label">Producto / equipo <span>opcional</span></label>
+      <div class="prod-toggle">
+        <button class="prod-tab active" onclick="toggleProdMode('texto',this)">✏️ Descripción</button>
+        <button class="prod-tab" onclick="toggleProdMode('foto',this)">📷 Foto</button>
+      </div>
       <input type="text" id="producto" placeholder="Ej: Samsung Galaxy A17 5G 128GB">
+      <div id="prod-foto-wrap" style="display:none;margin-top:6px">
+        <input type="file" class="prod-file" id="prod-file" accept="image/*" onchange="onProdFileChange(this)">
+        <img class="prod-preview-img" id="prod-preview" src="" alt="Vista previa">
+      </div>
     </div>
     <div class="field-group">
       <label class="field-label">Precio de cuota mensual <span>opcional</span></label>
@@ -435,6 +474,16 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <span style="font-size:12px;color:var(--text-secondary)"><span class="key-dot"></span>Configurada esta sesión</span>
       <button onclick="abrirModal()" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0">Cambiar</button>
     </div>
+  </div>
+  <div class="sidebar-section" style="padding-bottom:8px">
+    <div class="sidebar-label">Estilo visual de imagen</div>
+    <div class="estilo-grid">
+      <button class="estilo-btn active" onclick="selectEstilo('formal',this)">🏢 Formal</button>
+      <button class="estilo-btn" onclick="selectEstilo('costeno',this)">🎉 Alegre costeño</button>
+      <button class="estilo-btn" onclick="selectEstilo('minimalista',this)">◻ Minimalista</button>
+      <button class="estilo-btn" onclick="selectEstilo('custom',this)">✏️ Personalizar</button>
+    </div>
+    <textarea class="estilo-custom-ta" id="estilo-custom" placeholder="Describe el estilo visual que quieres para la imagen..."></textarea>
   </div>
   <button class="gen-btn" id="gen-btn" onclick="generarContenido()">
     <div class="spinner" id="spinner"></div>
@@ -492,14 +541,30 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         </div>
         <button class="img-key-btn" onclick="abrirImgKeyModal()">Configurar key</button>
       </div>
+      <div class="img-preview-panel" id="img-preview-panel">
+        <span class="img-preview-lbl-sec">Vista previa del aviso</span>
+        <div class="img-prev-field">
+          <span class="img-prev-fl">Titular principal</span>
+          <input type="text" class="img-prev-input" id="img-titular" placeholder="¡Tu celular desde $157.000/mes!" oninput="buildImgPrompt()">
+        </div>
+        <div class="img-prev-field">
+          <span class="img-prev-fl">Precio / cuota mensual</span>
+          <input type="text" class="img-prev-input" id="img-precio" placeholder="Cuotas desde $157.000/mes" oninput="buildImgPrompt()">
+        </div>
+        <div class="img-prev-field">
+          <span class="img-prev-fl">Call to action (CTA)</span>
+          <input type="text" class="img-prev-input" id="img-cta" placeholder="Visítanos en Corozal" oninput="buildImgPrompt()">
+        </div>
+        <button class="img-confirm-btn" onclick="confirmarPreviewYGenerar()">🖼 Generar imagen con estos datos</button>
+      </div>
       <div class="img-prompt-wrap">
         <div class="img-prompt-lbl">
-          <span>Prompt de imagen</span>
-          <button class="img-prompt-reset" onclick="buildImgPrompt()">↺ Restablecer</button>
+          <span>Prompt de imagen (editable)</span>
+          <button class="img-prompt-reset" onclick="resetPreviewFields()">↺ Restablecer</button>
         </div>
         <textarea class="img-prompt-ta" id="img-prompt-ta" placeholder="El prompt se genera automáticamente al producir los copies..."></textarea>
       </div>
-      <button class="img-gen-btn" id="img-gen-btn" onclick="generarImagen()">
+      <button class="img-gen-btn" id="img-gen-btn" onclick="generarImagen()" style="display:none">
         <div class="spinner" id="img-spinner"></div>
         <span id="img-gen-label">🖼 Generar imagen</span>
       </button>
@@ -586,6 +651,7 @@ async function generarContenido() {
     return;
   }
   const ciudad = document.getElementById('ciudad').value;
+  const modo = document.getElementById('modo')?.value || 'credito';
   const tipo = document.getElementById('tipo').value;
   const producto = document.getElementById('producto').value.trim();
   const cuota = document.getElementById('cuota').value.trim();
@@ -635,6 +701,7 @@ CONTEXTO:
 - NSE objetivo: 2-3 (Caribe colombiano)
 
 PARÁMETROS:
+- Modo de publicidad: ${{ credito:'Celular a crédito', promo:'Promoción especial', tienda:'Contenido de tienda', servicio:'Servicio / beneficio' }[modo]}
 - Ciudad/tienda: ${ciudad}
 - Tipo de pieza: ${TIPO_META[tipo]}
 ${producto ? '- Producto: ' + producto : ''}
@@ -789,12 +856,73 @@ function restoreHistory(idx){ const h=history[idx]; if(!h) return; document.getE
 
 // ── Módulo generador de imágenes ────────────────────────────────
 let currentEngine = 'gemini';
+let currentEstilo = 'formal';
+let productoImgBase64 = null;
+let logoBase64 = null;
 
 function selectEngine(engine) {
   currentEngine = engine;
   document.getElementById('eng-gemini').classList.toggle('active', engine === 'gemini');
   document.getElementById('eng-dalle').classList.toggle('active', engine === 'dalle');
   updateImgKeyStatus();
+}
+
+function toggleProdMode(mode, btn) {
+  document.querySelectorAll('.prod-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('producto').style.display = mode === 'texto' ? 'block' : 'none';
+  document.getElementById('prod-foto-wrap').style.display = mode === 'foto' ? 'block' : 'none';
+  if (mode === 'texto') productoImgBase64 = null;
+}
+
+function onProdFileChange(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    productoImgBase64 = e.target.result;
+    const img = document.getElementById('prod-preview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function selectEstilo(estilo, btn) {
+  currentEstilo = estilo;
+  document.querySelectorAll('.estilo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const ta = document.getElementById('estilo-custom');
+  ta.style.display = estilo === 'custom' ? 'block' : 'none';
+  buildImgPrompt();
+}
+
+async function loadLogoBase64() {
+  if (logoBase64) return logoBase64;
+  try {
+    const resp = await fetch('logos/creditek_logo_corregido_alta.png');
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => { logoBase64 = e.target.result; resolve(logoBase64); };
+      reader.readAsDataURL(blob);
+    });
+  } catch(e) { return null; }
+}
+
+function confirmarPreviewYGenerar() {
+  buildImgPrompt();
+  generarImagen();
+}
+
+function resetPreviewFields() {
+  const cuota = document.getElementById('cuota').value.trim();
+  const ciudad = document.getElementById('ciudad').value;
+  document.getElementById('img-titular').value = cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!';
+  document.getElementById('img-precio').value = cuota || 'Cuotas desde $150.000/mes';
+  document.getElementById('img-cta').value = ciudad ? `Visítanos en ${ciudad}` : 'Visítanos hoy';
+  buildImgPrompt();
 }
 
 function updateImgKeyStatus() {
@@ -806,18 +934,50 @@ function updateImgKeyStatus() {
 
 function buildImgPrompt() {
   const producto = document.getElementById('producto').value.trim() || 'smartphone';
-  const cuota    = document.getElementById('cuota').value.trim();
   const ciudad   = document.getElementById('ciudad').value || 'Colombia';
-  const titular  = cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!';
-  const precio   = cuota || 'Cuotas desde $150.000/mes';
-  const p = `Commercial advertisement for Creditek, a Colombian fintech brand. ${producto} smartphone, clean product shot with soft shadow, no background, floating on solid deep navy blue #0B1E3D background. Large bold white text '${titular}' in Montserrat font, upper left area. Turquoise #00C4CC accent color for price text '${precio}' in large bold font. Bottom CTA button in turquoise #00C4CC with dark text 'Visítanos en ${ciudad}'. Top right corner: brand logo consisting of a turquoise #00C4CC circular checkmark symbol (a check/tick inside an open circle shape) placed to the left of the word 'Creditek' written in bold white Montserrat font. No tagline, no subtitle, no extra text below the brand name. The checkmark circle is the only graphic element of the logo. Style: modern fintech, clean, high contrast, professional Colombian market. Format: 1080x1080px square, no watermarks, no text errors, no extra elements.`;
+  const modo     = document.getElementById('modo')?.value || 'credito';
+
+  // Read from preview fields (if filled) or compute defaults
+  const titularEl = document.getElementById('img-titular');
+  const precioEl  = document.getElementById('img-precio');
+  const ctaEl     = document.getElementById('img-cta');
+  const cuota     = document.getElementById('cuota').value.trim();
+  const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!');
+  const precio    = precioEl?.value.trim()  || cuota || 'Cuotas desde $150.000/mes';
+  const cta       = ctaEl?.value.trim()     || `Visítanos en ${ciudad}`;
+
+  // Style modifier
+  const estiloMap = {
+    formal:      'Modern professional fintech style. Structured geometric layout, high contrast, precise typography.',
+    costeno:     'Vibrant warm Caribbean Colombian style. Bold festive colors, energetic, celebratory mood.',
+    minimalista: 'Minimalist design, generous white space, single hero product, elegant understated typography.',
+    custom:      document.getElementById('estilo-custom')?.value.trim() || 'Modern fintech style.'
+  };
+  const estiloDesc = estiloMap[currentEstilo] || estiloMap.formal;
+
+  // Mode-based content
+  const modoMap = {
+    credito:  `${producto} smartphone floating on deep navy #0B1E3D background, clean product shot, soft drop shadow, no background cutout.`,
+    promo:    `Promotional sale banner for ${producto || 'smartphones'}, discount visual energy, festive ribbon or badge element.`,
+    tienda:   `Warm welcoming store interior, friendly staff behind counter, retail display of phones.`,
+    servicio: `Abstract financial trust visualization: approval checkmark, shield icon, clean approval flow graphic.`
+  };
+  const modoDesc = modoMap[modo] || modoMap.credito;
+
+  const p = `Commercial advertisement for Creditek, a Colombian fintech phone-credit brand. ${modoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. Turquoise #00C4CC for price '${precio}' in large bold numerals. Bottom area: CTA label '${cta}' on turquoise #00C4CC button. Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. No watermarks, no placeholder text, no extra elements. Square 1080×1080px, crisp high contrast.`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
 function showImgSection() {
   document.getElementById('img-section').classList.add('visible');
+  const cuota = document.getElementById('cuota').value.trim();
+  const ciudad = document.getElementById('ciudad').value;
+  document.getElementById('img-titular').value = cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!';
+  document.getElementById('img-precio').value = cuota || 'Cuotas desde $150.000/mes';
+  document.getElementById('img-cta').value = ciudad ? `Visítanos en ${ciudad}` : 'Visítanos hoy';
   buildImgPrompt();
   updateImgKeyStatus();
+  loadLogoBase64();
 }
 
 function abrirImgKeyModal() {
@@ -913,12 +1073,29 @@ async function generarConGemini(key, prompt) {
 }
 
 async function generarConDalle(key, prompt) {
+  const logo = await loadLogoBase64();
+  let inputPayload;
+  if (logo || productoImgBase64) {
+    const content = [];
+    if (logo) {
+      content.push({ type: 'input_text', text: 'Reference brand logo — reproduce exactly in top-right corner of the ad:' });
+      content.push({ type: 'input_image', image_url: logo });
+    }
+    if (productoImgBase64) {
+      content.push({ type: 'input_text', text: 'Reference product photo — feature this product prominently in the advertisement:' });
+      content.push({ type: 'input_image', image_url: productoImgBase64 });
+    }
+    content.push({ type: 'input_text', text: prompt });
+    inputPayload = [{ role: 'user', content }];
+  } else {
+    inputPayload = prompt;
+  }
   const res = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
     body: JSON.stringify({
       model: 'gpt-4o',
-      input: prompt,
+      input: inputPayload,
       tools: [{ type: 'image_generation', size: '1024x1024' }]
     })
   });
