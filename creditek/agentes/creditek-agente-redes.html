@@ -306,6 +306,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .estilo-btn.active{background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
 .estilo-custom-ta{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:12px;padding:8px 12px;resize:vertical;min-height:60px;outline:none;font-family:'DM Sans',sans-serif;display:none;transition:border-color .2s}
 .estilo-custom-ta:focus{border-color:var(--turquesa)}
+/* Titulares de impacto */
+.titular-opt{display:block;width:100%;text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;padding:8px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-bottom:4px}
+.titular-opt:hover{border-color:var(--turquesa);color:var(--turquesa);background:rgba(0,196,204,.08)}
+.titular-opt.selected{border-color:var(--turquesa);color:var(--turquesa);background:rgba(0,196,204,.12)}
 /* Logos de financieras */
 .financieras-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
 .fin-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;position:relative}
@@ -579,6 +583,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </div>
       <div class="img-preview-panel" id="img-preview-panel">
         <span class="img-preview-lbl-sec">Vista previa del aviso</span>
+        <div id="titulares-field" style="margin-bottom:14px">
+          <span class="img-prev-fl" style="display:block;margin-bottom:6px">Titulares sugeridos — clic para usar</span>
+          <div id="titulares-opts"><span style="font-size:11px;color:var(--text3)">Genera contenido primero para ver opciones...</span></div>
+        </div>
         <div class="img-prev-field">
           <span class="img-prev-fl">Titular principal</span>
           <input type="text" class="img-prev-input" id="img-titular" placeholder="¡Tu celular desde $157.000/mes!" oninput="buildImgPrompt()">
@@ -719,31 +727,78 @@ async function generarContenido() {
   document.getElementById('copy-all-btn').style.display = 'none';
 
   const platformsList = platforms.join(', ');
-  const prompt = `Eres el Agente de Marketing de Creditek SAS, empresa colombiana de venta de celulares a crédito con 11 tiendas propias en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
+  const modoLabel = { credito:'Celular a crédito', promo:'Promoción especial', tienda:'Contenido de tienda', servicio:'Servicio / beneficio' }[modo];
+  const brandBase = [
+    'IDENTIDAD DE MARCA CREDITEK:',
+    '- Logo: check circular + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro.',
+    '- Colores: Azul profundo #0B1E3D (fondos/títulos) · Turquesa #00C4CC (CTA/acentos) · Blanco #FFFFFF (textos sobre azul)',
+    '- Tipografía: Montserrat o Poppins — Bold titulares, Medium subtítulos, Regular textos',
+    '- Esencia: moderna, confiable, cercana, clara y resolutiva',
+    '- Tono: comercial sin sonar informal; humano, seguro y costeño'
+  ].join('\n');
+  let contextoBlock;
+  if (modo === 'credito') {
+    contextoBlock = `Eres el Agente de Marketing de Creditek SAS, empresa colombiana de venta de celulares a crédito con 11 tiendas propias en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
 
-IDENTIDAD DE MARCA CREDITEK:
-- Logo: check circular + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro.
-- Colores: Azul profundo #0B1E3D (fondos/títulos) · Turquesa #00C4CC (CTA/acentos) · Blanco #FFFFFF (textos sobre azul)
-- Tipografía: Montserrat o Poppins — Bold titulares, Medium subtítulos, Regular textos
-- Esencia: moderna, confiable, cercana, clara y resolutiva
+${brandBase}
 - Promesa: crédito fácil, mismo día, sin trámites complicados
-- Tono: comercial sin sonar informal; humano, seguro y costeño
 
 CONTEXTO:
 - Producto: celulares a crédito, sin banco, aprobación rápida
 - Plataformas: PayJoy, Alo Credit, Krediya, Addi
 - Plazos: 4, 6 u 8 meses
 - Diferenciador: aprobación fácil donde el banco dice que no
-- NSE objetivo: 2-3 (Caribe colombiano)
+- NSE objetivo: 2-3 (Caribe colombiano)`;
+  } else if (modo === 'promo') {
+    contextoBlock = `Eres el Agente de Marketing de Creditek SAS, tienda colombiana de celulares con 11 locales propios en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
+
+${brandBase}
+
+⚠️ REGLA CRÍTICA: Este copy es para una PROMOCIÓN ESPECIAL. NO menciones crédito, cuotas ni financiamiento en ningún copy. El mensaje trata únicamente de la oferta o promoción.`;
+  } else if (modo === 'tienda') {
+    contextoBlock = `Eres el Agente de Marketing de Creditek SAS, tienda colombiana de celulares con 11 locales propios en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
+
+${brandBase}
+
+⚠️ REGLA CRÍTICA: Este copy es CONTENIDO DE TIENDA. NO menciones crédito, cuotas ni financiamiento. El mensaje muestra la tienda, el equipo y la experiencia de compra.`;
+  } else {
+    contextoBlock = `Eres el Agente de Marketing de Creditek SAS, tienda colombiana de celulares con 11 locales propios en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
+
+${brandBase}
+
+⚠️ REGLA CRÍTICA: Este copy es sobre un SERVICIO O BENEFICIO. NO menciones crédito, cuotas ni financiamiento. El mensaje destaca el servicio o beneficio indicado.`;
+  }
+  const hashtagsCtx = modo === 'credito' ? 'ciudad, producto, crédito, Colombia' : 'ciudad, producto, Colombia';
+  const briefBlock = inclBrief ? `Después añade un BRIEF VISUAL CANVA capa por capa con estas especificaciones exactas del manual de marca Creditek:
+
+MANUAL DE MARCA CREDITEK (usa estos datos, no inventes nada):
+- Logo: símbolo de check circular + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA logos alternativos.
+- Colores oficiales: Azul profundo #0B1E3D (fondos, títulos), Turquesa #00C4CC (CTA, checks, acentos), Blanco #FFFFFF (textos sobre azul)
+- Tipografía: Montserrat o Poppins — Titulares Bold, Subtítulos Medium, Textos Regular
+- Formatos: Feed 1080×1080px · Stories/Reels 1080×1920px
+- Jerarquía obligatoria: título fuerte → beneficio/precio → CTA
+- Máximo 3 colores por diseño. Fondos SOLO azul oscuro o blanco
+- Fotografía de celular: recorte limpio sin fondo, buena iluminación, sombra suave
+- NUNCA texto placeholder tipo "en implosión" o similares
+
+El brief debe tener exactamente estas 7 capas:
+CAPA 1 - FONDO: color exacto (#0B1E3D o #FFFFFF), formato (1080×1080 o 1080×1920)
+CAPA 2 - LOGO: versión a usar, posición en el diseño, tamaño sugerido (% del ancho)
+CAPA 3 - IMAGEN PRODUCTO: cómo buscar el celular sin fondo (ej: "buscar en Google: [modelo] PNG sin fondo"), dónde posicionarlo
+CAPA 4 - TEXTO TITULAR: texto exacto, fuente Montserrat/Poppins Bold, color, tamaño sugerido en pt
+CAPA 5 - PRECIO/BENEFICIO: texto exacto del mensaje principal, Montserrat Bold, color #00C4CC, tamaño grande (60-80pt)
+CAPA 6 - CTA: texto del botón o llamada a acción, color fondo #00C4CC, texto #0B1E3D, posición
+CAPA 7 - CIUDAD Y DIRECCIÓN: nombre de la ciudad/tienda${direccion ? ', dirección física (' + direccion + ')' : ''}, tamaño pequeño, color blanco o turquesa, posición inferior` : '';
+  const prompt = `${contextoBlock}
 
 PARÁMETROS:
-- Modo de publicidad: ${{ credito:'Celular a crédito', promo:'Promoción especial', tienda:'Contenido de tienda', servicio:'Servicio / beneficio' }[modo]}
+- Modo de publicidad: ${modoLabel}
 - Ciudad/tienda: ${ciudad}
 - Tipo de pieza: ${TIPO_META[tipo]}
 ${producto ? '- Producto: ' + producto : ''}
-${cuota ? '- Precio cuota mensual: ' + cuota : ''}
-${inicial ? '- Cuota inicial: ' + inicial : ''}
-${nota ? '- Nota especial: ' + nota : ''}
+${cuota && modo === 'credito' ? '- Precio cuota mensual: ' + cuota : ''}
+${inicial && modo === 'credito' ? '- Cuota inicial: ' + inicial : ''}
+${nota ? '- Nota especial / información del contenido: ' + nota : ''}
 ${direccion ? '- Dirección(es) de tienda: ' + direccion : ''}
 - Plataformas: ${platformsList}
 
@@ -755,30 +810,17 @@ Genera el copy para CADA plataforma solicitada, adaptando tono y formato.
 - TikTok: gancho brutal en línea 1, muy corto
 ${direccion ? '- IMPORTANTE: Incluye la dirección de la tienda en el CTA o al final de cada copy, de forma natural según el tono de cada plataforma.' : ''}
 
-${inclHashtags ? 'Después añade:\nHASHTAGS: 10-12 hashtags con ciudad, producto, crédito, Colombia' : ''}
-${inclBrief ? `Después añade un BRIEF VISUAL CANVA capa por capa con estas especificaciones exactas del manual de marca Creditek:
+${inclHashtags ? 'Después añade:\nHASHTAGS: 10-12 hashtags con ' + hashtagsCtx : ''}
+${briefBlock}
 
-MANUAL DE MARCA CREDITEK (usa estos datos, no inventes nada):
-- Logo: símbolo de check circular + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA logos alternativos.
-- Colores oficiales: Azul profundo #0B1E3D (fondos, títulos), Turquesa #00C4CC (CTA, checks, acentos), Blanco #FFFFFF (textos sobre azul)
-- Tipografía: Montserrat o Poppins — Titulares Bold, Subtítulos Medium, Textos Regular
-- Formatos: Feed 1080×1080px · Stories/Reels 1080×1920px
-- Jerarquía obligatoria: título fuerte → beneficio/precio → CTA
-- Máximo 3 colores por diseño. Fondos SOLO azul oscuro o blanco
-- Fotografía de celular: recorte limpio sin fondo, buena iluminación, sombra suave
-- SIEMPRE mostrar precio de cuota mensual en texto grande
-- NUNCA texto placeholder tipo "en implosión" o similares
+Después añade:
+[TITULARES]
+3 opciones de titular corto para la imagen de esta pieza. Máximo 7 palabras, directo, con sabor costeño. Sin emojis. Formato exacto:
+1. {titular}
+2. {titular}
+3. {titular}
 
-El brief debe tener exactamente estas 7 capas:
-CAPA 1 - FONDO: color exacto (#0B1E3D o #FFFFFF), formato (1080×1080 o 1080×1920)
-CAPA 2 - LOGO: versión a usar, posición en el diseño, tamaño sugerido (% del ancho)
-CAPA 3 - IMAGEN PRODUCTO: cómo buscar el celular sin fondo (ej: "buscar en Google: [modelo] PNG sin fondo"), dónde posicionarlo
-CAPA 4 - TEXTO TITULAR: texto exacto, fuente Montserrat/Poppins Bold, color, tamaño sugerido en pt
-CAPA 5 - PRECIO CUOTA: texto exacto con la cuota mensual, Montserrat Bold, color #00C4CC, tamaño grande (60-80pt)
-CAPA 6 - CTA: texto del botón o llamada a acción, color fondo #00C4CC, texto #0B1E3D, posición
-CAPA 7 - CIUDAD Y DIRECCIÓN: nombre de la ciudad/tienda${direccion ? ', dirección física (' + direccion + ')' : ''}, tamaño pequeño, color blanco o turquesa, posición inferior` : ''}
-
-Formato EXACTO:
+Formato EXACTO de la respuesta completa:
 [PLATAFORMA: Facebook]
 {copy}
 
@@ -786,7 +828,12 @@ Formato EXACTO:
 {copy}
 
 ${inclHashtags ? '[HASHTAGS]\n{hashtags}' : ''}
-${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}`;
+${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
+
+[TITULARES]
+1. ...
+2. ...
+3. ...`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -870,8 +917,16 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
       grid.appendChild(c);
     }
   }
+  // Parse titulares
+  const tm = text.match(/\[TITULARES\]([\s\S]*?)$/i);
+  if (tm) {
+    const titLines = tm[1].trim().split('\n').filter(l => l.trim());
+    const titulares = titLines.map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean).slice(0, 3);
+    renderTitulares(titulares);
+  }
+
   if (inclBrief) {
-    const bm = text.match(/\[BRIEF VISUAL CANVA\]([\s\S]*?)$/i);
+    const bm = text.match(/\[BRIEF VISUAL CANVA\]([\s\S]*?)(?=\[TITULARES\]|$)/i);
     if (bm) {
       const bt = bm[1].trim();
       const lines = bt.split('\n').filter(l=>l.trim());
@@ -889,6 +944,20 @@ function copiarTexto(btn,texto){ navigator.clipboard.writeText(texto).then(()=>{
 function copiarTodo(){ const cards=document.querySelectorAll('.pieza-content,.hashtag-block,.brief-block'); let all=''; cards.forEach(c=>{all+=c.innerText+'\n\n---\n\n';}); navigator.clipboard.writeText(all.trim()).then(()=>{ const btn=document.getElementById('copy-all-btn'); btn.textContent='✓ Copiado todo'; setTimeout(()=>{btn.textContent='Copiar todo';},2000); }); }
 function renderHistory(){ const wrap=document.getElementById('history-wrap'); const list=document.getElementById('history-list'); if(!history.length){wrap.style.display='none';return;} wrap.style.display='block'; list.innerHTML=history.map((h,i)=>`<div class="history-item" onclick="restoreHistory(${i})"><div class="history-title">${h.tipo} · ${h.ciudad}</div><div class="history-meta">${h.producto} · ${h.timestamp}</div></div>`).join(''); }
 function restoreHistory(idx){ const h=history[idx]; if(!h) return; document.getElementById('empty-state').style.display='none'; document.getElementById('piezas-grid').innerHTML=''; renderPiezas(h.raw,h.platforms,Object.keys(TIPO_META).find(k=>TIPO_META[k]===h.tipo)||'oferta_semana',h.ciudad,document.getElementById('chk-hashtags').checked,document.getElementById('chk-brief').checked); document.getElementById('top-subtitle').textContent=h.tipo+' · '+h.ciudad; document.getElementById('copy-all-btn').style.display='block'; }
+
+function renderTitulares(titulares) {
+  const wrap = document.getElementById('titulares-opts');
+  if (!wrap || !titulares.length) return;
+  wrap.innerHTML = titulares.map(t =>
+    `<button class="titular-opt" onclick="selectTitular(this,'${t.replace(/'/g,"\\'")}')">${t}</button>`
+  ).join('');
+}
+function selectTitular(btn, text) {
+  document.querySelectorAll('.titular-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('img-titular').value = text;
+  buildImgPrompt();
+}
 
 // ── Módulo generador de imágenes ────────────────────────────────
 let currentEngine = 'gemini';
@@ -1020,10 +1089,10 @@ function buildImgPrompt() {
 
   // Style modifier
   const estiloMap = {
-    formal:      'Modern professional fintech style. Structured geometric layout, high contrast, precise typography.',
+    formal:      'Modern professional retail brand style. Structured geometric layout, high contrast, precise typography.',
     costeno:     'Vibrant warm Caribbean Colombian style. Bold festive colors, energetic, celebratory mood.',
     minimalista: 'Minimalist design, generous white space, single hero product, elegant understated typography.',
-    custom:      document.getElementById('estilo-custom')?.value.trim() || 'Modern fintech style.'
+    custom:      document.getElementById('estilo-custom')?.value.trim() || 'Modern retail brand style.'
   };
   const estiloDesc = estiloMap[currentEstilo] || estiloMap.formal;
 
@@ -1041,7 +1110,7 @@ function buildImgPrompt() {
     ? ` At the very bottom of the image, a thin horizontal strip (white or semi-transparent background) contains the small partner logos of the following financing companies, evenly spaced and horizontally aligned: ${selectedFins.map(f => f.label).join(', ')}. Logos are small, clean, and clearly legible.`
     : '';
 
-  const p = `Commercial advertisement for Creditek, a Colombian fintech phone-credit brand. ${modoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. Turquoise #00C4CC for price '${precio}' in large bold numerals. CTA label '${cta}' on turquoise #00C4CC button.${finStrip} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. No watermarks, no placeholder text. Square 1080×1080px, crisp high contrast.`;
+  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${modoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. Turquoise #00C4CC for price '${precio}' in large bold numerals. CTA label '${cta}' on turquoise #00C4CC button.${finStrip} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. No watermarks, no placeholder text. Square 1080×1080px, crisp high contrast.`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
