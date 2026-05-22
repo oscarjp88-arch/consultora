@@ -449,6 +449,20 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <label class="field-label">Nota especial <span>opcional</span></label>
       <textarea id="nota" placeholder="Ej: Solo 3 unidades, promoción hasta el viernes..."></textarea>
     </div>
+    <div class="field-group">
+      <label class="field-label">Fecha especial / Temporada <span>opcional</span></label>
+      <select id="fecha-especial" onchange="buildImgPrompt()">
+        <option value="">Sin fecha especial</option>
+        <option value="madre">🌸 Día de la Madre (mayo)</option>
+        <option value="padre">👔 Día del Padre (junio)</option>
+        <option value="mundial">⚽ Mundial de fútbol</option>
+        <option value="navidad">🎄 Navidad (diciembre)</option>
+        <option value="amistad">❤️ Amor y Amistad (septiembre)</option>
+        <option value="halloween">🎃 Halloween (octubre)</option>
+        <option value="anonuevo">🥂 Año Nuevo</option>
+        <option value="clases">📚 Regreso a clases</option>
+      </select>
+    </div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-label">Plataformas a generar</div>
@@ -523,7 +537,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <button class="estilo-btn" onclick="selectEstilo('minimalista',this)">◻ Minimalista</button>
       <button class="estilo-btn" onclick="selectEstilo('custom',this)">✏️ Personalizar</button>
     </div>
-    <textarea class="estilo-custom-ta" id="estilo-custom" placeholder="Describe el estilo visual que quieres para la imagen..."></textarea>
+    <textarea class="estilo-custom-ta" id="estilo-custom" placeholder="Describe el estilo visual que quieres para la imagen..." oninput="buildImgPrompt()"></textarea>
   </div>
   <button class="gen-btn" id="gen-btn" onclick="generarContenido()">
     <div class="spinner" id="spinner"></div>
@@ -669,6 +683,17 @@ const TIPO_META = {
   testimonio:'Testimonio de cliente', educativo:'Educación financiera',
   promo_urgencia:'Promo con urgencia', detras_camara:'Detrás de cámara'
 };
+const FECHAS_ESPECIALES = {
+  madre:   { label:'Día de la Madre', colores:'rosa cálido #FFB6C1, rosa dorado #C8965A, blanco', elementos:'flores sutiles, corazones, lazo rosado', tono:'emotivo, cálido, gratitud y amor familiar', ganchos:['El mejor regalo para tu mamá este mayo','Dale lo que ella siempre quiso','Este Día de la Madre, hazla feliz con su celular nuevo'] },
+  padre:   { label:'Día del Padre', colores:'azul acero #1E3A5F, gris plata #708090, dorado', elementos:'líneas fuertes, estrellas, detalles masculinos sutiles', tono:'orgulloso, directo, reconocimiento al papá que se lo merece', ganchos:['Para el papá que lo merece todo','El regalo perfecto pa este junio','Papá se lo merece — llévalo a Creditek'] },
+  mundial: { label:'Mundial de fútbol', colores:'amarillo #FFD700, azul #003087, rojo #CE1126 (tricolor Colombia)', elementos:'balón estilizado, estrellas, bandera de Colombia', tono:'patriotismo, emoción colectiva, celebración deportiva', ganchos:['Vive el Mundial con el mejor celular en la mano','Para ver cada gol en pantalla grande','¡Pa la final con tu celular nuevo de Creditek!'] },
+  navidad: { label:'Navidad', colores:'rojo #CC0000, verde pino #006400, dorado brillante #FFD700', elementos:'estrellas doradas, bolas navideñas estilizadas, pino minimalista', tono:'alegría familiar, generosidad, regalo, calidez', ganchos:['El mejor regalo de Navidad ya llegó a Creditek','Este diciembre, el regalo que todos quieren','Navidad llega antes en Creditek'] },
+  amistad: { label:'Amor y Amistad', colores:'rojo #FF4444, rosa #FF69B4, blanco brillante', elementos:'corazones, detalles rojos y rosados', tono:'celebración afectiva, sorpresa, compartir', ganchos:['El mejor detalle del 14 de septiembre','Sorprende a quien más quieres este Amor y Amistad','Dale la sorpresa que no espera'] },
+  halloween:{ label:'Halloween', colores:'naranja calabaza #FF6600, negro #000000, púrpura oscuro #4B0082', elementos:'calabazas estilizadas, telarañas sutiles, luna llena', tono:'divertido, misterioso, irreverente y directo', ganchos:['El susto del mes: precios que no creerás','Octubre de miedo... de lo baratos que están','Trato o truco: llévate el tuyo hoy'] },
+  anonuevo:{ label:'Año Nuevo', colores:'dorado #FFD700, negro #000000, plateado, champagne #F7E7CE', elementos:'fuegos artificiales estilizados, estrellas, burbujas', tono:'celebración, metas nuevas, estrenar, propósito de año', ganchos:['Empieza el año con celular nuevo','Tu propósito de año nuevo ya llegó a Creditek','Nuevo año, nuevo celular — empiézalo bien'] },
+  clases:  { label:'Regreso a clases', colores:'azul cielo #87CEEB, verde fresco #32CD32, amarillo brillante #FFE000', elementos:'útiles estilizados, mochila, estrellas de logro', tono:'optimismo juvenil, preparación, logro académico', ganchos:['Para este año escolar con todo','El estudiante que la rompe necesita este celular','Regresa a clases con el mejor equipo en mano'] }
+};
+
 const DIRECCIONES = {
   'Tolú':           'CK-01: Calle 15 Carrera 3-30 Local 1 / CK-10: Calle 16 Carrera 8-5 Piso 1 Local 3',
   'Corozal':        'CK-02: Carrera 25 #29-15 Local 3 Barrio San Miguel / CK-03: Carrera 25 #30-40 Centro / CK-04: Calle 30 25-57 Centro',
@@ -708,6 +733,8 @@ async function generarContenido() {
   const cuota = document.getElementById('cuota').value.trim();
   const inicial = document.getElementById('inicial').value.trim();
   const nota = document.getElementById('nota').value.trim();
+  const fechaKey = document.getElementById('fecha-especial')?.value || '';
+  const fechaData = FECHAS_ESPECIALES[fechaKey] || null;
   const platforms = getActivePlatforms();
   const inclHashtags = document.getElementById('chk-hashtags').checked;
   const inclBrief = document.getElementById('chk-brief').checked;
@@ -836,7 +863,12 @@ COPY MALO (nunca hacer esto):
 LÍMITES DE CARACTERES:
 WhatsApp: máximo 3 frases · Facebook: 300-400 caracteres · Instagram: 150-200 caracteres · TikTok: máximo 2 líneas
 
-ESTRUCTURA PARA ESTE TIPO DE PIEZA (${TIPO_META[tipo]}):
+${fechaData ? `FECHA ESPECIAL — ${fechaData.label}:
+- Adapta el tono del copy a esta emoción: ${fechaData.tono}
+- Ganchos sugeridos para esta fecha: ${fechaData.ganchos.join(' / ')}
+- Menciona la fecha de forma natural si encaja con el mensaje. No la fuerces.
+
+` : ''}ESTRUCTURA PARA ESTE TIPO DE PIEZA (${TIPO_META[tipo]}):
 ${tipoEstructura[tipo] || 'Gancho fuerte → beneficio concreto → CTA directo.'}
 
 INSTRUCCIONES POR PLATAFORMA:
@@ -1163,10 +1195,16 @@ function buildImgPrompt() {
     ? ` At the very bottom of the image, a thin horizontal strip (white or semi-transparent background) contains the small partner logos of the following financing companies, evenly spaced and horizontally aligned: ${selectedFins.map(f => f.label).join(', ')}. Logos are small, clean, and clearly legible.`
     : '';
 
+  const fechaKey2  = document.getElementById('fecha-especial')?.value || '';
+  const fechaData2 = FECHAS_ESPECIALES[fechaKey2] || null;
+  const fechaImgBlock = fechaData2
+    ? ` Seasonal theme — ${fechaData2.label}: incorporate secondary palette (${fechaData2.colores}) and subtle decorative elements (${fechaData2.elementos}). These seasonal accents complement the Creditek brand identity without replacing it.`
+    : '';
+
   const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays.`;
 
   const precioSegment = precio ? `Turquoise #00C4CC accent for '${precio}' in large bold numerals. ` : '';
-  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. Square 1080×1080px, crisp high contrast.${negativePrompt}`;
+  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. Square 1080×1080px, crisp high contrast.${negativePrompt}`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
