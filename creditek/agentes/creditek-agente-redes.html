@@ -347,6 +347,16 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .estilo-btn.active{background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
 .estilo-custom-ta{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:12px;padding:8px 12px;resize:vertical;min-height:60px;outline:none;font-family:'DM Sans',sans-serif;display:none;transition:border-color .2s}
 .estilo-custom-ta:focus{border-color:var(--turquesa)}
+/* Referencias visuales del mercado */
+.refs-status-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 4px 8px}
+.refs-status-txt{font-size:10px;color:var(--text3);line-height:1.5;flex:1}
+.refs-update-btn{background:rgba(0,196,204,.07);border:1px solid rgba(0,196,204,.2);color:var(--turquesa);font-size:10px;font-weight:700;padding:5px 8px;border-radius:var(--radius-sm);cursor:pointer;font-family:'Montserrat',sans-serif;white-space:nowrap;transition:all .2s;flex-shrink:0;letter-spacing:.02em}
+.refs-update-btn:hover{background:rgba(0,196,204,.15);border-color:var(--turquesa)}
+.refs-update-btn:disabled{opacity:.4;cursor:not-allowed}
+.refs-brand-list{font-size:10px;color:var(--text3);line-height:1.8;padding:0 4px;display:none}
+.refs-brand-item{display:flex;align-items:center;gap:5px}
+.refs-brand-dot{width:6px;height:6px;border-radius:50%;background:var(--turquesa);flex-shrink:0}
+.refs-stale{color:#f59e0b}
 /* Titulares de impacto */
 .titular-opt{display:block;width:100%;text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;padding:8px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-bottom:4px}
 .titular-opt:hover{border-color:var(--turquesa);color:var(--turquesa);background:rgba(0,196,204,.08)}
@@ -575,6 +585,14 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <textarea class="estilo-custom-ta" id="estilo-custom" placeholder="Describe el estilo visual que quieres para la imagen..." oninput="buildImgPrompt()"></textarea>
   </div>
+  <div class="sidebar-section" style="padding-bottom:8px">
+    <div class="sidebar-label">Referencias del mercado</div>
+    <div class="refs-status-row">
+      <span id="refs-status" class="refs-status-txt">Sin referencias guardadas</span>
+      <button class="refs-update-btn" id="refs-update-btn" onclick="actualizarReferencias()" title="Obtener señales visuales actuales de marcas del mercado colombiano">🔄 Actualizar</button>
+    </div>
+    <div id="refs-brand-list" class="refs-brand-list"></div>
+  </div>
   <button class="gen-btn" id="gen-btn" onclick="generarContenido()">
     <div class="spinner" id="spinner"></div>
     <span id="gen-label">✦ Generar piezas</span>
@@ -744,6 +762,7 @@ function abrirModal() {
 }
 window.addEventListener('DOMContentLoaded', () => {
   populateCiudadDropdown();
+  renderRefStatus();
   const stored = localStorage.getItem('ck_api_key');
   if (stored) sessionStorage.setItem('ck_api_key', stored);
   if (!sessionStorage.getItem('ck_api_key')) {
@@ -1572,8 +1591,136 @@ function buildImgPrompt() {
   };
   const bgSpec = (fechaData2 && fechaBgMap[fechaKey2]) ? fechaBgMap[fechaKey2] : 'solid deep navy #0B1E3D';
 
-  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}${inicialSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold 'Creditek' wordmark in Montserrat, no tagline. Background: ${bgSpec}. ${sizeSpec}, crisp high contrast.${negativePrompt}`;
+  const refBlock = getRefBlock();
+  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}${inicialSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold 'Creditek' wordmark in Montserrat, no tagline. Background: ${bgSpec}. ${sizeSpec}, crisp high contrast.${negativePrompt}${refBlock}`;
   document.getElementById('img-prompt-ta').value = p;
+}
+
+// ── Sistema de referencias visuales del mercado ─────────────────
+const MARKET_REFS = [
+  ['Samsung CO',  'https://www.samsung.com/co/smartphones/'],
+  ['Xiaomi CO',   'https://www.mi.com/co'],
+  ['Motorola CO', 'https://www.motorola.com/co/smartphones'],
+  ['OPPO CO',     'https://www.oppo.com/co/smartphones/'],
+  ['Realme CO',   'https://www.realme.com/co/smartphones/'],
+  ['TCL CO',      'https://www.tcl.com/co/es/smartphones.html'],
+  ['Infinix CO',  'https://www.infinixmobility.com/co'],
+  ['Honor CO',    'https://www.honor.com/co/phones/'],
+  ['PayJoy CO',   'https://www.payjoy.com/co'],
+  ['Krediya',     'https://www.krediya.com.co'],
+  ['Addi CO',     'https://www.addi.com/co'],
+  ['Alo Credit',  'https://www.alocredit.co'],
+];
+const REFS_TTL = 15 * 24 * 60 * 60 * 1000;
+
+function extractColors(html) {
+  const re = /#([0-9a-fA-F]{6})\b/g, counts = {}; let m;
+  while ((m = re.exec(html)) !== null) {
+    const c = m[0].toLowerCase();
+    const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+    if (r>240&&g>240&&b>240) continue;
+    if (r<20&&g<20&&b<20) continue;
+    if (Math.abs(r-g)<20&&Math.abs(g-b)<20&&Math.abs(r-b)<20) continue;
+    counts[c] = (counts[c]||0)+1;
+  }
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,4).map(e=>e[0]);
+}
+
+function extractFonts(html) {
+  const fonts = new Set(), skip = new Set(['sans-serif','serif','monospace','inherit','initial','none','auto','system-ui']);
+  const re = /font-family\s*:\s*['"]?([^'",;}{<>]+)/gi; let m;
+  while ((m = re.exec(html)) !== null) {
+    const f = m[1].trim().split(',')[0].replace(/['"]/g,'').trim();
+    if (f && f.length > 2 && !skip.has(f.toLowerCase())) fonts.add(f.slice(0,30));
+  }
+  const gfRe = /fonts\.googleapis\.com[^"']*family=([^&"'\s>]+)/gi;
+  while ((m = gfRe.exec(html)) !== null)
+    m[1].split('|').forEach(f => fonts.add(f.split(':')[0].replace(/\+/g,' ').trim().slice(0,30)));
+  return [...fonts].slice(0,4);
+}
+
+function extractKeywords(html) {
+  const parts = [];
+  const t = html.match(/<title[^>]*>([^<]{3,80})<\/title>/i);
+  if (t) parts.push(t[1].trim());
+  const d = html.match(/name=["']description["'][^>]*content=["']([^"']{10,120})/i) ||
+            html.match(/content=["']([^"']{10,120})["'][^>]*name=["']description["']/i);
+  if (d) parts.push(d[1].trim());
+  const h = html.match(/<h1[^>]*>([^<]{3,60})<\/h1>/i);
+  if (h) parts.push(h[1].replace(/<[^>]+>/g,'').trim());
+  return parts.filter(Boolean).join(' | ').slice(0,160);
+}
+
+async function fetchWithTimeout(url, ms=7000) {
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(tid); return r;
+  } catch(e) { clearTimeout(tid); throw e; }
+}
+
+async function fetchBrandRef(url) {
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const res = await fetchWithTimeout(proxy);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  const html = data.contents || '';
+  return { url, colors: extractColors(html), fonts: extractFonts(html), keywords: extractKeywords(html) };
+}
+
+function getRefBlock() {
+  const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
+  if (!stored?.brands) return '';
+  const lines = Object.entries(stored.brands).map(([name, d]) => {
+    const parts = [];
+    if (d.colors?.length) parts.push(`colors: ${d.colors.join(', ')}`);
+    if (d.fonts?.length) parts.push(`fonts: ${d.fonts.join(', ')}`);
+    if (d.keywords) parts.push(`context: "${d.keywords.slice(0,100)}"`);
+    return parts.length ? `- ${name}: ${parts.join(' | ')}` : null;
+  }).filter(Boolean);
+  if (!lines.length) return '';
+  return `\n\nVISUAL REFERENCES FROM CURRENT COLOMBIAN PHONE MARKET (competitive context only — Creditek brand identity always takes priority):\n${lines.join('\n')}`;
+}
+
+function formatRefAge(ts) {
+  const days = Math.floor((Date.now() - ts) / (24*60*60*1000));
+  if (days === 0) return 'actualizadas hoy';
+  if (days === 1) return 'actualizadas hace 1 día';
+  return `actualizadas hace ${days} días`;
+}
+
+function renderRefStatus() {
+  const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
+  const statusEl = document.getElementById('refs-status');
+  const listEl = document.getElementById('refs-brand-list');
+  if (!statusEl) return;
+  if (!stored) { statusEl.textContent = 'Sin referencias guardadas'; statusEl.className = 'refs-status-txt'; if (listEl) listEl.style.display = 'none'; return; }
+  const stale = (Date.now() - stored.timestamp) > REFS_TTL;
+  statusEl.textContent = stale ? `⚠ ${formatRefAge(stored.timestamp)} — actualizar recomendado` : formatRefAge(stored.timestamp);
+  statusEl.className = 'refs-status-txt' + (stale ? ' refs-stale' : '');
+  const names = Object.keys(stored.brands || {});
+  if (listEl && names.length) {
+    listEl.innerHTML = names.map(n => `<div class="refs-brand-item"><span class="refs-brand-dot"></span>${n}</div>`).join('');
+    listEl.style.display = 'block';
+  }
+}
+
+async function actualizarReferencias() {
+  const btn = document.getElementById('refs-update-btn');
+  const statusEl = document.getElementById('refs-status');
+  btn.disabled = true;
+  const brands = {};
+  for (const [name, url] of MARKET_REFS) {
+    statusEl.textContent = `Obteniendo ${name}...`;
+    try { brands[name] = await fetchBrandRef(url); }
+    catch(e) { brands[name] = { url, colors: [], fonts: [], keywords: '' }; }
+  }
+  localStorage.setItem('ck_referencias', JSON.stringify({ timestamp: Date.now(), brands }));
+  renderRefStatus();
+  btn.disabled = false;
+  buildImgPrompt();
+  showToast('✓ Referencias visuales del mercado actualizadas');
 }
 
 function showImgSection() {
