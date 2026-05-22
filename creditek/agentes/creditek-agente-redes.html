@@ -1519,8 +1519,9 @@ function resetPreviewFields() {
   const inclDirImg = document.getElementById('chk-direccion').checked;
   const tiendaInfo = getTiendaInfo(ciudad);
   const dirImg = inclDirImg ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
-  console.log('[dirección] ciudad:', ciudad, '| tiendaInfo:', tiendaInfo, '| dirImg:', dirImg);
-  const ctaBase = ciudad ? `Visítanos en ${getCiudadNombre(ciudad)}` : 'Visítanos hoy';
+  const nombreCta = tiendaInfo?.nombre || getCiudadNombre(ciudad);
+  console.log('[dirección] ciudad:', ciudad, '| tiendaInfo:', tiendaInfo, '| dirImg:', dirImg, '| nombreCta:', nombreCta);
+  const ctaBase = ciudad ? `Visítanos en ${nombreCta}` : 'Visítanos hoy';
   document.getElementById('img-cta').value = dirImg ? `${ctaBase} · ${dirImg}` : ctaBase;
   buildImgPrompt();
 }
@@ -1544,11 +1545,13 @@ function buildImgPrompt() {
   const ctaEl     = document.getElementById('img-cta');
   const cuota     = document.getElementById('cuota').value.trim();
   const inicial   = document.getElementById('inicial').value.trim();
-  const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${getCiudadNombre(ciudad)}!`);
-  const precio    = precioEl?.value.trim()  || cuota || '';
+  const tiendaInfoBuild = getTiendaInfo(ciudad);
+  const nombreCtaBuild  = tiendaInfoBuild?.nombre || getCiudadNombre(ciudad);
+  const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCtaBuild}!`);
+  const precio    = precioEl?.value.trim() || '';
   const inclDirBuild = document.getElementById('chk-direccion').checked;
-  const dirBuild     = inclDirBuild ? (DIRECCIONES[ciudad] || null) : null;
-  const ctaFallback  = dirBuild ? `Visítanos en ${getCiudadNombre(ciudad)} · ${dirBuild}` : `Visítanos en ${getCiudadNombre(ciudad)}`;
+  const dirBuild     = inclDirBuild ? (tiendaInfoBuild?.direccion || DIRECCIONES[ciudad] || null) : null;
+  const ctaFallback  = dirBuild ? `Visítanos en ${nombreCtaBuild} · ${dirBuild}` : `Visítanos en ${nombreCtaBuild}`;
   const cta          = ctaEl?.value.trim() || ctaFallback;
 
   // Style modifier
@@ -1591,7 +1594,7 @@ function buildImgPrompt() {
   const priceRule = (precio || inicial)
     ? `Show ONLY these exact prices: ${[precio, inicial].filter(Boolean).join(', ')}. DO NOT add, invent, or modify any other price or monetary figure.`
     : 'DO NOT show any price, number with dollar sign, monetary amount, or financial figures anywhere in the image. No "$", no "COP", no numeric prices, no installment amounts, no price badges. Leave all price areas blank or omit them entirely.';
-  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays. PRICE RULE — ${priceRule} QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
+  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays. DO NOT show any price, monetary amount, dollar sign, or financial figures unless explicitly included in this prompt. PRICE RULE — ${priceRule} QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
 
   const precioSegment  = precio  ? `Turquoise #00C4CC accent for '${precio}' in large bold numerals. ` : '';
   const inicialSegment = inicial ? `Show initial payment badge: 'Inicial desde ${inicial}' in turquoise #00C4CC, prominent position near the CTA button. ` : '';
