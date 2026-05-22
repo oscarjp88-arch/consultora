@@ -916,7 +916,7 @@ async function generarConDalle(key, prompt) {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-    body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', quality: 'hd', response_format: 'b64_json' })
+    body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', quality: 'hd' })
   });
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
@@ -927,17 +927,18 @@ async function generarConDalle(key, prompt) {
     );
   }
   const data = await res.json();
-  const b64 = data.data?.[0]?.b64_json;
-  if (!b64) throw new Error('OpenAI no devolvió imagen. Intenta de nuevo.');
-  return 'data:image/png;base64,' + b64;
+  const url = data.data?.[0]?.url;
+  if (!url) throw new Error('OpenAI no devolvió imagen. Intenta de nuevo.');
+  return url;
 }
 
 function descargarImagen() {
   const src = document.getElementById('img-output').src;
-  if (!src || !src.startsWith('data:')) return;
+  if (!src) return;
   const a = document.createElement('a');
   a.href = src;
   a.download = `creditek-imagen-${Date.now()}.png`;
+  a.target = '_blank';
   a.click();
 }
 </script>
