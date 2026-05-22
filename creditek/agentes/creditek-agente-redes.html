@@ -1618,7 +1618,7 @@ function buildImgPrompt() {
   const priceRule = (precio || inicial)
     ? `Show ONLY these exact prices: ${[precio, inicial].filter(Boolean).join(', ')}. DO NOT add, invent, or modify any other price or monetary figure.`
     : 'DO NOT show any price, number with dollar sign, monetary amount, or financial figures anywhere in the image. No "$", no "COP", no numeric prices, no installment amounts, no price badges. Leave all price areas blank or omit them entirely.';
-  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays. DO NOT show any price, monetary amount, dollar sign, or financial figures unless explicitly included in this prompt. PRICE RULE — ${priceRule} QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
+  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no truncated words, no abbreviated store names, no modified brand names, no extra unrelated people in background, no cluttered elements, no fake UI overlays. DO NOT show any price, monetary amount, dollar sign, or financial figures unless explicitly included in this prompt. PRICE RULE — ${priceRule} QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
 
   const precioSegment  = precio  ? `Turquoise #00C4CC accent for '${precio}' in large bold numerals. ` : '';
   const inicialSegment = inicial ? `Show initial payment badge: 'Inicial desde ${inicial}' in turquoise #00C4CC, prominent position near the CTA button. ` : '';
@@ -1643,8 +1643,12 @@ function buildImgPrompt() {
     ? ` CRITICAL: The smartphone in this image MUST be a ${producto}. DO NOT generate an iPhone or Apple product under any circumstance. The phone must have Android design language, ${androidBrand} branding visible on the device. If you cannot render this exact model, render a generic Android phone, never an iPhone.`
     : '';
 
+  const storeNameBlock = (tiendaInfoBuild?.nombre && !esCiudadBuild)
+    ? ` CRITICAL: The store name in the CTA button must appear EXACTLY as written: '${tiendaInfoBuild.nombre}'. Do not abbreviate, truncate, translate or modify this name in any way. Render every character of '${tiendaInfoBuild.nombre}' precisely.`
+    : '';
+
   const refBlock = getRefBlock();
-  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}${inicialSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold 'Creditek' wordmark in Montserrat, no tagline. Background: ${bgSpec}. ${sizeSpec}, crisp high contrast.${negativePrompt}${brandBlock}${refBlock}`;
+  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}${inicialSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold 'Creditek' wordmark in Montserrat, no tagline. Background: ${bgSpec}. ${sizeSpec}, crisp high contrast.${negativePrompt}${brandBlock}${storeNameBlock}${refBlock}`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
