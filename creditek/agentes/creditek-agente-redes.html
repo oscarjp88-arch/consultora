@@ -652,6 +652,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </button>
       <div class="img-result" id="img-result">
         <img class="img-output" id="img-output" src="" alt="Imagen generada">
+        <span id="img-model-lbl" style="display:block;text-align:center;font-size:11px;color:#00C4CC;margin-top:6px;opacity:0.8"></span>
         <button class="img-dl-btn" onclick="descargarImagen()">⬇ Descargar PNG</button>
       </div>
       <div class="img-err" id="img-err"></div>
@@ -871,12 +872,8 @@ async function generarContenido() {
     contextoBlock = `Eres el Agente de Marketing de Creditek SAS, empresa colombiana de venta de celulares a crédito con 11 tiendas propias en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
 
 ${brandBase}
-- Promesa: crédito fácil, mismo día, sin trámites complicados
 
-CONTEXTO:
-- Producto: celulares a crédito, sin banco, aprobación rápida
-- Plataformas: PayJoy, Alo Credit, Krediya, Addi
-- Plazos: 4, 6 u 8 meses
+MODELO DE NEGOCIO:
 - Plataformas de financiamiento: PayJoy, Alo Credit, Krediya, Addi. Plazos: 4, 6 u 8 meses.
 - Diferenciador: aprueba donde el banco dice que no. Sin historial requerido.
 - Objeción central del cliente: "¿Me van a aprobar? / Tengo miedo al endeudamiento."
@@ -1207,6 +1204,7 @@ let currentFormat = 'feed';
 let productoImgBase64 = null;
 let imgHistory = [];
 let imgHistoryIdx = 0;
+let lastImgModelLabel = '';
 
 const CHAR_LIMITS = { facebook: 400, instagram: 200, whatsapp: 160, tiktok: 100 };
 function charCounterHTML(platform, len) {
@@ -1485,6 +1483,7 @@ async function generarImagen() {
   resultDiv.style.display = 'none'; errDiv.style.display = 'none';
 
   try {
+    lastImgModelLabel = currentEngine === 'gemini' ? 'Gemini Imagen 4' : 'GPT Image 2';
     const src = currentEngine === 'gemini'
       ? await generarConGemini(key, prompt)
       : await generarConDalle(key, prompt);
@@ -1492,6 +1491,7 @@ async function generarImagen() {
     imgHistoryIdx = 0;
     mostrarImgVersion(src);
     resultDiv.style.display = 'block';
+    document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
     document.getElementById('img-editor').style.display = 'block';
     renderImgHistoryNav();
     showToast('✓ Imagen generada correctamente');
@@ -1506,29 +1506,43 @@ async function generarImagen() {
 
 async function generarConGemini(key, prompt) {
   const geminiNegative = "text distortion, blurry text, misspelled brand name, watermark, low quality, pixelated, cluttered, fake UI overlays, extra people, placeholder logos, generic stock photo feel";
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-4-0-generate-001:predict?key=${encodeURIComponent(key)}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        instances: [{ prompt, negativePrompt: geminiNegative }],
-        parameters: { sampleCount: 1, aspectRatio: currentFormat === 'stories' ? '9:16' : '1:1' }
-      })
-    }
-  );
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(
-      res.status === 401 || res.status === 403
-        ? 'API key de Gemini inválida o sin permisos de Imagen.'
-        : e.error?.message || `Error Gemini ${res.status}`
+  const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
+  const models = [
+    { id: 'imagen-4-0-generate-001', label: 'Gemini Imagen 4' },
+    { id: 'imagen-3.0-generate-001', label: 'Gemini Imagen 3' }
+  ];
+  let lastErr = 'Gemini no pudo generar la imagen. Verifica que Imagen esté habilitado en tu proyecto de Google AI Studio.';
+  for (const model of models) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:predict?key=${encodeURIComponent(key)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instances: [{ prompt, negativePrompt: geminiNegative }],
+          parameters: { sampleCount: 1, aspectRatio }
+        })
+      }
     );
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      if (res.status === 401) throw new Error('API key de Gemini inválida. Verifica en Google AI Studio.');
+      if ((res.status === 404 || res.status === 403) && model.id === models[0].id) {
+        lastErr = e.error?.message || `Imagen 4 no disponible (${res.status}), probando Imagen 3...`;
+        continue;
+      }
+      throw new Error(e.error?.message || `Error Gemini ${res.status}`);
+    }
+    const data = await res.json();
+    const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+    if (!b64) {
+      if (model.id === models[0].id) { lastErr = 'Imagen 4 sin respuesta, probando Imagen 3...'; continue; }
+      throw new Error('Gemini no devolvió imagen. Verifica que Imagen esté habilitado en tu proyecto.');
+    }
+    lastImgModelLabel = model.label;
+    return 'data:image/png;base64,' + b64;
   }
-  const data = await res.json();
-  const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-  if (!b64) throw new Error('Gemini no devolvió imagen. Verifica que Imagen 4 esté habilitado en tu proyecto.');
-  return 'data:image/png;base64,' + b64;
+  throw new Error(lastErr);
 }
 
 async function generarConDalle(key, prompt) {
@@ -1604,8 +1618,6 @@ function navegarImgHistory(dir) {
 }
 
 async function aplicarCambioImagen() {
-  const key = localStorage.getItem('ck_openai_key');
-  if (!key || key.length < 10) { showToast('Configura la API key de GPT Image 2 para editar', '#ef4444'); return; }
   const instruccion = document.getElementById('img-edit-prompt').value.trim();
   if (!instruccion) { showToast('Escribe qué quieres cambiar', '#ef4444'); return; }
   const currentSrc = imgHistory[imgHistoryIdx];
@@ -1619,26 +1631,38 @@ async function aplicarCambioImagen() {
 
   try {
     const promptBase = document.getElementById('img-prompt-ta').value.trim();
-    const editPrompt = `${promptBase}\n\nEDIT INSTRUCTION: ${instruccion}`;
-    const content = [
-      { type: 'input_image', image_url: currentSrc },
-      { type: 'input_text', text: editPrompt }
-    ];
-    const res = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-      body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content }], tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1792' : '1024x1024' }] })
-    });
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({}));
-      throw new Error(res.status === 401 ? 'API key de OpenAI inválida.' : e.error?.message || `Error OpenAI ${res.status}`);
+    let newSrc;
+
+    if (currentEngine === 'gemini') {
+      const key = localStorage.getItem('ck_gemini_key');
+      if (!key || key.length < 10) throw new Error('Configura la API key de Gemini para editar.');
+      const editPrompt = `${promptBase}\n\nMODIFICACIÓN SOLICITADA: ${instruccion}`;
+      newSrc = await generarConGemini(key, editPrompt);
+      document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
+    } else {
+      const key = localStorage.getItem('ck_openai_key');
+      if (!key || key.length < 10) throw new Error('Configura la API key de GPT Image 2 para editar.');
+      const editPrompt = `${promptBase}\n\nEDIT INSTRUCTION: ${instruccion}`;
+      const content = [
+        { type: 'input_image', image_url: currentSrc },
+        { type: 'input_text', text: editPrompt }
+      ];
+      const res = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content }], tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1792' : '1024x1024' }] })
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(res.status === 401 ? 'API key de OpenAI inválida.' : e.error?.message || `Error OpenAI ${res.status}`);
+      }
+      const data = await res.json();
+      const imageCall = data.output?.find(o => o.type === 'image_generation_call');
+      const b64 = imageCall?.result;
+      if (!b64) throw new Error('OpenAI no devolvió imagen editada.');
+      newSrc = 'data:image/png;base64,' + b64;
     }
-    const data = await res.json();
-    const imageCall = data.output?.find(o => o.type === 'image_generation_call');
-    const b64 = imageCall?.result;
-    if (!b64) throw new Error('OpenAI no devolvió imagen editada.');
-    const newSrc = 'data:image/png;base64,' + b64;
-    // Insert after current position, drop oldest if over 3
+
     imgHistory = imgHistory.slice(0, imgHistoryIdx + 1);
     imgHistory.push(newSrc);
     if (imgHistory.length > 3) imgHistory.shift();
