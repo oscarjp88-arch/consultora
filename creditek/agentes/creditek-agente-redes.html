@@ -1528,13 +1528,20 @@ function resetPreviewFields() {
   };
   document.getElementById('img-titular').value = titularDefaults[modo] || titularDefaults.credito;
   document.getElementById('img-precio').value  = precioDefaults[modo] ?? '';
-  const inclDirImg = document.getElementById('chk-direccion').checked;
+  const chkEl = document.getElementById('chk-direccion');
+  const inclDirImg = chkEl ? chkEl.checked : false;
   const esCiudadReset = isCiudadCompleta(ciudad);
   const tiendaInfo = getTiendaInfo(ciudad);
   if (inclDirImg && esCiudadReset) showToast('Dirección no disponible para ciudad completa', '#f59e0b');
   const dirImg = (!esCiudadReset && inclDirImg) ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
   const nombreCta = esCiudadReset ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
-  console.log('[dirección] ciudad:', ciudad, '| esCiudad:', esCiudadReset, '| tiendaInfo:', tiendaInfo, '| dirImg:', dirImg);
+  console.log('[chk-direccion] checkbox activo:', inclDirImg,
+    '| chkEl encontrado:', !!chkEl,
+    '| ciudad:', ciudad,
+    '| esCiudadCompleta:', esCiudadReset,
+    '| tiendaInfo encontrada:', tiendaInfo ? `${tiendaInfo.nombre} / ${tiendaInfo.direccion}` : null,
+    '| dirección resultante:', dirImg,
+    '| CTA final:', dirImg ? `Visítanos en ${nombreCta} · ${dirImg}` : `Visítanos en ${nombreCta}`);
   const ctaBase = ciudad ? `Visítanos en ${nombreCta}` : 'Visítanos hoy';
   document.getElementById('img-cta').value = dirImg ? `${ctaBase} · ${dirImg}` : ctaBase;
   buildImgPrompt();
