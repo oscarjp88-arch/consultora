@@ -650,6 +650,11 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <button class="engine-btn active" id="eng-gemini" onclick="selectEngine('gemini')">✦ Gemini Imagen 4</button>
         <button class="engine-btn" id="eng-dalle" onclick="selectEngine('dalle')">⬡ GPT Image 2</button>
       </div>
+      <!-- TEST TEMPORAL — borrar cuando se confirme modelo correcto -->
+      <div id="gemini-test-panel" style="margin:8px 0;padding:10px;background:#0d1f38;border:1px solid #1e3a5f;border-radius:8px">
+        <button onclick="testGeminiModels()" style="width:100%;padding:7px 12px;background:#1e3a5f;color:#00C4CC;border:1px solid #00C4CC;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">🔍 Test modelos Gemini</button>
+        <div id="gemini-test-results" style="margin-top:8px;font-size:11px;font-family:monospace;line-height:1.8;display:none"></div>
+      </div>
       <div class="fmt-toggle">
         <button class="fmt-btn active" id="fmt-feed" onclick="selectFormat('feed')">📱 Feed (1080×1080)</button>
         <button class="fmt-btn" id="fmt-stories" onclick="selectFormat('stories')">📲 Stories (1080×1920)</button>
@@ -2081,6 +2086,60 @@ function descargarImagen() {
   a.download = `creditek-imagen-${Date.now()}.png`;
   a.target = '_blank';
   a.click();
+}
+
+// ── TEST TEMPORAL: detectar modelos Gemini disponibles ─────────────
+async function testGeminiModels() {
+  const key = localStorage.getItem('ck_gemini_key');
+  const resultsEl = document.getElementById('gemini-test-results');
+  if (!key || key.length < 10) {
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = '<span style="color:#ef4444">⚠ Configura primero la API key de Gemini</span>';
+    return;
+  }
+  const models = [
+    'imagen-4.0-generate-preview-06-06',
+    'imagen-4.0-generate-preview-05-20',
+    'imagen-4.0-generate-preview-04-18',
+    'imagen-3.0-generate-002',
+    'imagegeneration@006',
+    'imagegeneration@005',
+  ];
+  const minPrompt = 'A simple blue square. Minimal test image.';
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '<span style="color:#94a3b8">Probando ' + models.length + ' modelos...</span>';
+  const lines = [];
+  for (const modelId of models) {
+    lines.push(`<span style="color:#94a3b8">⏳ ${modelId}</span>`);
+    resultsEl.innerHTML = lines.join('<br>');
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:predict?key=${encodeURIComponent(key)}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instances: [{ prompt: minPrompt }], parameters: { sampleCount: 1, aspectRatio: '1:1' } }),
+          signal: AbortSignal.timeout(15000) }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const code = res.status;
+        const msg  = data.error?.message || data.error?.status || `HTTP ${code}`;
+        const icon = code === 401 ? '🔑' : (code === 404 ? '❌' : (code === 403 ? '🚫' : '⚠'));
+        lines[lines.length - 1] = `<span style="color:#ef4444">${icon} ${modelId} — ${code}: ${msg}</span>`;
+      } else {
+        const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+        if (b64) {
+          lines[lines.length - 1] = `<span style="color:#22c55e">✅ ${modelId} — FUNCIONA (imagen recibida)</span>`;
+        } else {
+          lines[lines.length - 1] = `<span style="color:#f59e0b">⚠ ${modelId} — responde OK pero sin imagen (${JSON.stringify(Object.keys(data))})</span>`;
+        }
+      }
+    } catch(e) {
+      lines[lines.length - 1] = `<span style="color:#ef4444">💥 ${modelId} — ${e.message}</span>`;
+    }
+    resultsEl.innerHTML = lines.join('<br>');
+  }
+  lines.push('<span style="color:#94a3b8">— Test completado —</span>');
+  resultsEl.innerHTML = lines.join('<br>');
 }
 </script>
 </body>
