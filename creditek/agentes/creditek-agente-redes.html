@@ -166,6 +166,9 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .char-ok   { background: rgba(34,197,94,0.12);  color: #22c55e; }
 .char-warn { background: rgba(234,179,8,0.15);  color: #eab308; }
 .char-over { background: rgba(239,68,68,0.15);  color: #ef4444; }
+.ajustar-btn { background: transparent; border: 1px solid rgba(239,68,68,0.4); border-radius: 6px; color: #ef4444; font-size: 11px; padding: 3px 9px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; white-space: nowrap; }
+.ajustar-btn:hover { background: rgba(239,68,68,0.1); border-color: #ef4444; }
+.ajustar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .fmt-toggle { display: flex; gap: 6px; padding: 0 18px 10px; }
 .fmt-btn { flex: 1; padding: 8px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text2); font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; transition: all .15s; font-family: 'DM Sans', sans-serif; }
 .fmt-btn.active { background: rgba(0,196,204,.1); border-color: var(--turquesa); color: var(--turquesa); }
@@ -705,13 +708,14 @@ const FECHAS_ESPECIALES = {
   clases:  { label:'Regreso a clases', colores:'azul cielo #87CEEB, verde fresco #32CD32, amarillo brillante #FFE000', elementos:'útiles estilizados, mochila, estrellas de logro', tono:'optimismo juvenil, preparación, logro académico', ganchos:['Para este año escolar con todo','El estudiante que la rompe necesita este celular','Regresa a clases con el mejor equipo en mano'] }
 };
 
-const DIRECCIONES = {
-  'Tolú':           'CK-01: Calle 15 Carrera 3-30 Local 1 / CK-10: Calle 16 Carrera 8-5 Piso 1 Local 3',
-  'Corozal':        'CK-02: Carrera 25 #29-15 Local 3 Barrio San Miguel / CK-03: Carrera 25 #30-40 Centro / CK-04: Calle 30 25-57 Centro',
-  'Chinú':          'CK-05: Carrera 7 #19-24 / CK-06: Carrera 7 #17-44 Centro / CK-07: Calle 18 Carrera 7-23',
-  'Ciénaga de Oro': 'CK-08: Carrera 15 #6-37 Centro / CK-09: Carrera 15 #7 Centro',
-  'Coveñas':        'CK-11: Carrera 2 #9A-22 Barrio Guayabal',
+const CIUDADES_META = {
+  'Tolú':           { dir: 'CK-01: Calle 15 Carrera 3-30 Local 1 / CK-10: Calle 16 Carrera 8-5 Piso 1 Local 3', cultura: 'Municipio turístico del golfo de Morrosquillo (Sucre). Gente cálida y amable, ritmo tranquilo. Hay turistas pero el cliente local es trabajador del sector turismo y pesca. Aspiracional: quiere lo mejor para su familia. El copy debe sonar como un vecino de confianza, no un aviso de ciudad grande.' },
+  'Corozal':        { dir: 'CK-02: Carrera 25 #29-15 Local 3 Barrio San Miguel / CK-03: Carrera 25 #30-40 Centro / CK-04: Calle 30 25-57 Centro', cultura: 'Ciudad comercial y capital subregional de Sucre. Gente comerciante, práctica y directa. Valora el precio, la rapidez y el trato honesto. Hay mucha competencia comercial. El copy debe sonar directo al grano: beneficio claro, sin rodeos.' },
+  'Chinú':          { dir: 'CK-05: Carrera 7 #19-24 / CK-06: Carrera 7 #17-44 Centro / CK-07: Calle 18 Carrera 7-23', cultura: 'Municipio ganadero de Córdoba, economía agropecuaria y familiar. Gente tradicional, de palabra y confianza. El cliente valora que lo traten bien y que el negocio sea de fiar. El copy debe ser cálido, familiar y sin artificios — como le habla un conocido de toda la vida.' },
+  'Ciénaga de Oro': { dir: 'CK-08: Carrera 15 #6-37 Centro / CK-09: Carrera 15 #7 Centro', cultura: 'Municipio de Córdoba, activo comercialmente. Gente emprendedora, con espíritu de superación. Muchas familias con negocios propios o empleos informales. El copy debe apelar al orgullo y al logro: "te lo mereces", "es tu momento".' },
+  'Coveñas':        { dir: 'CK-11: Carrera 2 #9A-22 Barrio Guayabal', cultura: 'Municipio turístico de playa en Sucre, comunidad pequeña y unida. Economía de turismo y pesca. El cliente es local, de barrio, que conoce a todos. El copy debe ser cercano como una conversación de calle — breve, sin formalismos, como le hablas a alguien que ya conoces.' },
 };
+const DIRECCIONES = Object.fromEntries(Object.entries(CIUDADES_META).map(([k,v])=>[k,v.dir]));
 let history = [];
 
 function togglePlatform(btn) { btn.classList.toggle('active'); }
@@ -751,6 +755,7 @@ async function generarContenido() {
   const inclBrief = document.getElementById('chk-brief').checked;
   const inclDireccion = document.getElementById('chk-direccion').checked;
   const direccion = inclDireccion ? (DIRECCIONES[ciudad] || null) : null;
+  const culturaCtx = CIUDADES_META[ciudad]?.cultura || null;
 
   if (!ciudad) {
     const sel = document.getElementById('ciudad');
@@ -779,7 +784,7 @@ async function generarContenido() {
     '- Colores: Azul profundo #0B1E3D (fondos/títulos) · Turquesa #00C4CC (CTA/acentos) · Blanco #FFFFFF (textos sobre azul)',
     '- Tipografía: Montserrat o Poppins — Bold titulares, Medium subtítulos, Regular textos',
     '- Esencia: moderna, confiable, cercana, clara y resolutiva',
-    '- Tono: comercial sin sonar informal; humano, seguro y costeño'
+    '- Tono: cercano, directo y humano — como un vendedor que conoce a sus clientes, les habla de tú a tú y los trata con respeto sin importar su historial.'
   ].join('\n');
   let contextoBlock;
   if (modo === 'credito') {
@@ -859,7 +864,18 @@ ${nota ? '- Nota especial / información del contenido: ' + nota : ''}
 ${direccion ? '- Dirección(es) de tienda: ' + direccion : ''}
 - Plataformas: ${platformsList}
 
-LENGUAJE Y TONO OBLIGATORIO:
+PERFIL DEL CLIENTE CREDITEK:
+- Hombre o mujer de 25-45 años, ingreso familiar $1.2M-$2.5M
+- Usa Nequi o Daviplata, no tiene cuenta bancaria formal
+- No tiene historial crediticio o lo tiene manchado
+- Su último celular lo compró hace 2-3 años, ya está dañado o lento
+- Aspira a darle tecnología a su familia
+- Ha ido a otras tiendas y lo han tratado mal porque "no tiene cupo"
+- Le da vergüenza preguntar si le aprueban
+- Cuando le dicen que sí, siente alivio y orgullo
+Habla DIRECTAMENTE a esta persona. El copy debe hacerlo sentir que Creditek es diferente — que aquí sí lo atienden bien y sí le aprueban.
+
+${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudad}:\n${culturaCtx}\n\n` : ''}LENGUAJE Y TONO OBLIGATORIO:
 - Habla como un vendedor colombiano joven y cercano, no como una marca corporativa
 - Tono: informal, directo, sin tecnicismos. Como le hablas a un cliente que ya conoces.
 - Frases cortas y directas. Una idea por frase.
@@ -988,6 +1004,7 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
         <span class="pieza-tag">${ciudad}</span>
         <span class="pieza-tag">${lk}</span>
         ${charCounterHTML(platform, copy.length)}
+        ${copy.length > (CHAR_LIMITS[platform] || 400) ? `<button class="ajustar-btn" onclick="ajustarCopy(this, '${platform}', ${CHAR_LIMITS[platform] || 400})">✂ Ajustar</button>` : ''}
       </div>`;
     grid.appendChild(card);
   });
@@ -1026,6 +1043,36 @@ function fmt(text){ return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 function esc(str){ return str.replace(/`/g,'\\`').replace(/\$/g,'\\$'); }
 function copiarTexto(btn,texto){ navigator.clipboard.writeText(texto).then(()=>{ btn.classList.add('copied'); btn.querySelector('span').textContent='✓ Copiado'; setTimeout(()=>{ btn.classList.remove('copied'); btn.querySelector('span').textContent='Copiar'; },2000); }); }
 function copiarTodo(){ const cards=document.querySelectorAll('.pieza-content,.hashtag-block,.brief-block'); let all=''; cards.forEach(c=>{all+=c.innerText+'\n\n---\n\n';}); navigator.clipboard.writeText(all.trim()).then(()=>{ const btn=document.getElementById('copy-all-btn'); btn.textContent='✓ Copiado todo'; setTimeout(()=>{btn.textContent='Copiar todo';},2000); }); }
+
+async function ajustarCopy(btn, platform, maxChars) {
+  const card = btn.closest('.pieza-card');
+  const contentEl = card.querySelector('.pieza-content');
+  const copyBtn = card.querySelector('.copy-btn');
+  const originalText = contentEl.innerText.trim();
+  const apiKey = sessionStorage.getItem('ck_api_key') || '';
+  if (!apiKey) { showToast('Falta la API key', '#ef4444'); return; }
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 400, messages: [{ role: 'user', content: `Acorta este copy de ${platform} para que tenga MÁXIMO ${maxChars} caracteres. Mantén el gancho, el beneficio principal y el CTA. Conserva el tono informal y colombiano. No agregues nada nuevo. Responde SOLO con el copy acortado, sin explicaciones ni comillas.\n\nCopy original:\n${originalText}` }] })
+    });
+    const data = await response.json();
+    const trimmed = data.content?.find(b => b.type === 'text')?.text?.trim() || '';
+    if (!trimmed) throw new Error('Sin respuesta');
+    contentEl.innerHTML = fmt(trimmed);
+    const footer = btn.closest('.pieza-footer');
+    const counter = footer.querySelector('.char-counter');
+    const pct = trimmed.length / maxChars;
+    const cls = pct > 1 ? 'char-over' : pct >= 0.8 ? 'char-warn' : 'char-ok';
+    counter.className = `char-counter ${cls}`;
+    counter.textContent = `${pct > 1 ? '⚠ ' : ''}${trimmed.length}/${maxChars} car.`;
+    if (copyBtn) copyBtn.setAttribute('onclick', `copiarTexto(this,\`${esc(trimmed)}\`)`);
+    if (trimmed.length <= maxChars) btn.remove();
+    else { btn.disabled = false; btn.textContent = '✂ Ajustar'; }
+  } catch(e) { showToast('Error al ajustar: ' + (e.message||''), '#ef4444'); btn.disabled = false; btn.textContent = '✂ Ajustar'; }
+}
 function renderHistory(){ const wrap=document.getElementById('history-wrap'); const list=document.getElementById('history-list'); if(!history.length){wrap.style.display='none';return;} wrap.style.display='block'; list.innerHTML=history.map((h,i)=>`<div class="history-item" onclick="restoreHistory(${i})"><div class="history-title">${h.tipo} · ${h.ciudad}</div><div class="history-meta">${h.producto} · ${h.timestamp}</div></div>`).join(''); }
 function restoreHistory(idx){ const h=history[idx]; if(!h) return; document.getElementById('empty-state').style.display='none'; document.getElementById('piezas-grid').innerHTML=''; renderPiezas(h.raw,h.platforms,Object.keys(TIPO_META).find(k=>TIPO_META[k]===h.tipo)||'oferta_semana',h.ciudad,document.getElementById('chk-hashtags').checked,document.getElementById('chk-brief').checked); document.getElementById('top-subtitle').textContent=h.tipo+' · '+h.ciudad; document.getElementById('copy-all-btn').style.display='block'; }
 
