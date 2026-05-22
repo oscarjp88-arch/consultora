@@ -852,14 +852,22 @@ Object.entries(CIUDADES_META).forEach(([ciudad, meta]) => {
   });
 });
 const DIRECCIONES = Object.fromEntries(Object.entries(TIENDAS_FLAT).map(([k,v]) => [k, v.direccion]));
-function getTiendaInfo(val) { return TIENDAS_FLAT[val] || null; }
-function getCiudadNombre(val) { return TIENDAS_FLAT[val]?.ciudad || val.split(' · ')[0] || val; }
+function isCiudadCompleta(val) { return typeof val === 'string' && val.startsWith('ciudad:'); }
+function getTiendaInfo(val) { return isCiudadCompleta(val) ? null : (TIENDAS_FLAT[val] || null); }
+function getCiudadNombre(val) {
+  if (isCiudadCompleta(val)) return val.slice(7);
+  return TIENDAS_FLAT[val]?.ciudad || val.split(' · ')[0] || val;
+}
 function populateCiudadDropdown() {
   const sel = document.getElementById('ciudad');
   const grupos = Object.entries(CIUDADES_META);
   grupos.forEach(([ciudad, meta]) => {
     const grp = document.createElement('optgroup');
     grp.label = ciudad;
+    const optCity = document.createElement('option');
+    optCity.value = `ciudad:${ciudad}`;
+    optCity.textContent = `${ciudad} (todas las tiendas)`;
+    grp.appendChild(optCity);
     meta.tiendas.forEach(t => {
       const opt = document.createElement('option');
       opt.value = `${ciudad} · ${t.nombre}`;
@@ -895,6 +903,8 @@ async function generarContenido() {
     return;
   }
   const ciudad = document.getElementById('ciudad').value;
+  const ciudadDisplay = getCiudadNombre(ciudad);
+  const esCiudad = isCiudadCompleta(ciudad);
   const modo = document.getElementById('modo')?.value || 'credito';
   const tipo = document.getElementById('tipo').value;
   const producto = document.getElementById('producto').value.trim();
@@ -907,8 +917,10 @@ async function generarContenido() {
   const inclHashtags = document.getElementById('chk-hashtags').checked;
   const inclBrief = document.getElementById('chk-brief').checked;
   const inclDireccion = document.getElementById('chk-direccion').checked;
-  const direccion = inclDireccion ? (DIRECCIONES[ciudad] || null) : null;
-  const culturaCtx = getTiendaInfo(ciudad)?.contexto || null;
+  const direccion = (!esCiudad && inclDireccion) ? (DIRECCIONES[ciudad] || null) : null;
+  const culturaCtx = esCiudad
+    ? (CIUDADES_META[ciudad.slice(7)]?.contexto || null)
+    : (getTiendaInfo(ciudad)?.contexto || null);
 
   if (!ciudad) {
     const sel = document.getElementById('ciudad');
@@ -1037,7 +1049,7 @@ CAPA 7 - CIUDAD Y DIRECCIÓN: nombre de tienda${direccion ? ' (' + direccion + '
 
 PARÁMETROS:
 - Modo de publicidad: ${modoLabel}
-- Ciudad/tienda: ${ciudad}
+- Ciudad/tienda: ${ciudadDisplay}
 - Tipo de pieza: ${TIPO_META[tipo]}
 ${producto ? '- Producto: ' + producto : ''}
 ${cuota && modo === 'credito' ? '- Precio cuota mensual: ' + cuota : ''}
@@ -1057,7 +1069,7 @@ PERFIL DEL CLIENTE REAL (habla DIRECTAMENTE a esta persona):
 - Cuando le dicen que sí, siente alivio y orgullo
 El copy debe hacerlo sentir que Creditek es diferente: aquí sí lo atienden bien, aquí sí le aprueban, aquí nadie lo juzga.
 
-${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudad}:\n${culturaCtx}\n${getTiendaInfo(ciudad)?.nombre ? `Tienda: ${getTiendaInfo(ciudad).nombre}. Puedes mencionar este nombre cuando aporte autenticidad local (ej: "Visítanos en ${getTiendaInfo(ciudad).nombre}").` : ''}\n\n` : ''}LENGUAJE Y TONO OBLIGATORIO:
+${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudadDisplay}:\n${culturaCtx}\n${!esCiudad && getTiendaInfo(ciudad)?.nombre ? `Tienda: ${getTiendaInfo(ciudad).nombre}. Puedes mencionar este nombre cuando aporte autenticidad local (ej: "Visítanos en ${getTiendaInfo(ciudad).nombre}").` : `CTA de ciudad: usa "Visítanos en ${ciudadDisplay}" sin nombrar tienda específica.`}\n\n` : ''}LENGUAJE Y TONO OBLIGATORIO:
 - Habla como un vendedor colombiano cercano y respetuoso, no como una marca corporativa
 ${culturaCtx && (culturaCtx.includes('tradicional') || culturaCtx.includes('ganadero')) ? '- Registro: usa "usted" si el contexto lo pide; cálido, de confianza, como alguien del mismo pueblo.' : '- Registro: tuteo natural y directo, como alguien que ya conoce al cliente.'}
 - Frases cortas y directas. Una idea por frase.
@@ -1517,10 +1529,12 @@ function resetPreviewFields() {
   document.getElementById('img-titular').value = titularDefaults[modo] || titularDefaults.credito;
   document.getElementById('img-precio').value  = precioDefaults[modo] ?? '';
   const inclDirImg = document.getElementById('chk-direccion').checked;
+  const esCiudadReset = isCiudadCompleta(ciudad);
   const tiendaInfo = getTiendaInfo(ciudad);
-  const dirImg = inclDirImg ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
-  const nombreCta = tiendaInfo?.nombre || getCiudadNombre(ciudad);
-  console.log('[dirección] ciudad:', ciudad, '| tiendaInfo:', tiendaInfo, '| dirImg:', dirImg, '| nombreCta:', nombreCta);
+  if (inclDirImg && esCiudadReset) showToast('Dirección no disponible para ciudad completa', '#f59e0b');
+  const dirImg = (!esCiudadReset && inclDirImg) ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
+  const nombreCta = esCiudadReset ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
+  console.log('[dirección] ciudad:', ciudad, '| esCiudad:', esCiudadReset, '| tiendaInfo:', tiendaInfo, '| dirImg:', dirImg);
   const ctaBase = ciudad ? `Visítanos en ${nombreCta}` : 'Visítanos hoy';
   document.getElementById('img-cta').value = dirImg ? `${ctaBase} · ${dirImg}` : ctaBase;
   buildImgPrompt();
@@ -1545,11 +1559,12 @@ function buildImgPrompt() {
   const ctaEl     = document.getElementById('img-cta');
   const cuota     = document.getElementById('cuota').value.trim();
   const inicial   = document.getElementById('inicial').value.trim();
+  const esCiudadBuild   = isCiudadCompleta(ciudad);
   const tiendaInfoBuild = getTiendaInfo(ciudad);
-  const nombreCtaBuild  = tiendaInfoBuild?.nombre || getCiudadNombre(ciudad);
+  const nombreCtaBuild  = esCiudadBuild ? getCiudadNombre(ciudad) : (tiendaInfoBuild?.nombre || getCiudadNombre(ciudad));
   const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCtaBuild}!`);
   const precio    = precioEl?.value.trim() || '';
-  const inclDirBuild = document.getElementById('chk-direccion').checked;
+  const inclDirBuild = !esCiudadBuild && document.getElementById('chk-direccion').checked;
   const dirBuild     = inclDirBuild ? (tiendaInfoBuild?.direccion || DIRECCIONES[ciudad] || null) : null;
   const ctaFallback  = dirBuild ? `Visítanos en ${nombreCtaBuild} · ${dirBuild}` : `Visítanos en ${nombreCtaBuild}`;
   const cta          = ctaEl?.value.trim() || ctaFallback;
