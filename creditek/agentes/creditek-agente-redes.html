@@ -1110,7 +1110,7 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
     const text = data.content?.find(b => b.type === 'text')?.text || '';
     document.getElementById('loading-card').style.display = 'none';
     renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief);
-    const h = { ciudad, tipo: TIPO_META[tipo], producto: producto||'—', timestamp: new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}), raw: text, platforms };
+    const h = { ciudad, modo, tipo: TIPO_META[tipo], producto: producto||'—', timestamp: new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}), raw: text, platforms };
     history.unshift(h); if (history.length > 8) history.pop();
     renderHistory();
     document.getElementById('top-subtitle').textContent = TIPO_META[tipo]+' · '+ciudad+' · '+platforms.length+' plataforma'+(platforms.length>1?'s':'');
@@ -1332,6 +1332,9 @@ function restoreHistory(idx) {
   if (h.modo) document.getElementById('modo').value = h.modo;
   document.getElementById('tipo').value = tipoKey;
   updateModoUI();
+  document.querySelectorAll('.platform-btn').forEach(b => {
+    b.classList.toggle('active', h.platforms.includes(b.dataset.platform));
+  });
 }
 
 function renderTitulares(titulares) {
