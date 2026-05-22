@@ -6,6 +6,7 @@
 <title>Creditek · Agente 1 — Generador de Contenido</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 :root {
   --azul: #0B1E3D;
@@ -323,6 +324,11 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .img-edit-btn:hover{background:rgba(0,196,204,.18);border-color:var(--turquesa)}
 .img-edit-btn:disabled{opacity:.4;cursor:not-allowed}
 .img-edit-err{font-size:12px;color:#ff6b6b;padding:8px 0 0;line-height:1.6;display:none}
+.img-ab-use-btn{display:block;margin-top:6px;background:rgba(0,196,204,.07);border:1px solid rgba(0,196,204,.3);color:var(--turquesa);text-align:center;padding:7px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer;width:100%;font-family:'Montserrat',sans-serif;letter-spacing:.03em;transition:all .2s}
+.img-ab-use-btn:hover{background:rgba(0,196,204,.16)}
+.copy-footer-btn{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text3);font-size:11px;padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-left:auto;white-space:nowrap;flex-shrink:0}
+.copy-footer-btn:hover{border-color:var(--turquesa);color:var(--turquesa)}
+.copy-footer-btn.copied{border-color:var(--turquesa);color:var(--turquesa)}
 @keyframes imgFadeIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
 .img-output.fade-in{animation:imgFadeIn .35s ease}
 /* Modal keys imagen */
@@ -588,6 +594,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     <div style="display:flex;gap:8px;align-items:center">
       <button class="copy-all-btn" onclick="generarContenido()" id="regen-btn" style="display:none;background:#172d54;color:#00C4CC;border:1px solid rgba(0,196,204,0.3)">↺ Regenerar</button>
       <button class="copy-all-btn" onclick="copiarTodo()" id="copy-all-btn" style="display:none">Copiar todo</button>
+      <button class="copy-all-btn" onclick="exportarPaquete()" id="export-btn" style="display:none;background:#172d54;color:#00C4CC;border:1px solid rgba(0,196,204,0.3)" title="Descargar ZIP con todos los copies e imágenes">📦 Exportar</button>
     </div>
   </div>
   <div class="content-area" id="content-area">
@@ -679,12 +686,14 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
             <img class="img-output" id="img-ab-a" src="" alt="Gemini" style="display:none">
             <div class="img-ab-col-err" id="img-ab-err-a" style="display:none"></div>
             <button class="img-dl-btn" id="img-ab-dl-a" onclick="descargarImagenAB('a')" style="display:none">⬇ Descargar</button>
+            <button class="img-ab-use-btn" id="img-ab-use-a" onclick="usarImagenDeAB('a')" style="display:none">✓ Usar en editor</button>
           </div>
           <div class="img-ab-col">
             <div class="img-ab-col-label">⬡ GPT Image 2</div>
             <img class="img-output" id="img-ab-b" src="" alt="GPT Image 2" style="display:none">
             <div class="img-ab-col-err" id="img-ab-err-b" style="display:none"></div>
             <button class="img-dl-btn" id="img-ab-dl-b" onclick="descargarImagenAB('b')" style="display:none">⬇ Descargar</button>
+            <button class="img-ab-use-btn" id="img-ab-use-b" onclick="usarImagenDeAB('b')" style="display:none">✓ Usar en editor</button>
           </div>
         </div>
       </div>
@@ -1105,6 +1114,7 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
     renderHistory();
     document.getElementById('top-subtitle').textContent = TIPO_META[tipo]+' · '+ciudad+' · '+platforms.length+' plataforma'+(platforms.length>1?'s':'');
     document.getElementById('copy-all-btn').style.display = 'block';
+    document.getElementById('export-btn').style.display = 'block';
     document.getElementById('regen-btn').style.display = 'block';
     showToast('✓ Piezas generadas correctamente');
     showImgSection();
@@ -1129,6 +1139,7 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
     const copy = match[1].trim();
     const card = document.createElement('div');
     card.className = 'pieza-card';
+    card.dataset.platform = platform;
     card.innerHTML = `
       <div class="pieza-header">
         <div class="pieza-platform">
@@ -1144,6 +1155,7 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
         <span class="pieza-tag">${lk}</span>
         ${charCounterHTML(platform, copy.length)}
         ${copy.length > (CHAR_LIMITS[platform] || 400) ? `<button class="ajustar-btn" onclick="ajustarCopy(this, '${platform}', ${CHAR_LIMITS[platform] || 400})">✂ Ajustar</button>` : ''}
+        <button class="copy-footer-btn" onclick="copiarTexto(this,\`${esc(copy)}\`)"><span>📋 Copiar</span></button>
       </div>`;
     grid.appendChild(card);
   });
@@ -1182,6 +1194,87 @@ function fmt(text){ return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 function esc(str){ return str.replace(/`/g,'\\`').replace(/\$/g,'\\$'); }
 function copiarTexto(btn,texto){ navigator.clipboard.writeText(texto).then(()=>{ btn.classList.add('copied'); btn.querySelector('span').textContent='✓ Copiado'; setTimeout(()=>{ btn.classList.remove('copied'); btn.querySelector('span').textContent='Copiar'; },2000); }); }
 function copiarTodo(){ const cards=document.querySelectorAll('.pieza-content,.hashtag-block,.brief-block'); let all=''; cards.forEach(c=>{all+=c.innerText+'\n\n---\n\n';}); navigator.clipboard.writeText(all.trim()).then(()=>{ const btn=document.getElementById('copy-all-btn'); btn.textContent='✓ Copiado todo'; setTimeout(()=>{btn.textContent='Copiar todo';},2000); }); }
+
+async function exportarPaquete() {
+  if (typeof JSZip === 'undefined') { showToast('JSZip no disponible. Verifica tu conexión a internet.', '#ef4444'); return; }
+  const btn = document.getElementById('export-btn');
+  btn.disabled = true; btn.textContent = '⏳ Empacando...';
+  try {
+    const zip = new JSZip();
+    const ciudadRaw = document.getElementById('ciudad').value || 'creditek';
+    const ciudad = ciudadRaw.split(' · ')[0].toLowerCase().replace(/\s+/g,'-');
+    const ts = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'2-digit'}).replace(/\//g,'-');
+    const folder = zip.folder(`creditek-${ciudad}-${ts}`);
+
+    // Copy per platform (reads current DOM — reflects any ajustar edits)
+    document.querySelectorAll('.pieza-card[data-platform]').forEach(card => {
+      const p = card.dataset.platform;
+      const el = card.querySelector('.pieza-content');
+      if (el) folder.file(`${p}.txt`, el.innerText.trim());
+    });
+
+    // Hashtags
+    const htEl = document.querySelector('.hashtag-block');
+    if (htEl) {
+      const htText = htEl.innerText.replace(/^Para pegar[^\n]*\n/,'').trim();
+      if (htText) folder.file('hashtags.txt', htText);
+    }
+
+    // Brief visual
+    const brEl = document.querySelector('.brief-block');
+    if (brEl) {
+      const brText = brEl.innerText.replace(/^Instrucciones[^\n]*\n/,'').trim();
+      if (brText) folder.file('brief-canva.txt', brText);
+    }
+
+    // Titulares
+    const tits = [...document.querySelectorAll('.titular-opt')].map(b => b.textContent.trim()).filter(Boolean);
+    if (tits.length) folder.file('titulares.txt', tits.join('\n'));
+
+    // Imagen principal (single engine)
+    const imgSrc = imgHistory[imgHistoryIdx];
+    if (imgSrc && imgSrc.startsWith('data:')) {
+      const modelName = (lastImgModelLabel || 'imagen').toLowerCase().replace(/\s+/g,'-');
+      folder.file(`${modelName}.png`, imgSrc.split(',')[1], { base64: true });
+    }
+
+    // Imágenes A/B
+    const abA = document.getElementById('img-ab-a');
+    const abB = document.getElementById('img-ab-b');
+    if (abA?.src?.startsWith('data:')) folder.file('imagen-gemini.png', abA.src.split(',')[1], { base64: true });
+    if (abB?.src?.startsWith('data:')) folder.file('imagen-gpt.png', abB.src.split(',')[1], { base64: true });
+
+    const hasContent = folder.files && Object.keys(folder.files).length > 0;
+    if (!hasContent) { showToast('No hay contenido para exportar aún.', '#f59e0b'); btn.disabled=false; btn.textContent='📦 Exportar'; return; }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `creditek-${ciudad}-${ts}.zip`; a.click();
+    URL.revokeObjectURL(url);
+    showToast('✓ Paquete ZIP descargado');
+  } catch(e) {
+    showToast('Error al generar ZIP: ' + (e.message || ''), '#ef4444');
+    console.error(e);
+  }
+  btn.disabled = false; btn.textContent = '📦 Exportar';
+}
+
+function usarImagenDeAB(side) {
+  const el = document.getElementById(`img-ab-${side}`);
+  if (!el?.src?.startsWith('data:')) return;
+  imgHistory = [el.src];
+  imgHistoryIdx = 0;
+  mostrarImgVersion(el.src);
+  const labelEl = side === 'a' ? document.getElementById('img-ab-label-a') : null;
+  const label = labelEl ? labelEl.textContent.replace(/^[✦⬡]\s+/,'') : 'GPT Image 2';
+  document.getElementById('img-model-lbl').textContent = `Usando: ${label}`;
+  document.getElementById('img-result').style.display = 'block';
+  document.getElementById('img-editor').style.display = 'block';
+  renderImgHistoryNav();
+  document.getElementById('img-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  showToast(`✓ Imagen de ${label} lista para editar`);
+}
 
 async function ajustarCopy(btn, platform, maxChars) {
   const card = btn.closest('.pieza-card');
@@ -1731,6 +1824,7 @@ async function generarAB() {
     document.getElementById(`img-ab-${s}`).style.display = 'none';
     document.getElementById(`img-ab-err-${s}`).style.display = 'none';
     document.getElementById(`img-ab-dl-${s}`).style.display = 'none';
+    document.getElementById(`img-ab-use-${s}`).style.display = 'none';
   });
   document.getElementById('img-ab-label-a').textContent = '✦ Gemini Imagen 4';
   resultDiv.style.display = 'block';
@@ -1745,6 +1839,7 @@ async function generarAB() {
     img.src = gemRes.value; img.style.display = 'block';
     document.getElementById('img-ab-label-a').textContent = `✦ ${lastImgModelLabel}`;
     document.getElementById('img-ab-dl-a').style.display = 'block';
+    document.getElementById('img-ab-use-a').style.display = 'block';
   } else {
     const err = document.getElementById('img-ab-err-a');
     err.textContent = gemRes.reason?.message || 'Error Gemini'; err.style.display = 'block';
@@ -1754,6 +1849,7 @@ async function generarAB() {
     const img = document.getElementById('img-ab-b');
     img.src = dalleRes.value; img.style.display = 'block';
     document.getElementById('img-ab-dl-b').style.display = 'block';
+    document.getElementById('img-ab-use-b').style.display = 'block';
   } else {
     const err = document.getElementById('img-ab-err-b');
     err.textContent = dalleRes.reason?.message || 'Error GPT Image 2'; err.style.display = 'block';
