@@ -306,6 +306,16 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .estilo-btn.active{background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
 .estilo-custom-ta{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:12px;padding:8px 12px;resize:vertical;min-height:60px;outline:none;font-family:'DM Sans',sans-serif;display:none;transition:border-color .2s}
 .estilo-custom-ta:focus{border-color:var(--turquesa)}
+/* Logos de financieras */
+.financieras-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.fin-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;position:relative}
+.fin-item input[type=checkbox]{position:absolute;top:5px;right:5px;accent-color:var(--turquesa);width:13px;height:13px;cursor:pointer}
+.fin-item:has(input:checked){background:rgba(0,196,204,.1);border-color:var(--turquesa)}
+.fin-logo{height:24px;object-fit:contain;max-width:80px;filter:brightness(0) invert(1);opacity:.5;transition:opacity .15s}
+.fin-item:has(input:checked) .fin-logo{opacity:1}
+.fin-item span{font-size:10px;color:var(--text3);text-align:center}
+.fin-item:has(input:checked) span{color:var(--turquesa)}
+.fin-note{font-size:10px;color:var(--text3);line-height:1.5;padding:0 4px}
 /* Panel preview antes de imagen */
 .img-preview-panel{padding:14px 18px 8px;border-bottom:1px solid var(--border)}
 .img-preview-lbl-sec{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;display:block}
@@ -467,6 +477,32 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <input type="checkbox" id="chk-direccion">
       <label for="chk-direccion">Incluir dirección de la tienda</label>
     </div>
+  </div>
+  <div class="sidebar-section" style="padding-bottom:8px">
+    <div class="sidebar-label">Logos de financieras en imagen</div>
+    <div class="financieras-grid">
+      <label class="fin-item">
+        <input type="checkbox" id="fin-payjoy" value="payjoy" onchange="onFinancieraChange()">
+        <img src="logos/payjoy.png" alt="PayJoy" class="fin-logo">
+        <span>PayJoy</span>
+      </label>
+      <label class="fin-item">
+        <input type="checkbox" id="fin-krediya" value="krediya" onchange="onFinancieraChange()">
+        <img src="logos/krediya.png" alt="Krediya" class="fin-logo">
+        <span>Krediya</span>
+      </label>
+      <label class="fin-item">
+        <input type="checkbox" id="fin-alocredit" value="alocredit" onchange="onFinancieraChange()">
+        <img src="logos/alocredit.png" alt="Alo Credit" class="fin-logo">
+        <span>Alo Credit</span>
+      </label>
+      <label class="fin-item">
+        <input type="checkbox" id="fin-addi" value="addi" onchange="onFinancieraChange()">
+        <img src="logos/addi.png" alt="Addi" class="fin-logo">
+        <span>Addi</span>
+      </label>
+    </div>
+    <div class="fin-note">Aparecerán en la franja inferior de la imagen, alineados horizontalmente</div>
   </div>
   <div class="sidebar-section" style="padding-bottom:10px">
     <div class="sidebar-label">API Key</div>
@@ -859,6 +895,42 @@ let currentEngine = 'gemini';
 let currentEstilo = 'formal';
 let productoImgBase64 = null;
 let logoBase64 = null;
+const financierasCache = {};
+
+const FINANCIERAS = [
+  { id: 'payjoy',    label: 'PayJoy',    file: 'logos/payjoy.png' },
+  { id: 'krediya',   label: 'Krediya',   file: 'logos/krediya.png' },
+  { id: 'alocredit', label: 'Alo Credit',file: 'logos/alocredit.png' },
+  { id: 'addi',      label: 'Addi',      file: 'logos/addi.png' },
+];
+
+function getSelectedFinancieras() {
+  return FINANCIERAS.filter(f => document.getElementById('fin-' + f.id)?.checked);
+}
+
+async function loadFinancieraB64(fin) {
+  if (financierasCache[fin.id]) return financierasCache[fin.id];
+  try {
+    const resp = await fetch(fin.file);
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => { financierasCache[fin.id] = e.target.result; resolve(e.target.result); };
+      reader.readAsDataURL(blob);
+    });
+  } catch(e) { return null; }
+}
+
+async function loadAllSelectedFinancieras() {
+  const selected = getSelectedFinancieras();
+  const results = await Promise.all(selected.map(f => loadFinancieraB64(f)));
+  return selected.map((f, i) => ({ label: f.label, b64: results[i] })).filter(x => x.b64);
+}
+
+function onFinancieraChange() {
+  buildImgPrompt();
+}
 
 function selectEngine(engine) {
   currentEngine = engine;
@@ -964,7 +1036,12 @@ function buildImgPrompt() {
   };
   const modoDesc = modoMap[modo] || modoMap.credito;
 
-  const p = `Commercial advertisement for Creditek, a Colombian fintech phone-credit brand. ${modoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. Turquoise #00C4CC for price '${precio}' in large bold numerals. Bottom area: CTA label '${cta}' on turquoise #00C4CC button. Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. No watermarks, no placeholder text, no extra elements. Square 1080×1080px, crisp high contrast.`;
+  const selectedFins = getSelectedFinancieras();
+  const finStrip = selectedFins.length
+    ? ` At the very bottom of the image, a thin horizontal strip (white or semi-transparent background) contains the small partner logos of the following financing companies, evenly spaced and horizontally aligned: ${selectedFins.map(f => f.label).join(', ')}. Logos are small, clean, and clearly legible.`
+    : '';
+
+  const p = `Commercial advertisement for Creditek, a Colombian fintech phone-credit brand. ${modoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. Turquoise #00C4CC for price '${precio}' in large bold numerals. CTA label '${cta}' on turquoise #00C4CC button.${finStrip} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. No watermarks, no placeholder text. Square 1080×1080px, crisp high contrast.`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
@@ -1073,9 +1150,9 @@ async function generarConGemini(key, prompt) {
 }
 
 async function generarConDalle(key, prompt) {
-  const logo = await loadLogoBase64();
+  const [logo, finLogos] = await Promise.all([loadLogoBase64(), loadAllSelectedFinancieras()]);
   let inputPayload;
-  if (logo || productoImgBase64) {
+  if (logo || productoImgBase64 || finLogos.length) {
     const content = [];
     if (logo) {
       content.push({ type: 'input_text', text: 'Reference brand logo — reproduce exactly in top-right corner of the ad:' });
@@ -1084,6 +1161,10 @@ async function generarConDalle(key, prompt) {
     if (productoImgBase64) {
       content.push({ type: 'input_text', text: 'Reference product photo — feature this product prominently in the advertisement:' });
       content.push({ type: 'input_image', image_url: productoImgBase64 });
+    }
+    for (const fin of finLogos) {
+      content.push({ type: 'input_text', text: `Partner financing logo for bottom strip (${fin.label}):` });
+      content.push({ type: 'input_image', image_url: fin.b64 });
     }
     content.push({ type: 'input_text', text: prompt });
     inputPayload = [{ role: 'user', content }];
