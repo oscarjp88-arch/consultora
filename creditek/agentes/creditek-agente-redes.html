@@ -955,9 +955,9 @@ PERFIL DEL CLIENTE CREDITEK:
 - Cuando le dicen que sí, siente alivio y orgullo
 Habla DIRECTAMENTE a esta persona. El copy debe hacerlo sentir que Creditek es diferente — que aquí sí lo atienden bien y sí le aprueban.
 
-${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudad}:\n${culturaCtx}\n\n` : ''}LENGUAJE Y TONO OBLIGATORIO:
-- Habla como un vendedor colombiano joven y cercano, no como una marca corporativa
-- Tono: informal, directo, sin tecnicismos. Como le hablas a un cliente que ya conoces.
+${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudad}:\n${culturaCtx}\n${getTiendaInfo(ciudad)?.nombre ? `Tienda: ${getTiendaInfo(ciudad).nombre}. Puedes mencionar este nombre cuando aporte autenticidad local (ej: "Visítanos en ${getTiendaInfo(ciudad).nombre}").` : ''}\n\n` : ''}LENGUAJE Y TONO OBLIGATORIO:
+- Habla como un vendedor colombiano cercano y respetuoso, no como una marca corporativa
+${culturaCtx && (culturaCtx.includes('tradicional') || culturaCtx.includes('ganadero')) ? '- Registro: usa "usted" si el contexto lo pide; cálido, de confianza, como alguien del mismo pueblo.' : '- Registro: tuteo natural y directo, como alguien que ya conoce al cliente.'}
 - Frases cortas y directas. Una idea por frase.
 - PROHIBIDO: anglicismos, tecnicismos, frases corporativas como "potencia tu experiencia", "descubre", "innovador", "soluciones", "adquirir"
 
@@ -1001,11 +1001,7 @@ Después añade:
 3. {titular}
 
 Formato EXACTO de la respuesta completa:
-[PLATAFORMA: Facebook]
-{copy}
-
-[PLATAFORMA: Instagram]
-{copy}
+${platforms.map(p => `[PLATAFORMA: ${PLATFORMS_META[p].label}]\n{copy}`).join('\n\n')}
 
 ${inclHashtags ? '[HASHTAGS]\n{hashtags}' : ''}
 ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
@@ -1026,7 +1022,7 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
+        max_tokens: 6000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -1475,12 +1471,16 @@ async function generarImagen() {
 }
 
 async function generarConGemini(key, prompt) {
+  const geminiNegative = "text distortion, blurry text, misspelled brand name, watermark, low quality, pixelated, cluttered, fake UI overlays, extra people, placeholder logos, generic stock photo feel";
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/imagen-4-0-generate-001:predict?key=${encodeURIComponent(key)}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ instances: [{ prompt }], parameters: { sampleCount: 1 } })
+      body: JSON.stringify({
+        instances: [{ prompt, negativePrompt: geminiNegative }],
+        parameters: { sampleCount: 1, aspectRatio: currentFormat === 'stories' ? '9:16' : '1:1' }
+      })
     }
   );
   if (!res.ok) {
@@ -1525,7 +1525,7 @@ async function generarConDalle(key, prompt) {
     body: JSON.stringify({
       model: 'gpt-4o',
       input: inputPayload,
-      tools: [{ type: 'image_generation', size: '1024x1024' }]
+      tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1792' : '1024x1024' }]
     })
   });
   if (!res.ok) {
