@@ -1243,6 +1243,7 @@ function buildImgPrompt() {
   const precioEl  = document.getElementById('img-precio');
   const ctaEl     = document.getElementById('img-cta');
   const cuota     = document.getElementById('cuota').value.trim();
+  const inicial   = document.getElementById('inicial').value.trim();
   const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${ciudad}!`);
   const precio    = precioEl?.value.trim()  || cuota || '';
   const cta       = ctaEl?.value.trim()     || `Visítanos en ${ciudad}`;
@@ -1258,11 +1259,11 @@ function buildImgPrompt() {
 
   // Composition by piece type (takes priority over mode for layout decisions)
   const tipoImgMap = {
-    oferta_semana:    `Product shot of ${producto} large on the right side. Prominent turquoise #00C4CC price badge on the upper-left with large bold numerals. Bold headline text on the left. Strong visual hierarchy: headline → price → product.`,
+    oferta_semana:    `Product shot of ${producto} large on the right side.${precio ? ` Prominent turquoise #00C4CC price badge '${precio}' on the upper-left in large bold numerals.` : ''} Bold headline text on the left. Strong visual hierarchy: headline → ${precio ? 'price → ' : ''}product.`,
     showcase_producto:`${producto} centered hero shot, clean product floating with soft drop shadow. Minimal text. Small feature-callout labels around the product. Product dominates 60% of the composition.`,
     testimonio:       `Warm tone on deep navy background. Large opening quotation mark in turquoise #00C4CC. Two-line testimonial quote in large white text, centered. Warm human silhouette or portrait on one side. No product image needed.`,
     educativo:        `Clean informational layout. Simple bold icons (checkmarks, arrows, numbers) in turquoise #00C4CC on dark background. Text-forward design, clear reading hierarchy. Feels like a helpful tips card, not an ad.`,
-    promo_urgencia:   `High-energy urgency composition. Large "SOLO HOY" or countdown badge in turquoise #00C4CC. ${producto} product with diagonal flash element or ribbon. Price in very large bold numerals. High contrast, fast visual read.`,
+    promo_urgencia:   `High-energy urgency composition. Large "SOLO HOY" or countdown badge in turquoise #00C4CC. ${producto} product with diagonal flash element or ribbon.${precio ? ` Price '${precio}' in very large bold numerals.` : ''} High contrast, fast visual read.`,
     detras_camara:    `Warm store interior atmosphere. Natural ambient lighting. Retail display context with phones visible. People in natural store setting. Authentic documentary feel, no heavy graphic overlays or design elements.`
   };
   const tipoDesc = tipoImgMap[tipo] || tipoImgMap.oferta_semana;
@@ -1284,10 +1285,24 @@ function buildImgPrompt() {
     ? 'Vertical Stories composition: Creditek logo centered at top (top 15% of canvas). Main product or visual element centered in the middle third. Bold headline text below center. Price accent and CTA button near the bottom (bottom 25%). Use the full vertical height with generous spacing between zones.'
     : 'Square Feed composition: balanced horizontal layout, strong center focal point.';
 
-  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays. QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
+  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays. DO NOT invent any price, number, or monetary amount not explicitly specified. QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
 
-  const precioSegment = precio ? `Turquoise #00C4CC accent for '${precio}' in large bold numerals. ` : '';
-  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. ${sizeSpec}, crisp high contrast.${negativePrompt}`;
+  const precioSegment  = precio  ? `Turquoise #00C4CC accent for '${precio}' in large bold numerals. ` : '';
+  const inicialSegment = inicial ? `Show initial payment badge: 'Inicial desde ${inicial}' in turquoise #00C4CC, prominent position near the CTA button. ` : '';
+
+  const fechaBgMap = {
+    madre:    'clean white #FFFFFF background, dark navy #0B1E3D for text, rose pink #FF85A2 for accents',
+    padre:    'solid deep navy #0B1E3D background',
+    mundial:  'very dark navy #001233 background',
+    navidad:  'deep forest green #0A2015 background',
+    amistad:  'deep burgundy #1A0010 background',
+    halloween:'near black #0D0D0D background',
+    anonuevo: 'black #050505 background',
+    clases:   'clean white #FFFFFF background with sky-blue #87CEEB accents',
+  };
+  const bgSpec = (fechaData2 && fechaBgMap[fechaKey2]) ? fechaBgMap[fechaKey2] : 'solid deep navy #0B1E3D';
+
+  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}${inicialSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold 'Creditek' wordmark in Montserrat, no tagline. Background: ${bgSpec}. ${sizeSpec}, crisp high contrast.${negativePrompt}`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
