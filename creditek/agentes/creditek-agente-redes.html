@@ -929,7 +929,7 @@ PATRONES DE COPY MODO CRÉDITO (cita textualmente o adapta mínimo):
 "Solo hasta el viernes. Después no hay más."
 "Llévalo hoy, págalo cómodo. Así de fácil."
 WhatsApp: "Ey, llegó el [modelo] a [nombre tienda]. Inicial de $50.000 pesitos y lo llevas hoy. ¿Cuándo nos visitas?"
-Para Chinú / registro usted: "Don Juan, en Chinú Cell lo atendemos bien. Con la cédula alcanza — pase y lo miramos."`;
+Para Chinú / registro usted: "Don Juan, en [nombre tienda] lo atendemos bien. Con la cédula alcanza — pase y lo miramos."`;
 
   } else if (modo === 'promo') {
     contextoBlock = `Eres el Agente de Marketing de Creditek SAS, tienda colombiana de celulares con 11 locales propios en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
@@ -1192,7 +1192,18 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
 
 function fmt(text){ return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<em>$1</em>').replace(/\*(.+?)\*/g,'<em>$1</em>'); }
 function esc(str){ return str.replace(/`/g,'\\`').replace(/\$/g,'\\$'); }
-function copiarTexto(btn,texto){ navigator.clipboard.writeText(texto).then(()=>{ btn.classList.add('copied'); btn.querySelector('span').textContent='✓ Copiado'; setTimeout(()=>{ btn.classList.remove('copied'); btn.querySelector('span').textContent='Copiar'; },2000); }); }
+function copiarTexto(btn, texto) {
+  const span = btn.querySelector('span');
+  const original = span ? span.textContent : btn.textContent;
+  navigator.clipboard.writeText(texto).then(() => {
+    btn.classList.add('copied');
+    if (span) span.textContent = '✓ Copiado'; else btn.textContent = '✓ Copiado';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      if (span) span.textContent = original; else btn.textContent = original;
+    }, 2000);
+  });
+}
 function copiarTodo(){ const cards=document.querySelectorAll('.pieza-content,.hashtag-block,.brief-block'); let all=''; cards.forEach(c=>{all+=c.innerText+'\n\n---\n\n';}); navigator.clipboard.writeText(all.trim()).then(()=>{ const btn=document.getElementById('copy-all-btn'); btn.textContent='✓ Copiado todo'; setTimeout(()=>{btn.textContent='Copiar todo';},2000); }); }
 
 async function exportarPaquete() {
@@ -1308,7 +1319,20 @@ async function ajustarCopy(btn, platform, maxChars) {
   } catch(e) { showToast('Error al ajustar: ' + (e.message||''), '#ef4444'); btn.disabled = false; btn.textContent = '✂ Ajustar'; }
 }
 function renderHistory(){ const wrap=document.getElementById('history-wrap'); const list=document.getElementById('history-list'); if(!history.length){wrap.style.display='none';return;} wrap.style.display='block'; list.innerHTML=history.map((h,i)=>`<div class="history-item" onclick="restoreHistory(${i})"><div class="history-title">${h.tipo} · ${h.ciudad}</div><div class="history-meta">${h.producto} · ${h.timestamp}</div></div>`).join(''); }
-function restoreHistory(idx){ const h=history[idx]; if(!h) return; document.getElementById('empty-state').style.display='none'; document.getElementById('piezas-grid').innerHTML=''; renderPiezas(h.raw,h.platforms,Object.keys(TIPO_META).find(k=>TIPO_META[k]===h.tipo)||'oferta_semana',h.ciudad,document.getElementById('chk-hashtags').checked,document.getElementById('chk-brief').checked); document.getElementById('top-subtitle').textContent=h.tipo+' · '+h.ciudad; document.getElementById('copy-all-btn').style.display='block'; }
+function restoreHistory(idx) {
+  const h = history[idx];
+  if (!h) return;
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('piezas-grid').innerHTML = '';
+  const tipoKey = Object.keys(TIPO_META).find(k => TIPO_META[k] === h.tipo) || 'oferta_semana';
+  renderPiezas(h.raw, h.platforms, tipoKey, h.ciudad, document.getElementById('chk-hashtags').checked, document.getElementById('chk-brief').checked);
+  document.getElementById('top-subtitle').textContent = h.tipo + ' · ' + h.ciudad;
+  document.getElementById('copy-all-btn').style.display = 'block';
+  document.getElementById('ciudad').value = h.ciudad;
+  if (h.modo) document.getElementById('modo').value = h.modo;
+  document.getElementById('tipo').value = tipoKey;
+  updateModoUI();
+}
 
 function renderTitulares(titulares) {
   const wrap = document.getElementById('titulares-opts');
@@ -1437,7 +1461,7 @@ async function loadLogoBase64() {
 
 function confirmarPreviewYGenerar() {
   buildImgPrompt();
-  generarImagen();
+  generarImagen(document.querySelector('.img-confirm-btn'));
 }
 
 function resetPreviewFields() {
@@ -1592,7 +1616,7 @@ function submitImgKey() {
   updateImgKeyStatus();
 }
 
-async function generarImagen() {
+async function generarImagen(callerBtn = null) {
   const keyName = currentEngine === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key';
   const key = localStorage.getItem(keyName);
   if (!key || key.length < 10) { abrirImgKeyModal(); return; }
@@ -1603,10 +1627,14 @@ async function generarImagen() {
   const btn = document.getElementById('img-gen-btn');
   const spinner = document.getElementById('img-spinner');
   const label = document.getElementById('img-gen-label');
+  const visibleBtn = callerBtn || btn;
   const resultDiv = document.getElementById('img-result');
   const errDiv = document.getElementById('img-err');
 
-  btn.disabled = true; spinner.style.display = 'block'; label.textContent = 'Generando imagen...';
+  visibleBtn.disabled = true;
+  const originalLabel = callerBtn ? visibleBtn.textContent : null;
+  if (callerBtn) visibleBtn.textContent = '⏳ Generando...';
+  spinner.style.display = 'block'; label.textContent = 'Generando imagen...';
   resultDiv.style.display = 'none'; errDiv.style.display = 'none';
 
   try {
@@ -1628,7 +1656,9 @@ async function generarImagen() {
     showToast(err.message || 'Error al generar imagen', '#ef4444');
   }
 
-  btn.disabled = false; spinner.style.display = 'none'; label.textContent = '🖼 Generar imagen';
+  visibleBtn.disabled = false;
+  if (callerBtn && originalLabel) visibleBtn.textContent = originalLabel;
+  spinner.style.display = 'none'; label.textContent = '🖼 Generar imagen';
 }
 
 async function generarConGemini(key, prompt) {
