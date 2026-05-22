@@ -407,7 +407,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <div class="field-group">
       <label class="field-label">Modo de publicidad</label>
-      <select id="modo">
+      <select id="modo" onchange="updateModoUI()">
         <option value="credito">📱 Celular a crédito</option>
         <option value="promo">🎁 Promoción especial</option>
         <option value="tienda">🏪 Contenido de tienda</option>
@@ -437,11 +437,11 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <img class="prod-preview-img" id="prod-preview" src="" alt="Vista previa">
       </div>
     </div>
-    <div class="field-group">
+    <div class="field-group" id="fg-cuota">
       <label class="field-label">Precio de cuota mensual <span>opcional</span></label>
       <input type="text" id="cuota" placeholder="Ej: $157.000/mes">
     </div>
-    <div class="field-group">
+    <div class="field-group" id="fg-inicial">
       <label class="field-label">Cuota inicial <span>opcional</span></label>
       <input type="text" id="inicial" placeholder="Ej: $314.500">
     </div>
@@ -681,6 +681,13 @@ let history = [];
 function togglePlatform(btn) { btn.classList.toggle('active'); }
 function getActivePlatforms() { return [...document.querySelectorAll('.platform-btn.active')].map(b => b.dataset.platform); }
 
+function updateModoUI() {
+  const modo = document.getElementById('modo').value;
+  const show = modo === 'credito';
+  document.getElementById('fg-cuota').style.display   = show ? 'block' : 'none';
+  document.getElementById('fg-inicial').style.display = show ? 'block' : 'none';
+}
+
 function toggleKey(inputId, btn) {
   const el = document.getElementById(inputId);
   const show = el.type === 'password';
@@ -769,6 +776,14 @@ ${brandBase}
 ⚠️ REGLA CRÍTICA: Este copy es sobre un SERVICIO O BENEFICIO. NO menciones crédito, cuotas ni financiamiento. El mensaje destaca el servicio o beneficio indicado.`;
   }
   const hashtagsCtx = modo === 'credito' ? 'ciudad, producto, crédito, Colombia' : 'ciudad, producto, Colombia';
+  const tipoEstructura = {
+    oferta_semana:    'Abre con urgencia de cantidad o tiempo. Segundo párrafo: beneficio concreto con precio. Cierra con CTA de visita presencial.',
+    showcase_producto:'Primera línea: característica más llamativa del producto. Segunda: beneficio directo para el cliente. Cierra con precio o CTA de consulta.',
+    testimonio:       'Abre en primera persona como si fuera el cliente hablando. Máximo 2 frases del testimonio. Cierra con invitación a la tienda.',
+    educativo:        'Abre con una pregunta que el cliente se hace. Explica en lenguaje simple, sin tecnicismos. Cierra con CTA informativo.',
+    promo_urgencia:   'Primera línea: urgencia de tiempo o cantidad. Segunda: beneficio concreto. Tercera: CTA inmediato y directo.',
+    detras_camara:    'Tono íntimo, como mostrar el negocio a un amigo. Sin vender directamente. Cierra con invitación a conocer la tienda.'
+  };
   const briefBlock = inclBrief ? `Después añade un BRIEF VISUAL CANVA capa por capa con estas especificaciones exactas del manual de marca Creditek:
 
 MANUAL DE MARCA CREDITEK (usa estos datos, no inventes nada):
@@ -802,12 +817,24 @@ ${nota ? '- Nota especial / información del contenido: ' + nota : ''}
 ${direccion ? '- Dirección(es) de tienda: ' + direccion : ''}
 - Plataformas: ${platformsList}
 
-INSTRUCCIONES:
-Genera el copy para CADA plataforma solicitada, adaptando tono y formato.
-- Facebook: storytelling emocional, CTA clara a la tienda
-- Instagram: copy corto y visual, gancho fuerte en primera línea
-- WhatsApp: directo, informal, máximo 5 líneas
-- TikTok: gancho brutal en línea 1, muy corto
+LENGUAJE Y TONO REGIONAL OBLIGATORIO:
+- Habla como un costeño del Caribe colombiano, no como una marca corporativa
+- Expresiones válidas: "mano", "fino", "qué más", "buena nota", "eso es", "vale la pena", "no te quedes sin el tuyo"
+- Frases cortas, directas, sin rodeos
+- PROHIBIDO: anglicismos, tecnicismos, frases de marketing corporativo como "potencia tu experiencia", "descubre", "innovador", "soluciones", "adquirir"
+- Copy bueno: "¡Mano, este es el momento! El Samsung A17 te espera en Creditek Chinú. Sin rollo, sin banco."
+- Copy malo: "Descubre la innovadora experiencia de adquirir tecnología de punta con nuestras soluciones financieras."
+- Límites estrictos: WhatsApp máximo 3 frases · Facebook 300-400 caracteres · Instagram 150-200 caracteres · TikTok máximo 2 líneas
+
+ESTRUCTURA PARA ESTE TIPO DE PIEZA (${TIPO_META[tipo]}):
+${tipoEstructura[tipo] || 'Gancho fuerte → beneficio concreto → CTA directo.'}
+
+INSTRUCCIONES POR PLATAFORMA:
+Genera el copy para CADA plataforma solicitada respetando el límite de caracteres.
+- Facebook: storytelling breve con gancho emocional, CTA clara a la tienda. Máx 400 caracteres.
+- Instagram: primera línea es el gancho, copy visual y directo. Máx 200 caracteres.
+- WhatsApp: conversacional como un mensaje de un conocido. Máximo 3 frases.
+- TikTok: primera línea brutal que pare el scroll, segunda línea el beneficio, nada más.
 ${direccion ? '- IMPORTANTE: Incluye la dirección de la tienda en el CTA o al final de cada copy, de forma natural según el tono de cada plataforma.' : ''}
 
 ${inclHashtags ? 'Después añade:\nHASHTAGS: 10-12 hashtags con ' + hashtagsCtx : ''}
@@ -1058,11 +1085,24 @@ function confirmarPreviewYGenerar() {
 }
 
 function resetPreviewFields() {
+  const modo  = document.getElementById('modo')?.value || 'credito';
   const cuota = document.getElementById('cuota').value.trim();
   const ciudad = document.getElementById('ciudad').value;
-  document.getElementById('img-titular').value = cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!';
-  document.getElementById('img-precio').value = cuota || 'Cuotas desde $150.000/mes';
-  document.getElementById('img-cta').value = ciudad ? `Visítanos en ${ciudad}` : 'Visítanos hoy';
+  const titularDefaults = {
+    credito:  cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!',
+    promo:    '¡Oferta limitada!',
+    tienda:   '¡Visítanos hoy!',
+    servicio: 'Te atendemos con gusto'
+  };
+  const precioDefaults = {
+    credito:  cuota || 'Cuotas desde $150.000/mes',
+    promo:    'Aprovecha la promo',
+    tienda:   'Encuentra tu equipo ideal',
+    servicio: 'Rápido y sin complicaciones'
+  };
+  document.getElementById('img-titular').value = titularDefaults[modo] || titularDefaults.credito;
+  document.getElementById('img-precio').value  = precioDefaults[modo]  || precioDefaults.credito;
+  document.getElementById('img-cta').value     = ciudad ? `Visítanos en ${ciudad}` : 'Visítanos hoy';
   buildImgPrompt();
 }
 
@@ -1077,6 +1117,7 @@ function buildImgPrompt() {
   const producto = document.getElementById('producto').value.trim() || 'smartphone';
   const ciudad   = document.getElementById('ciudad').value || 'Colombia';
   const modo     = document.getElementById('modo')?.value || 'credito';
+  const tipo     = document.getElementById('tipo')?.value || 'oferta_semana';
 
   // Read from preview fields (if filled) or compute defaults
   const titularEl = document.getElementById('img-titular');
@@ -1096,32 +1137,31 @@ function buildImgPrompt() {
   };
   const estiloDesc = estiloMap[currentEstilo] || estiloMap.formal;
 
-  // Mode-based content
-  const modoMap = {
-    credito:  `${producto} smartphone floating on deep navy #0B1E3D background, clean product shot, soft drop shadow, no background cutout.`,
-    promo:    `Promotional sale banner for ${producto || 'smartphones'}, discount visual energy, festive ribbon or badge element.`,
-    tienda:   `Warm welcoming store interior, friendly staff behind counter, retail display of phones.`,
-    servicio: `Abstract financial trust visualization: approval checkmark, shield icon, clean approval flow graphic.`
+  // Composition by piece type (takes priority over mode for layout decisions)
+  const tipoImgMap = {
+    oferta_semana:    `Product shot of ${producto} large on the right side. Prominent turquoise #00C4CC price badge on the upper-left with large bold numerals. Bold headline text on the left. Strong visual hierarchy: headline → price → product.`,
+    showcase_producto:`${producto} centered hero shot, clean product floating with soft drop shadow. Minimal text. Small feature-callout labels around the product. Product dominates 60% of the composition.`,
+    testimonio:       `Warm tone on deep navy background. Large opening quotation mark in turquoise #00C4CC. Two-line testimonial quote in large white text, centered. Warm human silhouette or portrait on one side. No product image needed.`,
+    educativo:        `Clean informational layout. Simple bold icons (checkmarks, arrows, numbers) in turquoise #00C4CC on dark background. Text-forward design, clear reading hierarchy. Feels like a helpful tips card, not an ad.`,
+    promo_urgencia:   `High-energy urgency composition. Large "SOLO HOY" or countdown badge in turquoise #00C4CC. ${producto} product with diagonal flash element or ribbon. Price in very large bold numerals. High contrast, fast visual read.`,
+    detras_camara:    `Warm store interior atmosphere. Natural ambient lighting. Retail display context with phones visible. People in natural store setting. Authentic documentary feel, no heavy graphic overlays or design elements.`
   };
-  const modoDesc = modoMap[modo] || modoMap.credito;
+  const tipoDesc = tipoImgMap[tipo] || tipoImgMap.oferta_semana;
 
   const selectedFins = getSelectedFinancieras();
   const finStrip = selectedFins.length
     ? ` At the very bottom of the image, a thin horizontal strip (white or semi-transparent background) contains the small partner logos of the following financing companies, evenly spaced and horizontally aligned: ${selectedFins.map(f => f.label).join(', ')}. Logos are small, clean, and clearly legible.`
     : '';
 
-  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${modoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. Turquoise #00C4CC for price '${precio}' in large bold numerals. CTA label '${cta}' on turquoise #00C4CC button.${finStrip} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. No watermarks, no placeholder text. Square 1080×1080px, crisp high contrast.`;
+  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays.`;
+
+  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. Turquoise #00C4CC accent for '${precio}' in large bold numerals. CTA label '${cta}' on turquoise #00C4CC button.${finStrip} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. Square 1080×1080px, crisp high contrast.${negativePrompt}`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
 function showImgSection() {
   document.getElementById('img-section').classList.add('visible');
-  const cuota = document.getElementById('cuota').value.trim();
-  const ciudad = document.getElementById('ciudad').value;
-  document.getElementById('img-titular').value = cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!';
-  document.getElementById('img-precio').value = cuota || 'Cuotas desde $150.000/mes';
-  document.getElementById('img-cta').value = ciudad ? `Visítanos en ${ciudad}` : 'Visítanos hoy';
-  buildImgPrompt();
+  resetPreviewFields();
   updateImgKeyStatus();
   loadLogoBase64();
 }
