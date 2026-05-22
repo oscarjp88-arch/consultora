@@ -1099,13 +1099,13 @@ function resetPreviewFields() {
   const cuota = document.getElementById('cuota').value.trim();
   const ciudad = document.getElementById('ciudad').value;
   const titularDefaults = {
-    credito:  cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!',
+    credito:  cuota ? `¡Tu celular desde ${cuota}!` : '¡El tuyo te está esperando!',
     promo:    '¡Oferta limitada!',
     tienda:   '¡Visítanos hoy!',
     servicio: 'Te atendemos con gusto'
   };
   const precioDefaults = {
-    credito:  cuota || 'Cuotas desde $150.000/mes',
+    credito:  cuota,   // vacío si el usuario no escribió precio — nunca inventar
     promo:    'Aprovecha la promo',
     tienda:   'Encuentra tu equipo ideal',
     servicio: 'Rápido y sin complicaciones'
@@ -1134,8 +1134,8 @@ function buildImgPrompt() {
   const precioEl  = document.getElementById('img-precio');
   const ctaEl     = document.getElementById('img-cta');
   const cuota     = document.getElementById('cuota').value.trim();
-  const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : '¡Crédito aprobado hoy!');
-  const precio    = precioEl?.value.trim()  || cuota || 'Cuotas desde $150.000/mes';
+  const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${ciudad}!`);
+  const precio    = precioEl?.value.trim()  || cuota || '';
   const cta       = ctaEl?.value.trim()     || `Visítanos en ${ciudad}`;
 
   // Style modifier
@@ -1165,7 +1165,8 @@ function buildImgPrompt() {
 
   const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no extra unrelated people in background, no cluttered elements, no fake UI overlays.`;
 
-  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. Turquoise #00C4CC accent for '${precio}' in large bold numerals. CTA label '${cta}' on turquoise #00C4CC button.${finStrip} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. Square 1080×1080px, crisp high contrast.${negativePrompt}`;
+  const precioSegment = precio ? `Turquoise #00C4CC accent for '${precio}' in large bold numerals. ` : '';
+  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${estiloDesc} Large bold white text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold white 'Creditek' wordmark in Montserrat, no tagline. Background: solid deep navy #0B1E3D. Square 1080×1080px, crisp high contrast.${negativePrompt}`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
