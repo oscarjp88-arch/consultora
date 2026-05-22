@@ -353,9 +353,13 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .refs-update-btn{background:rgba(0,196,204,.07);border:1px solid rgba(0,196,204,.2);color:var(--turquesa);font-size:10px;font-weight:700;padding:5px 8px;border-radius:var(--radius-sm);cursor:pointer;font-family:'Montserrat',sans-serif;white-space:nowrap;transition:all .2s;flex-shrink:0;letter-spacing:.02em}
 .refs-update-btn:hover{background:rgba(0,196,204,.15);border-color:var(--turquesa)}
 .refs-update-btn:disabled{opacity:.4;cursor:not-allowed}
+.refs-cancel-btn{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:10px;font-weight:700;padding:5px 8px;border-radius:var(--radius-sm);cursor:pointer;font-family:'Montserrat',sans-serif;white-space:nowrap;transition:all .2s}
+.refs-cancel-btn:hover{background:rgba(239,68,68,.18)}
 .refs-brand-list{font-size:10px;color:var(--text3);line-height:1.8;padding:0 4px;display:none}
 .refs-brand-item{display:flex;align-items:center;gap:5px}
-.refs-brand-dot{width:6px;height:6px;border-radius:50%;background:var(--turquesa);flex-shrink:0}
+.refs-brand-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--turquesa)}
+.refs-dot-ok{background:#22c55e}
+.refs-dot-fail{background:#f59e0b}
 .refs-stale{color:#f59e0b}
 /* Titulares de impacto */
 .titular-opt{display:block;width:100%;text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;padding:8px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-bottom:4px}
@@ -588,8 +592,11 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   <div class="sidebar-section" style="padding-bottom:8px">
     <div class="sidebar-label">Referencias del mercado</div>
     <div class="refs-status-row">
-      <span id="refs-status" class="refs-status-txt">Sin referencias guardadas</span>
-      <button class="refs-update-btn" id="refs-update-btn" onclick="actualizarReferencias()" title="Obtener señales visuales actuales de marcas del mercado colombiano">🔄 Actualizar</button>
+      <span id="refs-status" class="refs-status-txt">Colores de marca activos — keywords sin obtener</span>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button class="refs-cancel-btn" id="refs-cancel-btn" style="display:none" onclick="cancelarReferencias()">✕ Cancelar</button>
+        <button class="refs-update-btn" id="refs-update-btn" onclick="actualizarReferencias()" title="Obtener keywords actuales de marcas del mercado colombiano">🔄 Actualizar</button>
+      </div>
     </div>
     <div id="refs-brand-list" class="refs-brand-list"></div>
   </div>
@@ -1597,6 +1604,20 @@ function buildImgPrompt() {
 }
 
 // ── Sistema de referencias visuales del mercado ─────────────────
+const BRAND_COLORS = {
+  'Samsung CO':  { primary: '#1428A0', label: 'navy blue — premium tech' },
+  'Xiaomi CO':   { primary: '#FF6900', label: 'orange — energetic youth' },
+  'Motorola CO': { primary: '#005A9C', label: 'corporate blue — trusted' },
+  'OPPO CO':     { primary: '#1D4289', label: 'deep blue — premium' },
+  'Realme CO':   { primary: '#FFD700', label: 'gold — value flagship' },
+  'Honor CO':    { primary: '#C8102E', label: 'red — bold tech' },
+  'Infinix CO':  { primary: '#FF0000', label: 'red — youthful energy' },
+  'TCL CO':      { primary: '#E4002B', label: 'red — approachable value' },
+  'PayJoy CO':   { primary: '#00A651', label: 'green — accessible credit' },
+  'Krediya':     { primary: '#FF6B00', label: 'orange — friendly fintech' },
+  'Addi CO':     { primary: '#A259FF', label: 'purple — modern BNPL' },
+  'Alo Credit':  { primary: '#00B4D8', label: 'cyan — digital credit' },
+};
 const MARKET_REFS = [
   ['Samsung CO',  'https://www.samsung.com/co/smartphones/'],
   ['Xiaomi CO',   'https://www.mi.com/co'],
@@ -1612,32 +1633,7 @@ const MARKET_REFS = [
   ['Alo Credit',  'https://www.alocredit.co'],
 ];
 const REFS_TTL = 15 * 24 * 60 * 60 * 1000;
-
-function extractColors(html) {
-  const re = /#([0-9a-fA-F]{6})\b/g, counts = {}; let m;
-  while ((m = re.exec(html)) !== null) {
-    const c = m[0].toLowerCase();
-    const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
-    if (r>240&&g>240&&b>240) continue;
-    if (r<20&&g<20&&b<20) continue;
-    if (Math.abs(r-g)<20&&Math.abs(g-b)<20&&Math.abs(r-b)<20) continue;
-    counts[c] = (counts[c]||0)+1;
-  }
-  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,4).map(e=>e[0]);
-}
-
-function extractFonts(html) {
-  const fonts = new Set(), skip = new Set(['sans-serif','serif','monospace','inherit','initial','none','auto','system-ui']);
-  const re = /font-family\s*:\s*['"]?([^'",;}{<>]+)/gi; let m;
-  while ((m = re.exec(html)) !== null) {
-    const f = m[1].trim().split(',')[0].replace(/['"]/g,'').trim();
-    if (f && f.length > 2 && !skip.has(f.toLowerCase())) fonts.add(f.slice(0,30));
-  }
-  const gfRe = /fonts\.googleapis\.com[^"']*family=([^&"'\s>]+)/gi;
-  while ((m = gfRe.exec(html)) !== null)
-    m[1].split('|').forEach(f => fonts.add(f.split(':')[0].replace(/\+/g,' ').trim().slice(0,30)));
-  return [...fonts].slice(0,4);
-}
+let refsCancelled = false;
 
 function extractKeywords(html) {
   const parts = [];
@@ -1651,7 +1647,7 @@ function extractKeywords(html) {
   return parts.filter(Boolean).join(' | ').slice(0,160);
 }
 
-async function fetchWithTimeout(url, ms=7000) {
+async function fetchWithTimeout(url, ms=4000) {
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), ms);
   try {
@@ -1660,34 +1656,31 @@ async function fetchWithTimeout(url, ms=7000) {
   } catch(e) { clearTimeout(tid); throw e; }
 }
 
-async function fetchBrandRef(url) {
+async function fetchBrandKeywords(url) {
   const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
   const res = await fetchWithTimeout(proxy);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  const html = data.contents || '';
-  return { url, colors: extractColors(html), fonts: extractFonts(html), keywords: extractKeywords(html) };
+  return extractKeywords(data.contents || '');
 }
 
 function getRefBlock() {
   const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
-  if (!stored?.brands) return '';
-  const lines = Object.entries(stored.brands).map(([name, d]) => {
-    const parts = [];
-    if (d.colors?.length) parts.push(`colors: ${d.colors.join(', ')}`);
-    if (d.fonts?.length) parts.push(`fonts: ${d.fonts.join(', ')}`);
-    if (d.keywords) parts.push(`context: "${d.keywords.slice(0,100)}"`);
-    return parts.length ? `- ${name}: ${parts.join(' | ')}` : null;
-  }).filter(Boolean);
-  if (!lines.length) return '';
-  return `\n\nVISUAL REFERENCES FROM CURRENT COLOMBIAN PHONE MARKET (competitive context only — Creditek brand identity always takes priority):\n${lines.join('\n')}`;
+  const colorLines = Object.entries(BRAND_COLORS)
+    .map(([name, c]) => `- ${name}: ${c.primary} (${c.label})`).join('\n');
+  const kwLines = stored?.brands
+    ? Object.entries(stored.brands).filter(([,d]) => d.keywords)
+        .map(([name, d]) => `- ${name}: ${d.keywords.slice(0,100)}`).join('\n')
+    : '';
+  const kwBlock = kwLines ? `\nMarket keywords (live):\n${kwLines}` : '';
+  return `\n\nCOLOMBIAN PHONE MARKET VISUAL CONTEXT:\nBrand colors for reference (use as market context only):\n${colorLines}${kwBlock}\nNOTE: Creditek brand colors (#0B1E3D + #00C4CC) always override these references.`;
 }
 
 function formatRefAge(ts) {
   const days = Math.floor((Date.now() - ts) / (24*60*60*1000));
-  if (days === 0) return 'actualizadas hoy';
-  if (days === 1) return 'actualizadas hace 1 día';
-  return `actualizadas hace ${days} días`;
+  if (days === 0) return 'keywords actualizadas hoy';
+  if (days === 1) return 'keywords hace 1 día';
+  return `keywords hace ${days} días`;
 }
 
 function renderRefStatus() {
@@ -1695,32 +1688,57 @@ function renderRefStatus() {
   const statusEl = document.getElementById('refs-status');
   const listEl = document.getElementById('refs-brand-list');
   if (!statusEl) return;
-  if (!stored) { statusEl.textContent = 'Sin referencias guardadas'; statusEl.className = 'refs-status-txt'; if (listEl) listEl.style.display = 'none'; return; }
+  if (!stored) {
+    statusEl.textContent = 'Colores de marca activos — keywords sin obtener';
+    statusEl.className = 'refs-status-txt';
+    if (listEl) listEl.style.display = 'none';
+    return;
+  }
   const stale = (Date.now() - stored.timestamp) > REFS_TTL;
-  statusEl.textContent = stale ? `⚠ ${formatRefAge(stored.timestamp)} — actualizar recomendado` : formatRefAge(stored.timestamp);
+  statusEl.textContent = stale
+    ? `⚠ ${formatRefAge(stored.timestamp)} — actualizar recomendado`
+    : formatRefAge(stored.timestamp);
   statusEl.className = 'refs-status-txt' + (stale ? ' refs-stale' : '');
-  const names = Object.keys(stored.brands || {});
-  if (listEl && names.length) {
-    listEl.innerHTML = names.map(n => `<div class="refs-brand-item"><span class="refs-brand-dot"></span>${n}</div>`).join('');
+  if (listEl && stored.brands) {
+    listEl.innerHTML = Object.entries(stored.brands).map(([n, d]) => {
+      const ok = d.keywords && d.keywords.length > 0;
+      return `<div class="refs-brand-item"><span class="refs-brand-dot ${ok ? 'refs-dot-ok' : 'refs-dot-fail'}"></span>${n}</div>`;
+    }).join('');
     listEl.style.display = 'block';
   }
 }
 
+function cancelarReferencias() {
+  refsCancelled = true;
+  document.getElementById('refs-cancel-btn').style.display = 'none';
+  document.getElementById('refs-update-btn').disabled = false;
+  document.getElementById('refs-status').textContent = 'Actualización cancelada';
+}
+
 async function actualizarReferencias() {
+  refsCancelled = false;
   const btn = document.getElementById('refs-update-btn');
+  const cancelBtn = document.getElementById('refs-cancel-btn');
   const statusEl = document.getElementById('refs-status');
   btn.disabled = true;
+  cancelBtn.style.display = 'inline-block';
+  const total = MARKET_REFS.length;
   const brands = {};
-  for (const [name, url] of MARKET_REFS) {
-    statusEl.textContent = `Obteniendo ${name}...`;
-    try { brands[name] = await fetchBrandRef(url); }
-    catch(e) { brands[name] = { url, colors: [], fonts: [], keywords: '' }; }
+  for (let i = 0; i < total; i++) {
+    if (refsCancelled) break;
+    const [name, url] = MARKET_REFS[i];
+    statusEl.textContent = `Obteniendo keywords ${i + 1}/${total}: ${name}...`;
+    try { brands[name] = { url, keywords: await fetchBrandKeywords(url) }; }
+    catch(e) { brands[name] = { url, keywords: '' }; }
   }
-  localStorage.setItem('ck_referencias', JSON.stringify({ timestamp: Date.now(), brands }));
+  if (!refsCancelled) {
+    localStorage.setItem('ck_referencias', JSON.stringify({ timestamp: Date.now(), brands }));
+    showToast('✓ Keywords del mercado actualizadas');
+  }
   renderRefStatus();
   btn.disabled = false;
+  cancelBtn.style.display = 'none';
   buildImgPrompt();
-  showToast('✓ Referencias visuales del mercado actualizadas');
 }
 
 function showImgSection() {
