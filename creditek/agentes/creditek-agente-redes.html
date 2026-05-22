@@ -527,6 +527,7 @@ function submitKey() {
   if (!val.startsWith('sk-ant-')) { err.style.display = 'block'; document.getElementById('modalKey').focus(); return; }
   err.style.display = 'none';
   localStorage.setItem('ck_api_key', val);
+  sessionStorage.setItem('ck_api_key', val);
   document.getElementById('apiModal').classList.add('hidden');
 }
 function abrirModal() {
@@ -536,7 +537,9 @@ function abrirModal() {
   setTimeout(() => document.getElementById('modalKey').focus(), 80);
 }
 window.addEventListener('DOMContentLoaded', () => {
-  if (!localStorage.getItem('ck_api_key')) {
+  const stored = localStorage.getItem('ck_api_key');
+  if (stored) sessionStorage.setItem('ck_api_key', stored);
+  if (!sessionStorage.getItem('ck_api_key')) {
     setTimeout(() => document.getElementById('modalKey').focus(), 80);
   } else {
     document.getElementById('apiModal').classList.add('hidden');
@@ -574,7 +577,7 @@ function toggleKey(inputId, btn) {
 }
 
 async function generarContenido() {
-  const apiKey = localStorage.getItem('ck_api_key') || '';
+  const apiKey = sessionStorage.getItem('ck_api_key') || '';
   if (!apiKey.startsWith('sk-ant-')) {
     abrirModal();
     return;
@@ -684,7 +687,7 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': localStorage.getItem('ck_api_key') || '',
+        'x-api-key': sessionStorage.getItem('ck_api_key') || '',
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },

@@ -204,9 +204,9 @@ function showToast(msg, color='#22c55e'){const t=document.getElementById('toast'
 
 // ── Modal API Key ───────────────────────────────────────────────
 function toggleModalKey(){const el=document.getElementById('modalKey');const btn=document.getElementById('modalEye');const show=el.type==='password';el.type=show?'text':'password';btn.textContent=show?'Ocultar':'Ver'}
-function submitKey(){const val=document.getElementById('modalKey').value.trim();const err=document.getElementById('modalError');if(!val.startsWith('sk-ant-')){err.style.display='block';document.getElementById('modalKey').focus();return}err.style.display='none';localStorage.setItem('ck_api_key',val);document.getElementById('apiModal').classList.add('hidden')}
+function submitKey(){const val=document.getElementById('modalKey').value.trim();const err=document.getElementById('modalError');if(!val.startsWith('sk-ant-')){err.style.display='block';document.getElementById('modalKey').focus();return}err.style.display='none';localStorage.setItem('ck_api_key',val);sessionStorage.setItem('ck_api_key',val);document.getElementById('apiModal').classList.add('hidden')}
 function abrirModal(){document.getElementById('modalKey').value='';document.getElementById('modalError').style.display='none';document.getElementById('apiModal').classList.remove('hidden');setTimeout(()=>document.getElementById('modalKey').focus(),80)}
-window.addEventListener('DOMContentLoaded',()=>{if(!localStorage.getItem('ck_api_key')){setTimeout(()=>document.getElementById('modalKey').focus(),80)}else{document.getElementById('apiModal').classList.add('hidden')}})
+window.addEventListener('DOMContentLoaded',()=>{const stored=localStorage.getItem('ck_api_key');if(stored)sessionStorage.setItem('ck_api_key',stored);if(!sessionStorage.getItem('ck_api_key')){setTimeout(()=>document.getElementById('modalKey').focus(),80)}else{document.getElementById('apiModal').classList.add('hidden')}})
 const CM={whatsapp:{label:'WhatsApp',color:'#25D366',emoji:'💬'},dm:{label:'DM Instagram',color:'#E1306C',emoji:'📸'},messenger:{label:'Messenger',color:'#0084FF',emoji:'💙'},comentario:{label:'Comentario',color:'#00C4CC',emoji:'💬'}};
 const TN={amigable:'amigable, cercano y costeño',formal:'formal y profesional sin perder calidez',urgente:'rápido, directo y orientado a la acción',empatico:'empático, comprensivo y resolutivo'};
 let respHistory = [];
@@ -218,7 +218,7 @@ function gAT(){const b=document.querySelector('.tbtn.active');return b?b.dataset
 async function gen(){
   const consulta=document.getElementById('consulta').value.trim();
   const ciudad=document.getElementById('ciudad').value;
-  const apiKey=localStorage.getItem('ck_api_key')||'';
+  const apiKey=sessionStorage.getItem('ck_api_key')||'';
   if(!apiKey.startsWith('sk-ant-')){abrirModal();return}
   const channels=gAC();
   const tono=gAT();
@@ -260,7 +260,7 @@ Formato EXACTO:
 
 etc.`;
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('ck_api_key')||'','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:3000,messages:[{role:'user',content:prompt}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':sessionStorage.getItem('ck_api_key')||'','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:3000,messages:[{role:'user',content:prompt}]})});
     if(!r.ok){const errData=await r.json().catch(()=>({}));const msg=r.status===401?'API key inválida. Presiona "Cambiar key" y verifica.':r.status===429?'Límite de uso alcanzado. Espera un momento e intenta de nuevo.':errData.error?.message||`Error ${r.status}`;throw new Error(msg)}
     const d=await r.json();
     const txt=d.content?.find(b=>b.type==='text')?.text||'';

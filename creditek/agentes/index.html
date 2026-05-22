@@ -32,26 +32,25 @@
     .card a:hover { opacity: 0.85; }
     footer { border-top: 1px solid rgba(0,196,204,0.1); padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; }
     .foot-txt { font-size: 11px; color: #567890; }
-    /* Modal */
-    #keyModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; }
-    #keyModal.open { display: flex; }
-    .mbox { background: #112444; border: 1px solid rgba(0,196,204,0.25); border-radius: 16px; padding: 36px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
-    .mlogo { display: flex; align-items: center; gap: 10px; }
-    .mlogo img { height: 36px; }
-    .mlogo span { font-weight: 800; color: #00C4CC; font-size: 15px; letter-spacing: 0.04em; }
-    .mtitle { font-size: 18px; font-weight: 700; }
-    .mdesc { font-size: 13px; color: #7a96b4; line-height: 1.6; }
-    .mfield { position: relative; }
-    .minput { width: 100%; background: #172d54; border: 1px solid rgba(0,196,204,0.2); color: #F0EFEB; border-radius: 8px; font-family: monospace; font-size: 13px; padding: 12px 52px 12px 14px; outline: none; transition: border-color 0.2s; }
-    .minput:focus { border-color: #00C4CC; }
-    .meye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #567890; cursor: pointer; font-size: 11px; }
-    .merr { font-size: 12px; color: #fc814a; display: none; }
-    .msub { background: #00C4CC; border: none; border-radius: 8px; color: #0B1E3D; font-weight: 700; font-size: 14px; padding: 13px; cursor: pointer; transition: all 0.2s; }
-    .msub:hover { background: #00dde6; }
-    .mcancel { background: none; border: 1px solid rgba(0,196,204,0.2); color: #7a96b4; border-radius: 8px; font-size: 13px; padding: 10px; cursor: pointer; transition: all 0.2s; }
-    .mcancel:hover { border-color: #00C4CC; color: #00C4CC; }
-    .mnote { font-size: 11px; color: #567890; text-align: center; line-height: 1.6; }
-    .mnote a { color: #00C4CC; text-decoration: none; }
+    /* Panel key inline */
+    .key-panel { background: #112444; border: 1px solid rgba(0,196,204,0.25); border-radius: 14px; padding: 22px 28px; margin-bottom: 32px; display: flex; align-items: flex-start; gap: 18px; }
+    .key-panel-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+    .key-panel-body { flex: 1; }
+    .key-panel-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .key-panel-desc { font-size: 12px; color: #7a96b4; margin-bottom: 14px; line-height: 1.5; }
+    .key-panel-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .key-panel-input { flex: 1; min-width: 220px; background: #172d54; border: 1px solid rgba(0,196,204,0.2); color: #F0EFEB; border-radius: 8px; font-family: monospace; font-size: 13px; padding: 10px 14px; outline: none; transition: border-color 0.2s; }
+    .key-panel-input:focus { border-color: #00C4CC; }
+    .key-panel-save { background: #00C4CC; color: #0B1E3D; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; padding: 10px 20px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+    .key-panel-save:hover { background: #00dde6; }
+    .key-panel-err { font-size: 12px; color: #fc814a; margin-top: 8px; display: none; }
+    .key-panel-note { font-size: 11px; color: #567890; margin-top: 10px; }
+    .key-panel-note a { color: #00C4CC; text-decoration: none; }
+    .key-panel.configured { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.05); }
+    .key-panel-ok { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #9BB8CC; }
+    .key-panel-ok-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .key-panel-change { background: none; border: 1px solid rgba(0,196,204,0.25); color: #00C4CC; border-radius: 6px; font-size: 11px; padding: 5px 12px; cursor: pointer; margin-left: 8px; transition: all 0.2s; }
+    .key-panel-change:hover { background: rgba(0,196,204,0.1); }
   </style>
 </head>
 <body>
@@ -70,24 +69,35 @@
     </div>
   </header>
 
-  <div id="keyModal">
-    <div class="mbox">
-      <div class="mlogo"><img src="logo.png" alt="Creditek"><span>CREDITEK</span></div>
-      <div class="mtitle">API Key de Anthropic</div>
-      <div class="mdesc">Configura tu API key una sola vez. Se guarda de forma segura en este navegador y se comparte entre todos los agentes Creditek.</div>
-      <div class="mfield">
-        <input class="minput" id="modalKey" type="password" placeholder="sk-ant-api03-..." autocomplete="off" onkeydown="if(event.key==='Enter')guardarKey()">
-        <button class="meye" onclick="toggleEye(this)">Ver</button>
-      </div>
-      <div class="merr" id="modalErr">La key debe comenzar con <strong>sk-ant-</strong>.</div>
-      <button class="msub" onclick="guardarKey()">Guardar →</button>
-      <button class="mcancel" onclick="cerrarModal()">Cancelar</button>
-      <div class="mnote">Obtén tu key en <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a><br>Esta key nunca se sube al repositorio.</div>
-    </div>
-  </div>
-
   <main>
     <p class="page-sub">Herramientas de marketing automatizadas para Creditek SAS · Caribe colombiano</p>
+
+    <!-- Panel visible de API key -->
+    <div class="key-panel" id="keyPanel">
+      <div class="key-panel-icon">🔑</div>
+      <div class="key-panel-body">
+        <div class="key-panel-title">API Key de Anthropic</div>
+        <!-- Estado: sin key -->
+        <div id="keyPanelSetup">
+          <div class="key-panel-desc">Ingresa tu key una sola vez. Se guardará en este navegador y se usará en todos los agentes automáticamente.</div>
+          <div class="key-panel-row">
+            <input type="password" class="key-panel-input" id="inlineKey" placeholder="sk-ant-api03-..." autocomplete="off" onkeydown="if(event.key==='Enter')guardarKeyInline()">
+            <button class="key-panel-save" onclick="guardarKeyInline()">Guardar key</button>
+          </div>
+          <div class="key-panel-err" id="inlineKeyErr">La key debe comenzar con <strong>sk-ant-</strong>.</div>
+          <div class="key-panel-note">Obtén tu key en <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com/settings/keys</a></div>
+        </div>
+        <!-- Estado: key configurada -->
+        <div id="keyPanelOk" style="display:none">
+          <div class="key-panel-ok">
+            <div class="key-panel-ok-dot"></div>
+            <span>API key configurada · Los agentes ya pueden usarla</span>
+            <button class="key-panel-change" onclick="mostrarCambioKey()">Cambiar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="grid">
       <div class="card">
         <div class="card-icon">📱</div>
@@ -128,38 +138,34 @@
   <script>
     function checkKey() {
       const key = localStorage.getItem('ck_api_key');
-      const dot = document.getElementById('keyDot');
-      const label = document.getElementById('keyLabel');
-      const btn = document.getElementById('btnConfig');
       const ok = key && key.startsWith('sk-ant-');
-      dot.className = 'key-dot ' + (ok ? 'on' : 'off');
-      label.textContent = ok ? 'Key configurada' : 'Key requerida';
-      btn.textContent = ok ? 'Cambiar key' : 'Configurar API Key';
+      // Header indicator
+      document.getElementById('keyDot').className = 'key-dot ' + (ok ? 'on' : 'off');
+      document.getElementById('keyLabel').textContent = ok ? 'Key configurada' : 'Key requerida';
+      document.getElementById('btnConfig').textContent = ok ? 'Cambiar key' : 'Configurar API Key';
+      // Panel inline
+      document.getElementById('keyPanelSetup').style.display = ok ? 'none' : 'block';
+      document.getElementById('keyPanelOk').style.display = ok ? 'block' : 'none';
+      document.getElementById('keyPanel').classList.toggle('configured', !!ok);
     }
-    function abrirModal() {
-      document.getElementById('modalKey').value = '';
-      document.getElementById('modalErr').style.display = 'none';
-      document.getElementById('keyModal').classList.add('open');
-      setTimeout(() => document.getElementById('modalKey').focus(), 80);
-    }
-    function cerrarModal() { document.getElementById('keyModal').classList.remove('open'); }
-    function toggleEye(btn) {
-      const el = document.getElementById('modalKey');
-      const show = el.type === 'password';
-      el.type = show ? 'text' : 'password';
-      btn.textContent = show ? 'Ocultar' : 'Ver';
-    }
-    function guardarKey() {
-      const val = document.getElementById('modalKey').value.trim();
-      const err = document.getElementById('modalErr');
-      if (!val.startsWith('sk-ant-')) { err.style.display = 'block'; document.getElementById('modalKey').focus(); return; }
+    function guardarKeyInline() {
+      const val = document.getElementById('inlineKey').value.trim();
+      const err = document.getElementById('inlineKeyErr');
+      if (!val.startsWith('sk-ant-')) { err.style.display = 'block'; document.getElementById('inlineKey').focus(); return; }
       err.style.display = 'none';
       localStorage.setItem('ck_api_key', val);
-      cerrarModal();
+      document.getElementById('inlineKey').value = '';
       checkKey();
     }
+    function mostrarCambioKey() {
+      document.getElementById('keyPanelSetup').style.display = 'block';
+      document.getElementById('keyPanelOk').style.display = 'none';
+      document.getElementById('keyPanel').classList.remove('configured');
+      setTimeout(() => document.getElementById('inlineKey').focus(), 80);
+    }
+    // El botón del header también muestra el panel inline
+    function abrirModal() { mostrarCambioKey(); document.querySelector('main').scrollIntoView({behavior:'smooth'}); }
     document.addEventListener('DOMContentLoaded', checkKey);
-    document.getElementById('keyModal').addEventListener('click', e => { if (e.target.id === 'keyModal') cerrarModal(); });
   </script>
 </body>
 </html>
