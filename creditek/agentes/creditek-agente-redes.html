@@ -295,7 +295,17 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .img-gen-btn{margin:0 18px 16px;width:calc(100% - 36px);background:var(--bg3);border:1px solid rgba(0,196,204,.3);color:var(--turquesa);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;padding:11px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em}
 .img-gen-btn:hover{background:rgba(0,196,204,.1);border-color:var(--turquesa)}
 .img-gen-btn:disabled{opacity:.4;cursor:not-allowed}
+.img-btn-row{margin:0 18px 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.img-btn-row .img-confirm-btn{margin:0;width:100%}
+.img-ab-btn{background:var(--bg3);border:1px solid rgba(100,160,255,.4);color:#7eb3ff;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;padding:11px 8px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.02em}
+.img-ab-btn:hover{background:rgba(100,160,255,.08);border-color:#7eb3ff}
+.img-ab-btn:disabled{opacity:.4;cursor:not-allowed}
 .img-result{padding:0 18px 18px;display:none}
+.img-ab-result{padding:0 18px 18px;display:none}
+.img-ab-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.img-ab-col{display:flex;flex-direction:column}
+.img-ab-col-label{text-align:center;font-size:10px;font-weight:700;color:var(--turquesa);letter-spacing:.05em;padding:0 0 7px;text-transform:uppercase}
+.img-ab-col-err{font-size:11px;color:#ff6b6b;padding:10px 4px;text-align:center;line-height:1.5;border:1px solid rgba(255,107,107,.2);border-radius:8px;margin-top:4px}
 .img-output{width:100%;border-radius:10px;border:1px solid var(--border);display:block}
 .img-dl-btn{display:block;margin-top:10px;background:var(--turquesa);color:var(--azul);text-align:center;padding:10px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;cursor:pointer;border:none;width:100%;font-family:'Montserrat',sans-serif;letter-spacing:.02em;transition:opacity .2s}
 .img-dl-btn:hover{opacity:.85}
@@ -637,7 +647,13 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
           <span class="img-prev-fl">Call to action (CTA)</span>
           <input type="text" class="img-prev-input" id="img-cta" placeholder="Visítanos en Corozal" oninput="buildImgPrompt()">
         </div>
-        <button class="img-confirm-btn" onclick="confirmarPreviewYGenerar()">🖼 Generar imagen con estos datos</button>
+        <div class="img-btn-row">
+          <button class="img-confirm-btn" onclick="confirmarPreviewYGenerar()">🖼 Generar imagen</button>
+          <button class="img-ab-btn" id="img-ab-btn" onclick="generarAB()">
+            <div class="spinner" id="img-ab-spinner" style="display:none"></div>
+            <span id="img-ab-label">⚡ Comparar A/B</span>
+          </button>
+        </div>
       </div>
       <div class="img-prompt-wrap">
         <div class="img-prompt-lbl">
@@ -656,6 +672,22 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <button class="img-dl-btn" onclick="descargarImagen()">⬇ Descargar PNG</button>
       </div>
       <div class="img-err" id="img-err"></div>
+      <div class="img-ab-result" id="img-ab-result">
+        <div class="img-ab-cols">
+          <div class="img-ab-col">
+            <div class="img-ab-col-label" id="img-ab-label-a">✦ Gemini Imagen 4</div>
+            <img class="img-output" id="img-ab-a" src="" alt="Gemini" style="display:none">
+            <div class="img-ab-col-err" id="img-ab-err-a" style="display:none"></div>
+            <button class="img-dl-btn" id="img-ab-dl-a" onclick="descargarImagenAB('a')" style="display:none">⬇ Descargar</button>
+          </div>
+          <div class="img-ab-col">
+            <div class="img-ab-col-label">⬡ GPT Image 2</div>
+            <img class="img-output" id="img-ab-b" src="" alt="GPT Image 2" style="display:none">
+            <div class="img-ab-col-err" id="img-ab-err-b" style="display:none"></div>
+            <button class="img-dl-btn" id="img-ab-dl-b" onclick="descargarImagenAB('b')" style="display:none">⬇ Descargar</button>
+          </div>
+        </div>
+      </div>
       <div class="img-editor" id="img-editor">
         <div class="img-editor-hdr">✏️ Editar imagen</div>
         <div class="img-editor-nav" id="img-editor-nav">
@@ -1677,6 +1709,69 @@ async function aplicarCambioImagen() {
     showToast(e.message || 'Error al editar', '#ef4444');
   }
   btn.disabled = false; spinner.style.display = 'none'; label.textContent = 'Aplicar cambio';
+}
+
+async function generarAB() {
+  const keyGemini = localStorage.getItem('ck_gemini_key');
+  const keyOpenAI = localStorage.getItem('ck_openai_key');
+  if (!keyGemini || keyGemini.length < 10) { showToast('Configura la API key de Gemini para el comparador A/B', '#ef4444'); return; }
+  if (!keyOpenAI || keyOpenAI.length < 10) { showToast('Configura la API key de GPT Image 2 para el comparador A/B', '#ef4444'); return; }
+  const prompt = document.getElementById('img-prompt-ta').value.trim();
+  if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
+
+  const btn = document.getElementById('img-ab-btn');
+  const spinner = document.getElementById('img-ab-spinner');
+  const label = document.getElementById('img-ab-label');
+  const resultDiv = document.getElementById('img-ab-result');
+
+  btn.disabled = true; spinner.style.display = 'block'; label.textContent = 'Generando ambas...';
+
+  // Reset state
+  ['a', 'b'].forEach(s => {
+    document.getElementById(`img-ab-${s}`).style.display = 'none';
+    document.getElementById(`img-ab-err-${s}`).style.display = 'none';
+    document.getElementById(`img-ab-dl-${s}`).style.display = 'none';
+  });
+  document.getElementById('img-ab-label-a').textContent = '✦ Gemini Imagen 4';
+  resultDiv.style.display = 'block';
+
+  const [gemRes, dalleRes] = await Promise.allSettled([
+    generarConGemini(keyGemini, prompt),
+    generarConDalle(keyOpenAI, prompt)
+  ]);
+
+  if (gemRes.status === 'fulfilled') {
+    const img = document.getElementById('img-ab-a');
+    img.src = gemRes.value; img.style.display = 'block';
+    document.getElementById('img-ab-label-a').textContent = `✦ ${lastImgModelLabel}`;
+    document.getElementById('img-ab-dl-a').style.display = 'block';
+  } else {
+    const err = document.getElementById('img-ab-err-a');
+    err.textContent = gemRes.reason?.message || 'Error Gemini'; err.style.display = 'block';
+  }
+
+  if (dalleRes.status === 'fulfilled') {
+    const img = document.getElementById('img-ab-b');
+    img.src = dalleRes.value; img.style.display = 'block';
+    document.getElementById('img-ab-dl-b').style.display = 'block';
+  } else {
+    const err = document.getElementById('img-ab-err-b');
+    err.textContent = dalleRes.reason?.message || 'Error GPT Image 2'; err.style.display = 'block';
+  }
+
+  btn.disabled = false; spinner.style.display = 'none'; label.textContent = '⚡ Comparar A/B';
+  const ok = (gemRes.status === 'fulfilled' ? 1 : 0) + (dalleRes.status === 'fulfilled' ? 1 : 0);
+  if (ok === 2) showToast('✓ Ambas imágenes generadas');
+  else if (ok === 1) showToast('Una imagen generada, la otra falló', '#f59e0b');
+  else showToast('Error en ambas generaciones', '#ef4444');
+}
+
+function descargarImagenAB(side) {
+  const src = document.getElementById(`img-ab-${side}`).src;
+  if (!src || src === window.location.href) return;
+  const a = document.createElement('a');
+  a.href = src; a.download = `creditek-ab-${side === 'a' ? 'gemini' : 'gpt'}-${Date.now()}.png`;
+  a.target = '_blank'; a.click();
 }
 
 function descargarImagen() {
