@@ -916,7 +916,7 @@ async function generarConDalle(key, prompt) {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-    body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', quality: 'hd' })
+    body: JSON.stringify({ model: 'gpt-image-2', prompt, n: 1, size: '1024x1024' })
   });
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
