@@ -421,12 +421,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     <div class="field-group">
       <label class="field-label">Ciudad / tienda</label>
       <select id="ciudad">
-        <option value="">Seleccionar ciudad...</option>
-        <option value="Tolú">Tolú (CK-01 / CK-10)</option>
-        <option value="Corozal">Corozal (CK-02 / CK-03 / CK-04)</option>
-        <option value="Chinú">Chinú (CK-05 / CK-06 / CK-07)</option>
-        <option value="Ciénaga de Oro">Ciénaga de Oro (CK-08 / CK-09)</option>
-        <option value="Coveñas">Coveñas (CK-11)</option>
+        <option value="">Seleccionar tienda...</option>
         <option value="todas las ciudades">Todas las ciudades</option>
       </select>
     </div>
@@ -706,6 +701,7 @@ function abrirModal() {
   setTimeout(() => document.getElementById('modalKey').focus(), 80);
 }
 window.addEventListener('DOMContentLoaded', () => {
+  populateCiudadDropdown();
   const stored = localStorage.getItem('ck_api_key');
   if (stored) sessionStorage.setItem('ck_api_key', stored);
   if (!sessionStorage.getItem('ck_api_key')) {
@@ -738,13 +734,68 @@ const FECHAS_ESPECIALES = {
 };
 
 const CIUDADES_META = {
-  'Tolú':           { dir: 'CK-01: Calle 15 Carrera 3-30 Local 1 / CK-10: Calle 16 Carrera 8-5 Piso 1 Local 3', cultura: 'Municipio turístico del golfo de Morrosquillo (Sucre). Gente cálida y amable, ritmo tranquilo. Hay turistas pero el cliente local es trabajador del sector turismo y pesca. Aspiracional: quiere lo mejor para su familia. El copy debe sonar como un vecino de confianza, no un aviso de ciudad grande.' },
-  'Corozal':        { dir: 'CK-02: Carrera 25 #29-15 Local 3 Barrio San Miguel / CK-03: Carrera 25 #30-40 Centro / CK-04: Calle 30 25-57 Centro', cultura: 'Ciudad comercial y capital subregional de Sucre. Gente comerciante, práctica y directa. Valora el precio, la rapidez y el trato honesto. Hay mucha competencia comercial. El copy debe sonar directo al grano: beneficio claro, sin rodeos.' },
-  'Chinú':          { dir: 'CK-05: Carrera 7 #19-24 / CK-06: Carrera 7 #17-44 Centro / CK-07: Calle 18 Carrera 7-23', cultura: 'Municipio ganadero de Córdoba, economía agropecuaria y familiar. Gente tradicional, de palabra y confianza. El cliente valora que lo traten bien y que el negocio sea de fiar. El copy debe ser cálido, familiar y sin artificios — como le habla un conocido de toda la vida.' },
-  'Ciénaga de Oro': { dir: 'CK-08: Carrera 15 #6-37 Centro / CK-09: Carrera 15 #7 Centro', cultura: 'Municipio de Córdoba, activo comercialmente. Gente emprendedora, con espíritu de superación. Muchas familias con negocios propios o empleos informales. El copy debe apelar al orgullo y al logro: "te lo mereces", "es tu momento".' },
-  'Coveñas':        { dir: 'CK-11: Carrera 2 #9A-22 Barrio Guayabal', cultura: 'Municipio turístico de playa en Sucre, comunidad pequeña y unida. Economía de turismo y pesca. El cliente es local, de barrio, que conoce a todos. El copy debe ser cercano como una conversación de calle — breve, sin formalismos, como le hablas a alguien que ya conoces.' },
+  'Tolú': {
+    tiendas: [
+      { codigo: 'CK-01', nombre: 'Cellfiao Tecnología Tolú',  direccion: 'Calle 15 Cra 3-30 Local 1' },
+      { codigo: 'CK-10', nombre: 'Celestarking Tolú',          direccion: 'Calle 16 Cra 8-5 Piso 1 Local 3' }
+    ],
+    contexto: 'Ciudad costera turística del golfo de Morrosquillo (Sucre), temporada alta diciembre-enero-julio. Gente cálida y amable, ritmo tranquilo. El cliente local trabaja en turismo o pesca, es aspiracional y quiere lo mejor para su familia. El copy debe sonar como un vecino de confianza, no un aviso de ciudad grande.'
+  },
+  'Corozal': {
+    tiendas: [
+      { codigo: 'CK-02', nombre: 'Móvil Shoping',       direccion: 'Cra 25 #29-15 Barrio San Miguel' },
+      { codigo: 'CK-03', nombre: 'Celfiao Tecnología',  direccion: 'Cra 25 #30-40 Centro' },
+      { codigo: 'CK-04', nombre: 'Creditel Store',       direccion: 'Calle 30 25-57 Centro' }
+    ],
+    contexto: 'Hub comercial y capital subregional de Sucre, feria en enero, mercado activo. Gente comerciante, práctica y directa. Valora el precio, la rapidez y el trato honesto. El copy debe ir directo al grano: beneficio claro, sin rodeos.'
+  },
+  'Chinú': {
+    tiendas: [
+      { codigo: 'CK-05', nombre: 'Chinú Cell',      direccion: 'Cra 7 #19-24' },
+      { codigo: 'CK-06', nombre: 'Creditel Chinú',  direccion: 'Calle 18 Cra 7-23' },
+      { codigo: 'CK-07', nombre: 'Sonivox.com Chinú', direccion: 'Cra 7 #17-44 Centro' }
+    ],
+    contexto: 'Ciudad intermedia de Córdoba, mercado ganadero, comunidad tradicional. Gente de palabra y confianza. El cliente valora que lo traten bien y que el negocio sea serio. El copy debe ser cálido, familiar y sin artificios — como le habla un conocido de toda la vida.'
+  },
+  'Ciénaga de Oro': {
+    tiendas: [
+      { codigo: 'CK-08', nombre: 'OroCell.net',           direccion: 'Cra 15 #6-37 Centro' },
+      { codigo: 'CK-09', nombre: 'KrediSinu Technology',  direccion: 'Cra 15 #7 Centro' }
+    ],
+    contexto: 'Municipio agrícola de Córdoba, comunidad familiar y emprendedora. Gente con espíritu de superación, muchas familias con negocios propios o empleos informales. El copy debe apelar al orgullo y al logro: "te lo mereces", "es tu momento".'
+  },
+  'Coveñas': {
+    tiendas: [
+      { codigo: 'CK-11', nombre: 'Creditel Coveñas', direccion: 'Cra 2 #9A-22 Barrio Guayabal' }
+    ],
+    contexto: 'Municipio turístico de playa en Sucre, comunidad pequeña y unida. Economía de turismo y pesca. El cliente es local, de barrio, que conoce a todos. El copy debe ser cercano como una conversación de calle — breve, sin formalismos, como le hablas a alguien que ya conoces.'
+  }
 };
-const DIRECCIONES = Object.fromEntries(Object.entries(CIUDADES_META).map(([k,v])=>[k,v.dir]));
+// Flat lookup keyed by "Ciudad · Nombre de tienda"
+const TIENDAS_FLAT = {};
+Object.entries(CIUDADES_META).forEach(([ciudad, meta]) => {
+  meta.tiendas.forEach(t => {
+    TIENDAS_FLAT[`${ciudad} · ${t.nombre}`] = { ciudad, codigo: t.codigo, nombre: t.nombre, direccion: t.direccion, contexto: meta.contexto };
+  });
+});
+const DIRECCIONES = Object.fromEntries(Object.entries(TIENDAS_FLAT).map(([k,v]) => [k, v.direccion]));
+function getTiendaInfo(val) { return TIENDAS_FLAT[val] || null; }
+function getCiudadNombre(val) { return TIENDAS_FLAT[val]?.ciudad || val.split(' · ')[0] || val; }
+function populateCiudadDropdown() {
+  const sel = document.getElementById('ciudad');
+  const grupos = Object.entries(CIUDADES_META);
+  grupos.forEach(([ciudad, meta]) => {
+    const grp = document.createElement('optgroup');
+    grp.label = ciudad;
+    meta.tiendas.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = `${ciudad} · ${t.nombre}`;
+      opt.textContent = `${ciudad} · ${t.nombre}`;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  });
+}
 let history = [];
 
 function togglePlatform(btn) { btn.classList.toggle('active'); }
@@ -784,7 +835,7 @@ async function generarContenido() {
   const inclBrief = document.getElementById('chk-brief').checked;
   const inclDireccion = document.getElementById('chk-direccion').checked;
   const direccion = inclDireccion ? (DIRECCIONES[ciudad] || null) : null;
-  const culturaCtx = CIUDADES_META[ciudad]?.cultura || null;
+  const culturaCtx = getTiendaInfo(ciudad)?.contexto || null;
 
   if (!ciudad) {
     const sel = document.getElementById('ciudad');
@@ -1254,7 +1305,7 @@ function resetPreviewFields() {
   document.getElementById('img-precio').value  = precioDefaults[modo]  || precioDefaults.credito;
   const inclDirImg = document.getElementById('chk-direccion').checked;
   const dirImg = inclDirImg ? (DIRECCIONES[ciudad] || null) : null;
-  const ctaBase = ciudad ? `Visítanos en ${ciudad}` : 'Visítanos hoy';
+  const ctaBase = ciudad ? `Visítanos en ${getCiudadNombre(ciudad)}` : 'Visítanos hoy';
   document.getElementById('img-cta').value = dirImg ? `${ctaBase} · ${dirImg}` : ctaBase;
   buildImgPrompt();
 }
@@ -1278,11 +1329,11 @@ function buildImgPrompt() {
   const ctaEl     = document.getElementById('img-cta');
   const cuota     = document.getElementById('cuota').value.trim();
   const inicial   = document.getElementById('inicial').value.trim();
-  const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${ciudad}!`);
+  const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${getCiudadNombre(ciudad)}!`);
   const precio    = precioEl?.value.trim()  || cuota || '';
   const inclDirBuild = document.getElementById('chk-direccion').checked;
   const dirBuild     = inclDirBuild ? (DIRECCIONES[ciudad] || null) : null;
-  const ctaFallback  = dirBuild ? `Visítanos en ${ciudad} · ${dirBuild}` : `Visítanos en ${ciudad}`;
+  const ctaFallback  = dirBuild ? `Visítanos en ${getCiudadNombre(ciudad)} · ${dirBuild}` : `Visítanos en ${getCiudadNombre(ciudad)}`;
   const cta          = ctaEl?.value.trim() || ctaFallback;
 
   // Style modifier
