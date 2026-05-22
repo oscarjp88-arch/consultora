@@ -860,11 +860,11 @@ async function generarContenido() {
   const modoLabel = { credito:'Celular a crédito', promo:'Promoción especial', tienda:'Contenido de tienda', servicio:'Servicio / beneficio' }[modo];
   const brandBase = [
     'IDENTIDAD DE MARCA CREDITEK:',
-    '- Logo: check circular + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro.',
-    '- Colores: Azul profundo #0B1E3D (fondos/títulos) · Turquesa #00C4CC (CTA/acentos) · Blanco #FFFFFF (textos sobre azul)',
-    '- Tipografía: Montserrat o Poppins — Bold titulares, Medium subtítulos, Regular textos',
-    '- Esencia: moderna, confiable, cercana, clara y resolutiva',
-    '- Tono: cercano, directo y humano — como un vendedor que conoce a sus clientes, les habla de tú a tú y los trata con respeto sin importar su historial.'
+    '- Logo: check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA usar versiones alternativas o modificadas.',
+    '- Colores: Azul profundo #0B1E3D (fondos, títulos, base) · Turquesa #00C4CC (CTA, acentos, checks, badges de precio) · Blanco #FFFFFF (textos sobre azul)',
+    '- Tipografía: Montserrat Bold — titulares y CTA · Montserrat Medium — subtítulos · Montserrat Regular / DM Sans — textos · Poppins — alternativa si Montserrat no está disponible',
+    '- Propuesta de valor: "Tu celular nuevo hoy. Sin trámites, sin rollo."',
+    '- Tono: cercano, directo y humano — como un vendedor que conoce a sus clientes, les habla de tú a tú (o de usted según la ciudad) y los trata con respeto sin importar su historial.'
   ].join('\n');
   let contextoBlock;
   if (modo === 'credito') {
@@ -877,60 +877,92 @@ CONTEXTO:
 - Producto: celulares a crédito, sin banco, aprobación rápida
 - Plataformas: PayJoy, Alo Credit, Krediya, Addi
 - Plazos: 4, 6 u 8 meses
-- Diferenciador: aprobación fácil donde el banco dice que no
-- NSE objetivo: 2-3 (Caribe colombiano)
-- Objeción principal del cliente: "¿Me van a aprobar? / Tengo miedo al endeudamiento"
-- Argumento de cierre: aprobación el mismo día con solo la cédula, sin tanto papeleo, sin importar el historial crediticio
-- El copy debe responder esta objeción de forma natural, sin sonar a publicidad. Ejemplo: "Sin miedo, con la cédula es suficiente."`;
+- Plataformas de financiamiento: PayJoy, Alo Credit, Krediya, Addi. Plazos: 4, 6 u 8 meses.
+- Diferenciador: aprueba donde el banco dice que no. Sin historial requerido.
+- Objeción central del cliente: "¿Me van a aprobar? / Tengo miedo al endeudamiento."
+- Argumento de cierre: aprobación el mismo día solo con la cédula, sin importar el historial.
+
+PATRONES DE COPY MODO CRÉDITO (cita textualmente o adapta mínimo):
+"Con una inicial de $50.000 pesitos ya es tuyo"
+"Tu celular nuevo desde $X al mes — sin banco, sin rollo"
+"Sin miedo, con la cédula es suficiente."
+"No importa si en otra tienda te dijeron que no."
+"Solo hasta el viernes. Después no hay más."
+"Llévalo hoy, págalo cómodo. Así de fácil."
+WhatsApp: "Ey, llegó el Samsung A17 a Creditek Corozal. Inicial de $50.000 pesitos y lo llevas hoy. ¿Cuándo nos visitas?"
+Para Chinú / registro usted: "Don Juan, en Chinú Cell lo atendemos bien. Con la cédula alcanza — pase y lo miramos."`;
 
   } else if (modo === 'promo') {
     contextoBlock = `Eres el Agente de Marketing de Creditek SAS, tienda colombiana de celulares con 11 locales propios en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
 
 ${brandBase}
 
-⚠️ REGLA CRÍTICA: Este copy es para una PROMOCIÓN ESPECIAL. NO menciones crédito, cuotas ni financiamiento en ningún copy. El mensaje trata únicamente de la oferta o promoción.`;
+⚠️ REGLA CRÍTICA: Este copy es para una PROMOCIÓN ESPECIAL. NO menciones crédito, cuotas ni financiamiento. El mensaje es 100% sobre la oferta.
+
+PATRONES DE COPY MODO PROMO (cita textualmente o adapta mínimo):
+"Solo [X] unidades. El que llega primero, lo lleva."
+"Esta semana en [nombre tienda]: [modelo] a [precio]. Antes de que se acaben."
+"[Modelo] bajó de precio esta semana. Solo en [ciudad]."
+"Sin rodeos: [precio]. Hasta el domingo."
+"Solo en [nombre tienda], [ciudad]. No lo vas a encontrar igual en otro lado."
+WhatsApp: "Oye, esta semana [modelo] está a [precio] en [tienda]. Si te interesa, ven antes del viernes que se acaba."`;
   } else if (modo === 'tienda') {
     contextoBlock = `Eres el Agente de Marketing de Creditek SAS, tienda colombiana de celulares con 11 locales propios en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
 
 ${brandBase}
 
-⚠️ REGLA CRÍTICA: Este copy es CONTENIDO DE TIENDA. NO menciones crédito, cuotas ni financiamiento. El mensaje muestra la tienda, el equipo y la experiencia de compra.`;
+⚠️ REGLA CRÍTICA: Este copy es CONTENIDO DE TIENDA. NO menciones crédito, cuotas ni financiamiento. Muestra la tienda, el equipo y la experiencia de compra.
+
+PATRONES DE COPY MODO TIENDA (cita textualmente o adapta mínimo):
+"Esto es [nombre tienda] por dentro. Pasa y conoce."
+"El equipo de [tienda] listo para atenderte. Ven hoy."
+"¿Cuándo fue la última vez que entraste a [nombre tienda]? Algo nuevo te espera."
+"En [nombre tienda] siempre hay alguien dispuesto a ayudarte. Sin compromiso."
+"[Tienda] en [ciudad]. Ya llevamos [tiempo] atendiéndolos a ustedes."`;
   } else {
     contextoBlock = `Eres el Agente de Marketing de Creditek SAS, tienda colombiana de celulares con 11 locales propios en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
 
 ${brandBase}
 
-⚠️ REGLA CRÍTICA: Este copy es sobre un SERVICIO O BENEFICIO. NO menciones crédito, cuotas ni financiamiento. El mensaje destaca el servicio o beneficio indicado.`;
+⚠️ REGLA CRÍTICA: Este copy es sobre un SERVICIO O BENEFICIO. NO menciones crédito, cuotas ni financiamiento. Destaca el servicio o beneficio indicado.
+
+PATRONES DE COPY MODO SERVICIO (cita textualmente o adapta mínimo):
+"¿Tu celular se está poniendo lento? En [tienda] lo revisamos sin cobro."
+"Batería dañada, pantalla rota — en [tienda] te orientamos sin que tengas que comprar nada."
+"Llevamos años en [ciudad]. Si tienes dudas sobre tu celular, pregunta — te respondemos."
+WhatsApp: "¿Problema con tu equipo? Cuéntanos qué tiene. En [tienda] miramos qué se puede hacer."`;
   }
   const hashtagsCtx = modo === 'credito' ? 'ciudad, producto, crédito, Colombia' : 'ciudad, producto, Colombia';
   const tipoEstructura = {
-    oferta_semana:    'Abre con urgencia de cantidad o tiempo. Segundo párrafo: beneficio concreto con precio. Cierra con CTA de visita presencial.',
-    showcase_producto:'Primera línea: característica más llamativa del producto. Segunda: beneficio directo para el cliente. Cierra con precio o CTA de consulta.',
-    testimonio:       'Abre en primera persona como si fuera el cliente hablando. Máximo 2 frases del testimonio. Cierra con invitación a la tienda.',
-    educativo:        'Abre con una pregunta que el cliente se hace. Explica en lenguaje simple, sin tecnicismos. Cierra con CTA informativo.',
-    promo_urgencia:   'Primera línea: urgencia de tiempo o cantidad. Segunda: beneficio concreto. Tercera: CTA inmediato y directo.',
-    detras_camara:    'Tono íntimo, como mostrar el negocio a un amigo. Sin vender directamente. Cierra con invitación a conocer la tienda.'
+    oferta_semana:    'Urgencia de cantidad o tiempo → beneficio con precio → CTA presencial.',
+    showcase_producto:'Característica más llamativa del producto → beneficio directo para el cliente → precio o CTA.',
+    testimonio:       'Primera persona como si fuera el cliente (máx. 2 frases) → invitación a la tienda.',
+    educativo:        'Pregunta que el cliente se hace → explicación simple sin tecnicismos → CTA informativo.',
+    promo_urgencia:   'Urgencia de tiempo o cantidad → beneficio concreto → CTA inmediato.',
+    detras_camara:    'Tono íntimo como mostrar el negocio a un amigo → sin vender directamente → invitación a conocer la tienda.'
   };
+  const briefFormat = currentFormat === 'stories' ? '1080×1920px (Stories/Reels)' : '1080×1080px (Feed)';
+  const briefBgColor = fechaData ? `#0B1E3D con paleta de fecha especial: ${fechaData.colores}` : '#0B1E3D o #FFFFFF';
   const briefBlock = inclBrief ? `Después añade un BRIEF VISUAL CANVA capa por capa con estas especificaciones exactas del manual de marca Creditek:
 
 MANUAL DE MARCA CREDITEK (usa estos datos, no inventes nada):
-- Logo: símbolo de check circular + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA logos alternativos.
-- Colores oficiales: Azul profundo #0B1E3D (fondos, títulos), Turquesa #00C4CC (CTA, checks, acentos), Blanco #FFFFFF (textos sobre azul)
-- Tipografía: Montserrat o Poppins — Titulares Bold, Subtítulos Medium, Textos Regular
-- Formatos: Feed 1080×1080px · Stories/Reels 1080×1920px
+- Logo: símbolo de check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA logos alternativos.
+- Colores oficiales: Azul profundo #0B1E3D (fondos, títulos) · Turquesa #00C4CC (CTA, checks, acentos) · Blanco #FFFFFF (textos sobre azul)
+- Tipografía: Montserrat Bold — titulares y CTA · Montserrat Medium — subtítulos · Montserrat Regular — textos
+- Formato activo: ${briefFormat}
 - Jerarquía obligatoria: título fuerte → beneficio/precio → CTA
-- Máximo 3 colores por diseño. Fondos SOLO azul oscuro o blanco
+- Máximo 3 colores por diseño. Fondo base: ${briefBgColor}
 - Fotografía de celular: recorte limpio sin fondo, buena iluminación, sombra suave
 - NUNCA texto placeholder tipo "en implosión" o similares
 
 El brief debe tener exactamente estas 7 capas:
-CAPA 1 - FONDO: color exacto (#0B1E3D o #FFFFFF), formato (1080×1080 o 1080×1920)
-CAPA 2 - LOGO: versión a usar, posición en el diseño, tamaño sugerido (% del ancho)
-CAPA 3 - IMAGEN PRODUCTO: cómo buscar el celular sin fondo (ej: "buscar en Google: [modelo] PNG sin fondo"), dónde posicionarlo
-CAPA 4 - TEXTO TITULAR: texto exacto, fuente Montserrat/Poppins Bold, color, tamaño sugerido en pt
-CAPA 5 - PRECIO/BENEFICIO: texto exacto del mensaje principal, Montserrat Bold, color #00C4CC, tamaño grande (60-80pt)
-CAPA 6 - CTA: texto del botón o llamada a acción, color fondo #00C4CC, texto #0B1E3D, posición
-CAPA 7 - CIUDAD Y DIRECCIÓN: nombre de la ciudad/tienda${direccion ? ', dirección física (' + direccion + ')' : ''}, tamaño pequeño, color blanco o turquesa, posición inferior` : '';
+CAPA 1 - FONDO: color exacto (${briefBgColor}), formato ${briefFormat}
+CAPA 2 - LOGO: versión blanca/turquesa sobre fondo oscuro, posición superior derecha, ~15% del ancho
+CAPA 3 - IMAGEN PRODUCTO: "buscar en Google: [modelo] PNG sin fondo", posición en el diseño
+CAPA 4 - TEXTO TITULAR: texto exacto, Montserrat Bold, color blanco o turquesa, tamaño sugerido en pt
+CAPA 5 - PRECIO/BENEFICIO: texto exacto del mensaje principal, Montserrat Bold, color #00C4CC, 60-80pt
+CAPA 6 - CTA: texto del botón o llamada a acción, fondo #00C4CC, texto #0B1E3D, posición inferior
+CAPA 7 - CIUDAD Y DIRECCIÓN: nombre de tienda${direccion ? ' (' + direccion + ')' : ''}, tamaño pequeño, color blanco o turquesa, posición inferior` : '';
   const prompt = `${contextoBlock}
 
 PARÁMETROS:
@@ -944,16 +976,16 @@ ${nota ? '- Nota especial / información del contenido: ' + nota : ''}
 ${direccion ? '- Dirección(es) de tienda: ' + direccion : ''}
 - Plataformas: ${platformsList}
 
-PERFIL DEL CLIENTE CREDITEK:
-- Hombre o mujer de 25-45 años, ingreso familiar $1.2M-$2.5M
+PERFIL DEL CLIENTE REAL (habla DIRECTAMENTE a esta persona):
+- Hombre o mujer, 25-45 años, ingreso familiar $1.2M–$2.5M/mes
 - Usa Nequi o Daviplata, no tiene cuenta bancaria formal
 - No tiene historial crediticio o lo tiene manchado
-- Su último celular lo compró hace 2-3 años, ya está dañado o lento
-- Aspira a darle tecnología a su familia
+- Su último celular lo compró hace 2-3 años — ya está dañado, lento o roto
+- Aspira a darle tecnología a su familia, que sus hijos tengan lo que necesitan
 - Ha ido a otras tiendas y lo han tratado mal porque "no tiene cupo"
 - Le da vergüenza preguntar si le aprueban
 - Cuando le dicen que sí, siente alivio y orgullo
-Habla DIRECTAMENTE a esta persona. El copy debe hacerlo sentir que Creditek es diferente — que aquí sí lo atienden bien y sí le aprueban.
+El copy debe hacerlo sentir que Creditek es diferente: aquí sí lo atienden bien, aquí sí le aprueban, aquí nadie lo juzga.
 
 ${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudad}:\n${culturaCtx}\n${getTiendaInfo(ciudad)?.nombre ? `Tienda: ${getTiendaInfo(ciudad).nombre}. Puedes mencionar este nombre cuando aporte autenticidad local (ej: "Visítanos en ${getTiendaInfo(ciudad).nombre}").` : ''}\n\n` : ''}LENGUAJE Y TONO OBLIGATORIO:
 - Habla como un vendedor colombiano cercano y respetuoso, no como una marca corporativa
@@ -961,18 +993,20 @@ ${culturaCtx && (culturaCtx.includes('tradicional') || culturaCtx.includes('gana
 - Frases cortas y directas. Una idea por frase.
 - PROHIBIDO: anglicismos, tecnicismos, frases corporativas como "potencia tu experiencia", "descubre", "innovador", "soluciones", "adquirir"
 
-PATRONES DE COPY QUE CONVIERTEN (úsalos como base):
-- Precio como anzuelo: "Con una inicial de $50.000 pesitos ya es tuyo"
-- Beneficio antes que producto: "Tu celular nuevo desde $X al mes — sin banco, sin rollo"
-- Urgencia de fecha: "Solo hasta el viernes. Después no hay más."
-- Vendedor cercano: "Llévalo hoy, págalo cómodo. Así de fácil."
-- WhatsApp (máximo 3 frases, como aviso de amigo): "Ey, llegó el Samsung A17 a Creditek. Inicial de $50.000 pesitos y lo llevas hoy. ¿Cuándo nos visitas?"
+COPY MALO — NUNCA HACER ESTO (6 anti-patrones prohibidos):
+❌ "Descubre la innovadora experiencia de adquirir tecnología de punta con nuestras soluciones financieras."
+❌ "Potencia tu estilo de vida con nuestros equipos de última generación."
+❌ "Aprovecha esta increíble oportunidad de financiamiento flexible."
+❌ "¡Contáctanos ahora y nuestros asesores te guiarán!" (genérico, sin ciudad, sin persona real)
+❌ Mencionar precios que no fueron especificados explícitamente por el usuario
+❌ Usar "Ey" o slang urbano en Chinú o Ciénaga de Oro (registro respetuoso / usted)
+PROHIBIDO además: "upgrade", "top", "lifestyle", "innovador", "potencia tu experiencia", "descubre", "soluciones", "adquirir", "tecnología de punta"
 
-COPY MALO (nunca hacer esto):
-"Descubre la innovadora experiencia de adquirir tecnología de punta con nuestras soluciones financieras."
-
-LÍMITES DE CARACTERES:
-WhatsApp: máximo 3 frases · Facebook: 300-400 caracteres · Instagram: 150-200 caracteres · TikTok: máximo 2 líneas
+LÍMITES DE CARACTERES (respetar siempre):
+- Facebook: 300–400 caracteres · storytelling breve, gancho emocional · Gancho → beneficio → CTA a tienda
+- Instagram: 150–200 caracteres · visual y directo · Primera línea = gancho; copy mínimo
+- WhatsApp: máx. 3 frases · como mensaje de amigo o conocido · Noticia → beneficio → pregunta/CTA
+- TikTok: 2 líneas máx. · brutal, para el scroll · Primera línea detiene, segunda convierte
 
 ${fechaData ? `FECHA ESPECIAL — ${fechaData.label}:
 - Adapta el tono del copy a esta emoción: ${fechaData.tono}
@@ -983,9 +1017,9 @@ ${fechaData ? `FECHA ESPECIAL — ${fechaData.label}:
 ${tipoEstructura[tipo] || 'Gancho fuerte → beneficio concreto → CTA directo.'}
 
 INSTRUCCIONES POR PLATAFORMA:
-Genera el copy para CADA plataforma solicitada respetando el límite de caracteres.
-- Facebook: storytelling breve con gancho emocional, CTA clara a la tienda. Máx 400 caracteres.
-- Instagram: primera línea es el gancho, copy visual y directo. Máx 200 caracteres.
+Genera el copy para CADA plataforma solicitada. Respeta los límites de caracteres indicados arriba.
+- Facebook: storytelling breve con gancho emocional, CTA clara a la tienda.
+- Instagram: primera línea es el gancho, copy visual y directo.
 - WhatsApp: conversacional como un mensaje de un conocido. Máximo 3 frases.
 - TikTok: primera línea brutal que pare el scroll, segunda línea el beneficio, nada más.
 ${direccion ? '- IMPORTANTE: Incluye la dirección de la tienda en el CTA o al final de cada copy, de forma natural según el tono de cada plataforma.' : ''}
@@ -1593,7 +1627,7 @@ async function aplicarCambioImagen() {
     const res = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-      body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content }], tools: [{ type: 'image_generation', size: '1024x1024' }] })
+      body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content }], tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1792' : '1024x1024' }] })
     });
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
