@@ -887,7 +887,8 @@ async function generarContenido() {
     setTimeout(() => { sel.style.borderColor = ''; sel.style.boxShadow = ''; }, 2500);
     return;
   }
-  if (!platforms.length) { alert('Selecciona al menos una plataforma.'); return; }
+  if (ciudad === 'todas las ciudades') showToast('Para mejor resultado selecciona una tienda específica', '#f59e0b');
+  if (!platforms.length) { showToast('Selecciona al menos una plataforma.', '#f59e0b'); return; }
 
   const btn = document.getElementById('gen-btn');
   const spinner = document.getElementById('spinner');
@@ -927,7 +928,7 @@ PATRONES DE COPY MODO CRÉDITO (cita textualmente o adapta mínimo):
 "No importa si en otra tienda te dijeron que no."
 "Solo hasta el viernes. Después no hay más."
 "Llévalo hoy, págalo cómodo. Así de fácil."
-WhatsApp: "Ey, llegó el Samsung A17 a Creditek Corozal. Inicial de $50.000 pesitos y lo llevas hoy. ¿Cuándo nos visitas?"
+WhatsApp: "Ey, llegó el [modelo] a [nombre tienda]. Inicial de $50.000 pesitos y lo llevas hoy. ¿Cuándo nos visitas?"
 Para Chinú / registro usted: "Don Juan, en Chinú Cell lo atendemos bien. Con la cédula alcanza — pase y lo miramos."`;
 
   } else if (modo === 'promo') {
@@ -1147,7 +1148,6 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
           ${meta.emoji} ${meta.label}
           <span class="pieza-badge ${meta.badge}">${TIPO_META[tipo]}</span>
         </div>
-        <button class="copy-btn" onclick="copiarTexto(this,\`${esc(copy)}\`)"><span>Copiar</span></button>
       </div>
       <div class="pieza-body"><div class="pieza-content">${fmt(copy)}</div></div>
       <div class="pieza-footer">
@@ -1301,6 +1301,8 @@ async function ajustarCopy(btn, platform, maxChars) {
     counter.className = `char-counter ${cls}`;
     counter.textContent = `${pct > 1 ? '⚠ ' : ''}${trimmed.length}/${maxChars} car.`;
     if (copyBtn) copyBtn.setAttribute('onclick', `copiarTexto(this,\`${esc(trimmed)}\`)`);
+    const footerCopyBtn = card.querySelector('.copy-footer-btn');
+    if (footerCopyBtn) footerCopyBtn.setAttribute('onclick', `copiarTexto(this,\`${esc(trimmed)}\`)`);
     if (trimmed.length <= maxChars) btn.remove();
     else { btn.disabled = false; btn.textContent = '✂ Ajustar'; }
   } catch(e) { showToast('Error al ajustar: ' + (e.message||''), '#ef4444'); btn.disabled = false; btn.textContent = '✂ Ajustar'; }
@@ -1331,7 +1333,7 @@ let imgHistory = [];
 let imgHistoryIdx = 0;
 let lastImgModelLabel = '';
 
-const CHAR_LIMITS = { facebook: 400, instagram: 200, whatsapp: 160, tiktok: 100 };
+const CHAR_LIMITS = { facebook: 400, instagram: 200, whatsapp: 250, tiktok: 100 };
 function charCounterHTML(platform, len) {
   const max = CHAR_LIMITS[platform] || 400;
   const pct = len / max;
@@ -1710,7 +1712,6 @@ async function generarConDalle(key, prompt) {
     );
   }
   const data = await res.json();
-  console.log('[GPT Image 2] respuesta completa:', JSON.stringify(data, null, 2));
   const imageCall = data.output?.find(o => o.type === 'image_generation_call');
   const b64 = imageCall?.result;
   if (!b64) throw new Error('OpenAI no devolvió imagen. Revisa la consola para ver la respuesta completa.');
