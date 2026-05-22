@@ -8,8 +8,8 @@
 <style>
 :root{--azul:#0B1E3D;--turquesa:#00C4CC;--bg:#0B1E3D;--bg2:#112444;--bg3:#172d54;--bord:rgba(0,196,204,0.15);--bord2:rgba(0,196,204,0.35);--txt:#F0EFEB;--txt2:#9BB8CC;--txt3:#567890;--r:12px;--rs:8px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:15px;line-height:1.6}
-.shell{display:flex;height:100vh;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:15px;line-height:1.6}
+.shell{display:flex;flex:1;min-height:0;overflow:hidden}
 
 /* SIDEBAR */
 .sidebar{width:296px;min-width:296px;background:var(--bg2);border-right:1px solid var(--bord);display:flex;flex-direction:column;overflow-y:auto}
@@ -165,7 +165,7 @@ select option{background:var(--bg2)}
   .dcard-copy{border-top:1px solid #ddd}
   .copy-text{color:#333}
 }
-.breadcrumb{position:fixed;top:14px;left:14px;z-index:200;display:flex;align-items:center;gap:6px;font-size:12px;background:rgba(11,30,61,0.92);border:1px solid rgba(0,196,204,.25);border-radius:20px;padding:6px 14px;backdrop-filter:blur(4px)}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;background:#112444;border-bottom:1px solid rgba(0,196,204,.15);padding:10px 20px;flex-shrink:0}
 .breadcrumb a{color:#00C4CC;text-decoration:none;font-weight:600}
 .breadcrumb a:hover{text-decoration:underline}
 .breadcrumb .sep{color:#567890}
