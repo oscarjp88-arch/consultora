@@ -1598,8 +1598,16 @@ function buildImgPrompt() {
   };
   const bgSpec = (fechaData2 && fechaBgMap[fechaKey2]) ? fechaBgMap[fechaKey2] : 'solid deep navy #0B1E3D';
 
+  const knownBrands = ['Samsung', 'Xiaomi', 'Motorola', 'OPPO', 'Realme', 'Infinix', 'Honor', 'TCL', 'iPhone', 'Apple'];
+  const detectedBrand = knownBrands.find(b => producto.toLowerCase().includes(b.toLowerCase()));
+  const isApple = detectedBrand === 'iPhone' || detectedBrand === 'Apple';
+  const androidBrand = isApple ? 'Android' : (detectedBrand || null);
+  const brandBlock = androidBrand
+    ? ` CRITICAL: The smartphone in this image MUST be a ${producto}. DO NOT generate an iPhone or Apple product under any circumstance. The phone must have Android design language, ${androidBrand} branding visible on the device. If you cannot render this exact model, render a generic Android phone, never an iPhone.`
+    : '';
+
   const refBlock = getRefBlock();
-  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}${inicialSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold 'Creditek' wordmark in Montserrat, no tagline. Background: ${bgSpec}. ${sizeSpec}, crisp high contrast.${negativePrompt}${refBlock}`;
+  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}${inicialSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold 'Creditek' wordmark in Montserrat, no tagline. Background: ${bgSpec}. ${sizeSpec}, crisp high contrast.${negativePrompt}${brandBlock}${refBlock}`;
   document.getElementById('img-prompt-ta').value = p;
 }
 
@@ -1833,10 +1841,10 @@ async function generarConGemini(key, prompt) {
   const geminiNegative = "text distortion, blurry text, misspelled brand name, watermark, low quality, pixelated, cluttered, fake UI overlays, extra people, placeholder logos, generic stock photo feel";
   const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
   const models = [
-    { id: 'imagen-4-0-generate-001', label: 'Gemini Imagen 4' },
-    { id: 'imagen-3.0-generate-001', label: 'Gemini Imagen 3' }
+    { id: 'imagen-4.0-generate-preview-06-06', label: 'Gemini Imagen 4' },
+    { id: 'imagen-4.0-generate-preview-05-20', label: 'Gemini Imagen 4 (may)' }
   ];
-  let lastErr = 'Gemini no pudo generar la imagen. Verifica que Imagen esté habilitado en tu proyecto de Google AI Studio.';
+  let lastErr = 'Gemini Imagen 4 no disponible. Usa GPT Image 2.';
   for (const model of models) {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:predict?key=${encodeURIComponent(key)}`,
@@ -1853,7 +1861,7 @@ async function generarConGemini(key, prompt) {
       const e = await res.json().catch(() => ({}));
       if (res.status === 401) throw new Error('API key de Gemini inválida. Verifica en Google AI Studio.');
       if ((res.status === 404 || res.status === 403) && model.id === models[0].id) {
-        lastErr = e.error?.message || `Imagen 4 no disponible (${res.status}), probando Imagen 3...`;
+        lastErr = 'Gemini Imagen 4 no disponible. Usa GPT Image 2.';
         continue;
       }
       throw new Error(e.error?.message || `Error Gemini ${res.status}`);
@@ -1861,7 +1869,7 @@ async function generarConGemini(key, prompt) {
     const data = await res.json();
     const b64 = data.predictions?.[0]?.bytesBase64Encoded;
     if (!b64) {
-      if (model.id === models[0].id) { lastErr = 'Imagen 4 sin respuesta, probando Imagen 3...'; continue; }
+      if (model.id === models[0].id) { lastErr = 'Gemini Imagen 4 no disponible. Usa GPT Image 2.'; continue; }
       throw new Error('Gemini no devolvió imagen. Verifica que Imagen esté habilitado en tu proyecto.');
     }
     lastImgModelLabel = model.label;
@@ -1966,15 +1974,11 @@ async function aplicarCambioImagen() {
     } else {
       const key = localStorage.getItem('ck_openai_key');
       if (!key || key.length < 10) throw new Error('Configura la API key de GPT Image 2 para editar.');
-      const editPrompt = `${promptBase}\n\nEDIT INSTRUCTION: ${instruccion}`;
-      const content = [
-        { type: 'input_image', image_url: currentSrc },
-        { type: 'input_text', text: editPrompt }
-      ];
+      const editPrompt = `${promptBase}\n\nMODIFICACIÓN SOLICITADA: ${instruccion}`;
       const res = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-        body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content }], tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1792' : '1024x1024' }] })
+        body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content: [{ type: 'input_text', text: editPrompt }] }], tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1792' : '1024x1024' }] })
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
