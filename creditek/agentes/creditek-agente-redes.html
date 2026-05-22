@@ -927,9 +927,12 @@ async function generarConDalle(key, prompt) {
     );
   }
   const data = await res.json();
-  const url = data.data?.[0]?.url;
-  if (!url) throw new Error('OpenAI no devolvió imagen. Intenta de nuevo.');
-  return url;
+  console.log('[GPT Image 2] respuesta completa:', JSON.stringify(data, null, 2));
+  const item = data.data?.[0];
+  if (!item) throw new Error('OpenAI no devolvió imagen. Intenta de nuevo.');
+  if (item.b64_json) return 'data:image/png;base64,' + item.b64_json;
+  if (item.url) return item.url;
+  throw new Error('OpenAI no devolvió imagen. Intenta de nuevo.');
 }
 
 function descargarImagen() {
