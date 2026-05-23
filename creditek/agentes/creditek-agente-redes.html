@@ -452,6 +452,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <label class="field-label">Ciudad / tienda</label>
       <select id="ciudad" onchange="resetPreviewFields()">
         <option value="">Seleccionar tienda...</option>
+        <option value="general">🏢 General Creditek</option>
         <option value="todas las ciudades">Todas las ciudades</option>
       </select>
     </div>
@@ -859,6 +860,7 @@ const DIRECCIONES = Object.fromEntries(Object.entries(TIENDAS_FLAT).map(([k,v]) 
 function isCiudadCompleta(val) { return typeof val === 'string' && val.startsWith('ciudad:'); }
 function getTiendaInfo(val) { return isCiudadCompleta(val) ? null : (TIENDAS_FLAT[val] || null); }
 function getCiudadNombre(val) {
+  if (val === 'general') return 'Creditek';
   if (isCiudadCompleta(val)) return val.slice(7);
   return TIENDAS_FLAT[val]?.ciudad || val.split(' · ')[0] || val;
 }
@@ -1538,7 +1540,7 @@ function resetPreviewFields() {
   const inclDirImg = chkEl ? chkEl.checked : false;
   const esCiudadReset = isCiudadCompleta(ciudad);
   const tiendaInfo = getTiendaInfo(ciudad);
-  if (inclDirImg && esCiudadReset) showToast('Dirección no disponible para ciudad completa', '#f59e0b');
+  if (inclDirImg && (esCiudadReset || ciudad === 'general')) showToast('Dirección no disponible para esta selección', '#f59e0b');
   const dirImg = (!esCiudadReset && inclDirImg) ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
   const nombreCta = esCiudadReset ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
   console.log('[chk-direccion] checkbox activo:', inclDirImg,
