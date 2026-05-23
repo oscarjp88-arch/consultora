@@ -653,6 +653,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <!-- TEST TEMPORAL — borrar cuando se confirme modelo correcto -->
       <div id="gemini-test-panel" style="margin:8px 0;padding:10px;background:#0d1f38;border:1px solid #1e3a5f;border-radius:8px">
         <button onclick="testGeminiModels()" style="width:100%;padding:7px 12px;background:#1e3a5f;color:#00C4CC;border:1px solid #00C4CC;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">🔍 Test modelos Gemini</button>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+          <span style="font-size:10px;color:#64748b;white-space:nowrap">Proyecto Vertex:</span>
+          <input id="vertex-project-id" type="text" placeholder="my-gcp-project-id" style="flex:1;padding:4px 7px;background:#0b1e3d;border:1px solid #1e3a5f;color:#94a3b8;border-radius:4px;font-size:11px;font-family:monospace">
+        </div>
         <div id="gemini-test-results" style="margin-top:8px;font-size:11px;font-family:monospace;line-height:1.8;display:none"></div>
       </div>
       <div class="fmt-toggle">
@@ -2126,54 +2130,122 @@ function descargarImagen() {
 
 // ── TEST TEMPORAL: detectar modelos Gemini disponibles ─────────────
 async function testGeminiModels() {
-  const key = localStorage.getItem('ck_gemini_key');
-  const resultsEl = document.getElementById('gemini-test-results');
+  const key        = localStorage.getItem('ck_gemini_key');
+  const resultsEl  = document.getElementById('gemini-test-results');
+  const vertexProj = (document.getElementById('vertex-project-id')?.value || '').trim();
+
   if (!key || key.length < 10) {
     resultsEl.style.display = 'block';
     resultsEl.innerHTML = '<span style="color:#ef4444">⚠ Configura primero la API key de Gemini</span>';
     return;
   }
-  const models = [
-    'imagen-4.0-generate-preview-06-06',
-    'imagen-4.0-generate-preview-05-20',
-    'imagen-4.0-generate-preview-04-18',
-    'imagen-3.0-generate-002',
-    'imagegeneration@006',
-    'imagegeneration@005',
-  ];
+
   const minPrompt = 'A simple blue square. Minimal test image.';
+
+  // Catalog of endpoints to test
+  // type: 'predict'         → v1beta/v1 :predict (Imagen API)
+  // type: 'vertex'          → Vertex AI :predict (requiere proyecto GCP + OAuth, no API key)
+  // type: 'generateContent' → Gemini generateContent con responseModalities IMAGE
+  const endpoints = [
+    // ── v1beta :predict ──────────────────────────────────────────────
+    { label: 'v1beta · imagen-4.0-preview-06-06',    type: 'predict', ver: 'v1beta', model: 'imagen-4.0-generate-preview-06-06' },
+    { label: 'v1beta · imagen-4.0-preview-05-20',    type: 'predict', ver: 'v1beta', model: 'imagen-4.0-generate-preview-05-20' },
+    { label: 'v1beta · imagen-4.0-preview-04-18',    type: 'predict', ver: 'v1beta', model: 'imagen-4.0-generate-preview-04-18' },
+    { label: 'v1beta · imagen-3.0-generate-002',     type: 'predict', ver: 'v1beta', model: 'imagen-3.0-generate-002' },
+    { label: 'v1beta · imagegeneration@006',          type: 'predict', ver: 'v1beta', model: 'imagegeneration@006' },
+    { label: 'v1beta · imagegeneration@005',          type: 'predict', ver: 'v1beta', model: 'imagegeneration@005' },
+    // ── v1 :predict ──────────────────────────────────────────────────
+    { label: 'v1 · imagen-4.0-preview-06-06',        type: 'predict', ver: 'v1',     model: 'imagen-4.0-generate-preview-06-06' },
+    { label: 'v1 · imagen-4.0-preview-05-20',        type: 'predict', ver: 'v1',     model: 'imagen-4.0-generate-preview-05-20' },
+    // ── Vertex AI :predict (requiere proyecto GCP + OAuth) ───────────
+    { label: `Vertex AI · imagen-4.0-preview-06-06 (proyecto: ${vertexProj || 'NO CONFIGURADO'})`,
+      type: 'vertex', model: 'imagen-4.0-generate-preview-06-06', project: vertexProj },
+    // ── gemini-2.0-flash-exp generateContent IMAGE ───────────────────
+    { label: 'v1beta · gemini-2.0-flash-exp (IMAGE modality)', type: 'generateContent', ver: 'v1beta', model: 'gemini-2.0-flash-exp' },
+  ];
+
   resultsEl.style.display = 'block';
-  resultsEl.innerHTML = '<span style="color:#94a3b8">Probando ' + models.length + ' modelos...</span>';
+  resultsEl.innerHTML = `<span style="color:#94a3b8">Probando ${endpoints.length} endpoints...</span>`;
   const lines = [];
-  for (const modelId of models) {
-    lines.push(`<span style="color:#94a3b8">⏳ ${modelId}</span>`);
+
+  for (const ep of endpoints) {
+    lines.push(`<span style="color:#94a3b8">⏳ ${ep.label}</span>`);
     resultsEl.innerHTML = lines.join('<br>');
+
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:predict?key=${encodeURIComponent(key)}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      let res, data, ok = false, result = '';
+
+      if (ep.type === 'predict') {
+        const url = `https://generativelanguage.googleapis.com/${ep.ver}/models/${ep.model}:predict?key=${encodeURIComponent(key)}`;
+        res  = await fetch(url, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ instances: [{ prompt: minPrompt }], parameters: { sampleCount: 1, aspectRatio: '1:1' } }),
-          signal: AbortSignal.timeout(15000) }
-      );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const code = res.status;
-        const msg  = data.error?.message || data.error?.status || `HTTP ${code}`;
-        const icon = code === 401 ? '🔑' : (code === 404 ? '❌' : (code === 403 ? '🚫' : '⚠'));
-        lines[lines.length - 1] = `<span style="color:#ef4444">${icon} ${modelId} — ${code}: ${msg}</span>`;
-      } else {
-        const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-        if (b64) {
-          lines[lines.length - 1] = `<span style="color:#22c55e">✅ ${modelId} — FUNCIONA (imagen recibida)</span>`;
-        } else {
-          lines[lines.length - 1] = `<span style="color:#f59e0b">⚠ ${modelId} — responde OK pero sin imagen (${JSON.stringify(Object.keys(data))})</span>`;
+          signal: AbortSignal.timeout(20000)
+        });
+        data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+          ok = !!b64;
+          result = ok ? 'FUNCIONA — imagen recibida' : `OK pero sin imagen — keys: ${JSON.stringify(Object.keys(data))}`;
+        }
+
+      } else if (ep.type === 'vertex') {
+        if (!ep.project) {
+          lines[lines.length - 1] = `<span style="color:#64748b">⏭ ${ep.label} — ingresa el proyecto GCP para probar</span>`;
+          resultsEl.innerHTML = lines.join('<br>');
+          continue;
+        }
+        const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${ep.project}/locations/us-central1/publishers/google/models/${ep.model}:predict`;
+        res  = await fetch(url, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+          body: JSON.stringify({ instances: [{ prompt: minPrompt }], parameters: { sampleCount: 1, aspectRatio: '1:1' } }),
+          signal: AbortSignal.timeout(20000)
+        });
+        data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+          ok = !!b64;
+          result = ok ? 'FUNCIONA — imagen recibida' : `OK pero sin imagen — keys: ${JSON.stringify(Object.keys(data))}`;
+        }
+
+      } else if (ep.type === 'generateContent') {
+        const url = `https://generativelanguage.googleapis.com/${ep.ver}/models/${ep.model}:generateContent?key=${encodeURIComponent(key)}`;
+        res  = await fetch(url, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: minPrompt }] }],
+            generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
+          }),
+          signal: AbortSignal.timeout(20000)
+        });
+        data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          const parts = data.candidates?.[0]?.content?.parts || [];
+          const imgPart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+          ok = !!imgPart;
+          result = ok
+            ? `FUNCIONA — imagen recibida (${imgPart.inlineData.mimeType})`
+            : `OK pero sin imagen — parts: ${JSON.stringify(parts.map(p => Object.keys(p)))}`;
         }
       }
+
+      if (!res.ok) {
+        const code = res.status;
+        const msg  = data?.error?.message || data?.error?.status || `HTTP ${code}`;
+        const icon = code === 401 ? '🔑' : (code === 404 ? '❌' : (code === 403 ? '🚫' : '⚠'));
+        lines[lines.length - 1] = `<span style="color:#ef4444">${icon} ${ep.label} — ${code}: ${msg}</span>`;
+      } else if (ok) {
+        lines[lines.length - 1] = `<span style="color:#22c55e">✅ ${ep.label} — ${result}</span>`;
+      } else {
+        lines[lines.length - 1] = `<span style="color:#f59e0b">⚠ ${ep.label} — ${result}</span>`;
+      }
+
     } catch(e) {
-      lines[lines.length - 1] = `<span style="color:#ef4444">💥 ${modelId} — ${e.message}</span>`;
+      lines[lines.length - 1] = `<span style="color:#ef4444">💥 ${ep.label} — ${e.message}</span>`;
     }
     resultsEl.innerHTML = lines.join('<br>');
   }
+
   lines.push('<span style="color:#94a3b8">— Test completado —</span>');
   resultsEl.innerHTML = lines.join('<br>');
 }
