@@ -1,0 +1,18 @@
+name            = "creditek-gemini-proxy"
+main            = "gemini-proxy.js"
+compatibility_date = "2024-09-23"
+
+# El Worker quedará disponible en:
+# https://creditek-gemini-proxy.<tu-subdominio>.workers.dev
+#
+# Para usar un dominio propio descomenta y ajusta:
+# [[routes]]
+# pattern = "api.tudominio.com/gemini/*"
+# zone_name = "tudominio.com"
+
+# Variables de entorno NO secretas (opcionales)
+# [vars]
+# ALLOWED_ORIGIN = "https://tudominio.com"
+
+# GEMINI_API_KEY se configura como secret, NO aquí:
+# wrangler secret put GEMINI_API_KEY
