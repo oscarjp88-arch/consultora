@@ -1900,7 +1900,7 @@ async function generarConGemini(key, prompt) {
   const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
 
   // ── Vía proxy (resuelve CORS desde GitHub Pages o browser) ──────────────
-  const proxyUrl = localStorage.getItem('ck_gemini_proxy_url');
+  const proxyUrl = 'https://creditek-gemini-proxy.comercial-853.workers.dev';
   if (proxyUrl) {
     const res = await fetch(`${proxyUrl}/generate`, {
       method: 'POST',
