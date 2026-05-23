@@ -655,15 +655,6 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <button class="engine-btn active" id="eng-gemini" onclick="selectEngine('gemini')">✦ Gemini Imagen 4</button>
         <button class="engine-btn" id="eng-dalle" onclick="selectEngine('dalle')">⬡ GPT Image 2</button>
       </div>
-      <!-- TEST TEMPORAL — borrar cuando se confirme modelo correcto -->
-      <div id="gemini-test-panel" style="margin:8px 0;padding:10px;background:#0d1f38;border:1px solid #1e3a5f;border-radius:8px">
-        <button onclick="testGeminiModels()" style="width:100%;padding:7px 12px;background:#1e3a5f;color:#00C4CC;border:1px solid #00C4CC;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">🔍 Test modelos Gemini</button>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
-          <span style="font-size:10px;color:#64748b;white-space:nowrap">Proyecto Vertex:</span>
-          <input id="vertex-project-id" type="text" placeholder="my-gcp-project-id" style="flex:1;padding:4px 7px;background:#0b1e3d;border:1px solid #1e3a5f;color:#94a3b8;border-radius:4px;font-size:11px;font-family:monospace">
-        </div>
-        <div id="gemini-test-results" style="margin-top:8px;font-size:11px;font-family:monospace;line-height:1.8;display:none"></div>
-      </div>
       <div class="fmt-toggle">
         <button class="fmt-btn active" id="fmt-feed" onclick="selectFormat('feed')">📱 Feed (1080×1080)</button>
         <button class="fmt-btn" id="fmt-stories" onclick="selectFormat('stories')">📲 Stories (1080×1920)</button>
@@ -673,7 +664,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
           <div class="img-key-dot" id="img-key-dot"></div>
           <span id="img-key-label">Key no configurada</span>
         </div>
-        <button class="img-key-btn" onclick="abrirImgKeyModal()">Configurar key</button>
+        <button class="img-key-btn" id="img-key-row-btn" onclick="abrirImgKeyModal()">Configurar key</button>
       </div>
       <div class="img-preview-panel" id="img-preview-panel">
         <span class="img-preview-lbl-sec">Vista previa del aviso</span>
@@ -692,6 +683,17 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <div class="img-prev-field">
           <span class="img-prev-fl">Call to action (CTA)</span>
           <input type="text" class="img-prev-input" id="img-cta" placeholder="Visítanos en Corozal" oninput="buildImgPrompt()">
+        </div>
+        <div class="img-prev-field" style="padding-top:4px">
+          <label class="checkbox-row" style="padding:2px 0">
+            <input type="checkbox" id="chk-specs" onchange="buildImgPrompt(); document.getElementById('specs-input-wrap').style.display=this.checked?'block':'none'">
+            <label for="chk-specs">Incluir especificaciones técnicas en la imagen</label>
+          </label>
+          <div id="specs-input-wrap" style="display:none;margin-top:6px">
+            <input type="text" class="img-prev-input" id="img-specs"
+              placeholder="Ej: 128GB, cámara 50MP, batería 5000mAh, pantalla 6.7&quot;"
+              oninput="buildImgPrompt()">
+          </div>
         </div>
         <div class="img-btn-row">
           <button class="img-confirm-btn" onclick="confirmarPreviewYGenerar()">🖼 Generar imagen</button>
@@ -1560,7 +1562,14 @@ function resetPreviewFields() {
 }
 
 function updateImgKeyStatus() {
-  const key = localStorage.getItem(currentEngine === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key');
+  if (currentEngine === 'gemini') {
+    document.getElementById('img-key-dot').className = 'img-key-dot ok';
+    document.getElementById('img-key-label').textContent = 'Worker Vertex AI activo';
+    document.getElementById('img-key-row-btn').style.display = 'none';
+    return;
+  }
+  document.getElementById('img-key-row-btn').style.display = '';
+  const key = localStorage.getItem('ck_openai_key');
   const ok = key && key.length > 10;
   document.getElementById('img-key-dot').className = 'img-key-dot' + (ok ? ' ok' : '');
   document.getElementById('img-key-label').textContent = ok ? 'Key configurada' : 'Key no configurada';
@@ -1572,7 +1581,6 @@ function buildImgPrompt() {
   const modo     = document.getElementById('modo')?.value || 'credito';
   const tipo     = document.getElementById('tipo')?.value || 'oferta_semana';
 
-  // Read from preview fields (if filled) or compute defaults
   const titularEl = document.getElementById('img-titular');
   const precioEl  = document.getElementById('img-precio');
   const ctaEl     = document.getElementById('img-cta');
@@ -1588,78 +1596,138 @@ function buildImgPrompt() {
   const ctaFallback  = dirBuild ? `Visítanos en ${nombreCtaBuild} · ${dirBuild}` : `Visítanos en ${nombreCtaBuild}`;
   const cta          = ctaEl?.value.trim() || ctaFallback;
 
-  // Style modifier
-  const estiloMap = {
-    formal:      'Modern professional retail brand style. Structured geometric layout, high contrast, precise typography.',
-    costeno:     'Vibrant warm Caribbean Colombian style. Bold festive colors, energetic, celebratory mood.',
-    minimalista: 'Minimalist design, generous white space, single hero product, elegant understated typography.',
-    custom:      document.getElementById('estilo-custom')?.value.trim() || 'Modern retail brand style.'
+  const tipoLabels = {
+    oferta_semana:    'Oferta de la semana',
+    showcase_producto:'Showcase del producto',
+    testimonio:       'Testimonio de cliente',
+    educativo:        'Contenido educativo/informativo',
+    promo_urgencia:   'Promoción de urgencia',
+    detras_camara:    'Detrás de cámara / tienda',
   };
-  const estiloDesc = estiloMap[currentEstilo] || estiloMap.formal;
 
-  // Composition by piece type (takes priority over mode for layout decisions)
   const tipoImgMap = {
-    oferta_semana:    `Product shot of ${producto} large on the right side.${precio ? ` Prominent turquoise #00C4CC price badge '${precio}' on the upper-left in large bold numerals.` : ''} Bold headline text on the left. Strong visual hierarchy: headline → ${precio ? 'price → ' : ''}product.`,
-    showcase_producto:`${producto} centered hero shot, clean product floating with soft drop shadow. Minimal text. Small feature-callout labels around the product. Product dominates 60% of the composition.`,
-    testimonio:       `Warm tone on deep navy background. Large opening quotation mark in turquoise #00C4CC. Two-line testimonial quote in large white text, centered. Warm human silhouette or portrait on one side. No product image needed.`,
-    educativo:        `Clean informational layout. Simple bold icons (checkmarks, arrows, numbers) in turquoise #00C4CC on dark background. Text-forward design, clear reading hierarchy. Feels like a helpful tips card, not an ad.`,
-    promo_urgencia:   `High-energy urgency composition. Large "SOLO HOY" or countdown badge in turquoise #00C4CC. ${producto} product with diagonal flash element or ribbon.${precio ? ` Price '${precio}' in very large bold numerals.` : ''} High contrast, fast visual read.`,
-    detras_camara:    `Warm store interior atmosphere. Natural ambient lighting. Retail display context with phones visible. People in natural store setting. Authentic documentary feel, no heavy graphic overlays or design elements.`
+    oferta_semana:    `Fotografía del producto ${producto} grande en el lado derecho.${precio ? ` Badge de precio prominente en turquesa #00C4CC con '${precio}' en números grandes y en negrita en la parte superior izquierda.` : ''} Titular en negrita a la izquierda. Jerarquía visual fuerte: titular → ${precio ? 'precio → ' : ''}producto.`,
+    showcase_producto:`${producto} centrado como imagen héroe, flotando con sombra suave y bordes limpios. Texto mínimo. Pequeñas etiquetas de características alrededor del producto. El producto ocupa el 60% de la composición.`,
+    testimonio:       `Tono cálido sobre fondo azul marino profundo. Gran comilla de apertura en turquesa #00C4CC. Frase testimonial de cliente en texto blanco grande y centrado. Silueta humana cálida o retrato en un costado. No mostrar imagen de producto.`,
+    educativo:        `Diseño informativo limpio. Íconos simples en negrita (checks, flechas, números) en turquesa #00C4CC sobre fondo oscuro. Diseño centrado en texto con jerarquía de lectura clara. Aspecto de tarjeta de consejos útiles, no de aviso publicitario agresivo.`,
+    promo_urgencia:   `Composición de alta energía y urgencia. Badge grande "SOLO HOY" o cuenta regresiva en turquesa #00C4CC. Producto ${producto} con elemento diagonal o cinta de destaque.${precio ? ` Precio '${precio}' en números muy grandes y en negrita.` : ''} Alto contraste, lectura visual rápida e impactante.`,
+    detras_camara:    `Atmósfera cálida del interior de una tienda Creditek. Iluminación natural y ambiente. Contexto de vitrina con celulares visibles. Personas en ambiente natural de tienda. Estilo documental auténtico, sin overlays gráficos pesados ni elementos de diseño artificiales.`
   };
   const tipoDesc = tipoImgMap[tipo] || tipoImgMap.oferta_semana;
 
+  const estiloMap = {
+    formal:      'Estilo moderno de marca retail profesional. Composición geométrica estructurada, alto contraste, tipografía precisa y ordenada.',
+    costeno:     'Estilo caribeño colombiano vibrante y festivo. Colores cálidos y vivos, energético, ambiente de celebración costeña.',
+    minimalista: 'Diseño minimalista con espacio generoso, producto héroe único en primer plano, tipografía elegante y discreta.',
+    custom:      document.getElementById('estilo-custom')?.value.trim() || 'Estilo moderno de marca retail profesional.'
+  };
+  const estiloDesc = estiloMap[currentEstilo] || estiloMap.formal;
+
   const selectedFins = getSelectedFinancieras();
   const finStrip = selectedFins.length
-    ? ` At the very bottom of the image, a thin horizontal strip (white or semi-transparent background) contains the small partner logos of the following financing companies, evenly spaced and horizontally aligned: ${selectedFins.map(f => f.label).join(', ')}. Logos are small, clean, and clearly legible.`
+    ? `En la franja inferior de la imagen, una banda horizontal delgada (fondo blanco o semitransparente) contiene los logos pequeños de las siguientes entidades financieras aliadas, alineados horizontalmente y con espaciado uniforme: ${selectedFins.map(f => f.label).join(', ')}. Logos pequeños, limpios y legibles.`
     : '';
 
   const fechaKey2  = document.getElementById('fecha-especial')?.value || '';
   const fechaData2 = FECHAS_ESPECIALES[fechaKey2] || null;
   const fechaImgBlock = fechaData2
-    ? ` Seasonal theme — ${fechaData2.label}: incorporate secondary palette (${fechaData2.colores}) and subtle decorative elements (${fechaData2.elementos}). These seasonal accents complement the Creditek brand identity without replacing it.`
+    ? `Temática de fecha especial — ${fechaData2.label}: incorporar paleta secundaria (${fechaData2.colores}) y elementos decorativos sutiles (${fechaData2.elementos}). Estos acentos estacionales complementan la identidad de marca Creditek sin reemplazarla.`
     : '';
 
   const isStories = currentFormat === 'stories';
-  const sizeSpec = isStories ? '1080×1920px vertical Stories format' : '1080×1080px square Feed format';
+  const formatoLabel = isStories ? 'Stories vertical 1080×1920px' : 'Feed cuadrado 1080×1080px';
   const layoutGuide = isStories
-    ? `Vertical Stories composition: Creditek logo centered at top (top 15% of canvas). Main product or visual element centered in the middle third. Bold headline text below center.${precio ? ' Price accent and' : ''} CTA button near the bottom (bottom 25%). Use the full vertical height with generous spacing between zones.`
-    : 'Square Feed composition: balanced horizontal layout, strong center focal point.';
+    ? `Composición vertical para Stories (1080×1920px): Logo Creditek centrado en la parte superior (15% superior del lienzo). Elemento visual o producto principal centrado en el tercio medio del lienzo. Titular en negrita debajo del centro.${precio ? ' Acento de precio y' : ''} Botón CTA cerca del fondo (25% inferior). Aprovechar toda la altura vertical con espaciado generoso entre zonas.`
+    : 'Composición cuadrada para Feed (1080×1080px): diseño horizontal equilibrado, punto focal central fuerte, lectura visual de izquierda a derecha.';
+
+  const modoLabel = { credito: 'Crédito de celular', arriendo: 'Arriendo de celular', seguro: 'Seguro de celular' }[modo] || modo;
 
   const priceRule = (precio || inicial)
-    ? `Show ONLY these exact prices: ${[precio, inicial].filter(Boolean).join(', ')}. DO NOT add, invent, or modify any other price or monetary figure.`
-    : 'DO NOT show any price, number with dollar sign, monetary amount, or financial figures anywhere in the image. No "$", no "COP", no numeric prices, no installment amounts, no price badges. Leave all price areas blank or omit them entirely.';
-  const negativePrompt = ` CRITICAL REQUIREMENTS: Brand name must be spelled exactly 'Creditek' — not 'Crediteck', not 'Crediitek', not any other variation. No watermarks, no distorted text, no placeholder logos, no misspelled words, no truncated words, no abbreviated store names, no modified brand names, no extra unrelated people in background, no cluttered elements, no fake UI overlays. DO NOT show any price, monetary amount, dollar sign, or financial figures unless explicitly included in this prompt. PRICE RULE — ${priceRule} QUALITY REQUIREMENTS: High-resolution, crisp, professional output. Phone products must be sharp, well-lit with professional studio lighting, clean edges. No pixelated, blurry, or low-quality rendering. Minimum equivalent of 300 DPI quality.`;
+    ? `Mostrar ÚNICAMENTE estos valores exactos: ${[precio, inicial].filter(Boolean).join(' / ')}. NO agregar, inventar ni modificar ninguna otra cifra o monto monetario.`
+    : 'NO mostrar ningún precio, número con signo de pesos, monto monetario ni cifra financiera en ningún lugar de la imagen. Sin "$", sin "COP", sin precios numéricos, sin valores de cuota, sin badges de precio. Omitir completamente cualquier área de precio.';
 
-  const precioSegment  = precio  ? `Turquoise #00C4CC accent for '${precio}' in large bold numerals. ` : '';
-  const inicialSegment = inicial ? `Show initial payment badge: 'Inicial desde ${inicial}' in turquoise #00C4CC, prominent position near the CTA button. ` : '';
+  const precioSegment  = precio  ? `Acento de cuota mensual '${precio}' en turquesa #00C4CC, números grandes en negrita bien visibles.` : '';
+  const inicialSegment = inicial ? `Badge de cuota inicial: 'Inicial desde ${inicial}' en turquesa #00C4CC, posición prominente cerca del botón CTA.` : '';
 
   const fechaBgMap = {
-    madre:    'clean white #FFFFFF background, dark navy #0B1E3D for text, rose pink #FF85A2 for accents',
-    padre:    'solid deep navy #0B1E3D background',
-    mundial:  'very dark navy #001233 background',
-    navidad:  'deep forest green #0A2015 background',
-    amistad:  'deep burgundy #1A0010 background',
-    halloween:'near black #0D0D0D background',
-    anonuevo: 'black #050505 background',
-    clases:   'clean white #FFFFFF background with sky-blue #87CEEB accents',
+    madre:    'fondo blanco #FFFFFF, texto azul marino #0B1E3D, acentos rosado #FF85A2',
+    padre:    'fondo azul marino profundo #0B1E3D',
+    mundial:  'fondo azul marino muy oscuro #001233',
+    navidad:  'fondo verde bosque profundo #0A2015',
+    amistad:  'fondo borgoña oscuro #1A0010',
+    halloween:'fondo casi negro #0D0D0D',
+    anonuevo: 'fondo negro #050505',
+    clases:   'fondo blanco #FFFFFF con acentos azul cielo #87CEEB',
   };
-  const bgSpec = (fechaData2 && fechaBgMap[fechaKey2]) ? fechaBgMap[fechaKey2] : 'solid deep navy #0B1E3D';
+  const bgSpec = (fechaData2 && fechaBgMap[fechaKey2]) ? fechaBgMap[fechaKey2] : 'azul marino profundo #0B1E3D';
 
   const knownBrands = ['Samsung', 'Xiaomi', 'Motorola', 'OPPO', 'Realme', 'Infinix', 'Honor', 'TCL', 'iPhone', 'Apple'];
   const detectedBrand = knownBrands.find(b => producto.toLowerCase().includes(b.toLowerCase()));
   const isApple = detectedBrand === 'iPhone' || detectedBrand === 'Apple';
   const androidBrand = isApple ? 'Android' : (detectedBrand || null);
   const brandBlock = androidBrand
-    ? ` CRITICAL: The smartphone in this image MUST be a ${producto}. DO NOT generate an iPhone or Apple product under any circumstance. The phone must have Android design language, ${androidBrand} branding visible on the device. If you cannot render this exact model, render a generic Android phone, never an iPhone.`
+    ? `CRÍTICO: El smartphone en esta imagen DEBE ser un ${producto}. NO generar un iPhone ni ningún producto Apple bajo ninguna circunstancia. El teléfono debe tener diseño Android con marca ${androidBrand} visible en el dispositivo. Si no es posible renderizar ese modelo exacto, usar un teléfono Android genérico — nunca un iPhone.`
     : '';
 
   const storeNameBlock = (tiendaInfoBuild?.nombre && !esCiudadBuild)
-    ? ` CRITICAL: The store name in the CTA button must appear EXACTLY as written: '${tiendaInfoBuild.nombre}'. Do not abbreviate, truncate, translate or modify this name in any way. Render every character of '${tiendaInfoBuild.nombre}' precisely.`
+    ? `CRÍTICO: El nombre de la tienda en el botón CTA debe aparecer EXACTAMENTE así: '${tiendaInfoBuild.nombre}'. No abreviar, truncar, traducir ni modificar este nombre de ninguna manera. Renderizar cada carácter de '${tiendaInfoBuild.nombre}' con precisión absoluta.`
     : '';
 
+  const inclSpecs = document.getElementById('chk-specs')?.checked || false;
+  const specsText = document.getElementById('img-specs')?.value.trim() || '';
+  const specsBlock = inclSpecs
+    ? specsText
+      ? `ESPECIFICACIONES TÉCNICAS A MOSTRAR: Incluir callout labels flotantes alrededor del producto con estas specs: ${specsText}. Cada label en fondo turquesa #00C4CC con texto blanco, tipografía pequeña y limpia, posicionados alrededor del teléfono sin tapar la pantalla.`
+      : `Incluir callout labels flotantes alrededor del ${producto} con sus especificaciones técnicas clave (pantalla, cámara principal, batería, almacenamiento). Labels en fondo turquesa #00C4CC con texto blanco, tipografía pequeña, posicionados alrededor del teléfono.`
+    : `NO mostrar especificaciones técnicas, callout labels ni chips de características alrededor del producto. Diseño limpio centrado en el producto y el mensaje principal.`;
+
   const refBlock = getRefBlock();
-  const p = `Commercial advertisement for Creditek, a Colombian phone store with easy same-day approval. ${tipoDesc} ${layoutGuide} ${estiloDesc} Large bold text '${titular}' in Montserrat Bold font, prominent position. ${precioSegment}${inicialSegment}CTA label '${cta}' on turquoise #00C4CC button.${finStrip}${fechaImgBlock} Top-right corner: Creditek brand logo — a turquoise circular check/tick symbol beside bold 'Creditek' wordmark in Montserrat, no tagline. Background: ${bgSpec}. ${sizeSpec}, crisp high contrast.${negativePrompt}${brandBlock}${storeNameBlock}${refBlock}`;
-  document.getElementById('img-prompt-ta').value = p;
+
+  const lineas = [
+    `Anuncio publicitario profesional para Creditek, tienda colombiana de celulares con aprobación inmediata el mismo día.`,
+    ``,
+    `INFORMACIÓN DEL ANUNCIO:`,
+    `- Producto: ${producto}`,
+    `- Modalidad: ${modoLabel}`,
+    `- Tipo de pieza: ${tipoLabels[tipo] || tipo}`,
+    `- Formato: ${formatoLabel}`,
+    `- Ciudad/Tienda: ${nombreCtaBuild || ciudad}`,
+    precio  ? `- Cuota mensual: ${precio}` : null,
+    inicial ? `- Cuota inicial: ${inicial}` : null,
+    fechaData2 ? `- Temporada especial: ${fechaData2.label}` : null,
+    ``,
+    `COMPOSICIÓN Y LAYOUT:`,
+    tipoDesc,
+    layoutGuide,
+    specsBlock,
+    ``,
+    `ESTILO VISUAL: ${estiloDesc}`,
+    ``,
+    `TEXTOS EN LA IMAGEN:`,
+    `- Titular principal: "${titular}" en fuente Montserrat Bold, posición destacada y prominente`,
+    precioSegment ? `- ${precioSegment}` : null,
+    inicialSegment ? `- ${inicialSegment}` : null,
+    `- Botón CTA: "${cta}" sobre fondo turquesa #00C4CC`,
+    ``,
+    `IDENTIDAD DE MARCA CREDITEK:`,
+    `- Logo en esquina superior derecha: símbolo circular turquesa con palomita/check junto al wordmark "Creditek" en Montserrat Bold, sin eslogan adicional`,
+    `- Paleta de marca: azul marino #0B1E3D (fondo principal), turquesa #00C4CC (acentos, botones y badges), blanco #FFFFFF (texto principal)`,
+    `- Fondo: ${bgSpec}`,
+    finStrip ? `- ${finStrip}` : null,
+    fechaImgBlock ? `- ${fechaImgBlock}` : null,
+    ``,
+    `RESTRICCIONES CRÍTICAS:`,
+    `- La marca SIEMPRE escrita exactamente como "Creditek" — ninguna variación ortográfica permitida (no "Crediteck", no "Crediitek", no otras variaciones)`,
+    `- Sin marcas de agua, texto distorsionado, logos placeholder ni palabras mal escritas o truncadas`,
+    `- REGLA DE PRECIOS: ${priceRule}`,
+    `- Alta resolución y calidad profesional. Celulares con iluminación de estudio, bordes nítidos, sin pixelado ni desenfoque`,
+    `- Sin interfaces de usuario falsas (UI overlays), sin personas adicionales no deseadas, sin elementos desorganizados`,
+    brandBlock ? brandBlock : null,
+    storeNameBlock ? storeNameBlock : null,
+    refBlock,
+  ].filter(l => l !== null).join('\n');
+
+  document.getElementById('img-prompt-ta').value = lineas;
 }
 
 // ── Sistema de referencias visuales del mercado ─────────────────
@@ -1852,8 +1920,9 @@ function submitImgKey() {
 
 async function generarImagen(callerBtn = null) {
   const keyName = currentEngine === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key';
-  const key = localStorage.getItem(keyName);
-  if (!key || key.length < 10) { abrirImgKeyModal(); return; }
+  const key = localStorage.getItem(keyName) || '';
+  // Gemini usa el Worker con WIF — no requiere API key en el browser
+  if (currentEngine !== 'gemini' && (!key || key.length < 10)) { abrirImgKeyModal(); return; }
 
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) return;
@@ -2162,127 +2231,6 @@ function descargarImagen() {
   a.click();
 }
 
-// ── TEST TEMPORAL: detectar modelos Gemini disponibles ─────────────
-async function testGeminiModels() {
-  const key        = localStorage.getItem('ck_gemini_key');
-  const resultsEl  = document.getElementById('gemini-test-results');
-  const vertexProj = (document.getElementById('vertex-project-id')?.value || '').trim();
-
-  if (!key || key.length < 10) {
-    resultsEl.style.display = 'block';
-    resultsEl.innerHTML = '<span style="color:#ef4444">⚠ Configura primero la API key de Gemini</span>';
-    return;
-  }
-
-  const minPrompt = 'A simple blue square. Minimal test image.';
-
-  // Catalog of endpoints to test
-  // type: 'predict'         → v1beta/v1 :predict (Imagen API)
-  // type: 'vertex'          → Vertex AI :predict (requiere proyecto GCP + OAuth, no API key)
-  // type: 'generateContent' → Gemini generateContent con responseModalities IMAGE
-  const endpoints = [
-    // ── v1beta :predict ──────────────────────────────────────────────
-    { label: 'v1beta · imagen-4.0-preview-06-06',    type: 'predict', ver: 'v1beta', model: 'imagen-4.0-generate-preview-06-06' },
-    { label: 'v1beta · imagen-4.0-preview-05-20',    type: 'predict', ver: 'v1beta', model: 'imagen-4.0-generate-preview-05-20' },
-    { label: 'v1beta · imagen-4.0-preview-04-18',    type: 'predict', ver: 'v1beta', model: 'imagen-4.0-generate-preview-04-18' },
-    { label: 'v1beta · imagen-3.0-generate-002',     type: 'predict', ver: 'v1beta', model: 'imagen-3.0-generate-002' },
-    { label: 'v1beta · imagegeneration@006',          type: 'predict', ver: 'v1beta', model: 'imagegeneration@006' },
-    { label: 'v1beta · imagegeneration@005',          type: 'predict', ver: 'v1beta', model: 'imagegeneration@005' },
-    // ── v1 :predict ──────────────────────────────────────────────────
-    { label: 'v1 · imagen-4.0-preview-06-06',        type: 'predict', ver: 'v1',     model: 'imagen-4.0-generate-preview-06-06' },
-    { label: 'v1 · imagen-4.0-preview-05-20',        type: 'predict', ver: 'v1',     model: 'imagen-4.0-generate-preview-05-20' },
-    // ── Vertex AI :predict (requiere proyecto GCP + OAuth) ───────────
-    { label: `Vertex AI · imagen-4.0-preview-06-06 (proyecto: ${vertexProj || 'NO CONFIGURADO'})`,
-      type: 'vertex', model: 'imagen-4.0-generate-preview-06-06', project: vertexProj },
-    // ── gemini-2.0-flash-exp generateContent IMAGE ───────────────────
-    { label: 'v1beta · gemini-2.0-flash-exp (IMAGE modality)', type: 'generateContent', ver: 'v1beta', model: 'gemini-2.0-flash-exp' },
-  ];
-
-  resultsEl.style.display = 'block';
-  resultsEl.innerHTML = `<span style="color:#94a3b8">Probando ${endpoints.length} endpoints...</span>`;
-  const lines = [];
-
-  for (const ep of endpoints) {
-    lines.push(`<span style="color:#94a3b8">⏳ ${ep.label}</span>`);
-    resultsEl.innerHTML = lines.join('<br>');
-
-    try {
-      let res, data, ok = false, result = '';
-
-      if (ep.type === 'predict') {
-        const url = `https://generativelanguage.googleapis.com/${ep.ver}/models/${ep.model}:predict?key=${encodeURIComponent(key)}`;
-        res  = await fetch(url, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instances: [{ prompt: minPrompt }], parameters: { sampleCount: 1, aspectRatio: '1:1' } }),
-          signal: AbortSignal.timeout(20000)
-        });
-        data = await res.json().catch(() => ({}));
-        if (res.ok) {
-          const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-          ok = !!b64;
-          result = ok ? 'FUNCIONA — imagen recibida' : `OK pero sin imagen — keys: ${JSON.stringify(Object.keys(data))}`;
-        }
-
-      } else if (ep.type === 'vertex') {
-        if (!ep.project) {
-          lines[lines.length - 1] = `<span style="color:#64748b">⏭ ${ep.label} — ingresa el proyecto GCP para probar</span>`;
-          resultsEl.innerHTML = lines.join('<br>');
-          continue;
-        }
-        const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${ep.project}/locations/us-central1/publishers/google/models/${ep.model}:predict`;
-        res  = await fetch(url, {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-          body: JSON.stringify({ instances: [{ prompt: minPrompt }], parameters: { sampleCount: 1, aspectRatio: '1:1' } }),
-          signal: AbortSignal.timeout(20000)
-        });
-        data = await res.json().catch(() => ({}));
-        if (res.ok) {
-          const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-          ok = !!b64;
-          result = ok ? 'FUNCIONA — imagen recibida' : `OK pero sin imagen — keys: ${JSON.stringify(Object.keys(data))}`;
-        }
-
-      } else if (ep.type === 'generateContent') {
-        const url = `https://generativelanguage.googleapis.com/${ep.ver}/models/${ep.model}:generateContent?key=${encodeURIComponent(key)}`;
-        res  = await fetch(url, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: minPrompt }] }],
-            generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
-          }),
-          signal: AbortSignal.timeout(20000)
-        });
-        data = await res.json().catch(() => ({}));
-        if (res.ok) {
-          const parts = data.candidates?.[0]?.content?.parts || [];
-          const imgPart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
-          ok = !!imgPart;
-          result = ok
-            ? `FUNCIONA — imagen recibida (${imgPart.inlineData.mimeType})`
-            : `OK pero sin imagen — parts: ${JSON.stringify(parts.map(p => Object.keys(p)))}`;
-        }
-      }
-
-      if (!res.ok) {
-        const code = res.status;
-        const msg  = data?.error?.message || data?.error?.status || `HTTP ${code}`;
-        const icon = code === 401 ? '🔑' : (code === 404 ? '❌' : (code === 403 ? '🚫' : '⚠'));
-        lines[lines.length - 1] = `<span style="color:#ef4444">${icon} ${ep.label} — ${code}: ${msg}</span>`;
-      } else if (ok) {
-        lines[lines.length - 1] = `<span style="color:#22c55e">✅ ${ep.label} — ${result}</span>`;
-      } else {
-        lines[lines.length - 1] = `<span style="color:#f59e0b">⚠ ${ep.label} — ${result}</span>`;
-      }
-
-    } catch(e) {
-      lines[lines.length - 1] = `<span style="color:#ef4444">💥 ${ep.label} — ${e.message}</span>`;
-    }
-    resultsEl.innerHTML = lines.join('<br>');
-  }
-
-  lines.push('<span style="color:#94a3b8">— Test completado —</span>');
-  resultsEl.innerHTML = lines.join('<br>');
-}
 </script>
 </body>
 </html>

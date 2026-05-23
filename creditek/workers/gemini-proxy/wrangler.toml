@@ -2,14 +2,14 @@ name               = "creditek-gemini-proxy"
 main               = "index.js"
 compatibility_date = "2024-09-23"
 
-# Una vez desplegado, la URL será:
-# https://creditek-gemini-proxy.<tu-subdominio>.workers.dev
-#
-# Para dominio propio, descomenta:
-# [[routes]]
-# pattern = "api.tudominio.com/gemini-proxy/*"
-# zone_name = "tudominio.com"
+[vars]
+# Recurso completo del WIF provider. El nombre del pool es "creditek-cloudflare"
+# (sin guión extra al inicio — el original tenía un typo: "-creditek-cloudflare").
+GCP_WIF_AUDIENCE = "//iam.googleapis.com/projects/564444450181/locations/global/workloadIdentityPools/-creditek-cloudflare/providers/cloudflare-workers"
+GCP_PROJECT_ID   = "creditek-imagen"
+GCP_SA_EMAIL     = "creditek-vertex-sa@creditek-imagen.iam.gserviceaccount.com"
 
-# IMPORTANTE: NO pongas la API key aquí.
-# Configúrala como secret con: wrangler secret put GEMINI_API_KEY
-# Si no usas secret, el agente la envía en el body de cada petición.
+# Secrets (nunca aquí — usar: wrangler secret put <NOMBRE>):
+#   GCP_WIF_PRIVATE_KEY  — clave privada RSA del Worker (firma el JWT)
+#   GCP_WIF_PUBLIC_JWK   — JWK de la clave pública (sirve en /.well-known/jwks.json)
+#   GEMINI_API_KEY       — API key de AI Studio (fallback)
