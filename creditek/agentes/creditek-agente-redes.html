@@ -427,6 +427,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <input class="m-input" id="imgModalKey" type="password" placeholder="AIzaSy..." autocomplete="off" onkeydown="if(event.key==='Enter')submitImgKey()">
       <button class="m-eye" onclick="toggleImgKey(this)">Ver</button>
     </div>
+    <div id="proxyUrlRow" style="display:none;margin-top:10px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:5px">URL del Worker proxy <span style="color:var(--text3)">(opcional — resuelve CORS)</span></div>
+      <input class="m-input" id="imgProxyUrl" type="text" placeholder="https://creditek-gemini-proxy.tu-subdominio.workers.dev" autocomplete="off" style="font-size:12px">
+    </div>
     <div class="m-error" id="imgModalError">Verifica el formato de la key e intenta de nuevo.</div>
     <button class="m-submit" onclick="submitImgKey()">Guardar key →</button>
     <div class="m-note">
@@ -1814,6 +1818,8 @@ function abrirImgKeyModal() {
   document.getElementById('imgModalKey').placeholder  = isGemini ? 'AIzaSy...' : 'sk-proj-...';
   document.getElementById('imgModalKey').value = '';
   document.getElementById('imgModalError').style.display = 'none';
+  document.getElementById('proxyUrlRow').style.display = isGemini ? 'block' : 'none';
+  if (isGemini) document.getElementById('imgProxyUrl').value = localStorage.getItem('ck_gemini_proxy_url') || '';
   document.getElementById('imgKeyModal').classList.remove('hidden');
   setTimeout(() => document.getElementById('imgModalKey').focus(), 80);
 }
@@ -1835,6 +1841,11 @@ function submitImgKey() {
   if (val.length < 10) { err.style.display = 'block'; document.getElementById('imgModalKey').focus(); return; }
   err.style.display = 'none';
   localStorage.setItem(currentEngine === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key', val);
+  if (currentEngine === 'gemini') {
+    const proxyUrl = (document.getElementById('imgProxyUrl')?.value || '').trim().replace(/\/$/, '');
+    if (proxyUrl) localStorage.setItem('ck_gemini_proxy_url', proxyUrl);
+    else localStorage.removeItem('ck_gemini_proxy_url');
+  }
   cerrarImgKeyModal();
   updateImgKeyStatus();
 }
@@ -1887,11 +1898,32 @@ async function generarImagen(callerBtn = null) {
 async function generarConGemini(key, prompt) {
   const geminiNegative = "text distortion, blurry text, misspelled brand name, watermark, low quality, pixelated, cluttered, fake UI overlays, extra people, placeholder logos, generic stock photo feel";
   const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
+
+  // ── Vía proxy (resuelve CORS desde GitHub Pages o browser) ──────────────
+  const proxyUrl = localStorage.getItem('ck_gemini_proxy_url');
+  if (proxyUrl) {
+    const res = await fetch(`${proxyUrl}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, negativePrompt: geminiNegative, aspectRatio, apiKey: key })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('API key de Gemini inválida. Verifica en Google AI Studio.');
+      throw new Error(data.error || `Error proxy Gemini ${res.status}`);
+    }
+    const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+    if (!b64) throw new Error('El proxy no devolvió imagen. Verifica que Imagen API esté habilitada en tu proyecto.');
+    lastImgModelLabel = data.label || 'Gemini Imagen 4 (proxy)';
+    return 'data:image/png;base64,' + b64;
+  }
+
+  // ── Llamada directa (fallback — puede bloquearse por CORS en producción) ─
   const models = [
     { id: 'imagen-4.0-generate-preview-06-06', label: 'Gemini Imagen 4' },
     { id: 'imagen-4.0-generate-preview-05-20', label: 'Gemini Imagen 4 (may)' }
   ];
-  let lastErr = 'Gemini Imagen 4 no disponible. Usa GPT Image 2.';
+  let lastErr = 'Gemini Imagen 4 no disponible. Configura el Worker proxy o usa GPT Image 2.';
   for (const model of models) {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:predict?key=${encodeURIComponent(key)}`,
@@ -1908,7 +1940,7 @@ async function generarConGemini(key, prompt) {
       const e = await res.json().catch(() => ({}));
       if (res.status === 401) throw new Error('API key de Gemini inválida. Verifica en Google AI Studio.');
       if ((res.status === 404 || res.status === 403) && model.id === models[0].id) {
-        lastErr = 'Gemini Imagen 4 no disponible. Usa GPT Image 2.';
+        lastErr = 'Gemini Imagen 4 no disponible. Configura el Worker proxy o usa GPT Image 2.';
         continue;
       }
       throw new Error(e.error?.message || `Error Gemini ${res.status}`);
