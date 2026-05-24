@@ -283,6 +283,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .engine-row{display:flex;gap:8px;padding:14px 18px 8px}
 .model-chk-label{display:flex;align-items:center;gap:7px;padding:8px 14px;background:#FFFFFF;border:1.5px solid rgba(11,30,61,.15);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;user-select:none}
 .model-chk-label:has(input:checked){background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
+.model-chk-label.model-chk-active{background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
 .model-chk-label:hover{border-color:var(--border-hover);color:var(--text)}
 .model-chk-label input[type=checkbox]{accent-color:var(--turquesa);width:14px;height:14px;cursor:pointer;flex-shrink:0}
 .model-chk-disabled{opacity:.42;cursor:not-allowed;pointer-events:none}
@@ -1506,9 +1507,6 @@ function onFinancieraChange() {
 
 function selectEngine(engine) {
   currentEngine = engine;
-  document.getElementById('eng-gemini').classList.toggle('active', engine === 'gemini');
-  document.getElementById('eng-gemini3pro').classList.toggle('active', engine === 'gemini3pro');
-  document.getElementById('eng-dalle').classList.toggle('active', engine === 'dalle');
   updateImgKeyStatus();
 }
 
@@ -1597,7 +1595,16 @@ function resetPreviewFields() {
   buildImgPrompt();
 }
 
+function syncModelUI() {
+  ['chk-gemini', 'chk-dalle', 'chk-gemini3pro'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.closest('label')?.classList.toggle('model-chk-active', !!el.checked);
+  });
+}
+
 function updateImgKeyStatus() {
+  syncModelUI();
   const useDalle = document.getElementById('chk-dalle')?.checked;
   if (!useDalle) {
     document.getElementById('img-key-dot').className = 'img-key-dot ok';
@@ -1988,6 +1995,7 @@ function showImgSection() {
   document.getElementById('img-section').classList.add('visible');
   resetPreviewFields();
   updateImgKeyStatus();
+  syncModelUI();
   loadLogoBase64();
 }
 
@@ -2558,15 +2566,14 @@ function abrirPomelli() {
 
 // ── Botón "Prompt Canva" — toggle panel con brief ───────────────
 function toggleCanvaBrief() {
-  buildImgPrompt(); // sync prompt antes de leer valores
   const panel = document.getElementById('canva-brief-panel');
   const btn   = document.getElementById('canva-btn');
-  const isOpen = panel.style.display === 'block';
-  if (isOpen) {
+  if (btn.classList.contains('active')) {
     panel.style.display = 'none';
     btn.classList.remove('active');
     return;
   }
+  buildImgPrompt(); // sync prompt antes de leer valores
   // Construir contenido del brief
   const producto  = document.getElementById('producto').value.trim() || '—';
   const titular   = document.getElementById('img-titular').value.trim() || '—';
