@@ -1208,6 +1208,8 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
     document.getElementById('export-btn').style.display = 'block';
     document.getElementById('regen-btn').style.display = 'block';
     document.getElementById('action-btns-row').style.display = 'flex';
+    document.getElementById('canva-brief-panel').style.display = 'none';
+    document.getElementById('canva-btn').classList.remove('active');
     showToast('✓ Piezas generadas correctamente');
     showImgSection();
   } catch(err) {
@@ -1657,11 +1659,12 @@ function buildImgPrompt() {
   };
   const tipoDesc = tipoImgMap[tipo] || tipoImgMap.oferta_semana;
 
+  const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
   const estiloMap = {
     formal:      'Estilo moderno de marca retail profesional. Composición geométrica estructurada, alto contraste, tipografía precisa y ordenada.',
     costeno:     'Estilo caribeño colombiano vibrante y festivo. Colores cálidos y vivos, energético, ambiente de celebración costeña.',
     minimalista: 'Diseño minimalista con espacio generoso, producto héroe único en primer plano, tipografía elegante y discreta.',
-    custom:      document.getElementById('estilo-custom')?.value.trim() || 'Estilo moderno de marca retail profesional.'
+    custom:      estiloCustomVal || 'Estilo libre — aplicar criterio artístico y visual del modelo.'
   };
   const estiloDesc = estiloMap[currentEstilo] || estiloMap.formal;
 
@@ -2042,7 +2045,7 @@ async function generarImagen(callerBtn = null) {
   try {
     lastImgModelLabel = currentEngine === 'gemini' ? 'Gemini Imagen 4' : 'GPT Image 2';
     const src = currentEngine === 'gemini'
-      ? await generarConGemini(key, prompt)
+      ? await generarConGemini(key)
       : await generarConDalle(key, prompt);
     imgHistory = [src];
     imgHistoryIdx = 0;
@@ -2063,11 +2066,29 @@ async function generarImagen(callerBtn = null) {
   spinner.style.display = 'none'; label.textContent = '🖼 Generar imagen';
 }
 
-async function generarConGemini(key, prompt) {
-  const geminiNegative = "text distortion, blurry text, misspelled brand name, watermark, low quality, pixelated, cluttered, fake UI overlays, extra people, placeholder logos, generic stock photo feel";
+async function generarConGemini(key) {
+  // Gemini Imagen 4 genera siempre una fotografía artística del producto —
+  // no publicidad con texto. El prompt de marketing se usa solo en GPT Image 2.
+  const producto = document.getElementById('producto')?.value.trim() || 'smartphone';
   const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
-  const logoInstr = 'Logo Creditek: símbolo de check circular en turquesa #00C4CC junto al wordmark "Creditek" en Montserrat Bold — debe aparecer exactamente así en esquina inferior derecha, sin variaciones ni interpretaciones alternativas del logo.';
-  const fullPrompt = `${prompt}\n${logoInstr}`;
+
+  const artisticPrompt = [
+    `Fotografía artística y cinematográfica del ${producto}.`,
+    `Fondo azul marino profundo #0B1E3D, limpio y uniforme, sin gradientes artificiales.`,
+    `Iluminación de estudio profesional: luz principal lateral suave con destellos elegantes en los bordes del dispositivo.`,
+    `El teléfono perfectamente centrado, flotando con sombra larga y difusa, perspectiva ligeramente en 3/4 para mostrar pantalla y borde lateral.`,
+    `Estilo editorial premium de revista de tecnología — cinematográfico, minimalista, de alta gama.`,
+    `ABSOLUTAMENTE SIN texto, sin banners, sin precios, sin badges, sin eslóganes, sin ningún elemento gráfico superpuesto.`,
+    `Logo Creditek pequeño y discreto en esquina inferior derecha: símbolo de check circular en turquesa #00C4CC junto al wordmark "Creditek" en Montserrat Bold — exactamente así, sin variaciones ni interpretaciones.`,
+    `Alta resolución, calidad de fotografía de producto profesional.`,
+  ].join(' ');
+
+  const geminiNegative = [
+    'text', 'letters', 'words', 'typography', 'price tag', 'promotional text', 'advertising copy',
+    'slogan', 'banner', 'badge', 'any written content', 'text distortion', 'blurry text',
+    'misspelled brand name', 'watermark', 'low quality', 'pixelated', 'cluttered',
+    'fake UI overlays', 'extra people', 'placeholder logos', 'generic stock photo feel',
+  ].join(', ');
 
   // ── Vía proxy (resuelve CORS desde GitHub Pages o browser) ──────────────
   const proxyUrl = 'https://creditek-gemini-proxy.comercial-853.workers.dev';
@@ -2075,7 +2096,7 @@ async function generarConGemini(key, prompt) {
     const res = await fetch(`${proxyUrl}/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: fullPrompt, negativePrompt: geminiNegative, aspectRatio, apiKey: key })
+      body: JSON.stringify({ prompt: artisticPrompt, negativePrompt: geminiNegative, aspectRatio, apiKey: key })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -2101,7 +2122,7 @@ async function generarConGemini(key, prompt) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          instances: [{ prompt: fullPrompt, negativePrompt: geminiNegative }],
+          instances: [{ prompt: artisticPrompt, negativePrompt: geminiNegative }],
           parameters: { sampleCount: 1, aspectRatio }
         })
       }
@@ -2218,7 +2239,7 @@ async function aplicarCambioImagen() {
       const key = localStorage.getItem('ck_gemini_key');
       if (!key || key.length < 10) throw new Error('Configura la API key de Gemini para editar.');
       const editPrompt = `${promptBase}\n\nMODIFICACIÓN SOLICITADA: ${instruccion}`;
-      newSrc = await generarConGemini(key, editPrompt);
+      newSrc = await generarConGemini(key);
       document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
     } else {
       const key = localStorage.getItem('ck_openai_key');
@@ -2282,7 +2303,7 @@ async function generarAB() {
   resultDiv.style.display = 'block';
 
   const [gemRes, dalleRes] = await Promise.allSettled([
-    generarConGemini(keyGemini, prompt),
+    generarConGemini(keyGemini),
     generarConDalle(keyOpenAI, prompt)
   ]);
 
@@ -2399,7 +2420,7 @@ async function generarConModelos() {
 
   const callEngine = (id) => {
     const key = id === 'dalle' ? keyOpenAI : (localStorage.getItem('ck_gemini_key') || '');
-    if (id === 'gemini') return generarConGemini(key, prompt);
+    if (id === 'gemini') return generarConGemini(key);
     return generarConDalle(key, prompt);
   };
 
