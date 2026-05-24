@@ -285,6 +285,8 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .model-chk-label:has(input:checked){background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
 .model-chk-label:hover{border-color:var(--border-hover);color:var(--text)}
 .model-chk-label input[type=checkbox]{accent-color:var(--turquesa);width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.model-chk-disabled{opacity:.42;cursor:not-allowed;pointer-events:none}
+.model-chk-badge{font-size:9px;font-weight:700;background:rgba(239,68,68,.12);color:#ef4444;border-radius:4px;padding:2px 5px;margin-left:4px;white-space:nowrap}
 .img-key-row{padding:0 18px 10px;display:flex;align-items:center;gap:8px}
 .img-key-status{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px;flex:1}
 .img-key-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0}
@@ -696,7 +698,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <div class="engine-row">
         <label class="model-chk-label"><input type="checkbox" id="chk-gemini" checked onchange="updateImgKeyStatus()"> ✦ Gemini Imagen 4</label>
         <label class="model-chk-label"><input type="checkbox" id="chk-dalle" checked onchange="updateImgKeyStatus()"> ⬡ GPT Image 2</label>
-        <label class="model-chk-label"><input type="checkbox" id="chk-gemini3pro" onchange="updateImgKeyStatus()"> ◈ Gemini 3 Pro</label>
+        <label class="model-chk-label model-chk-disabled" title="Modelo no disponible — acceso pendiente de aprobación en GCP"><input type="checkbox" id="chk-gemini3pro" disabled> ◈ Gemini 3 Pro <span class="model-chk-badge">No disponible</span></label>
       </div>
       <div class="fmt-toggle">
         <button class="fmt-btn active" id="fmt-feed" onclick="selectFormat('feed')">📱 Feed (1080×1080)</button>
@@ -2072,6 +2074,8 @@ async function generarImagen(callerBtn = null) {
 async function generarConGemini(key, prompt) {
   const geminiNegative = "text distortion, blurry text, misspelled brand name, watermark, low quality, pixelated, cluttered, fake UI overlays, extra people, placeholder logos, generic stock photo feel";
   const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
+  const logoInstr = 'Logo Creditek: símbolo de check circular en turquesa #00C4CC junto al wordmark "Creditek" en Montserrat Bold — debe aparecer exactamente así en esquina inferior derecha, sin variaciones ni interpretaciones alternativas del logo.';
+  const fullPrompt = `${prompt}\n${logoInstr}`;
 
   // ── Vía proxy (resuelve CORS desde GitHub Pages o browser) ──────────────
   const proxyUrl = 'https://creditek-gemini-proxy.comercial-853.workers.dev';
@@ -2079,7 +2083,7 @@ async function generarConGemini(key, prompt) {
     const res = await fetch(`${proxyUrl}/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, negativePrompt: geminiNegative, aspectRatio, apiKey: key })
+      body: JSON.stringify({ prompt: fullPrompt, negativePrompt: geminiNegative, aspectRatio, apiKey: key })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -2105,7 +2109,7 @@ async function generarConGemini(key, prompt) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          instances: [{ prompt, negativePrompt: geminiNegative }],
+          instances: [{ prompt: fullPrompt, negativePrompt: geminiNegative }],
           parameters: { sampleCount: 1, aspectRatio }
         })
       }
@@ -2359,6 +2363,40 @@ function descargarImagenAB(side) {
   a.target = '_blank'; a.click();
 }
 
+async function validarPromptConIA(producto, prompt) {
+  const key = sessionStorage.getItem('ck_api_key') || '';
+  if (!key || key.length < 10) return { ok: true };
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 120,
+        messages: [{ role: 'user', content: `Eres un validador de prompts de imagen de marketing para celulares.
+Producto especificado: "${producto}"
+Prompt de imagen (primeros 600 chars): "${prompt.slice(0, 600)}"
+
+¿El prompt describe correctamente ese modelo de celular sin mezclar características de otra marca o modelo diferente?
+Responde ÚNICAMENTE con JSON válido, sin texto adicional:
+{"ok": true} si es correcto — {"ok": false, "issue": "descripción breve del problema en español, máx 120 caracteres"} si hay inconsistencia` }]
+      }),
+      signal: AbortSignal.timeout(12_000)
+    });
+    if (!res.ok) return { ok: true };
+    const data = await res.json();
+    const text = data.content?.find(b => b.type === 'text')?.text?.trim() || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return { ok: true };
+    return JSON.parse(match[0]);
+  } catch { return { ok: true }; }
+}
+
 async function generarConModelos() {
   buildImgPrompt();
   const prompt = document.getElementById('img-prompt-ta').value.trim();
@@ -2382,10 +2420,25 @@ async function generarConModelos() {
 
   const btn = document.getElementById('img-confirm-btn');
   btn.disabled = true;
-  btn.textContent = '⏳ Generando...';
   document.getElementById('img-result').style.display     = 'none';
   document.getElementById('img-ab-result').style.display  = 'none';
   document.getElementById('img-err').style.display        = 'none';
+
+  // Validar prompt con IA si hay producto especificado
+  const productoVal = document.getElementById('producto')?.value.trim();
+  if (productoVal) {
+    btn.textContent = '🔍 Validando prompt...';
+    const validacion = await validarPromptConIA(productoVal, prompt);
+    if (!validacion.ok) {
+      const continuar = window.confirm(`⚠️ Inconsistencia detectada en el prompt:\n\n${validacion.issue}\n\n¿Generar la imagen de todas formas?`);
+      if (!continuar) {
+        btn.disabled = false;
+        btn.textContent = '🖼 Generar imagen';
+        return;
+      }
+    }
+  }
+  btn.textContent = '⏳ Generando...';
 
   const callEngine = (id) => {
     const key = id === 'dalle' ? keyOpenAI : (localStorage.getItem('ck_gemini_key') || '');
