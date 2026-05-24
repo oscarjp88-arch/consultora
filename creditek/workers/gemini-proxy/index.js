@@ -198,18 +198,63 @@ if (path === '/test-fetch') {
     }
 
     if (path === '/brand-references') {
-      // Páginas de listing de productos (más densas en texto de specs que las homepages)
+      // Modelos populares en Colombia 2025 (actualizar manualmente c/trimestre)
+      // Samsung se obtiene dinámicamente desde su sitio web (JSON-LD con precios)
+      const STATIC = {
+        'Xiaomi CO': [
+          { nombre: 'Redmi Note 15 Pro 5G', specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'200MP', bateria:'5110mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'Redmi Note 14 5G',     specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'5110mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'Poco X7 Pro 5G',        specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'6000mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'Poco M6 Pro',           specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'64MP',  bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'Redmi 14C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5160mAh', pantalla:'6.88"' }, precio: null },
+          { nombre: 'Redmi 13C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.74"' }, precio: null },
+        ],
+        'Motorola CO': [
+          { nombre: 'Moto G85 5G',  specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'Moto G75 5G',  specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.78"' }, precio: null },
+          { nombre: 'Moto G55 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.49"' }, precio: null },
+          { nombre: 'Moto G35 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.72"' }, precio: null },
+          { nombre: 'Moto E45',     specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'48MP', bateria:'5000mAh', pantalla:'6.56"' }, precio: null },
+          { nombre: 'Razr 50 5G',   specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'4200mAh', pantalla:'6.9"'  }, precio: null },
+        ],
+        'OPPO CO': [
+          { nombre: 'OPPO Reno14 5G',      specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'5800mAh', pantalla:'6.76"' }, precio: null },
+          { nombre: 'OPPO Reno14 F 5G',    specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'OPPO Reno12 F 5G',    specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'108MP', bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'OPPO A60',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'OPPO Find N6',        specs: { ram:'16GB RAM', almacenamiento:'512GB', camara:'50MP',  bateria:'5600mAh', pantalla:'8.0"'  }, precio: null },
+          { nombre: 'OPPO A6s',            specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'13MP',  bateria:'5100mAh', pantalla:'6.67"' }, precio: null },
+        ],
+        'Realme CO': [
+          { nombre: 'Realme GT 6',        specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5500mAh', pantalla:'6.78"' }, precio: null },
+          { nombre: 'Realme 12 Pro+',     specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.7"'  }, precio: null },
+          { nombre: 'Realme C67',         specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP',bateria:'5000mAh', pantalla:'6.72"' }, precio: null },
+          { nombre: 'Realme Narzo 70x 5G',specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'Realme C55',         specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'64MP', bateria:'5000mAh', pantalla:'6.72"' }, precio: null },
+          { nombre: 'Realme 12 5G',       specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.72"' }, precio: null },
+        ],
+      };
+
+      // Samsung: fetch dinámico desde samsung.com/co (JSON-LD con modelos y precios actuales)
       const brands = [
-        { marca: 'Samsung CO', url: 'https://www.samsung.com/co/smartphones/all-smartphones/' },
-        { marca: 'Xiaomi CO',  url: 'https://www.mi.com/co/phones' },
+        { marca: 'Samsung CO',  urls: ['https://www.samsung.com/co/smartphones/all-smartphones/'] },
+        { marca: 'Xiaomi CO',   urls: [] },
+        { marca: 'Motorola CO', urls: [] },
+        { marca: 'OPPO CO',     urls: [] },
+        { marca: 'Realme CO',   urls: [] },
       ];
 
       // Lee hasta maxBytes del body para no cargar páginas enteras en memoria
       async function fetchHtml(url, maxBytes = 600_000) {
         const res = await fetch(url, {
           redirect: 'follow',
-          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
-          signal: AbortSignal.timeout(10_000),
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'es-CO,es;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+          },
+          signal: AbortSignal.timeout(12_000),
         });
         if (!res.ok) return { html: '', status: res.status };
         const reader = res.body.getReader();
@@ -258,10 +303,20 @@ if (path === '/test-fetch') {
         return m ? '$' + m[1] : null;
       }
 
-      async function extractModels({ marca, url }) {
+      async function extractModels({ marca, urls }) {
+        // Marcas con datos estáticos: retornar directamente sin fetch
+        if (!urls.length && STATIC[marca]) {
+          return { marca, status: 200, url: 'static', modelos: STATIC[marca], contexto: '' };
+        }
+
+        let html = '', status = 0, usedUrl = '';
+        for (const url of urls) {
+          const result = await fetchHtml(url);
+          if (result.html && result.status === 200) { html = result.html; status = result.status; usedUrl = url; break; }
+          status = result.status;
+        }
         try {
-          const { html, status } = await fetchHtml(url);
-          if (!html) return { marca, modelos: [], status };
+          if (!html) return { marca, modelos: STATIC[marca] || [], status, url: usedUrl };
 
           const seen   = new Set();
           const modelos = [];
@@ -299,11 +354,13 @@ if (path === '/test-fetch') {
           // ── 3. H2/H3 — nombres de modelos en páginas de listing ────────────
           for (const m of html.matchAll(/<h[23][^>]*>([\s\S]*?)<\/h[23]>/gi)) {
             const text = stripTags(m[1]).trim();
-            if (text.length < 4 || text.length > 90 || seen.has(text)) continue;
-            // Filtrar por patrones típicos de nombres de celulares
-            if (!/Galaxy|Redmi|Note|Poco|Edge|Find|Reno|GT|Narzo|A\d|G\d|M\d|X\d|Pro|Plus|Ultra|5G|4G/i.test(text)) continue;
+            if (text.length < 6 || text.length > 120 || seen.has(text)) continue;
+            // Detecta nombre de marca O specs inline (títulos MercadoLibre incluyen RAM/GB)
+            const hasModel = /Galaxy|Redmi|Poco|Narzo|Moto\s*[A-Z]|Razr|Stylus|OPPO\s*[A-Z]|Reno\d|Find\s*[NX]|Realme\s*\d|GT\s*\d|Note\s*\d+\s*Pro|Samsung|Xiaomi|Motorola/i.test(text);
+            const hasSpec  = /\d+\s*GB|\d+\s*MP|\d{4}\s*mAh/i.test(text);
+            if (!hasModel && !hasSpec) continue;
             seen.add(text);
-            modelos.push({ nombre: text, specs: null, precio: null });
+            modelos.push({ nombre: text, specs: parseSpecs(text), precio: parsePrice(text) });
           }
 
           // ── 4. Texto plano de la página para contexto general ──────────────
@@ -319,11 +376,12 @@ if (path === '/test-fetch') {
           return {
             marca,
             status,
+            url: usedUrl,
             modelos: modelos.slice(0, 12),
             contexto: [ogTitle, metaDesc].filter(Boolean).join(' | ').slice(0, 300) || plainText.slice(0, 300),
           };
         } catch (e) {
-          return { marca, modelos: [], contexto: '', status: null, error: e.message };
+          return { marca, modelos: [], contexto: '', status, url: usedUrl, error: e.message };
         }
       }
 
