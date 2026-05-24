@@ -1807,7 +1807,28 @@ function getRefBlock() {
         .map(([name, d]) => `- ${name}: ${d.keywords.slice(0,100)}`).join('\n')
     : '';
   const kwBlock = kwLines ? `\nMarket keywords (live):\n${kwLines}` : '';
-  return `\n\nCOLOMBIAN PHONE MARKET VISUAL CONTEXT:\nBrand colors for reference (use as market context only):\n${colorLines}${kwBlock}\nNOTE: Creditek brand colors (#0B1E3D + #00C4CC) always override these references.`;
+
+  // Enriquecimiento automático: si el producto coincide con un modelo guardado,
+  // agregar nombre y specs al prompt. Nunca incluir precioLista — el precio
+  // siempre viene del formulario del usuario.
+  let modelBlock = '';
+  if (stored?.brands) {
+    const producto = (document.getElementById('producto')?.value || '').trim().toLowerCase();
+    if (producto.length > 3) {
+      outer: for (const [, d] of Object.entries(stored.brands)) {
+        for (const m of (d.modelos || [])) {
+          const n = m.nombre.toLowerCase();
+          if (n.includes(producto) || producto.includes(n.split(' ').slice(0, 3).join(' '))) {
+            const specsStr = m.specs ? Object.values(m.specs).join(', ') : '';
+            modelBlock = `\nModelo de referencia: ${m.nombre}${specsStr ? ` — ${specsStr}` : ''}`;
+            break outer;
+          }
+        }
+      }
+    }
+  }
+
+  return `\n\nCOLOMBIAN PHONE MARKET VISUAL CONTEXT:\nBrand colors for reference (use as market context only):\n${colorLines}${kwBlock}${modelBlock}\nNOTE: Creditek brand colors (#0B1E3D + #00C4CC) always override these references.`;
 }
 
 function formatRefAge(ts) {
@@ -1843,19 +1864,17 @@ function renderRefStatus() {
     listEl.style.display = 'block';
   }
   if (imagesEl && stored.brands) {
-    const withImgs = Object.entries(stored.brands).filter(([, d]) => d.imageUrls?.length);
-    if (withImgs.length) {
-      imagesEl.innerHTML = withImgs.map(([name, d]) => `
+    const withModels = Object.entries(stored.brands).filter(([, d]) => d.modelos?.length);
+    if (withModels.length) {
+      imagesEl.innerHTML = withModels.map(([name, d]) => `
         <div class="refs-brand-images">
           <div class="refs-brand-images-name">${name}</div>
-          <div class="refs-img-grid">${
-            d.imageUrls.slice(0, 5).map(u =>
-              `<a href="${u}" target="_blank" rel="noopener">
-                <img class="refs-img-thumb" src="${u}" alt="${name}" loading="lazy"
-                     onerror="this.closest('a').style.display='none'">
-              </a>`
-            ).join('')
-          }</div>
+          <ul style="margin:4px 0 0 12px;padding:0;list-style:disc;font-size:11px;color:#ccc;line-height:1.7">${
+            d.modelos.slice(0, 6).map(m => {
+              const specs = m.specs ? ` <span style="color:#888;font-size:10px">${Object.values(m.specs).join(' · ')}</span>` : '';
+              return `<li>${m.nombre}${specs}</li>`;
+            }).join('')
+          }</ul>
         </div>`).join('');
       imagesEl.style.display = 'block';
     } else {
@@ -1900,8 +1919,10 @@ async function actualizarReferencias() {
     const workerData = await workerImagesPromise;
     if (workerData?.results) {
       for (const r of workerData.results) {
-        if (brands[r.marca]) brands[r.marca].imageUrls = r.imageUrls;
-        else brands[r.marca] = { url: '', keywords: '', imageUrls: r.imageUrls };
+        // Guardar solo nombre+specs de modelos. precioLista no se usa en prompts de imagen.
+        const modelos = (r.modelos || []).map(({ nombre, specs }) => ({ nombre, specs }));
+        if (brands[r.marca]) brands[r.marca].modelos = modelos;
+        else brands[r.marca] = { url: '', keywords: '', modelos };
       }
     }
     localStorage.setItem('ck_referencias', JSON.stringify({ timestamp: Date.now(), brands }));

@@ -200,38 +200,40 @@ if (path === '/test-fetch') {
     if (path === '/brand-references') {
       // Modelos populares en Colombia 2025 (actualizar manualmente c/trimestre)
       // Samsung se obtiene dinámicamente desde su sitio web (JSON-LD con precios)
+      // precioLista = precio de venta público oficial de cada fabricante.
+      //   NO es el precio de cuota de Creditek — el agente HTML nunca lo usa en el prompt de imagen.
       const STATIC = {
         'Xiaomi CO': [
-          { nombre: 'Redmi Note 15 Pro 5G', specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'200MP', bateria:'5110mAh', pantalla:'6.67"' }, precio: null },
-          { nombre: 'Redmi Note 14 5G',     specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'5110mAh', pantalla:'6.67"' }, precio: null },
-          { nombre: 'Poco X7 Pro 5G',        specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'6000mAh', pantalla:'6.67"' }, precio: null },
-          { nombre: 'Poco M6 Pro',           specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'64MP',  bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
-          { nombre: 'Redmi 14C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5160mAh', pantalla:'6.88"' }, precio: null },
-          { nombre: 'Redmi 13C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.74"' }, precio: null },
+          { nombre: 'Redmi Note 15 Pro 5G', specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'200MP', bateria:'5110mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Redmi Note 14 5G',     specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'5110mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Poco X7 Pro 5G',        specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'6000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Poco M6 Pro',           specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'64MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Redmi 14C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5160mAh', pantalla:'6.88"' }, precioLista: null },
+          { nombre: 'Redmi 13C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.74"' }, precioLista: null },
         ],
         'Motorola CO': [
-          { nombre: 'Moto G85 5G',  specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
-          { nombre: 'Moto G75 5G',  specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.78"' }, precio: null },
-          { nombre: 'Moto G55 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.49"' }, precio: null },
-          { nombre: 'Moto G35 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.72"' }, precio: null },
-          { nombre: 'Moto E45',     specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'48MP', bateria:'5000mAh', pantalla:'6.56"' }, precio: null },
-          { nombre: 'Razr 50 5G',   specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'4200mAh', pantalla:'6.9"'  }, precio: null },
+          { nombre: 'Moto G85 5G',  specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Moto G75 5G',  specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.78"' }, precioLista: null },
+          { nombre: 'Moto G55 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.49"' }, precioLista: null },
+          { nombre: 'Moto G35 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
+          { nombre: 'Moto E45',     specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'48MP', bateria:'5000mAh', pantalla:'6.56"' }, precioLista: null },
+          { nombre: 'Razr 50 5G',   specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'4200mAh', pantalla:'6.9"'  }, precioLista: null },
         ],
         'OPPO CO': [
-          { nombre: 'OPPO Reno14 5G',      specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'5800mAh', pantalla:'6.76"' }, precio: null },
-          { nombre: 'OPPO Reno14 F 5G',    specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
-          { nombre: 'OPPO Reno12 F 5G',    specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'108MP', bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
-          { nombre: 'OPPO A60',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
-          { nombre: 'OPPO Find N6',        specs: { ram:'16GB RAM', almacenamiento:'512GB', camara:'50MP',  bateria:'5600mAh', pantalla:'8.0"'  }, precio: null },
-          { nombre: 'OPPO A6s',            specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'13MP',  bateria:'5100mAh', pantalla:'6.67"' }, precio: null },
+          { nombre: 'OPPO Reno14 5G',      specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'5800mAh', pantalla:'6.76"' }, precioLista: null },
+          { nombre: 'OPPO Reno14 F 5G',    specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'OPPO Reno12 F 5G',    specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'108MP', bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'OPPO A60',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'OPPO Find N6',        specs: { ram:'16GB RAM', almacenamiento:'512GB', camara:'50MP',  bateria:'5600mAh', pantalla:'8.0"'  }, precioLista: null },
+          { nombre: 'OPPO A6s',            specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'13MP',  bateria:'5100mAh', pantalla:'6.67"' }, precioLista: null },
         ],
         'Realme CO': [
-          { nombre: 'Realme GT 6',        specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5500mAh', pantalla:'6.78"' }, precio: null },
-          { nombre: 'Realme 12 Pro+',     specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.7"'  }, precio: null },
-          { nombre: 'Realme C67',         specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP',bateria:'5000mAh', pantalla:'6.72"' }, precio: null },
-          { nombre: 'Realme Narzo 70x 5G',specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.67"' }, precio: null },
-          { nombre: 'Realme C55',         specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'64MP', bateria:'5000mAh', pantalla:'6.72"' }, precio: null },
-          { nombre: 'Realme 12 5G',       specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.72"' }, precio: null },
+          { nombre: 'Realme GT 6',        specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5500mAh', pantalla:'6.78"' }, precioLista: null },
+          { nombre: 'Realme 12 Pro+',     specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.7"'  }, precioLista: null },
+          { nombre: 'Realme C67',         specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP',bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
+          { nombre: 'Realme Narzo 70x 5G',specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Realme C55',         specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'64MP', bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
+          { nombre: 'Realme 12 5G',       specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
         ],
       };
 
@@ -336,10 +338,11 @@ if (path === '/test-fetch') {
                   if (!nombre || seen.has(nombre) || nombre.length > 100) continue;
                   seen.add(nombre);
                   const desc  = [p.description || '', p.name || ''].join(' ');
-                  const price = p.offers?.price
+                  // precioLista = PVP oficial; nunca usarlo en el prompt de imagen (el precio viene del formulario)
+                  const precioLista = p.offers?.price
                     ? `$${Number(p.offers.price).toLocaleString('es-CO')}`
                     : parsePrice(desc);
-                  modelos.push({ nombre, specs: parseSpecs(desc), precio: price });
+                  modelos.push({ nombre, specs: parseSpecs(desc), precioLista });
                 }
               }
             } catch { /* JSON malformado — ignorar */ }
@@ -360,7 +363,7 @@ if (path === '/test-fetch') {
             const hasSpec  = /\d+\s*GB|\d+\s*MP|\d{4}\s*mAh/i.test(text);
             if (!hasModel && !hasSpec) continue;
             seen.add(text);
-            modelos.push({ nombre: text, specs: parseSpecs(text), precio: parsePrice(text) });
+            modelos.push({ nombre: text, specs: parseSpecs(text), precioLista: parsePrice(text) });
           }
 
           // ── 4. Texto plano de la página para contexto general ──────────────
