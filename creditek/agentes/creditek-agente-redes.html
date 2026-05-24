@@ -521,6 +521,15 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <input type="text" id="inicial" placeholder="Ej: $314.500">
     </div>
     <div class="field-group">
+      <label class="checkbox-row" style="padding:6px 4px">
+        <input type="checkbox" id="chk-specs" onchange="buildImgPrompt(); document.getElementById('specs-input-wrap').style.display=this.checked?'block':'none'">
+        <label for="chk-specs" style="font-size:12px;color:var(--text2);cursor:pointer">Incluir specs técnicas en imagen</label>
+      </label>
+      <div id="specs-input-wrap" style="display:none;margin-top:4px">
+        <input type="text" id="img-specs" placeholder="Ej: 128GB, cámara 50MP, batería 5000mAh, pantalla 6.7&quot;" oninput="buildImgPrompt()" style="width:100%;background:#FFFFFF;border:1px solid rgba(11,30,61,.15);color:#0B1E3D;border-radius:var(--radius-sm);font-size:13px;padding:8px 12px;outline:none;font-family:'DM Sans',sans-serif">
+      </div>
+    </div>
+    <div class="field-group">
       <label class="field-label">Nota especial <span>opcional</span></label>
       <textarea id="nota" placeholder="Ej: Solo 3 unidades, promoción hasta el viernes..."></textarea>
     </div>
@@ -716,17 +725,6 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <div class="img-prev-field">
           <span class="img-prev-fl">Call to action (CTA)</span>
           <input type="text" class="img-prev-input" id="img-cta" placeholder="Visítanos en Corozal" oninput="buildImgPrompt()">
-        </div>
-        <div class="img-prev-field" style="padding-top:4px">
-          <label class="checkbox-row" style="padding:2px 0">
-            <input type="checkbox" id="chk-specs" onchange="buildImgPrompt(); document.getElementById('specs-input-wrap').style.display=this.checked?'block':'none'">
-            <label for="chk-specs">Incluir especificaciones técnicas en la imagen</label>
-          </label>
-          <div id="specs-input-wrap" style="display:none;margin-top:6px">
-            <input type="text" class="img-prev-input" id="img-specs"
-              placeholder="Ej: 128GB, cámara 50MP, batería 5000mAh, pantalla 6.7&quot;"
-              oninput="buildImgPrompt()">
-          </div>
         </div>
         <div class="img-btn-row">
           <button class="img-confirm-btn" onclick="confirmarPreviewYGenerar()">🖼 Generar imagen</button>
