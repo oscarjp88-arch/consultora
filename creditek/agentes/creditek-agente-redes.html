@@ -523,15 +523,6 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <input type="text" id="inicial" placeholder="Ej: $314.500">
     </div>
     <div class="field-group">
-      <label class="checkbox-row" style="padding:6px 4px">
-        <input type="checkbox" id="chk-specs" onchange="buildImgPrompt(); document.getElementById('specs-input-wrap').style.display=this.checked?'block':'none'">
-        <label for="chk-specs" style="font-size:12px;color:var(--text2);cursor:pointer">Incluir specs técnicas en imagen</label>
-      </label>
-      <div id="specs-input-wrap" style="display:none;margin-top:4px">
-        <input type="text" id="img-specs" placeholder="Ej: 128GB, cámara 50MP, batería 5000mAh, pantalla 6.7&quot;" oninput="buildImgPrompt()" style="width:100%;background:#FFFFFF;border:1px solid rgba(11,30,61,.15);color:#0B1E3D;border-radius:var(--radius-sm);font-size:13px;padding:8px 12px;outline:none;font-family:'DM Sans',sans-serif">
-      </div>
-    </div>
-    <div class="field-group">
       <label class="field-label">Nota especial <span>opcional</span></label>
       <textarea id="nota" placeholder="Ej: Solo 3 unidades, promoción hasta el viernes..." oninput="buildImgPrompt()"></textarea>
     </div>
@@ -1720,12 +1711,22 @@ function buildImgPrompt() {
 
   const nota = document.getElementById('nota')?.value.trim() || '';
 
-  const inclSpecs = document.getElementById('chk-specs')?.checked || false;
-  const specsText = document.getElementById('img-specs')?.value.trim() || '';
-  const specsBlock = inclSpecs
-    ? specsText
-      ? `ESPECIFICACIONES TÉCNICAS A MOSTRAR: Incluir callout labels flotantes alrededor del producto con estas specs: ${specsText}. Cada label en fondo turquesa #00C4CC con texto blanco, tipografía pequeña y limpia, posicionados alrededor del teléfono sin tapar la pantalla.`
-      : `Incluir callout labels flotantes alrededor del ${producto} con sus especificaciones técnicas clave (pantalla, cámara principal, batería, almacenamiento). Labels en fondo turquesa #00C4CC con texto blanco, tipografía pequeña, posicionados alrededor del teléfono.`
+  const autoSpecs = (() => {
+    const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
+    if (!stored?.brands || producto.length <= 3) return '';
+    const prod = producto.toLowerCase();
+    for (const [, d] of Object.entries(stored.brands)) {
+      for (const m of (d.modelos || [])) {
+        const n = m.nombre.toLowerCase();
+        if (n.includes(prod) || prod.includes(n.split(' ').slice(0, 3).join(' '))) {
+          return m.specs ? Object.values(m.specs).join(', ') : '';
+        }
+      }
+    }
+    return '';
+  })();
+  const specsBlock = autoSpecs
+    ? `ESPECIFICACIONES TÉCNICAS A MOSTRAR: Incluir callout labels flotantes alrededor del producto con estas specs: ${autoSpecs}. Cada label en fondo turquesa #00C4CC con texto blanco, tipografía pequeña y limpia, posicionados alrededor del teléfono sin tapar la pantalla.`
     : `NO mostrar especificaciones técnicas, callout labels ni chips de características alrededor del producto. Diseño limpio centrado en el producto y el mensaje principal.`;
 
   const refBlock = getRefBlock();
@@ -1979,10 +1980,27 @@ async function actualizarReferencias() {
 
 function showImgSection() {
   document.getElementById('img-section').classList.add('visible');
+  document.getElementById('canva-brief-panel').style.display = 'none';
+  document.getElementById('canva-btn').classList.remove('active');
   resetPreviewFields();
   updateImgKeyStatus();
   syncModelUI();
   loadLogoBase64();
+  // Refresh brand-refs modelos cache silently in background
+  fetch('https://creditek-gemini-proxy.comercial-853.workers.dev/brand-references')
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (!data?.results) return;
+      const stored = JSON.parse(localStorage.getItem('ck_referencias') || '{"brands":{}}');
+      const brands = stored.brands || {};
+      for (const r of data.results) {
+        const modelos = (r.modelos || []).map(({ nombre, specs, imagenRef }) => ({ nombre, specs, imagenRef }));
+        if (brands[r.marca]) brands[r.marca].modelos = modelos;
+        else brands[r.marca] = { url: '', keywords: '', modelos };
+      }
+      localStorage.setItem('ck_referencias', JSON.stringify({ timestamp: Date.now(), brands }));
+    })
+    .catch(() => {});
 }
 
 function abrirImgKeyModal() {
@@ -2343,39 +2361,6 @@ function descargarImagenAB(side) {
   a.target = '_blank'; a.click();
 }
 
-async function validarPromptConIA(producto, prompt) {
-  const key = sessionStorage.getItem('ck_api_key') || '';
-  if (!key || key.length < 10) return { ok: true };
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 120,
-        messages: [{ role: 'user', content: `Eres un validador de prompts de imagen de marketing para celulares.
-Producto especificado: "${producto}"
-Prompt de imagen (primeros 600 chars): "${prompt.slice(0, 600)}"
-
-¿El prompt describe correctamente ese modelo de celular sin mezclar características de otra marca o modelo diferente?
-Responde ÚNICAMENTE con JSON válido, sin texto adicional:
-{"ok": true} si es correcto — {"ok": false, "issue": "descripción breve del problema en español, máx 120 caracteres"} si hay inconsistencia` }]
-      }),
-      signal: AbortSignal.timeout(12_000)
-    });
-    if (!res.ok) return { ok: true };
-    const data = await res.json();
-    const text = data.content?.find(b => b.type === 'text')?.text?.trim() || '';
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return { ok: true };
-    return JSON.parse(match[0]);
-  } catch { return { ok: true }; }
-}
 
 async function generarConModelos() {
   buildImgPrompt();
@@ -2402,20 +2387,6 @@ async function generarConModelos() {
   document.getElementById('img-ab-result').style.display  = 'none';
   document.getElementById('img-err').style.display        = 'none';
 
-  // Validar prompt con IA si hay producto especificado
-  const productoVal = document.getElementById('producto')?.value.trim();
-  if (productoVal) {
-    btn.textContent = '🔍 Validando prompt...';
-    const validacion = await validarPromptConIA(productoVal, prompt);
-    if (!validacion.ok) {
-      const continuar = window.confirm(`⚠️ Inconsistencia detectada en el prompt:\n\n${validacion.issue}\n\n¿Generar la imagen de todas formas?`);
-      if (!continuar) {
-        btn.disabled = false;
-        btn.textContent = '🖼 Generar imagen';
-        return;
-      }
-    }
-  }
   btn.textContent = '⏳ Generando...';
 
   const callEngine = (id) => {
