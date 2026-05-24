@@ -534,7 +534,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <div class="field-group">
       <label class="field-label">Nota especial <span>opcional</span></label>
-      <textarea id="nota" placeholder="Ej: Solo 3 unidades, promoción hasta el viernes..."></textarea>
+      <textarea id="nota" placeholder="Ej: Solo 3 unidades, promoción hasta el viernes..." oninput="buildImgPrompt()"></textarea>
     </div>
     <div class="field-group">
       <label class="field-label">Fecha especial / Temporada <span>opcional</span></label>
@@ -1725,6 +1725,8 @@ function buildImgPrompt() {
     ? `CRÍTICO: El nombre de la tienda en el botón CTA debe aparecer EXACTAMENTE así: '${tiendaInfoBuild.nombre}'. No abreviar, truncar, traducir ni modificar este nombre de ninguna manera. Renderizar cada carácter de '${tiendaInfoBuild.nombre}' con precisión absoluta.`
     : '';
 
+  const nota = document.getElementById('nota')?.value.trim() || '';
+
   const inclSpecs = document.getElementById('chk-specs')?.checked || false;
   const specsText = document.getElementById('img-specs')?.value.trim() || '';
   const specsBlock = inclSpecs
@@ -1747,6 +1749,7 @@ function buildImgPrompt() {
     precio  ? `- Cuota mensual: ${precio}` : null,
     inicial ? `- Cuota inicial: ${inicial}` : null,
     fechaData2 ? `- Temporada especial: ${fechaData2.label}` : null,
+    nota ? `- Nota especial del operador: ${nota}` : null,
     ``,
     `COMPOSICIÓN Y LAYOUT:`,
     tipoDesc,
