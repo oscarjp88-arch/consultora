@@ -281,9 +281,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .img-hdr-title{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700}
 .img-hdr-badge{font-size:10px;background:rgba(0,196,204,.12);color:var(--turquesa);padding:2px 8px;border-radius:12px;letter-spacing:.04em}
 .engine-row{display:flex;gap:8px;padding:14px 18px 8px}
-.engine-btn{flex:1;padding:9px 12px;background:#FFFFFF;border:1px solid rgba(11,30,61,.15);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;font-family:'DM Sans',sans-serif}
-.engine-btn.active{background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
-.engine-btn:hover:not(.active){border-color:var(--border-hover);color:var(--text)}
+.model-chk-label{display:flex;align-items:center;gap:7px;padding:8px 14px;background:#FFFFFF;border:1.5px solid rgba(11,30,61,.15);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;user-select:none}
+.model-chk-label:has(input:checked){background:rgba(0,196,204,.1);border-color:var(--turquesa);color:var(--turquesa)}
+.model-chk-label:hover{border-color:var(--border-hover);color:var(--text)}
+.model-chk-label input[type=checkbox]{accent-color:var(--turquesa);width:14px;height:14px;cursor:pointer;flex-shrink:0}
 .img-key-row{padding:0 18px 10px;display:flex;align-items:center;gap:8px}
 .img-key-status{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px;flex:1}
 .img-key-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0}
@@ -693,9 +694,9 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <span class="img-hdr-badge">Beta</span>
       </div>
       <div class="engine-row">
-        <button class="engine-btn active" id="eng-gemini" onclick="selectEngine('gemini')">✦ Gemini Imagen 4</button>
-        <button class="engine-btn" id="eng-gemini3pro" onclick="selectEngine('gemini3pro')">◈ Gemini 3 Pro</button>
-        <button class="engine-btn" id="eng-dalle" onclick="selectEngine('dalle')">⬡ GPT Image 2</button>
+        <label class="model-chk-label"><input type="checkbox" id="chk-gemini" checked onchange="updateImgKeyStatus()"> ✦ Gemini Imagen 4</label>
+        <label class="model-chk-label"><input type="checkbox" id="chk-dalle" checked onchange="updateImgKeyStatus()"> ⬡ GPT Image 2</label>
+        <label class="model-chk-label"><input type="checkbox" id="chk-gemini3pro" onchange="updateImgKeyStatus()"> ◈ Gemini 3 Pro</label>
       </div>
       <div class="fmt-toggle">
         <button class="fmt-btn active" id="fmt-feed" onclick="selectFormat('feed')">📱 Feed (1080×1080)</button>
@@ -727,11 +728,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
           <input type="text" class="img-prev-input" id="img-cta" placeholder="Visítanos en Corozal" oninput="buildImgPrompt()">
         </div>
         <div class="img-btn-row">
-          <button class="img-confirm-btn" onclick="confirmarPreviewYGenerar()">🖼 Generar imagen</button>
-          <button class="img-ab-btn" id="img-ab-btn" onclick="generarAB()">
-            <div class="spinner" id="img-ab-spinner" style="display:none"></div>
-            <span id="img-ab-label">⚡ Comparar A/B</span>
-          </button>
+          <button class="img-confirm-btn" id="img-confirm-btn" onclick="generarConModelos()">🖼 Generar imagen</button>
         </div>
       </div>
       <div class="img-prompt-wrap">
@@ -1558,8 +1555,7 @@ async function loadLogoBase64() {
 }
 
 function confirmarPreviewYGenerar() {
-  buildImgPrompt();
-  generarImagen(document.querySelector('.img-confirm-btn'));
+  generarConModelos();
 }
 
 function resetPreviewFields() {
@@ -1600,10 +1596,10 @@ function resetPreviewFields() {
 }
 
 function updateImgKeyStatus() {
-  if (currentEngine === 'gemini' || currentEngine === 'gemini3pro') {
+  const useDalle = document.getElementById('chk-dalle')?.checked;
+  if (!useDalle) {
     document.getElementById('img-key-dot').className = 'img-key-dot ok';
-    document.getElementById('img-key-label').textContent =
-      currentEngine === 'gemini3pro' ? 'Worker Vertex AI activo · Gemini 3 Pro Image' : 'Worker Vertex AI activo';
+    document.getElementById('img-key-label').textContent = 'Worker Vertex AI activo';
     document.getElementById('img-key-row-btn').style.display = 'none';
     return;
   }
@@ -1611,7 +1607,7 @@ function updateImgKeyStatus() {
   const key = localStorage.getItem('ck_openai_key');
   const ok = key && key.length > 10;
   document.getElementById('img-key-dot').className = 'img-key-dot' + (ok ? ' ok' : '');
-  document.getElementById('img-key-label').textContent = ok ? 'Key configurada' : 'Key no configurada';
+  document.getElementById('img-key-label').textContent = ok ? 'Key GPT Image 2 configurada' : 'API key de GPT Image 2 requerida';
 }
 
 function buildImgPrompt() {
@@ -1991,18 +1987,14 @@ function showImgSection() {
 }
 
 function abrirImgKeyModal() {
-  const isGemini = currentEngine === 'gemini';
-  document.getElementById('imgKeyIcon').textContent   = isGemini ? '✦' : '⬡';
-  document.getElementById('imgKeyTitle').textContent  = isGemini ? 'GEMINI API KEY' : 'OPENAI API KEY';
-  document.getElementById('imgKeyHeading').textContent = isGemini ? 'API Key de Google Gemini' : 'API Key de OpenAI';
-  document.getElementById('imgKeyDesc').textContent   = isGemini
-    ? 'Necesitas una API key de Google AI Studio para generar imágenes con Gemini Imagen 4.'
-    : 'Necesitas una API key de OpenAI para generar imágenes con DALL-E 3 (HD).';
-  document.getElementById('imgModalKey').placeholder  = isGemini ? 'AIzaSy...' : 'sk-proj-...';
+  document.getElementById('imgKeyIcon').textContent    = '⬡';
+  document.getElementById('imgKeyTitle').textContent   = 'OPENAI API KEY';
+  document.getElementById('imgKeyHeading').textContent = 'API Key de OpenAI';
+  document.getElementById('imgKeyDesc').textContent    = 'Necesitas una API key de OpenAI para generar imágenes con GPT Image 2.';
+  document.getElementById('imgModalKey').placeholder   = 'sk-proj-...';
   document.getElementById('imgModalKey').value = '';
   document.getElementById('imgModalError').style.display = 'none';
-  document.getElementById('proxyUrlRow').style.display = isGemini ? 'block' : 'none';
-  if (isGemini) document.getElementById('imgProxyUrl').value = localStorage.getItem('ck_gemini_proxy_url') || '';
+  document.getElementById('proxyUrlRow').style.display = 'none';
   document.getElementById('imgKeyModal').classList.remove('hidden');
   setTimeout(() => document.getElementById('imgModalKey').focus(), 80);
 }
@@ -2023,12 +2015,7 @@ function submitImgKey() {
   const err = document.getElementById('imgModalError');
   if (val.length < 10) { err.style.display = 'block'; document.getElementById('imgModalKey').focus(); return; }
   err.style.display = 'none';
-  localStorage.setItem(currentEngine === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key', val);
-  if (currentEngine === 'gemini') {
-    const proxyUrl = (document.getElementById('imgProxyUrl')?.value || '').trim().replace(/\/$/, '');
-    if (proxyUrl) localStorage.setItem('ck_gemini_proxy_url', proxyUrl);
-    else localStorage.removeItem('ck_gemini_proxy_url');
-  }
+  localStorage.setItem('ck_openai_key', val);
   cerrarImgKeyModal();
   updateImgKeyStatus();
 }
@@ -2370,6 +2357,125 @@ function descargarImagenAB(side) {
   const a = document.createElement('a');
   a.href = src; a.download = `creditek-ab-${side === 'a' ? 'gemini' : 'gpt'}-${Date.now()}.png`;
   a.target = '_blank'; a.click();
+}
+
+async function generarConModelos() {
+  buildImgPrompt();
+  const prompt = document.getElementById('img-prompt-ta').value.trim();
+  if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
+
+  const useGemini    = document.getElementById('chk-gemini')?.checked;
+  const useDalle     = document.getElementById('chk-dalle')?.checked;
+  const useGemini3pro = document.getElementById('chk-gemini3pro')?.checked;
+
+  const MODELS = [
+    { id: 'gemini',     label: '✦ Gemini Imagen 4', checked: useGemini },
+    { id: 'dalle',      label: '⬡ GPT Image 2',      checked: useDalle },
+    { id: 'gemini3pro', label: '◈ Gemini 3 Pro',     checked: useGemini3pro },
+  ];
+  const selected = MODELS.filter(m => m.checked);
+
+  if (selected.length === 0) { showToast('Selecciona al menos un modelo', '#f59e0b'); return; }
+
+  const keyOpenAI = localStorage.getItem('ck_openai_key') || '';
+  if (useDalle && keyOpenAI.length < 10) { abrirImgKeyModal(); return; }
+
+  const btn = document.getElementById('img-confirm-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando...';
+  document.getElementById('img-result').style.display     = 'none';
+  document.getElementById('img-ab-result').style.display  = 'none';
+  document.getElementById('img-err').style.display        = 'none';
+
+  const callEngine = (id) => {
+    const key = id === 'dalle' ? keyOpenAI : (localStorage.getItem('ck_gemini_key') || '');
+    if (id === 'gemini')     return generarConGemini(key, prompt);
+    if (id === 'gemini3pro') return generarConGemini3Pro(prompt);
+    return generarConDalle(key, prompt);
+  };
+
+  if (selected.length === 1) {
+    const m = selected[0];
+    currentEngine = m.id;
+    try {
+      lastImgModelLabel = m.label.replace(/^[✦⬡◈] /, '');
+      const src = await callEngine(m.id);
+      imgHistory = [src]; imgHistoryIdx = 0;
+      mostrarImgVersion(src);
+      document.getElementById('img-result').style.display = 'block';
+      document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
+      document.getElementById('img-editor').style.display = 'block';
+      renderImgHistoryNav();
+      showToast('✓ Imagen generada correctamente');
+    } catch(err) {
+      const errDiv = document.getElementById('img-err');
+      errDiv.textContent = err.message || 'Error al generar imagen.';
+      errDiv.style.display = 'block';
+      showToast(err.message || 'Error al generar imagen', '#ef4444');
+    }
+  } else {
+    const results = await Promise.allSettled(selected.map(m => callEngine(m.id)));
+    const abResult = document.getElementById('img-ab-result');
+    const abCols   = abResult.querySelector('.img-ab-cols');
+    abCols.style.gridTemplateColumns = selected.length === 3 ? '1fr 1fr 1fr' : '1fr 1fr';
+    abCols.innerHTML = '';
+
+    let okCount = 0;
+    results.forEach((res, i) => {
+      const m = selected[i];
+      const col = document.createElement('div');
+      col.className = 'img-ab-col';
+
+      const lbl = document.createElement('div');
+      lbl.className = 'img-ab-col-label';
+      lbl.textContent = m.label;
+      col.appendChild(lbl);
+
+      if (res.status === 'fulfilled') {
+        okCount++;
+        const imgSrc = res.value;
+        const img = document.createElement('img');
+        img.className = 'img-output'; img.src = imgSrc; img.alt = m.label;
+        col.appendChild(img);
+
+        const dlBtn = document.createElement('button');
+        dlBtn.className = 'img-dl-btn'; dlBtn.textContent = '⬇ Descargar';
+        dlBtn.onclick = () => { const a = document.createElement('a'); a.href = imgSrc; a.download = `creditek-${m.id}-${Date.now()}.png`; a.target = '_blank'; a.click(); };
+        col.appendChild(dlBtn);
+
+        const useBtn = document.createElement('button');
+        useBtn.className = 'img-ab-use-btn'; useBtn.textContent = '✓ Usar en editor';
+        useBtn.onclick = () => {
+          currentEngine = m.id;
+          imgHistory = [imgSrc]; imgHistoryIdx = 0;
+          mostrarImgVersion(imgSrc);
+          document.getElementById('img-result').style.display = 'block';
+          document.getElementById('img-model-lbl').textContent = `Generado con ${m.label.replace(/^[✦⬡◈] /, '')}`;
+          document.getElementById('img-editor').style.display = 'block';
+          renderImgHistoryNav();
+          abResult.style.display = 'none';
+          showToast('✓ Imagen seleccionada para edición');
+        };
+        col.appendChild(useBtn);
+      } else {
+        const errEl = document.createElement('div');
+        errEl.className = 'img-ab-col-err'; errEl.style.display = 'block';
+        errEl.textContent = res.reason?.message || `Error en ${m.label}`;
+        col.appendChild(errEl);
+      }
+      abCols.appendChild(col);
+    });
+
+    abResult.style.display = 'block';
+    const firstOk = results.findIndex(r => r.status === 'fulfilled');
+    if (firstOk >= 0) currentEngine = selected[firstOk].id;
+    if (okCount === selected.length) showToast(`✓ ${okCount} imágenes generadas`);
+    else if (okCount > 0) showToast(`${okCount} de ${selected.length} imágenes generadas`, '#f59e0b');
+    else showToast('Error en todas las generaciones', '#ef4444');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🖼 Generar imagen';
 }
 
 function descargarImagen() {
