@@ -660,6 +660,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </div>
       <div class="engine-row">
         <button class="engine-btn active" id="eng-gemini" onclick="selectEngine('gemini')">✦ Gemini Imagen 4</button>
+        <button class="engine-btn" id="eng-gemini3pro" onclick="selectEngine('gemini3pro')">◈ Gemini 3 Pro</button>
         <button class="engine-btn" id="eng-dalle" onclick="selectEngine('dalle')">⬡ GPT Image 2</button>
       </div>
       <div class="fmt-toggle">
@@ -1478,6 +1479,7 @@ function onFinancieraChange() {
 function selectEngine(engine) {
   currentEngine = engine;
   document.getElementById('eng-gemini').classList.toggle('active', engine === 'gemini');
+  document.getElementById('eng-gemini3pro').classList.toggle('active', engine === 'gemini3pro');
   document.getElementById('eng-dalle').classList.toggle('active', engine === 'dalle');
   updateImgKeyStatus();
 }
@@ -1569,9 +1571,10 @@ function resetPreviewFields() {
 }
 
 function updateImgKeyStatus() {
-  if (currentEngine === 'gemini') {
+  if (currentEngine === 'gemini' || currentEngine === 'gemini3pro') {
     document.getElementById('img-key-dot').className = 'img-key-dot ok';
-    document.getElementById('img-key-label').textContent = 'Worker Vertex AI activo';
+    document.getElementById('img-key-label').textContent =
+      currentEngine === 'gemini3pro' ? 'Worker Vertex AI activo · Gemini 3 Pro Image' : 'Worker Vertex AI activo';
     document.getElementById('img-key-row-btn').style.display = 'none';
     return;
   }
@@ -1584,6 +1587,21 @@ function updateImgKeyStatus() {
 
 function buildImgPrompt() {
   const producto = document.getElementById('producto').value.trim() || 'smartphone';
+
+  // Gemini 3 Pro Image: prompt artístico minimalista — sin texto en la imagen
+  if (currentEngine === 'gemini3pro') {
+    document.getElementById('img-prompt-ta').value = [
+      `Fotografía artística de estudio del smartphone ${producto}.`,
+      `Fondo limpio azul marino profundo #0B1E3D.`,
+      `Iluminación de estudio profesional con reflejos elegantes sobre el dispositivo.`,
+      `El teléfono centrado, flotando con sombra suave, bordes perfectamente nítidos.`,
+      `Logo Creditek pequeño en la esquina inferior derecha: símbolo circular turquesa con palomita/check junto al wordmark "Creditek" en Montserrat Bold, blanco sobre el fondo oscuro.`,
+      `Sin texto adicional. Sin precios. Sin banners publicitarios. Únicamente el dispositivo y el logo Creditek.`,
+      `Alta resolución, calidad fotográfica profesional de producto.`,
+    ].join(' ');
+    return;
+  }
+
   const ciudad   = document.getElementById('ciudad').value || 'Colombia';
   const modo     = document.getElementById('modo')?.value || 'credito';
   const tipo     = document.getElementById('tipo')?.value || 'oferta_semana';
@@ -1919,8 +1937,8 @@ async function actualizarReferencias() {
     const workerData = await workerImagesPromise;
     if (workerData?.results) {
       for (const r of workerData.results) {
-        // Guardar solo nombre+specs de modelos. precioLista no se usa en prompts de imagen.
-        const modelos = (r.modelos || []).map(({ nombre, specs }) => ({ nombre, specs }));
+        // Guardar nombre, specs e imagenRef. precioLista se descarta — el precio viene del formulario.
+        const modelos = (r.modelos || []).map(({ nombre, specs, imagenRef }) => ({ nombre, specs, imagenRef }));
         if (brands[r.marca]) brands[r.marca].modelos = modelos;
         else brands[r.marca] = { url: '', keywords: '', modelos };
       }
@@ -1985,10 +2003,11 @@ function submitImgKey() {
 }
 
 async function generarImagen(callerBtn = null) {
-  const keyName = currentEngine === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key';
+  const isWorkerEngine = currentEngine === 'gemini' || currentEngine === 'gemini3pro';
+  const keyName = isWorkerEngine ? 'ck_gemini_key' : 'ck_openai_key';
   const key = localStorage.getItem(keyName) || '';
-  // Gemini usa el Worker con WIF — no requiere API key en el browser
-  if (currentEngine !== 'gemini' && (!key || key.length < 10)) { abrirImgKeyModal(); return; }
+  // Gemini e Gemini 3 Pro usan el Worker con WIF — no requieren API key en el browser
+  if (!isWorkerEngine && (!key || key.length < 10)) { abrirImgKeyModal(); return; }
 
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) return;
@@ -2007,9 +2026,11 @@ async function generarImagen(callerBtn = null) {
   resultDiv.style.display = 'none'; errDiv.style.display = 'none';
 
   try {
-    lastImgModelLabel = currentEngine === 'gemini' ? 'Gemini Imagen 4' : 'GPT Image 2';
-    const src = currentEngine === 'gemini'
-      ? await generarConGemini(key, prompt)
+    lastImgModelLabel = currentEngine === 'gemini' ? 'Gemini Imagen 4'
+      : currentEngine === 'gemini3pro' ? 'Gemini 3 Pro Image'
+      : 'GPT Image 2';
+    const src = currentEngine === 'gemini' ? await generarConGemini(key, prompt)
+      : currentEngine === 'gemini3pro' ? await generarConGemini3Pro(prompt)
       : await generarConDalle(key, prompt);
     imgHistory = [src];
     imgHistoryIdx = 0;
@@ -2090,6 +2111,39 @@ async function generarConGemini(key, prompt) {
     return 'data:image/png;base64,' + b64;
   }
   throw new Error(lastErr);
+}
+
+async function generarConGemini3Pro(prompt) {
+  const proxyUrl = 'https://creditek-gemini-proxy.comercial-853.workers.dev';
+
+  // Buscar imagenRef del modelo detectado en referencias almacenadas
+  let imageUrl = null;
+  const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
+  if (stored?.brands) {
+    const prod = (document.getElementById('producto')?.value || '').trim().toLowerCase();
+    outer: for (const [, d] of Object.entries(stored.brands)) {
+      for (const m of (d.modelos || [])) {
+        if (!m.imagenRef) continue;
+        const n = m.nombre.toLowerCase();
+        if (n.includes(prod) || prod.includes(n.split(' ').slice(0, 3).join(' '))) {
+          imageUrl = m.imagenRef;
+          break outer;
+        }
+      }
+    }
+  }
+
+  const res = await fetch(`${proxyUrl}/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ engine: 'gemini3pro', prompt, imageUrl }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error Gemini 3 Pro ${res.status}`);
+  const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+  if (!b64) throw new Error('Gemini 3 Pro no devolvió imagen. Verifica que el modelo esté disponible en tu proyecto.');
+  lastImgModelLabel = data.label || 'Gemini 3 Pro Image';
+  return 'data:image/jpeg;base64,' + b64;
 }
 
 async function generarConDalle(key, prompt) {

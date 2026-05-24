@@ -342,7 +342,11 @@ if (path === '/test-fetch') {
                   const precioLista = p.offers?.price
                     ? `$${Number(p.offers.price).toLocaleString('es-CO')}`
                     : parsePrice(desc);
-                  modelos.push({ nombre, specs: parseSpecs(desc), precioLista });
+                  // imagenRef = URL oficial del producto para pasarla a Gemini 3 Pro Image como referencia
+                  const imagenRef = p.image
+                    ? (Array.isArray(p.image) ? p.image[0] : p.image)
+                    : null;
+                  modelos.push({ nombre, specs: parseSpecs(desc), precioLista, imagenRef });
                 }
               }
             } catch { /* JSON malformado — ignorar */ }
@@ -409,8 +413,64 @@ if (path === '/test-fetch') {
     try { body = await request.json(); }
     catch { return err('JSON inválido', 400); }
 
-    const { prompt, aspectRatio = '1:1', apiKey } = body;
+    const { prompt, aspectRatio = '1:1', apiKey, engine, imageUrl } = body;
     if (!prompt) return err('Campo "prompt" requerido', 400);
+
+    // ── Gemini 3 Pro Image — endpoint global, generateContent multimodal ─────
+    if (engine === 'gemini3pro') {
+      if (!env.GCP_WIF_PRIVATE_KEY || !env.GCP_WIF_AUDIENCE) {
+        return err('Falta GCP_WIF_PRIVATE_KEY para gemini3pro', 401);
+      }
+      const token = await getVertexToken(env);
+      const g3url = `https://aiplatform.googleapis.com/v1/projects/${env.GCP_PROJECT_ID}/locations/global/publishers/google/models/gemini-3-pro-image:generateContent`;
+
+      const parts = [];
+
+      // Imagen de referencia del producto (desde /brand-references vía HTML)
+      if (imageUrl) {
+        try {
+          const imgRes = await fetch(imageUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            signal: AbortSignal.timeout(8_000),
+            redirect: 'follow',
+          });
+          if (imgRes.ok) {
+            const buf = await imgRes.arrayBuffer();
+            const bytes = new Uint8Array(buf);
+            let bin = '';
+            for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+            const mimeType = imgRes.headers.get('content-type')?.split(';')[0] || 'image/jpeg';
+            parts.push({ inlineData: { mimeType, data: btoa(bin) } });
+          }
+        } catch { /* sin imagen de referencia — continuar solo con texto */ }
+      }
+
+      parts.push({ text: prompt });
+
+      const g3res = await fetch(g3url, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts }],
+          generationConfig: { responseModalities: ['IMAGE'] },
+        }),
+        signal: AbortSignal.timeout(60_000),
+      });
+
+      if (!g3res.ok) {
+        const d = await g3res.json().catch(() => ({}));
+        return err(d.error?.message || `gemini3pro error ${g3res.status}`, g3res.status);
+      }
+
+      const g3data = await g3res.json().catch(() => ({}));
+      const imgPart = g3data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+      if (!imgPart) return err('gemini3pro: sin imagen en respuesta', 502);
+
+      return ok({
+        predictions: [{ bytesBase64Encoded: imgPart.inlineData.data }],
+        label: 'Gemini 3 Pro Image',
+      });
+    }
 
     // ── Vía 1: Vertex AI con WIF + SA impersonation (Imagen 4) ───────────────
     if (env.GCP_WIF_PRIVATE_KEY && env.GCP_WIF_AUDIENCE && env.GCP_SA_EMAIL) {
