@@ -602,8 +602,20 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   <div class="sidebar-section" style="padding-bottom:10px">
     <div class="sidebar-label">API Key</div>
     <div class="key-status">
-      <span style="font-size:12px;color:var(--text-secondary)"><span class="key-dot"></span>Configurada esta sesión</span>
-      <button onclick="abrirModal()" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0">Cambiar</button>
+      <span style="font-size:12px;color:var(--text2)"><span class="key-dot"></span>Anthropic — configurada esta sesión</span>
+      <button onclick="abrirModal()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0">Cambiar</button>
+    </div>
+    <div class="key-status" style="padding:3px 3px 0">
+      <span style="font-size:12px;color:var(--text2)">
+        <span class="img-key-dot" id="sidebar-gemini-dot" style="width:7px;height:7px;margin-right:5px;display:inline-block"></span>Gemini AI Studio
+      </span>
+      <button onclick="abrirImgKeyModal('gemini')" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0">Configurar</button>
+    </div>
+    <div class="key-status" style="padding:3px 3px 4px">
+      <span style="font-size:12px;color:var(--text2)">
+        <span class="img-key-dot" id="sidebar-openai-dot" style="width:7px;height:7px;margin-right:5px;display:inline-block"></span>OpenAI / GPT Image 2
+      </span>
+      <button onclick="abrirImgKeyModal('openai')" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0">Configurar</button>
     </div>
   </div>
   <div class="sidebar-section" style="padding-bottom:8px">
@@ -654,10 +666,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   <div id="action-btns-row">
     <button class="action-btn" id="canva-btn" onclick="toggleCanvaBrief()">◧ Prompt Canva</button>
     <button class="action-btn" onclick="abrirPomelli()">✦ Abrir en Pomelli</button>
-    <button class="action-btn" onclick="showImgSection()">🖼 Generar imagen</button>
+    <button class="action-btn" id="action-gen-btn" onclick="showImgSection(); generarConModelos()">🖼 Generar imagen</button>
   </div>
   <!-- ══ CANVA BRIEF PANEL ══════════════════════════════════════════ -->
-  <div id="canva-brief-panel">
+  <div id="canva-brief-panel" style="display:none">
     <div class="canva-brief-title">◧ Brief de diseño para Canva</div>
     <div id="canva-brief-content"></div>
   </div>
@@ -717,9 +729,6 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <div class="img-prev-field">
           <span class="img-prev-fl">Call to action (CTA)</span>
           <input type="text" class="img-prev-input" id="img-cta" placeholder="Visítanos en Corozal" oninput="buildImgPrompt()">
-        </div>
-        <div class="img-btn-row">
-          <button class="img-confirm-btn" id="img-confirm-btn" onclick="generarConModelos()">🖼 Generar imagen</button>
         </div>
       </div>
       <div class="img-prompt-wrap">
@@ -812,6 +821,7 @@ window.addEventListener('DOMContentLoaded', () => {
   } else {
     document.getElementById('apiModal').classList.add('hidden');
   }
+  updateImgKeyStatus();
 });
 
 const PLATFORMS_META = {
@@ -1627,6 +1637,11 @@ function updateImgKeyStatus() {
     document.getElementById('img-key-label').textContent = 'Selecciona un modelo';
     btn.style.display = 'none';
   }
+  // Update sidebar key dots
+  const sgd = document.getElementById('sidebar-gemini-dot');
+  const sod = document.getElementById('sidebar-openai-dot');
+  if (sgd) sgd.className = 'img-key-dot' + (geminiOk ? ' ok' : '');
+  if (sod) sod.className = 'img-key-dot' + (dalleOk  ? ' ok' : '');
 }
 
 function buildImgPrompt() {
@@ -1892,7 +1907,7 @@ function getRefBlock() {
     }
   }
 
-  return `\n\nCOLOMBIAN PHONE MARKET VISUAL CONTEXT:\nBrand colors for reference (use as market context only):\n${colorLines}${kwBlock}${modelBlock}\nNOTE: Creditek brand colors (#0B1E3D + #00C4CC) always override these references.`;
+  return `\n\nCOLOMBIAN PHONE MARKET VISUAL CONTEXT:\nBrand colors for reference (use as market context only):\n${colorLines}${kwBlock}${modelBlock}\nNOTA: Los colores de marca Creditek (#0B1E3D + #00C4CC) siempre tienen prioridad. TODOS los textos en la imagen deben estar en español colombiano, nunca en inglés.`;
 }
 
 function formatRefAge(ts) {
@@ -2371,7 +2386,7 @@ async function generarConModelos() {
   if (useGemini && keyGemini.length < 10) { abrirImgKeyModal('gemini'); return; }
   if (useDalle  && keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
 
-  const btn = document.getElementById('img-confirm-btn');
+  const btn = document.getElementById('action-gen-btn');
   btn.disabled = true;
   document.getElementById('img-result').style.display     = 'none';
   document.getElementById('img-ab-result').style.display  = 'none';
