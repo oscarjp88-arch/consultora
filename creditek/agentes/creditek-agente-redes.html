@@ -444,7 +444,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <span class="m-logo-name" id="imgKeyTitle">GEMINI API KEY</span>
     </div>
     <div class="m-title" id="imgKeyHeading">API Key de Google Gemini</div>
-    <div class="m-desc" id="imgKeyDesc">Necesitas una API key de Google AI Studio para generar imágenes con Gemini Imagen 4.</div>
+    <div class="m-desc" id="imgKeyDesc">Necesitas una API key de Google AI Studio para generar fotos de producto con Gemini Flash 2.5.</div>
     <div class="m-field">
       <input class="m-input" id="imgModalKey" type="password" placeholder="AIzaSy..." autocomplete="off" onkeydown="if(event.key==='Enter')submitImgKey()">
       <button class="m-eye" onclick="toggleImgKey(this)">Ver</button>
@@ -686,7 +686,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <span class="img-hdr-badge">Beta</span>
       </div>
       <div class="engine-row">
-        <label class="model-chk-label"><input type="checkbox" id="chk-gemini" checked onchange="updateImgKeyStatus()"> ✦ Gemini Imagen 4</label>
+        <label class="model-chk-label"><input type="checkbox" id="chk-gemini" checked onchange="updateImgKeyStatus()"> 📷 Foto producto</label>
         <label class="model-chk-label"><input type="checkbox" id="chk-dalle" checked onchange="updateImgKeyStatus()"> ⬡ GPT Image 2</label>
       </div>
       <div class="fmt-toggle">
@@ -698,7 +698,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
           <div class="img-key-dot" id="img-key-dot"></div>
           <span id="img-key-label">Key no configurada</span>
         </div>
-        <button class="img-key-btn" id="img-key-row-btn" onclick="abrirImgKeyModal()">Configurar key</button>
+        <button class="img-key-btn" id="img-key-row-btn" onclick="updateImgKeyStatus()">Configurar key</button>
       </div>
       <div class="img-preview-panel" id="img-preview-panel">
         <span class="img-preview-lbl-sec">Vista previa del aviso</span>
@@ -742,7 +742,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <div class="img-ab-result" id="img-ab-result">
         <div class="img-ab-cols">
           <div class="img-ab-col">
-            <div class="img-ab-col-label" id="img-ab-label-a">✦ Gemini Imagen 4</div>
+            <div class="img-ab-col-label" id="img-ab-label-a">📷 Foto producto</div>
             <img class="img-output" id="img-ab-a" src="" alt="Gemini" style="display:none">
             <div class="img-ab-col-err" id="img-ab-err-a" style="display:none"></div>
             <button class="img-dl-btn" id="img-ab-dl-a" onclick="descargarImagenAB('a')" style="display:none">⬇ Descargar</button>
@@ -1595,18 +1595,38 @@ function syncModelUI() {
 
 function updateImgKeyStatus() {
   syncModelUI();
-  const useDalle = document.getElementById('chk-dalle')?.checked;
-  if (!useDalle) {
+  const useGemini = document.getElementById('chk-gemini')?.checked;
+  const useDalle  = document.getElementById('chk-dalle')?.checked;
+  const keyGemini = localStorage.getItem('ck_gemini_key') || '';
+  const keyOpenAI = localStorage.getItem('ck_openai_key') || '';
+  const geminiOk  = keyGemini.length > 10;
+  const dalleOk   = keyOpenAI.length > 10;
+  const btn = document.getElementById('img-key-row-btn');
+
+  if (useGemini && !geminiOk) {
+    document.getElementById('img-key-dot').className = 'img-key-dot';
+    document.getElementById('img-key-label').textContent = 'API key de Gemini AI Studio requerida';
+    btn.textContent = 'Configurar key Gemini';
+    btn.onclick = () => abrirImgKeyModal('gemini');
+    btn.style.display = '';
+  } else if (useDalle && !dalleOk) {
+    document.getElementById('img-key-dot').className = 'img-key-dot';
+    document.getElementById('img-key-label').textContent = 'API key de GPT Image 2 requerida';
+    btn.textContent = 'Configurar key OpenAI';
+    btn.onclick = () => abrirImgKeyModal('openai');
+    btn.style.display = '';
+  } else if (useGemini || useDalle) {
     document.getElementById('img-key-dot').className = 'img-key-dot ok';
-    document.getElementById('img-key-label').textContent = 'Worker Vertex AI activo';
-    document.getElementById('img-key-row-btn').style.display = 'none';
-    return;
+    const parts = [];
+    if (useGemini && geminiOk) parts.push('Gemini');
+    if (useDalle  && dalleOk)  parts.push('GPT Image 2');
+    document.getElementById('img-key-label').textContent = parts.join(' · ') + ' configurado';
+    btn.style.display = 'none';
+  } else {
+    document.getElementById('img-key-dot').className = 'img-key-dot';
+    document.getElementById('img-key-label').textContent = 'Selecciona un modelo';
+    btn.style.display = 'none';
   }
-  document.getElementById('img-key-row-btn').style.display = '';
-  const key = localStorage.getItem('ck_openai_key');
-  const ok = key && key.length > 10;
-  document.getElementById('img-key-dot').className = 'img-key-dot' + (ok ? ' ok' : '');
-  document.getElementById('img-key-label').textContent = ok ? 'Key GPT Image 2 configurada' : 'API key de GPT Image 2 requerida';
 }
 
 function buildImgPrompt() {
@@ -2003,12 +2023,22 @@ function showImgSection() {
     .catch(() => {});
 }
 
-function abrirImgKeyModal() {
-  document.getElementById('imgKeyIcon').textContent    = '⬡';
-  document.getElementById('imgKeyTitle').textContent   = 'OPENAI API KEY';
-  document.getElementById('imgKeyHeading').textContent = 'API Key de OpenAI';
-  document.getElementById('imgKeyDesc').textContent    = 'Necesitas una API key de OpenAI para generar imágenes con GPT Image 2.';
-  document.getElementById('imgModalKey').placeholder   = 'sk-proj-...';
+let _imgKeyTarget = 'openai';
+function abrirImgKeyModal(type = 'openai') {
+  _imgKeyTarget = type;
+  if (type === 'gemini') {
+    document.getElementById('imgKeyIcon').textContent    = '📷';
+    document.getElementById('imgKeyTitle').textContent   = 'GEMINI AI STUDIO KEY';
+    document.getElementById('imgKeyHeading').textContent = 'API Key de Google AI Studio';
+    document.getElementById('imgKeyDesc').textContent    = 'Necesitas una API key de Google AI Studio para generar fotos de producto con Gemini Flash.';
+    document.getElementById('imgModalKey').placeholder   = 'AIzaSy...';
+  } else {
+    document.getElementById('imgKeyIcon').textContent    = '⬡';
+    document.getElementById('imgKeyTitle').textContent   = 'OPENAI API KEY';
+    document.getElementById('imgKeyHeading').textContent = 'API Key de OpenAI';
+    document.getElementById('imgKeyDesc').textContent    = 'Necesitas una API key de OpenAI para generar imágenes con GPT Image 2.';
+    document.getElementById('imgModalKey').placeholder   = 'sk-proj-...';
+  }
   document.getElementById('imgModalKey').value = '';
   document.getElementById('imgModalError').style.display = 'none';
   document.getElementById('proxyUrlRow').style.display = 'none';
@@ -2032,7 +2062,7 @@ function submitImgKey() {
   const err = document.getElementById('imgModalError');
   if (val.length < 10) { err.style.display = 'block'; document.getElementById('imgModalKey').focus(); return; }
   err.style.display = 'none';
-  localStorage.setItem('ck_openai_key', val);
+  localStorage.setItem(_imgKeyTarget === 'gemini' ? 'ck_gemini_key' : 'ck_openai_key', val);
   cerrarImgKeyModal();
   updateImgKeyStatus();
 }
@@ -2041,8 +2071,7 @@ async function generarImagen(callerBtn = null) {
   const isWorkerEngine = currentEngine === 'gemini';
   const keyName = isWorkerEngine ? 'ck_gemini_key' : 'ck_openai_key';
   const key = localStorage.getItem(keyName) || '';
-  // Gemini Imagen 4 usa el Worker con WIF — no requiere API key en el browser
-  if (!isWorkerEngine && (!key || key.length < 10)) { abrirImgKeyModal(); return; }
+  if (key.length < 10) { abrirImgKeyModal(isWorkerEngine ? 'gemini' : 'openai'); return; }
 
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) return;
@@ -2061,7 +2090,7 @@ async function generarImagen(callerBtn = null) {
   resultDiv.style.display = 'none'; errDiv.style.display = 'none';
 
   try {
-    lastImgModelLabel = currentEngine === 'gemini' ? 'Gemini Imagen 4' : 'GPT Image 2';
+    lastImgModelLabel = currentEngine === 'gemini' ? 'Gemini Flash 2.5' : 'GPT Image 2';
     const src = currentEngine === 'gemini'
       ? await generarConGemini(key)
       : await generarConDalle(key, prompt);
@@ -2085,85 +2114,44 @@ async function generarImagen(callerBtn = null) {
 }
 
 async function generarConGemini(key) {
-  // Gemini Imagen 4 genera siempre una fotografía artística del producto —
-  // no publicidad con texto. El prompt de marketing se usa solo en GPT Image 2.
   const producto = document.getElementById('producto')?.value.trim() || 'smartphone';
-  const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
 
-  const artisticPrompt = [
-    `Fotografía artística y cinematográfica del ${producto}.`,
-    `Fondo azul marino profundo #0B1E3D, limpio y uniforme, sin gradientes artificiales.`,
-    `Iluminación de estudio profesional: luz principal lateral suave con destellos elegantes en los bordes del dispositivo.`,
-    `El teléfono perfectamente centrado, flotando con sombra larga y difusa, perspectiva ligeramente en 3/4 para mostrar pantalla y borde lateral.`,
-    `Estilo editorial premium de revista de tecnología — cinematográfico, minimalista, de alta gama.`,
-    `ABSOLUTAMENTE SIN texto, sin banners, sin precios, sin badges, sin eslóganes, sin ningún elemento gráfico superpuesto.`,
-    `Logo Creditek pequeño y discreto en esquina inferior derecha: símbolo de check circular en turquesa #00C4CC junto al wordmark "Creditek" en Montserrat Bold — exactamente así, sin variaciones ni interpretaciones.`,
-    `Alta resolución, calidad de fotografía de producto profesional.`,
+  const prompt = [
+    `Professional studio product photograph of the ${producto}.`,
+    `Deep navy blue background #0B1E3D, clean and uniform, no gradients.`,
+    `Professional studio lighting: soft main side light with elegant edge highlights on the device.`,
+    `Device perfectly centered, slightly floating with a long soft shadow, slight 3/4 angle showing screen and side edge.`,
+    `Premium editorial style from a high-end technology magazine — cinematic, minimalist.`,
+    `NO text, NO banners, NO price tags, NO badges, NO slogans, NO overlaid graphic elements of any kind.`,
+    `High resolution, professional product photography quality.`,
   ].join(' ');
 
-  const geminiNegative = [
-    'text', 'letters', 'words', 'typography', 'price tag', 'promotional text', 'advertising copy',
-    'slogan', 'banner', 'badge', 'any written content', 'text distortion', 'blurry text',
-    'misspelled brand name', 'watermark', 'low quality', 'pixelated', 'cluttered',
-    'fake UI overlays', 'extra people', 'placeholder logos', 'generic stock photo feel',
-  ].join(', ');
+  const MODEL = 'gemini-2.5-flash-preview-05-20';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
 
-  // ── Vía proxy (resuelve CORS desde GitHub Pages o browser) ──────────────
-  const proxyUrl = 'https://creditek-gemini-proxy.comercial-853.workers.dev';
-  if (proxyUrl) {
-    const res = await fetch(`${proxyUrl}/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: artisticPrompt, negativePrompt: geminiNegative, aspectRatio, apiKey: key })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      if (res.status === 401) throw new Error('API key de Gemini inválida. Verifica en Google AI Studio.');
-      throw new Error(data.error || `Error proxy Gemini ${res.status}`);
-    }
-    const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-    if (!b64) throw new Error('El proxy no devolvió imagen. Verifica que Imagen API esté habilitada en tu proyecto.');
-    lastImgModelLabel = data.label || 'Gemini Imagen 4 (proxy)';
-    return 'data:image/png;base64,' + b64;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
+    })
+  });
+
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    if (res.status === 400) throw new Error(e.error?.message || 'Solicitud inválida. Verifica que la API key tiene acceso a generación de imágenes.');
+    if (res.status === 401 || res.status === 403) throw new Error('API key de Gemini inválida o sin permisos. Verifica en Google AI Studio.');
+    throw new Error(e.error?.message || `Error Gemini ${res.status}`);
   }
 
-  // ── Llamada directa (fallback — puede bloquearse por CORS en producción) ─
-  const models = [
-    { id: 'imagen-4.0-generate-preview-06-06', label: 'Gemini Imagen 4' },
-    { id: 'imagen-4.0-generate-preview-05-20', label: 'Gemini Imagen 4 (may)' }
-  ];
-  let lastErr = 'Gemini Imagen 4 no disponible. Configura el Worker proxy o usa GPT Image 2.';
-  for (const model of models) {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:predict?key=${encodeURIComponent(key)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          instances: [{ prompt: artisticPrompt, negativePrompt: geminiNegative }],
-          parameters: { sampleCount: 1, aspectRatio }
-        })
-      }
-    );
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({}));
-      if (res.status === 401) throw new Error('API key de Gemini inválida. Verifica en Google AI Studio.');
-      if ((res.status === 404 || res.status === 403) && model.id === models[0].id) {
-        lastErr = 'Gemini Imagen 4 no disponible. Configura el Worker proxy o usa GPT Image 2.';
-        continue;
-      }
-      throw new Error(e.error?.message || `Error Gemini ${res.status}`);
-    }
-    const data = await res.json();
-    const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-    if (!b64) {
-      if (model.id === models[0].id) { lastErr = 'Gemini Imagen 4 no disponible. Usa GPT Image 2.'; continue; }
-      throw new Error('Gemini no devolvió imagen. Verifica que Imagen esté habilitado en tu proyecto.');
-    }
-    lastImgModelLabel = model.label;
-    return 'data:image/png;base64,' + b64;
-  }
-  throw new Error(lastErr);
+  const data = await res.json();
+  const part = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+  if (!part?.inlineData?.data) throw new Error('Gemini no devolvió imagen. Verifica que tu API key tiene acceso a generación de imágenes en AI Studio.');
+
+  lastImgModelLabel = 'Gemini Flash 2.5';
+  const mime = part.inlineData.mimeType || 'image/png';
+  return `data:${mime};base64,${part.inlineData.data}`;
 }
 
 async function generarConDalle(key, prompt) {
@@ -2255,7 +2243,7 @@ async function aplicarCambioImagen() {
 
     if (currentEngine === 'gemini') {
       const key = localStorage.getItem('ck_gemini_key');
-      if (!key || key.length < 10) throw new Error('Configura la API key de Gemini para editar.');
+      if (!key || key.length < 10) throw new Error('Configura la API key de Gemini AI Studio para editar.');
       const editPrompt = `${promptBase}\n\nMODIFICACIÓN SOLICITADA: ${instruccion}`;
       newSrc = await generarConGemini(key);
       document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
@@ -2298,8 +2286,8 @@ async function aplicarCambioImagen() {
 async function generarAB() {
   const keyGemini = localStorage.getItem('ck_gemini_key');
   const keyOpenAI = localStorage.getItem('ck_openai_key');
-  if (!keyGemini || keyGemini.length < 10) { showToast('Configura la API key de Gemini para el comparador A/B', '#ef4444'); return; }
-  if (!keyOpenAI || keyOpenAI.length < 10) { showToast('Configura la API key de GPT Image 2 para el comparador A/B', '#ef4444'); return; }
+  if (!keyGemini || keyGemini.length < 10) { abrirImgKeyModal('gemini'); return; }
+  if (!keyOpenAI || keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
 
@@ -2317,7 +2305,7 @@ async function generarAB() {
     document.getElementById(`img-ab-dl-${s}`).style.display = 'none';
     document.getElementById(`img-ab-use-${s}`).style.display = 'none';
   });
-  document.getElementById('img-ab-label-a').textContent = '✦ Gemini Imagen 4';
+  document.getElementById('img-ab-label-a').textContent = '📷 Foto producto';
   resultDiv.style.display = 'block';
 
   const [gemRes, dalleRes] = await Promise.allSettled([
@@ -2371,15 +2359,17 @@ async function generarConModelos() {
   const useDalle  = document.getElementById('chk-dalle')?.checked;
 
   const MODELS = [
-    { id: 'gemini', label: '✦ Gemini Imagen 4', checked: useGemini },
-    { id: 'dalle',  label: '⬡ GPT Image 2',      checked: useDalle },
+    { id: 'gemini', label: '📷 Foto producto', checked: useGemini },
+    { id: 'dalle',  label: '⬡ GPT Image 2',    checked: useDalle },
   ];
   const selected = MODELS.filter(m => m.checked);
 
   if (selected.length === 0) { showToast('Selecciona al menos un modelo', '#f59e0b'); return; }
 
+  const keyGemini = localStorage.getItem('ck_gemini_key') || '';
   const keyOpenAI = localStorage.getItem('ck_openai_key') || '';
-  if (useDalle && keyOpenAI.length < 10) { abrirImgKeyModal(); return; }
+  if (useGemini && keyGemini.length < 10) { abrirImgKeyModal('gemini'); return; }
+  if (useDalle  && keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
 
   const btn = document.getElementById('img-confirm-btn');
   btn.disabled = true;
@@ -2390,7 +2380,7 @@ async function generarConModelos() {
   btn.textContent = '⏳ Generando...';
 
   const callEngine = (id) => {
-    const key = id === 'dalle' ? keyOpenAI : (localStorage.getItem('ck_gemini_key') || '');
+    const key = id === 'dalle' ? keyOpenAI : keyGemini;
     if (id === 'gemini') return generarConGemini(key);
     return generarConDalle(key, prompt);
   };
