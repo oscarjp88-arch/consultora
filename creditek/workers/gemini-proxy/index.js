@@ -198,71 +198,136 @@ if (path === '/test-fetch') {
     }
 
     if (path === '/brand-references') {
+      // Páginas de listing de productos (más densas en texto de specs que las homepages)
       const brands = [
-        { marca: 'Samsung CO',  url: 'https://www.samsung.com/co/' },
-        { marca: 'Xiaomi CO',   url: 'https://www.mi.com/co' },
-        { marca: 'Motorola CO', url: 'https://www.motorola.com/co/' },
-        { marca: 'OPPO CO',     url: 'https://www.oppo.com/co/' },
-        { marca: 'Realme CO',   url: 'https://www.realme.com/co/' },
+        { marca: 'Samsung CO', url: 'https://www.samsung.com/co/smartphones/all-smartphones/' },
+        { marca: 'Xiaomi CO',  url: 'https://www.mi.com/co/phones' },
       ];
 
-      async function extractImages({ marca, url }) {
+      // Lee hasta maxBytes del body para no cargar páginas enteras en memoria
+      async function fetchHtml(url, maxBytes = 600_000) {
+        const res = await fetch(url, {
+          redirect: 'follow',
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
+          signal: AbortSignal.timeout(10_000),
+        });
+        if (!res.ok) return { html: '', status: res.status };
+        const reader = res.body.getReader();
+        const chunks = [];
+        let total = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          total += value.length;
+          if (total >= maxBytes) { reader.cancel(); break; }
+        }
+        const buf = new Uint8Array(total);
+        let off = 0;
+        for (const c of chunks) { buf.set(c, off); off += c.length; }
+        return { html: new TextDecoder().decode(buf), status: res.status };
+      }
+
+      function stripTags(s) {
+        return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+
+      // Extrae specs de RAM/cámara/batería/pantalla de un bloque de texto
+      function parseSpecs(text) {
+        const specs = {};
+        const ram     = text.match(/(\d+)\s*GB[\s+](?:de\s+)?RAM/i);
+        const storage = text.match(/(\d+)\s*GB[\s+](?:de\s+)?(?:almacenamiento|ROM|storage|memoria\s+interna)/i);
+        const cam     = text.match(/(\d+)\s*MP\s+(?:c[aá]mara|camera|principal|main)/i)
+                     || text.match(/c[aá]mara[^.]{0,30}?(\d+)\s*MP/i)
+                     || text.match(/(\d+)\s*MP/i);
+        const bat     = text.match(/(\d[\d.]*)\s*mAh/i);
+        const screen  = text.match(/(\d+[.,]\d+)\s*(?:pulgadas|pulg\b|["″]|inch)/i);
+        const chip    = text.match(/(?:Snapdragon|Dimensity|Exynos|Helio|MediaTek)\s+[\w\d]+/i);
+        if (ram)     specs.ram            = ram[1] + 'GB RAM';
+        if (storage) specs.almacenamiento = storage[1] + 'GB';
+        if (cam)     specs.camara         = cam[1] + 'MP';
+        if (bat)     specs.bateria        = bat[1] + 'mAh';
+        if (screen)  specs.pantalla       = screen[1].replace(',', '.') + '"';
+        if (chip)    specs.procesador     = chip[0];
+        return Object.keys(specs).length ? specs : null;
+      }
+
+      // Extrae precio en formato colombiano ($1.299.900)
+      function parsePrice(text) {
+        const m = text.match(/\$\s*([\d.,]{4,})/);
+        return m ? '$' + m[1] : null;
+      }
+
+      async function extractModels({ marca, url }) {
         try {
-          const res = await fetch(url, {
-            redirect: 'follow',
-            headers: { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-            signal: AbortSignal.timeout(9000),
-          });
-          if (!res.ok) return { marca, imageUrls: [], status: res.status };
+          const { html, status } = await fetchHtml(url);
+          if (!html) return { marca, modelos: [], status };
 
-          // Leer solo los primeros 500 KB para evitar presión de memoria en páginas grandes
-          const reader = res.body.getReader();
-          const chunks = [];
-          let total = 0;
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-            total += value.length;
-            if (total >= 500_000) { reader.cancel(); break; }
+          const seen   = new Set();
+          const modelos = [];
+
+          // ── 1. JSON-LD structured data — fuente más confiable ──────────────
+          for (const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+            try {
+              const data  = JSON.parse(m[1]);
+              const items = [data].flat();
+              for (const node of items) {
+                // ItemList con productos
+                const products = node['@type'] === 'ItemList'
+                  ? (node.itemListElement || []).map(e => e.item || e).filter(Boolean)
+                  : node['@type'] === 'Product' ? [node] : [];
+                for (const p of products) {
+                  const nombre = (p.name || '').trim();
+                  if (!nombre || seen.has(nombre) || nombre.length > 100) continue;
+                  seen.add(nombre);
+                  const desc  = [p.description || '', p.name || ''].join(' ');
+                  const price = p.offers?.price
+                    ? `$${Number(p.offers.price).toLocaleString('es-CO')}`
+                    : parsePrice(desc);
+                  modelos.push({ nombre, specs: parseSpecs(desc), precio: price });
+                }
+              }
+            } catch { /* JSON malformado — ignorar */ }
           }
-          const buf = new Uint8Array(total);
-          let off = 0;
-          for (const c of chunks) { buf.set(c, off); off += c.length; }
-          const html = new TextDecoder().decode(buf);
 
-          const seen = new Set();
-          const add = (raw) => {
-            if (!raw) return;
-            let u = raw.startsWith('http') ? raw : null;
-            if (!u) { try { u = new URL(raw, url).href; } catch { return; } }
-            if (!/\.(jpe?g|png|webp)(\?|$)/i.test(u)) return;
-            if (/favicon|icon|logo|sprite|arrow|chevron|check|star|badge|flag/i.test(u)) return;
-            // descartar thumbnails de nav (88x88, 40x40, etc.) y barras de navegación
-            if (/[-_]\d{2,3}x\d{2,3}\.(jpe?g|png|webp)/i.test(u)) return;
-            if (/\/gnb\/|\/nav\/|\/navigation\//i.test(u)) return;
-            if (/_GNB\.(jpe?g|png|webp)/i.test(u)) return;
-            seen.add(u.split('?')[0]);
+          // ── 2. Meta og:title / description — al menos nombre de la página ──
+          const ogTitle = (html.match(/property=["']og:title["'][^>]*content=["']([^"']{3,80})["']/i)
+                       || html.match(/content=["']([^"']{3,80})["'][^>]*property=["']og:title["']/i))?.[1] || '';
+          const metaDesc = (html.match(/name=["']description["'][^>]*content=["']([^"']{10,200})["']/i)
+                        || html.match(/content=["']([^"']{10,200})["'][^>]*name=["']description["']/i))?.[1] || '';
+
+          // ── 3. H2/H3 — nombres de modelos en páginas de listing ────────────
+          for (const m of html.matchAll(/<h[23][^>]*>([\s\S]*?)<\/h[23]>/gi)) {
+            const text = stripTags(m[1]).trim();
+            if (text.length < 4 || text.length > 90 || seen.has(text)) continue;
+            // Filtrar por patrones típicos de nombres de celulares
+            if (!/Galaxy|Redmi|Note|Poco|Edge|Find|Reno|GT|Narzo|A\d|G\d|M\d|X\d|Pro|Plus|Ultra|5G|4G/i.test(text)) continue;
+            seen.add(text);
+            modelos.push({ nombre: text, specs: null, precio: null });
+          }
+
+          // ── 4. Texto plano de la página para contexto general ──────────────
+          const plainText = stripTags(
+            html
+              .replace(/<script[\s\S]*?<\/script>/gi, '')
+              .replace(/<style[\s\S]*?<\/style>/gi, '')
+              .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+              .replace(/<header[\s\S]*?<\/header>/gi, '')
+              .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+          ).slice(0, 1000);
+
+          return {
+            marca,
+            status,
+            modelos: modelos.slice(0, 12),
+            contexto: [ogTitle, metaDesc].filter(Boolean).join(' | ').slice(0, 300) || plainText.slice(0, 300),
           };
-
-          // og:image y twitter:image — imágenes héroe de mayor calidad
-          for (const m of html.matchAll(/property=["']og:image["'][^>]*content=["']([^"']+)["']/gi)) add(m[1]);
-          for (const m of html.matchAll(/content=["']([^"']+)["'][^>]*property=["']og:image["']/gi)) add(m[1]);
-          for (const m of html.matchAll(/name=["']twitter:image["'][^>]*content=["']([^"']+)["']/gi)) add(m[1]);
-          for (const m of html.matchAll(/content=["']([^"']+)["'][^>]*name=["']twitter:image["']/gi)) add(m[1]);
-          // img src y lazy-load
-          for (const m of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) add(m[1]);
-          for (const m of html.matchAll(/data-src=["']([^"']+)["']/gi)) add(m[1]);
-          // srcset — solo primera URL de cada entrada
-          for (const m of html.matchAll(/srcset=["']([^ "',]+)/gi)) add(m[1]);
-
-          return { marca, imageUrls: [...seen].slice(0, 10), status: res.status };
         } catch (e) {
-          return { marca, imageUrls: [], status: null, error: e.message };
+          return { marca, modelos: [], contexto: '', status: null, error: e.message };
         }
       }
 
-      const results = await Promise.all(brands.map(extractImages));
+      const results = await Promise.all(brands.map(extractModels));
       return ok({ results });
     }
 
