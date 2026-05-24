@@ -990,12 +990,13 @@ async function generarContenido() {
   const platformsList = platforms.join(', ');
   const modoLabel = { credito:'Celular a crédito', promo:'Promoción especial', tienda:'Contenido de tienda', servicio:'Servicio / beneficio' }[modo];
   const brandBase = [
-    'IDENTIDAD DE MARCA CREDITEK:',
+    'IDENTIDAD DE MARCA CREDITEK v2.0:',
+    '- Creditek es una empresa COMERCIAL de venta de celulares a crédito — NO es fintech, NO es banco, NO es app de préstamos.',
+    '- Mensaje rector: "Estrena celular hoy y págalo fácil con Creditek."',
     '- Logo: check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA usar versiones alternativas o modificadas.',
     '- Colores: Azul profundo #0B1E3D (fondos, títulos, base) · Turquesa #00C4CC (CTA, acentos, checks, badges de precio) · Blanco #FFFFFF (textos sobre azul)',
     '- Tipografía: Montserrat Bold — titulares y CTA · Montserrat Medium — subtítulos · Montserrat Regular / DM Sans — textos · Poppins — alternativa si Montserrat no está disponible',
-    '- Propuesta de valor: "Tu celular nuevo hoy. Sin trámites, sin rollo."',
-    '- Tono: cercano, directo y humano — como un vendedor que conoce a sus clientes, les habla de tú a tú (o de usted según la ciudad) y los trata con respeto sin importar su historial.'
+    '- Tono: comercial, directo y confiable — vender con claridad sin sonar agresivo ni desesperado. El cliente debe sentir que lo tratan bien, no que lo están presionando.'
   ].join('\n');
   let contextoBlock;
   if (modo === 'credito') {
@@ -1004,10 +1005,11 @@ async function generarContenido() {
 ${brandBase}
 
 MODELO DE NEGOCIO:
-- Plataformas de financiamiento: PayJoy, Alo Credit, Krediya, Addi. Plazos: 4, 6 u 8 meses.
-- Diferenciador: aprueba donde el banco dice que no. Sin historial requerido.
+- Creditek vende celulares — el crédito es el mecanismo de pago, no el producto.
+- Plataformas de financiamiento aliadas: PayJoy, Alo Credit, Krediya, Addi. Plazos: 4, 6 u 8 meses.
+- Diferenciador: proceso ágil, atención presencial de calidad, aprobación el mismo día con cédula.
 - Objeción central del cliente: "¿Me van a aprobar? / Tengo miedo al endeudamiento."
-- Argumento de cierre: aprobación el mismo día solo con la cédula, sin importar el historial.
+- Argumento de cierre: "Estrena tu celular hoy y lo pagas cómodo — solo necesitas tu cédula."
 
 PATRONES DE COPY MODO CRÉDITO (cita textualmente o adapta mínimo):
 "Con una inicial de $50.000 pesitos ya es tuyo"
@@ -1120,14 +1122,17 @@ ${culturaCtx && (culturaCtx.includes('tradicional') || culturaCtx.includes('gana
 - Frases cortas y directas. Una idea por frase.
 - PROHIBIDO: anglicismos, tecnicismos, frases corporativas como "potencia tu experiencia", "descubre", "innovador", "soluciones", "adquirir"
 
-COPY MALO — NUNCA HACER ESTO (6 anti-patrones prohibidos):
+COPY MALO — NUNCA HACER ESTO (anti-patrones prohibidos):
 ❌ "Descubre la innovadora experiencia de adquirir tecnología de punta con nuestras soluciones financieras."
 ❌ "Potencia tu estilo de vida con nuestros equipos de última generación."
 ❌ "Aprovecha esta increíble oportunidad de financiamiento flexible."
 ❌ "¡Contáctanos ahora y nuestros asesores te guiarán!" (genérico, sin ciudad, sin persona real)
 ❌ Mencionar precios que no fueron especificados explícitamente por el usuario
 ❌ Usar "Ey" o slang urbano en Chinú o Ciénaga de Oro (registro respetuoso / usted)
-PROHIBIDO además: "upgrade", "top", "lifestyle", "innovador", "potencia tu experiencia", "descubre", "soluciones", "adquirir", "tecnología de punta"
+❌ "Aprobado para todo el mundo sin revisar nada" — falso y genera desconfianza legal
+❌ "Cualquier equipo sin condiciones" — impreciso y puede crear expectativas falsas
+❌ "Compra ya o pierdes todo" / lenguaje de urgencia agresiva o amenazante
+PROHIBIDO además: "upgrade", "top", "lifestyle", "innovador", "potencia tu experiencia", "descubre", "soluciones", "adquirir", "tecnología de punta", "fintech", "crédito digital"
 
 LÍMITES DE CARACTERES (respetar siempre):
 - Facebook: 300–400 caracteres · storytelling breve, gancho emocional · Gancho → beneficio → CTA a tienda
@@ -1733,7 +1738,7 @@ function buildImgPrompt() {
   const refBlock = getRefBlock();
 
   const lineas = [
-    `Anuncio publicitario profesional para Creditek, tienda colombiana de celulares con aprobación inmediata el mismo día.`,
+    `Anuncio publicitario profesional para Creditek, empresa comercial colombiana de venta de celulares a crédito. Mensaje rector: "Estrena celular hoy y págalo fácil con Creditek."`,
     ``,
     `INFORMACIÓN DEL ANUNCIO:`,
     `- Producto: ${producto}`,
@@ -1761,6 +1766,7 @@ function buildImgPrompt() {
     `IDENTIDAD DE MARCA CREDITEK:`,
     `- Logo en esquina superior derecha: símbolo circular turquesa con palomita/check junto al wordmark "Creditek" en Montserrat Bold, sin eslogan adicional`,
     `- Paleta de marca: azul marino #0B1E3D (fondo principal), turquesa #00C4CC (acentos, botones y badges), blanco #FFFFFF (texto principal)`,
+    `- REGLA DE COLOR: azul marino #0B1E3D y turquesa #00C4CC deben dominar el diseño. Los colores propios del producto (carcasa, pantalla) pueden aparecer de forma natural pero no deben ocupar más del 20% del área total de la imagen. El resto del diseño respeta la paleta Creditek.`,
     `- Fondo: ${bgSpec}`,
     finStrip ? `- ${finStrip}` : null,
     fechaImgBlock ? `- ${fechaImgBlock}` : null,
@@ -1769,6 +1775,7 @@ function buildImgPrompt() {
     `- La marca SIEMPRE escrita exactamente como "Creditek" — ninguna variación ortográfica permitida (no "Crediteck", no "Crediitek", no otras variaciones)`,
     `- Sin marcas de agua, texto distorsionado, logos placeholder ni palabras mal escritas o truncadas`,
     `- REGLA DE PRECIOS: ${priceRule}`,
+    `- FRASES PROHIBIDAS en cualquier texto de la imagen: "aprobado para todo el mundo", "sin revisar nada", "cualquier equipo sin condiciones", "compra ya o pierdes todo". Tono: comercial y confiable, nunca agresivo.`,
     `- Alta resolución y calidad profesional. Celulares con iluminación de estudio, bordes nítidos, sin pixelado ni desenfoque`,
     `- Sin interfaces de usuario falsas (UI overlays), sin personas adicionales no deseadas, sin elementos desorganizados`,
     brandBlock ? brandBlock : null,
@@ -1790,7 +1797,7 @@ const BRAND_COLORS = {
   'Infinix CO':  { primary: '#FF0000', label: 'red — youthful energy' },
   'TCL CO':      { primary: '#E4002B', label: 'red — approachable value' },
   'PayJoy CO':   { primary: '#00A651', label: 'green — accessible credit' },
-  'Krediya':     { primary: '#FF6B00', label: 'orange — friendly fintech' },
+  'Krediya':     { primary: '#FF6B00', label: 'orange — plataforma de crédito aliada' },
   'Addi CO':     { primary: '#A259FF', label: 'purple — modern BNPL' },
   'Alo Credit':  { primary: '#00B4D8', label: 'cyan — digital credit' },
 };
