@@ -197,6 +197,75 @@ if (path === '/test-fetch') {
       return ok({ results });
     }
 
+    if (path === '/brand-references') {
+      const brands = [
+        { marca: 'Samsung CO',  url: 'https://www.samsung.com/co/' },
+        { marca: 'Xiaomi CO',   url: 'https://www.mi.com/co' },
+        { marca: 'Motorola CO', url: 'https://www.motorola.com/co/' },
+        { marca: 'OPPO CO',     url: 'https://www.oppo.com/co/' },
+        { marca: 'Realme CO',   url: 'https://www.realme.com/co/' },
+      ];
+
+      async function extractImages({ marca, url }) {
+        try {
+          const res = await fetch(url, {
+            redirect: 'follow',
+            headers: { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+            signal: AbortSignal.timeout(9000),
+          });
+          if (!res.ok) return { marca, imageUrls: [], status: res.status };
+
+          // Leer solo los primeros 500 KB para evitar presión de memoria en páginas grandes
+          const reader = res.body.getReader();
+          const chunks = [];
+          let total = 0;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            total += value.length;
+            if (total >= 500_000) { reader.cancel(); break; }
+          }
+          const buf = new Uint8Array(total);
+          let off = 0;
+          for (const c of chunks) { buf.set(c, off); off += c.length; }
+          const html = new TextDecoder().decode(buf);
+
+          const seen = new Set();
+          const add = (raw) => {
+            if (!raw) return;
+            let u = raw.startsWith('http') ? raw : null;
+            if (!u) { try { u = new URL(raw, url).href; } catch { return; } }
+            if (!/\.(jpe?g|png|webp)(\?|$)/i.test(u)) return;
+            if (/favicon|icon|logo|sprite|arrow|chevron|check|star|badge|flag/i.test(u)) return;
+            // descartar thumbnails de nav (88x88, 40x40, etc.) y barras de navegación
+            if (/[-_]\d{2,3}x\d{2,3}\.(jpe?g|png|webp)/i.test(u)) return;
+            if (/\/gnb\/|\/nav\/|\/navigation\//i.test(u)) return;
+            if (/_GNB\.(jpe?g|png|webp)/i.test(u)) return;
+            seen.add(u.split('?')[0]);
+          };
+
+          // og:image y twitter:image — imágenes héroe de mayor calidad
+          for (const m of html.matchAll(/property=["']og:image["'][^>]*content=["']([^"']+)["']/gi)) add(m[1]);
+          for (const m of html.matchAll(/content=["']([^"']+)["'][^>]*property=["']og:image["']/gi)) add(m[1]);
+          for (const m of html.matchAll(/name=["']twitter:image["'][^>]*content=["']([^"']+)["']/gi)) add(m[1]);
+          for (const m of html.matchAll(/content=["']([^"']+)["'][^>]*name=["']twitter:image["']/gi)) add(m[1]);
+          // img src y lazy-load
+          for (const m of html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) add(m[1]);
+          for (const m of html.matchAll(/data-src=["']([^"']+)["']/gi)) add(m[1]);
+          // srcset — solo primera URL de cada entrada
+          for (const m of html.matchAll(/srcset=["']([^ "',]+)/gi)) add(m[1]);
+
+          return { marca, imageUrls: [...seen].slice(0, 10), status: res.status };
+        } catch (e) {
+          return { marca, imageUrls: [], status: null, error: e.message };
+        }
+      }
+
+      const results = await Promise.all(brands.map(extractImages));
+      return ok({ results });
+    }
+
     if (path === '/health') {
       return ok({
         ok: true,

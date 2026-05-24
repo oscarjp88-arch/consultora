@@ -361,6 +361,12 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .refs-dot-ok{background:#22c55e}
 .refs-dot-fail{background:#f59e0b}
 .refs-stale{color:#f59e0b}
+.refs-images-wrap{padding:2px 4px 8px}
+.refs-brand-images{margin-bottom:10px}
+.refs-brand-images-name{font-size:9px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.refs-img-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+.refs-img-thumb{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:3px;border:1px solid var(--border);display:block;cursor:pointer;transition:border-color .15s,opacity .15s}
+.refs-img-thumb:hover{border-color:var(--turquesa);opacity:.85}
 /* Titulares de impacto */
 .titular-opt{display:block;width:100%;text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;padding:8px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-bottom:4px}
 .titular-opt:hover{border-color:var(--turquesa);color:var(--turquesa);background:rgba(0,196,204,.08)}
@@ -604,6 +610,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </div>
     </div>
     <div id="refs-brand-list" class="refs-brand-list"></div>
+    <div id="refs-images" class="refs-images-wrap" style="display:none"></div>
   </div>
   <button class="gen-btn" id="gen-btn" onclick="generarContenido()">
     <div class="spinner" id="spinner"></div>
@@ -1812,13 +1819,15 @@ function formatRefAge(ts) {
 
 function renderRefStatus() {
   const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
-  const statusEl = document.getElementById('refs-status');
-  const listEl = document.getElementById('refs-brand-list');
+  const statusEl  = document.getElementById('refs-status');
+  const listEl    = document.getElementById('refs-brand-list');
+  const imagesEl  = document.getElementById('refs-images');
   if (!statusEl) return;
   if (!stored) {
     statusEl.textContent = 'Colores de marca activos — keywords sin obtener';
     statusEl.className = 'refs-status-txt';
-    if (listEl) listEl.style.display = 'none';
+    if (listEl)   listEl.style.display   = 'none';
+    if (imagesEl) imagesEl.style.display = 'none';
     return;
   }
   const stale = (Date.now() - stored.timestamp) > REFS_TTL;
@@ -1833,6 +1842,26 @@ function renderRefStatus() {
     }).join('');
     listEl.style.display = 'block';
   }
+  if (imagesEl && stored.brands) {
+    const withImgs = Object.entries(stored.brands).filter(([, d]) => d.imageUrls?.length);
+    if (withImgs.length) {
+      imagesEl.innerHTML = withImgs.map(([name, d]) => `
+        <div class="refs-brand-images">
+          <div class="refs-brand-images-name">${name}</div>
+          <div class="refs-img-grid">${
+            d.imageUrls.slice(0, 5).map(u =>
+              `<a href="${u}" target="_blank" rel="noopener">
+                <img class="refs-img-thumb" src="${u}" alt="${name}" loading="lazy"
+                     onerror="this.closest('a').style.display='none'">
+              </a>`
+            ).join('')
+          }</div>
+        </div>`).join('');
+      imagesEl.style.display = 'block';
+    } else {
+      imagesEl.style.display = 'none';
+    }
+  }
 }
 
 function cancelarReferencias() {
@@ -1844,11 +1873,17 @@ function cancelarReferencias() {
 
 async function actualizarReferencias() {
   refsCancelled = false;
-  const btn = document.getElementById('refs-update-btn');
+  const btn       = document.getElementById('refs-update-btn');
   const cancelBtn = document.getElementById('refs-cancel-btn');
-  const statusEl = document.getElementById('refs-status');
+  const statusEl  = document.getElementById('refs-status');
   btn.disabled = true;
   cancelBtn.style.display = 'inline-block';
+
+  // Lanzar fetch de imágenes al Worker en paralelo (no bloqueante)
+  const workerImagesPromise = fetch('https://creditek-gemini-proxy.comercial-853.workers.dev/brand-references')
+    .then(r => r.json()).catch(() => ({ results: [] }));
+
+  // Fetch de keywords secuencial (comportamiento existente)
   const total = MARKET_REFS.length;
   const brands = {};
   for (let i = 0; i < total; i++) {
@@ -1858,9 +1893,19 @@ async function actualizarReferencias() {
     try { brands[name] = { url, keywords: await fetchBrandKeywords(url) }; }
     catch(e) { brands[name] = { url, keywords: '' }; }
   }
+
   if (!refsCancelled) {
+    // Recoger imágenes del Worker (probablemente ya terminó mientras se buscaban keywords)
+    statusEl.textContent = 'Obteniendo imágenes de referencia...';
+    const workerData = await workerImagesPromise;
+    if (workerData?.results) {
+      for (const r of workerData.results) {
+        if (brands[r.marca]) brands[r.marca].imageUrls = r.imageUrls;
+        else brands[r.marca] = { url: '', keywords: '', imageUrls: r.imageUrls };
+      }
+    }
     localStorage.setItem('ck_referencias', JSON.stringify({ timestamp: Date.now(), brands }));
-    showToast('✓ Keywords del mercado actualizadas');
+    showToast('✓ Referencias del mercado actualizadas');
   }
   renderRefStatus();
   btn.disabled = false;
