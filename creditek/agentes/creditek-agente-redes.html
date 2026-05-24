@@ -2155,7 +2155,7 @@ async function generarConDalle(key, prompt) {
     body: JSON.stringify({
       model: 'gpt-4o',
       input: inputPayload,
-      tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1792' : '1024x1024' }]
+      tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1536' : '1024x1024' }]
     })
   });
   if (!res.ok) {
@@ -2227,7 +2227,7 @@ async function aplicarCambioImagen() {
       const res = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-        body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content: [{ type: 'input_text', text: editPrompt }] }], tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1792' : '1024x1024' }] })
+        body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content: [{ type: 'input_text', text: editPrompt }] }], tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1536' : '1024x1024' }] })
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
