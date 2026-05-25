@@ -696,7 +696,7 @@ if (path === '/test-fetch') {
               predictions: [{ bytesBase64Encoded: nbImg.inlineData.data, mimeType: nbImg.inlineData.mimeType }],
               model: 'gemini-3.1-flash-image-preview',
               label: 'Nano Banana 2',
-            });
+            }, '0: Nano Banana 2 (gemini-3.1-flash-image-preview)');
           }
         } else if (nbRes.status === 401) {
           return err('GEMINI_API_KEY inválida.', 401);
@@ -740,7 +740,7 @@ if (path === '/test-fetch') {
           const b64 = data.predictions?.[0]?.bytesBase64Encoded;
           if (!b64) continue;
 
-          return ok({ predictions: data.predictions, model: model.id, label: model.label });
+          return ok({ predictions: data.predictions, model: model.id, label: model.label }, `1: Vertex AI (${model.id})`);
         }
       } catch (_e) {
         return err(`WIF error: ${_e.message}`, 500);
@@ -776,7 +776,7 @@ if (path === '/test-fetch') {
       const b64 = data.predictions?.[0]?.bytesBase64Encoded;
       if (!b64) continue;
 
-      return ok({ predictions: data.predictions, model: model.id, label: model.label });
+      return ok({ predictions: data.predictions, model: model.id, label: model.label }, `2: AI Studio Imagen (${model.id})`);
     }
 
     for (const model of GEMINI_MODELS) {
@@ -807,18 +807,18 @@ if (path === '/test-fetch') {
         predictions: [{ bytesBase64Encoded: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType }],
         model: model.id,
         label: model.label,
-      });
+      }, `2: AI Studio Gemini (${model.id})`);
     }
 
     return err('Ningún modelo disponible. Verifica WIF o GEMINI_API_KEY.', 503);
   },
 };
 
-function ok(data) {
-  return new Response(JSON.stringify(data), {
-    status: 200,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
-  });
+function ok(data, via = null) {
+  const body = via ? { ...data, via } : data;
+  const headers = { ...CORS, 'Content-Type': 'application/json' };
+  if (via) headers['X-Via'] = via;
+  return new Response(JSON.stringify(body), { status: 200, headers });
 }
 
 function err(message, status = 400) {
