@@ -632,6 +632,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     <div class="estilo-grid">
       <button class="estilo-btn active" onclick="selectEstilo('formal',this)">🏢 Formal</button>
       <button class="estilo-btn" onclick="selectEstilo('costeno',this)">🎉 Alegre costeño</button>
+      <button class="estilo-btn" onclick="selectEstilo('chistoso',this)">😂 Chistoso</button>
       <button class="estilo-btn" onclick="selectEstilo('minimalista',this)">◻ Minimalista</button>
       <button class="estilo-btn" onclick="selectEstilo('custom',this)">✏️ Personalizar</button>
     </div>
@@ -1654,108 +1655,54 @@ function updateImgKeyStatus() {
 }
 
 function buildImgPrompt() {
-  const producto = document.getElementById('producto').value.trim() || 'smartphone';
-
-  const ciudad   = document.getElementById('ciudad').value || 'Colombia';
-  const modo     = document.getElementById('modo')?.value || 'credito';
-  const tipo     = document.getElementById('tipo')?.value || 'oferta_semana';
+  // ── Leer todos los campos del formulario ────────────────────────
+  const producto  = document.getElementById('producto').value.trim() || 'smartphone';
+  const ciudad    = document.getElementById('ciudad').value || 'Colombia';
+  const modo      = document.getElementById('modo')?.value || 'credito';
+  const tipo      = document.getElementById('tipo')?.value || 'oferta_semana';
+  const cuota     = document.getElementById('cuota').value.trim();
+  const inicial   = document.getElementById('inicial').value.trim();
+  const nota      = document.getElementById('nota')?.value.trim() || '';
+  const fechaKey  = document.getElementById('fecha-especial')?.value || '';
+  const fechaData = FECHAS_ESPECIALES[fechaKey] || null;
 
   const titularEl = document.getElementById('img-titular');
   const precioEl  = document.getElementById('img-precio');
   const ctaEl     = document.getElementById('img-cta');
-  const cuota     = document.getElementById('cuota').value.trim();
-  const inicial   = document.getElementById('inicial').value.trim();
-  const esCiudadBuild   = isCiudadCompleta(ciudad);
-  const tiendaInfoBuild = getTiendaInfo(ciudad);
-  const nombreCtaBuild  = esCiudadBuild ? getCiudadNombre(ciudad) : (tiendaInfoBuild?.nombre || getCiudadNombre(ciudad));
-  const titular   = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCtaBuild}!`);
-  const precio    = precioEl?.value.trim() || '';
-  const inclDirBuild = !esCiudadBuild && document.getElementById('chk-direccion').checked;
-  const dirBuild     = inclDirBuild ? (tiendaInfoBuild?.direccion || DIRECCIONES[ciudad] || null) : null;
-  const ctaFallback  = dirBuild ? `Visítanos en ${nombreCtaBuild} · ${dirBuild}` : `Visítanos en ${nombreCtaBuild}`;
-  const cta          = ctaEl?.value.trim() || ctaFallback;
 
-  const tipoLabels = {
-    oferta_semana:    'Oferta de la semana',
-    showcase_producto:'Showcase del producto',
-    testimonio:       'Testimonio de cliente',
-    educativo:        'Contenido educativo/informativo',
-    promo_urgencia:   'Promoción de urgencia',
-    detras_camara:    'Detrás de cámara / tienda',
-  };
+  const esCiudad     = isCiudadCompleta(ciudad);
+  const tiendaInfo   = getTiendaInfo(ciudad);
+  const nombreCta    = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
+  const inclDir      = !esCiudad && document.getElementById('chk-direccion').checked;
+  const dir          = inclDir ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
+  const ctaFallback  = dir ? `Visítanos en ${nombreCta} · ${dir}` : `Visítanos en ${nombreCta}`;
 
+  const titular = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCta}!`);
+  const precio  = precioEl?.value.trim() || '';
+  const cta     = ctaEl?.value.trim() || ctaFallback;
+
+  const modoLabel = { credito:'Crédito de celular', arriendo:'Arriendo de celular', seguro:'Seguro de celular' }[modo] || modo;
+
+  // ── Formato y composición por plataforma ────────────────────────
+  const isStories   = currentFormat === 'stories';
+  const formatoLabel = isStories ? 'Stories / TikTok vertical 1080×1920 px' : 'Feed cuadrado 1080×1080 px';
+  const layoutGuide = isStories
+    ? 'Composición VERTICAL 1080×1920 px: zona superior (0–20%) → logo Creditek centrado. Zona media (20–70%) → producto protagonista grande, bien iluminado, con iluminación de estudio. Zona inferior (70–100%) → titular en Montserrat Bold + precio en turquesa + botón CTA. Aprovechar toda la altura con espaciado generoso.'
+    : 'Composición CUADRADA 1080×1080 px: producto en primer plano a la derecha (55% del ancho), textos jerarquizados a la izquierda (titular → precio → CTA), logo Creditek esquina superior derecha. Equilibrio visual horizontal, punto focal central fuerte.';
+
+  // ── Tipo de pieza y composición específica ──────────────────────
   const tipoImgMap = {
-    oferta_semana:    `Fotografía del producto ${producto} grande en el lado derecho.${precio ? ` Badge de precio prominente en turquesa #00C4CC con '${precio}' en números grandes y en negrita en la parte superior izquierda.` : ''} Titular en negrita a la izquierda. Jerarquía visual fuerte: titular → ${precio ? 'precio → ' : ''}producto.`,
-    showcase_producto:`${producto} centrado como imagen héroe, flotando con sombra suave y bordes limpios. Texto mínimo. Pequeñas etiquetas de características alrededor del producto. El producto ocupa el 60% de la composición.`,
-    testimonio:       `Tono cálido sobre fondo azul marino profundo. Gran comilla de apertura en turquesa #00C4CC. Frase testimonial de cliente en texto blanco grande y centrado. Silueta humana cálida o retrato en un costado. No mostrar imagen de producto.`,
-    educativo:        `Diseño informativo limpio. Íconos simples en negrita (checks, flechas, números) en turquesa #00C4CC sobre fondo oscuro. Diseño centrado en texto con jerarquía de lectura clara. Aspecto de tarjeta de consejos útiles, no de aviso publicitario agresivo.`,
-    promo_urgencia:   `Composición de alta energía y urgencia. Badge grande "SOLO HOY" o cuenta regresiva en turquesa #00C4CC. Producto ${producto} con elemento diagonal o cinta de destaque.${precio ? ` Precio '${precio}' en números muy grandes y en negrita.` : ''} Alto contraste, lectura visual rápida e impactante.`,
-    detras_camara:    `Atmósfera cálida del interior de una tienda Creditek. Iluminación natural y ambiente. Contexto de vitrina con celulares visibles. Personas en ambiente natural de tienda. Estilo documental auténtico, sin overlays gráficos pesados ni elementos de diseño artificiales.`
+    oferta_semana:    `Oferta de la semana: ${producto} protagonista grande y bien iluminado.${precio ? ` Badge de precio "${precio}" muy prominente en turquesa #00C4CC, números grandes y en negrita, posición superior izquierda.` : ''} Titular en Montserrat Bold en la zona izquierda. Jerarquía visual clara: titular → precio → producto → CTA.`,
+    showcase_producto:`Showcase del producto: ${producto} centrado como imagen héroe, flotando con sombra suave, bordes nítidos y fondo limpio. Texto mínimo. El producto ocupa el 60–65% de la composición. Etiquetas de specs flotantes si aplica.`,
+    testimonio:       `Testimonio: tono cálido y humano. Gran comilla de apertura en turquesa #00C4CC. Frase testimonial de cliente en texto blanco grande y centrado. Silueta o retrato de persona en un costado. Sin imagen del producto.`,
+    educativo:        `Contenido educativo: diseño limpio e informativo. Íconos en turquesa #00C4CC (checks, números, flechas) sobre fondo azul marino. Jerarquía de lectura clara, aspecto de tarjeta útil — no aviso agresivo.`,
+    promo_urgencia:   `Promo con urgencia: composición de alta energía. Badge "SOLO HOY" o elemento de cuenta regresiva en turquesa #00C4CC. Producto ${producto} con cinta o elemento diagonal de destaque.${precio ? ` Precio "${precio}" en números muy grandes y en negrita.` : ''} Alto contraste, lectura visual inmediata.`,
+    detras_camara:    `Detrás de cámara: atmósfera auténtica del interior de una tienda Creditek. Iluminación natural, vitrina con celulares visibles, personas en ambiente real de tienda. Estilo documental — sin overlays gráficos pesados.`,
   };
   const tipoDesc = tipoImgMap[tipo] || tipoImgMap.oferta_semana;
 
-  const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
-  const estiloMap = {
-    formal:      'Estilo moderno de marca retail profesional. Composición geométrica estructurada, alto contraste, tipografía precisa y ordenada.',
-    costeno:     'Estilo caribeño colombiano vibrante y festivo. Colores cálidos y vivos, energético, ambiente de celebración costeña.',
-    minimalista: 'Diseño minimalista con espacio generoso, producto héroe único en primer plano, tipografía elegante y discreta.',
-    custom:      estiloCustomVal || 'Estilo libre — aplicar criterio artístico y visual del modelo.'
-  };
-  const estiloDesc = estiloMap[currentEstilo] || estiloMap.formal;
-
-  const selectedFins = getSelectedFinancieras();
-  const finStrip = selectedFins.length
-    ? `En la franja inferior de la imagen, una banda horizontal delgada (fondo blanco o semitransparente) contiene los logos pequeños de las siguientes entidades financieras aliadas, alineados horizontalmente y con espaciado uniforme: ${selectedFins.map(f => f.label).join(', ')}. Logos pequeños, limpios y legibles.`
-    : '';
-
-  const fechaKey2  = document.getElementById('fecha-especial')?.value || '';
-  const fechaData2 = FECHAS_ESPECIALES[fechaKey2] || null;
-  const fechaImgBlock = fechaData2
-    ? `Temática de fecha especial — ${fechaData2.label}: incorporar paleta secundaria (${fechaData2.colores}) y elementos decorativos sutiles (${fechaData2.elementos}). Estos acentos estacionales complementan la identidad de marca Creditek sin reemplazarla.`
-    : '';
-
-  const isStories = currentFormat === 'stories';
-  const formatoLabel = isStories ? 'Stories vertical 1080×1920px' : 'Feed cuadrado 1080×1080px';
-  const layoutGuide = isStories
-    ? `Composición vertical para Stories (1080×1920px): Logo Creditek centrado en la parte superior (15% superior del lienzo). Elemento visual o producto principal centrado en el tercio medio del lienzo. Titular en negrita debajo del centro.${precio ? ' Acento de precio y' : ''} Botón CTA cerca del fondo (25% inferior). Aprovechar toda la altura vertical con espaciado generoso entre zonas.`
-    : 'Composición cuadrada para Feed (1080×1080px): diseño horizontal equilibrado, punto focal central fuerte, lectura visual de izquierda a derecha.';
-
-  const modoLabel = { credito: 'Crédito de celular', arriendo: 'Arriendo de celular', seguro: 'Seguro de celular' }[modo] || modo;
-
-  const priceRule = (precio || inicial)
-    ? `Mostrar ÚNICAMENTE estos valores exactos: ${[precio, inicial].filter(Boolean).join(' / ')}. NO agregar, inventar ni modificar ninguna otra cifra o monto monetario.`
-    : 'NO mostrar ningún precio, número con signo de pesos, monto monetario ni cifra financiera en ningún lugar de la imagen. Sin "$", sin "COP", sin precios numéricos, sin valores de cuota, sin badges de precio. Omitir completamente cualquier área de precio.';
-
-  const precioSegment  = precio  ? `Acento de cuota mensual '${precio}' en turquesa #00C4CC, números grandes en negrita bien visibles.` : '';
-  const inicialSegment = inicial ? `Badge de cuota inicial: 'Inicial desde ${inicial}' en turquesa #00C4CC, posición prominente cerca del botón CTA.` : '';
-
-  const fechaBgMap = {
-    madre:    'fondo blanco #FFFFFF, texto azul marino #0B1E3D, acentos rosado #FF85A2',
-    padre:    'fondo azul marino profundo #0B1E3D',
-    mundial:  'fondo azul marino muy oscuro #001233',
-    navidad:  'fondo verde bosque profundo #0A2015',
-    amistad:  'fondo borgoña oscuro #1A0010',
-    halloween:'fondo casi negro #0D0D0D',
-    anonuevo: 'fondo negro #050505',
-    clases:   'fondo blanco #FFFFFF con acentos azul cielo #87CEEB',
-  };
-  const bgSpec = (fechaData2 && fechaBgMap[fechaKey2]) ? fechaBgMap[fechaKey2] : 'azul marino profundo #0B1E3D';
-
-  const knownBrands = ['Samsung', 'Xiaomi', 'Motorola', 'OPPO', 'Realme', 'Infinix', 'Honor', 'TCL', 'iPhone', 'Apple'];
-  const detectedBrand = knownBrands.find(b => producto.toLowerCase().includes(b.toLowerCase()));
-  const isApple = detectedBrand === 'iPhone' || detectedBrand === 'Apple';
-  const androidBrand = isApple ? 'Android' : (detectedBrand || null);
-  const brandBlock = androidBrand
-    ? `CRÍTICO: El smartphone en esta imagen DEBE ser un ${producto}. NO generar un iPhone ni ningún producto Apple bajo ninguna circunstancia. El teléfono debe tener diseño Android con marca ${androidBrand} visible en el dispositivo. Si no es posible renderizar ese modelo exacto, usar un teléfono Android genérico — nunca un iPhone.`
-    : '';
-
-  const storeNameBlock = (tiendaInfoBuild?.nombre && !esCiudadBuild)
-    ? `CRÍTICO: El nombre de la tienda en el botón CTA debe aparecer EXACTAMENTE así: '${tiendaInfoBuild.nombre}'. No abreviar, truncar, traducir ni modificar este nombre de ninguna manera. Renderizar cada carácter de '${tiendaInfoBuild.nombre}' con precisión absoluta.`
-    : '';
-
-  const nota = document.getElementById('nota')?.value.trim() || '';
-
-  const inclSpecs = document.getElementById('chk-specs')?.checked || false;
+  // ── Specs del producto ──────────────────────────────────────────
+  const inclSpecs  = document.getElementById('chk-specs')?.checked || false;
   const specsManual = document.getElementById('img-specs')?.value.trim() || '';
   const autoSpecs = (() => {
     if (!inclSpecs) return '';
@@ -1772,59 +1719,125 @@ function buildImgPrompt() {
     }
     return '';
   })();
-  const specsText = specsManual || autoSpecs;
+  const specsText  = specsManual || autoSpecs;
   const specsBlock = inclSpecs
     ? specsText
-      ? `ESPECIFICACIONES TÉCNICAS A MOSTRAR: Incluir callout labels flotantes alrededor del producto con estas specs: ${specsText}. Cada label en fondo turquesa #00C4CC con texto blanco, tipografía pequeña y limpia, posicionados alrededor del teléfono sin tapar la pantalla.`
-      : `Incluir callout labels flotantes alrededor del ${producto} con sus especificaciones técnicas clave (pantalla, cámara principal, batería, almacenamiento). Labels en fondo turquesa #00C4CC con texto blanco, tipografía pequeña, posicionados alrededor del teléfono.`
-    : `NO mostrar especificaciones técnicas, callout labels ni chips de características alrededor del producto. Diseño limpio centrado en el producto y el mensaje principal.`;
+      ? `Incluir callout labels flotantes alrededor del ${producto} con estas specs técnicas: ${specsText}. Cada label: fondo turquesa #00C4CC, texto blanco, tipografía pequeña y limpia, sin tapar la pantalla.`
+      : `Incluir callout labels flotantes con las specs técnicas clave del ${producto} (pantalla, cámara, batería, almacenamiento). Labels en turquesa #00C4CC con texto blanco.`
+    : `Sin especificaciones técnicas ni callout labels alrededor del producto. Diseño limpio centrado en el producto y el mensaje.`;
+
+  // ── Identidad visual por estilo ──────────────────────────────────
+  const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
+  const mensajeMap = {
+    formal:
+      `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
+    costeno:
+      `Tono caribeño colombiano: alegre, festivo, cercano y con sabor costeño. Usar conceptos y frases como: "¡Pa que te veas bien papi!", "¡Ese sí es equipo, hermano!", "¡Lo mejor pa ti y pa tu familia!", "¡Sin cuento — entra y llévalo!". Energético, celebratorio, con el calor y la picardía del Caribe colombiano.`,
+    chistoso:
+      `Tono de humor comercial ligero, desenfadado y que genere deseo de compra con una sonrisa. Usar conceptos como: "Tu celular viejo ya está pidiendo jubilación", "Ese celular tuyo ya merece descanso", "¿Tu cámara toma fotos o pinturas rupestres?", "Sigue usando ese celular y te confunden con pieza de museo", "Actualízate antes de que tu celular te dé pena ajena". Divertido sin perder elegancia ni credibilidad — que el humor lleve a comprar, no solo a reír.`,
+    minimalista:
+      `Tono sereno y aspiracional. Menos texto, más espacio en blanco. El producto habla solo. Mensaje único, breve y poderoso — máximo una idea por imagen.`,
+    custom:
+      estiloCustomVal || `Estilo libre definido por el operador. Aplicar criterio artístico y de diseño según las instrucciones anteriores.`,
+  };
+  const mensajeEstilo = mensajeMap[currentEstilo] || mensajeMap.formal;
+
+  // ── Fondo según fecha especial ───────────────────────────────────
+  const fechaBgMap = {
+    madre:'fondo blanco #FFFFFF, texto azul marino #0B1E3D, acentos rosado #FF85A2',
+    padre:'fondo azul marino profundo #0B1E3D',
+    mundial:'fondo azul marino muy oscuro #001233',
+    navidad:'fondo verde bosque profundo #0A2015',
+    amistad:'fondo borgoña oscuro #1A0010',
+    halloween:'fondo casi negro #0D0D0D',
+    anonuevo:'fondo negro #050505',
+    clases:'fondo blanco #FFFFFF con acentos azul cielo #87CEEB',
+  };
+  const bgSpec = (fechaData && fechaBgMap[fechaKey]) ? fechaBgMap[fechaKey] : 'azul marino profundo #0B1E3D';
+
+  const fechaImgBlock = fechaData
+    ? `Temática ${fechaData.label}: incorporar paleta secundaria (${fechaData.colores}) y elementos decorativos sutiles (${fechaData.elementos}). Estos acentos estacionales complementan la identidad Creditek, no la reemplazan.`
+    : '';
+
+  // ── Financieras ──────────────────────────────────────────────────
+  const selectedFins = getSelectedFinancieras();
+  const finStrip = selectedFins.length
+    ? `Franja inferior: banda horizontal delgada (fondo blanco o semitransparente) con logos pequeños de: ${selectedFins.map(f => f.label).join(', ')}. Logos limpios, legibles, alineados horizontalmente con espaciado uniforme.`
+    : '';
+
+  // ── Precios ──────────────────────────────────────────────────────
+  const priceRule = (precio || inicial)
+    ? `Mostrar ÚNICAMENTE estos valores exactos: ${[precio && `cuota ${precio}`, inicial && `inicial ${inicial}`].filter(Boolean).join(' / ')}. NO agregar, inventar ni modificar ningún otro monto.`
+    : 'NO mostrar ningún precio, número con signo de pesos, monto ni cifra financiera. Sin "$", sin "COP", sin badges de precio. Omitir completamente el área de precio.';
+
+  // ── Marca/brand del celular ──────────────────────────────────────
+  const knownBrands = ['Samsung','Xiaomi','Motorola','OPPO','Realme','Infinix','Honor','TCL','iPhone','Apple'];
+  const detectedBrand = knownBrands.find(b => producto.toLowerCase().includes(b.toLowerCase()));
+  const isApple   = detectedBrand === 'iPhone' || detectedBrand === 'Apple';
+  const brandBlock = (detectedBrand && !isApple)
+    ? `CRÍTICO — MARCA DEL CELULAR: El smartphone en la imagen DEBE ser un ${producto}. NO generar un iPhone ni ningún producto Apple. El teléfono debe tener diseño Android con la marca ${detectedBrand} claramente visible. Si no es posible renderizar ese modelo exacto, usar un Android genérico — jamás un iPhone.`
+    : isApple
+      ? `El smartphone en la imagen es un ${producto} (producto Apple). Respetar el diseño exacto de Apple, con botones y notch/Dynamic Island correctos.`
+      : '';
+
+  const storeNameBlock = (tiendaInfo?.nombre && !esCiudad)
+    ? `CRÍTICO — NOMBRE DE TIENDA: el botón CTA debe decir exactamente "${tiendaInfo.nombre}". No abreviar, truncar ni modificar este nombre bajo ninguna circunstancia.`
+    : '';
 
   const refBlock = getRefBlock();
 
+  // ── Construir prompt estructurado ────────────────────────────────
   const lineas = [
-    `Anuncio publicitario profesional para Creditek, empresa comercial colombiana de venta de celulares a crédito. Mensaje rector: "Estrena celular hoy y págalo fácil con Creditek."`,
+    `ROL:`,
+    `Actúa como director de arte publicitario senior especializado en piezas para redes sociales, retail de celulares y marcas de crédito comercial colombiano.`,
     ``,
-    `INFORMACIÓN DEL ANUNCIO:`,
-    `- Producto: ${producto}`,
-    `- Modalidad: ${modoLabel}`,
-    `- Tipo de pieza: ${tipoLabels[tipo] || tipo}`,
-    `- Formato: ${formatoLabel}`,
-    `- Ciudad/Tienda: ${nombreCtaBuild || ciudad}`,
+    `FORMATO:`,
+    `${formatoLabel}`,
+    `${layoutGuide}`,
+    ``,
+    `PRODUCTO PRINCIPAL:`,
+    `- Equipo: ${producto}`,
+    specsText && inclSpecs ? `- Especificaciones: ${specsText}` : null,
     precio  ? `- Cuota mensual: ${precio}` : null,
     inicial ? `- Cuota inicial: ${inicial}` : null,
-    fechaData2 ? `- Temporada especial: ${fechaData2.label}` : null,
-    nota ? `- Nota especial del operador: ${nota}` : null,
+    `- Modalidad: ${modoLabel}`,
+    `- Tipo de pieza: ${{ oferta_semana:'Oferta de la semana', showcase_producto:'Showcase del producto', testimonio:'Testimonio', educativo:'Educativo', promo_urgencia:'Promo con urgencia', detras_camara:'Detrás de cámara' }[tipo] || tipo}`,
     ``,
-    `COMPOSICIÓN Y LAYOUT:`,
+    `COMPOSICIÓN:`,
     tipoDesc,
-    layoutGuide,
     specsBlock,
     ``,
-    `ESTILO VISUAL: ${estiloDesc}`,
+    `MENSAJE PUBLICITARIO — estilo "${currentEstilo}":`,
+    mensajeEstilo,
+    nota ? `Instrucción adicional del operador: ${nota}` : null,
     ``,
-    `TEXTOS EN LA IMAGEN:`,
-    `- Titular principal: "${titular}" en fuente Montserrat Bold, posición destacada y prominente`,
-    precioSegment ? `- ${precioSegment}` : null,
-    inicialSegment ? `- ${inicialSegment}` : null,
-    `- Botón CTA: "${cta}" sobre fondo turquesa #00C4CC`,
+    `TEXTOS EXACTOS EN LA IMAGEN (renderizar tal cual, sin modificar ni traducir):`,
+    `1. Titular principal: "${titular}" — Montserrat Bold, posición destacada, máximo 2 líneas`,
+    precio  ? `2. Cuota mensual: "${precio}" — números grandes en negrita, turquesa #00C4CC, muy visible` : null,
+    inicial ? `${precio ? '3' : '2'}. Cuota inicial: "Inicial desde ${inicial}" — badge turquesa #00C4CC` : null,
+    `${[precio, inicial].filter(Boolean).length + 2}. Botón CTA: "${cta}" — fondo turquesa #00C4CC, texto azul marino #0B1E3D, esquinas redondeadas`,
+    `${[precio, inicial].filter(Boolean).length + 3}. Ciudad / Tienda: "${nombreCta}"`,
     ``,
-    `IDENTIDAD DE MARCA CREDITEK:`,
-    `- Logo en esquina superior derecha: símbolo circular turquesa con palomita/check junto al wordmark "Creditek" en Montserrat Bold, sin eslogan adicional`,
-    `- Paleta de marca: azul marino #0B1E3D (fondo principal), turquesa #00C4CC (acentos, botones y badges), blanco #FFFFFF (texto principal)`,
-    `- REGLA DE COLOR: azul marino #0B1E3D y turquesa #00C4CC deben dominar el diseño. Los colores propios del producto (carcasa, pantalla) pueden aparecer de forma natural pero no deben ocupar más del 20% del área total de la imagen. El resto del diseño respeta la paleta Creditek.`,
-    `- Fondo: ${bgSpec}`,
-    finStrip ? `- ${finStrip}` : null,
+    `IDENTIDAD VISUAL:`,
+    `- Fondo principal: ${bgSpec}`,
+    `- Paleta de marca: azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF`,
+    `- Dominio de color: azul marino + turquesa ocupan mínimo el 80% del diseño. Los colores naturales del producto (carcasa, pantalla) pueden aparecer pero no dominan.`,
+    `- Logo Creditek: esquina superior derecha — símbolo circular turquesa con check/palomita + wordmark "Creditek" en Montserrat Bold. NO modificar, escalar de forma extraña ni ocultar el logo.`,
+    `- Tipografía: Montserrat Bold para titulares y cifras; DM Sans para textos secundarios`,
+    finStrip     ? `- ${finStrip}`     : null,
     fechaImgBlock ? `- ${fechaImgBlock}` : null,
     ``,
-    `RESTRICCIONES CRÍTICAS:`,
-    `- La marca SIEMPRE escrita exactamente como "Creditek" — ninguna variación ortográfica permitida (no "Crediteck", no "Crediitek", no otras variaciones)`,
-    `- Sin marcas de agua, texto distorsionado, logos placeholder ni palabras mal escritas o truncadas`,
-    `- REGLA DE PRECIOS: ${priceRule}`,
-    `- FRASES PROHIBIDAS en cualquier texto de la imagen: "aprobado para todo el mundo", "sin revisar nada", "cualquier equipo sin condiciones", "compra ya o pierdes todo". Tono: comercial y confiable, nunca agresivo.`,
-    `- Alta resolución y calidad profesional. Celulares con iluminación de estudio, bordes nítidos, sin pixelado ni desenfoque`,
-    `- Sin interfaces de usuario falsas (UI overlays), sin personas adicionales no deseadas, sin elementos desorganizados`,
-    brandBlock ? brandBlock : null,
-    storeNameBlock ? storeNameBlock : null,
+    `RESTRICCIONES (cumplir todas sin excepción):`,
+    `- IDIOMA: TODOS los textos en la imagen en español colombiano. Nunca en inglés, ni parcialmente.`,
+    `- MARCA: siempre escrita "Creditek" — ninguna variación ortográfica (no "Crediteck", "Crediitek", "CreditEk" ni ninguna otra).`,
+    `- NO inventar datos del celular (specs, precios, modelos) que no se hayan indicado explícitamente.`,
+    `- NO modificar ni distorsionar el logo Creditek bajo ninguna circunstancia.`,
+    `- NO pixelar, desenfocar ni cortar textos. Todos los textos deben ser legibles y nítidos.`,
+    `- NO deformar el celular. Proporciones reales del dispositivo, iluminación de estudio profesional.`,
+    `- NO incluir frases como "aprobado para todos sin condiciones", "sin ningún requisito", "compra ya o pierdes todo". Tono siempre comercial y confiable.`,
+    `- PRECIOS: ${priceRule}`,
+    brandBlock    ? `- ${brandBlock}`    : null,
+    storeNameBlock ? `- ${storeNameBlock}` : null,
     refBlock,
   ].filter(l => l !== null).join('\n');
 
@@ -2546,6 +2559,7 @@ function toggleCanvaBrief() {
   const estiloMap = {
     formal:      'Retail profesional — composición geométrica, alto contraste, tipografía precisa',
     costeno:     'Caribeño colombiano — colores cálidos, energético, festivo',
+    chistoso:    'Humor comercial ligero — mensajes ingeniosos, tono juguetón, llamada a la acción divertida',
     minimalista: 'Minimalista — espacio generoso, producto héroe, tipografía elegante',
     custom:      document.getElementById('estilo-custom')?.value.trim() || 'Personalizado'
   };
