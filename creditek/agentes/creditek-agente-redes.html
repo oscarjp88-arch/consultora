@@ -827,6 +827,8 @@ function abrirModal() {
   setTimeout(() => document.getElementById('modalKey').focus(), 80);
 }
 window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('canva-brief-panel').style.display = 'none';
+  document.getElementById('canva-btn').classList.remove('active');
   populateCiudadDropdown();
   renderRefStatus();
   const stored = localStorage.getItem('ck_api_key');
@@ -1433,6 +1435,8 @@ function renderHistory(){ const wrap=document.getElementById('history-wrap'); co
 function restoreHistory(idx) {
   const h = history[idx];
   if (!h) return;
+  document.getElementById('canva-brief-panel').style.display = 'none';
+  document.getElementById('canva-btn').classList.remove('active');
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('piezas-grid').innerHTML = '';
   const tipoKey = Object.keys(TIPO_META).find(k => TIPO_META[k] === h.tipo) || 'oferta_semana';
@@ -2564,15 +2568,12 @@ function abrirPomelli() {
 function toggleCanvaBrief() {
   const panel = document.getElementById('canva-brief-panel');
   const btn   = document.getElementById('canva-btn');
-  const estadoAntes = { display: panel.style.display, active: btn.classList.contains('active') };
-  console.log('[toggleCanvaBrief] ANTES →', estadoAntes);
-  if (btn.classList.contains('active')) {
+  if (panel.style.display === 'block') {
     panel.style.display = 'none';
     btn.classList.remove('active');
-    console.log('[toggleCanvaBrief] DESPUÉS → cerrado');
     return;
   }
-  buildImgPrompt(); // sync prompt antes de leer valores
+  buildImgPrompt();
   // Construir contenido del brief
   const producto  = document.getElementById('producto').value.trim() || '—';
   const titular   = document.getElementById('img-titular').value.trim() || '—';
@@ -2616,7 +2617,6 @@ function toggleCanvaBrief() {
   document.getElementById('canva-brief-content').innerHTML = html;
   panel.style.display = 'block';
   btn.classList.add('active');
-  console.log('[toggleCanvaBrief] DESPUÉS → abierto (display=block, active=true)');
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
