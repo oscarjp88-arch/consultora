@@ -667,6 +667,44 @@ if (path === '/test-fetch') {
       });
     }
 
+    // ── Vía 0: Nano Banana 2 — AI Studio gemini-3.1-flash-image-preview ────────
+    const nbKey = (env.GEMINI_API_KEY || apiKey || '').trim();
+    if (nbKey) {
+      const nbUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${nbKey}`;
+      try {
+        const nbRes = await fetch(nbUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseModalities: ['IMAGE', 'TEXT'],
+              thinkingConfig: { thinkingBudget: -1 },
+              imageGenerationConfig: { imageSize: '2K' },
+            },
+            tools: [{ googleSearch: {} }],
+          }),
+          signal: AbortSignal.timeout(90_000),
+        });
+
+        if (nbRes.ok) {
+          const nbData = await nbRes.json().catch(() => ({}));
+          const nbParts = nbData.candidates?.[0]?.content?.parts || [];
+          const nbImg = nbParts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+          if (nbImg) {
+            return ok({
+              predictions: [{ bytesBase64Encoded: nbImg.inlineData.data, mimeType: nbImg.inlineData.mimeType }],
+              model: 'gemini-3.1-flash-image-preview',
+              label: 'Nano Banana 2',
+            });
+          }
+        } else if (nbRes.status === 401) {
+          return err('GEMINI_API_KEY inválida.', 401);
+        }
+        // 404 / 400 / 403 → continuar con Vertex AI
+      } catch (_) { /* timeout o red — continuar */ }
+    }
+
     // ── Vía 1: Vertex AI con WIF + SA impersonation (Imagen 4) ───────────────
     if (env.GCP_WIF_PRIVATE_KEY && env.GCP_WIF_AUDIENCE && env.GCP_SA_EMAIL) {
       try {
