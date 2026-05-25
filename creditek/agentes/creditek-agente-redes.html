@@ -525,12 +525,15 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <input type="text" id="inicial" placeholder="Ej: $314.500">
     </div>
     <div class="field-group">
-      <label class="checkbox-row" style="padding:6px 4px">
-        <input type="checkbox" id="chk-specs" onchange="buildImgPrompt(); document.getElementById('specs-input-wrap').style.display=this.checked?'block':'none'">
-        <label for="chk-specs" style="font-size:12px;color:var(--text2);cursor:pointer">Incluir specs técnicas en imagen</label>
-      </label>
-      <div id="specs-input-wrap" style="display:none;margin-top:4px">
-        <input type="text" id="img-specs" placeholder="Ej: 128GB, cámara 50MP, batería 5000mAh, pantalla 6.7&quot;" oninput="buildImgPrompt()" style="width:100%;background:#FFFFFF;border:1px solid rgba(11,30,61,.15);color:#0B1E3D;border-radius:var(--radius-sm);font-size:13px;padding:8px 12px;outline:none;font-family:'DM Sans',sans-serif">
+      <label class="field-label">Specs técnicas en imagen <span>opcional</span></label>
+      <div style="display:flex;flex-direction:column;gap:3px;margin-top:6px">
+        <label class="checkbox-row"><input type="checkbox" id="spec-ram" checked onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">RAM</span></label>
+        <label class="checkbox-row"><input type="checkbox" id="spec-storage" checked onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">Almacenamiento</span></label>
+        <label class="checkbox-row"><input type="checkbox" id="spec-camera" checked onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">Cámara principal</span></label>
+        <label class="checkbox-row"><input type="checkbox" id="spec-battery" checked onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">Batería</span></label>
+        <label class="checkbox-row"><input type="checkbox" id="spec-screen" onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">Pantalla</span></label>
+        <label class="checkbox-row"><input type="checkbox" id="spec-chip" onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">Procesador</span></label>
+        <label class="checkbox-row"><input type="checkbox" id="spec-5g" onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">Conectividad 5G</span></label>
       </div>
     </div>
     <div class="field-group">
@@ -1232,6 +1235,8 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
     console.error('API error:', err);
   }
   btn.disabled = false; spinner.style.display = 'none'; label.textContent = '✦ Generar piezas';
+  document.getElementById('canva-brief-panel').style.display = 'none';
+  document.getElementById('canva-btn').classList.remove('active');
 }
 
 function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
@@ -1704,28 +1709,35 @@ function buildImgPrompt() {
   const tipoDesc = tipoImgMap[tipo] || tipoImgMap.oferta_semana;
 
   // ── Specs del producto ──────────────────────────────────────────
-  const inclSpecs  = document.getElementById('chk-specs')?.checked || false;
-  const specsManual = document.getElementById('img-specs')?.value.trim() || '';
-  const autoSpecs = (() => {
-    if (!inclSpecs) return '';
+  const SPEC_FIELDS = [
+    { id: 'spec-ram',     label: 'RAM',            key: 'ram' },
+    { id: 'spec-storage', label: 'Almacenamiento', key: 'almacenamiento' },
+    { id: 'spec-camera',  label: 'Cámara',         key: 'camara' },
+    { id: 'spec-battery', label: 'Batería',        key: 'bateria' },
+    { id: 'spec-screen',  label: 'Pantalla',       key: 'pantalla' },
+    { id: 'spec-chip',    label: 'Procesador',     key: 'procesador' },
+    { id: 'spec-5g',      label: '5G',             key: null },
+  ];
+  const checkedSpecs = SPEC_FIELDS.filter(s => document.getElementById(s.id)?.checked);
+  let foundSpecs = {};
+  if (checkedSpecs.length > 0 && producto.length > 3) {
     const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
-    if (!stored?.brands || producto.length <= 3) return '';
-    const prod = producto.toLowerCase();
-    for (const [, d] of Object.entries(stored.brands)) {
-      for (const m of (d.modelos || [])) {
-        const n = m.nombre.toLowerCase();
-        if (n.includes(prod) || prod.includes(n.split(' ').slice(0, 3).join(' '))) {
-          return m.specs ? Object.values(m.specs).join(', ') : '';
+    if (stored?.brands) {
+      const prod = producto.toLowerCase();
+      outer: for (const [, d] of Object.entries(stored.brands)) {
+        for (const m of (d.modelos || [])) {
+          const n = m.nombre.toLowerCase();
+          if (n.includes(prod) || prod.includes(n.split(' ').slice(0, 3).join(' '))) {
+            foundSpecs = m.specs || {};
+            break outer;
+          }
         }
       }
     }
-    return '';
-  })();
-  const specsText  = specsManual || autoSpecs;
-  const specsBlock = inclSpecs
-    ? specsText
-      ? `Incluir callout labels flotantes alrededor del ${producto} con estas specs técnicas: ${specsText}. Cada label: fondo turquesa #00C4CC, texto blanco, tipografía pequeña y limpia, sin tapar la pantalla.`
-      : `Incluir callout labels flotantes con las specs técnicas clave del ${producto} (pantalla, cámara, batería, almacenamiento). Labels en turquesa #00C4CC con texto blanco.`
+  }
+  const specsItems = checkedSpecs.map(s => (!s.key ? '5G' : (foundSpecs[s.key] || s.label)));
+  const specsBlock = checkedSpecs.length > 0
+    ? `Incluir callout labels flotantes alrededor del ${producto} con estas specs técnicas: ${specsItems.join(', ')}. Cada label: fondo turquesa #00C4CC, texto blanco, tipografía pequeña y limpia, sin tapar la pantalla.`
     : `Sin especificaciones técnicas ni callout labels alrededor del producto. Diseño limpio centrado en el producto y el mensaje.`;
 
   // ── Identidad visual por estilo ──────────────────────────────────
@@ -1736,7 +1748,7 @@ function buildImgPrompt() {
     costeno:
       `Tono caribeño colombiano: alegre, festivo, cercano y con sabor costeño. Usar conceptos y frases como: "¡Pa que te veas bien papi!", "¡Ese sí es equipo, hermano!", "¡Lo mejor pa ti y pa tu familia!", "¡Sin cuento — entra y llévalo!". Energético, celebratorio, con el calor y la picardía del Caribe colombiano.`,
     chistoso:
-      `Tono de humor comercial ligero, desenfadado y que genere deseo de compra con una sonrisa. Usar conceptos como: "Tu celular viejo ya está pidiendo jubilación", "Ese celular tuyo ya merece descanso", "¿Tu cámara toma fotos o pinturas rupestres?", "Sigue usando ese celular y te confunden con pieza de museo", "Actualízate antes de que tu celular te dé pena ajena". Divertido sin perder elegancia ni credibilidad — que el humor lleve a comprar, no solo a reír.`,
+      `Tono de humor comercial ligero y desenfadado que genere deseo de compra con una sonrisa. Crear frases originales que incorporen específicamente el nombre "${producto}" y contrasten con el celular viejo del comprador. El humor debe hacer referencia directa al modelo, por ejemplo: "Deja ese ladrillo y pásate al ${producto}", "¿Tu cámara aún toma fotos en blanco y negro sin querer? El ${producto} te espera", "Tu celular ya pidió jubilación — el ${producto} llegó a rescatarte". Humor cálido, colombiano y comercial — divertido sin perder elegancia ni credibilidad.`,
     minimalista:
       `Tono sereno y aspiracional. Menos texto, más espacio en blanco. El producto habla solo. Mensaje único, breve y poderoso — máximo una idea por imagen.`,
     custom:
@@ -1851,6 +1863,7 @@ function buildImgPrompt() {
     `- NO modificar ni distorsionar el logo Creditek bajo ninguna circunstancia.`,
     `- NO pixelar, desenfocar ni cortar textos. Todos los textos deben ser legibles y nítidos.`,
     `- NO deformar el celular. Proporciones reales del dispositivo, iluminación de estudio profesional.`,
+    `- CELULAR EXACTO: el celular en la imagen debe ser exactamente el ${producto} — NO usar celular genérico ni inventar el diseño.`,
     `- NO incluir frases como "aprobado para todos sin condiciones", "sin ningún requisito", "compra ya o pierdes todo". Tono siempre comercial y confiable.`,
     `- PRECIOS: ${priceRule}`,
     brandBlock    ? `- ${brandBlock}`    : null,
@@ -2190,7 +2203,7 @@ async function generarConGemini(key) {
   ].join(' ');
 
   const MODELS = [
-    'gemini-2.5-flash-preview-05-20',
+    'gemini-2.0-flash-exp-image-generation',
     'gemini-2.0-flash-preview-image-generation',
   ];
   const body = JSON.stringify({
@@ -2216,7 +2229,7 @@ async function generarConGemini(key) {
   const part = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
   if (!part?.inlineData?.data) throw new Error('Gemini no devolvió imagen. Verifica que tu API key tiene acceso a generación de imágenes en AI Studio.');
 
-  lastImgModelLabel = usedModel === 'gemini-2.5-flash-preview-05-20' ? 'Gemini 2.5 Flash' : 'Gemini 2.0 Flash';
+  lastImgModelLabel = usedModel === 'gemini-2.0-flash-exp-image-generation' ? 'Gemini 2.0 Flash (exp)' : 'Gemini 2.0 Flash';
   const mime = part.inlineData.mimeType || 'image/png';
   return `data:${mime};base64,${part.inlineData.data}`;
 }
