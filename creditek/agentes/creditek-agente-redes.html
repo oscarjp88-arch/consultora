@@ -1964,10 +1964,12 @@ function renderRefStatus() {
     : formatRefAge(stored.timestamp);
   statusEl.className = 'refs-status-txt' + (stale ? ' refs-stale' : '');
   if (listEl && stored.brands) {
-    listEl.innerHTML = Object.entries(stored.brands).map(([n, d]) => {
-      const ok = d.keywords && d.keywords.length > 0;
-      return `<div class="refs-brand-item"><span class="refs-brand-dot ${ok ? 'refs-dot-ok' : 'refs-dot-fail'}"></span>${n}</div>`;
-    }).join('');
+    listEl.innerHTML = Object.entries(stored.brands)
+      .filter(([n]) => !n.endsWith(' MX'))
+      .map(([n, d]) => {
+        const ok = d.keywords && d.keywords.length > 0;
+        return `<div class="refs-brand-item"><span class="refs-brand-dot ${ok ? 'refs-dot-ok' : 'refs-dot-fail'}"></span>${n}</div>`;
+      }).join('');
     listEl.style.display = 'block';
   }
   if (imagesEl) imagesEl.style.display = 'none';

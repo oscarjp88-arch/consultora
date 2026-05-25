@@ -274,21 +274,21 @@ if (path === '/test-fetch') {
           { nombre: 'Realme C55',          specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'64MP',  bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
           { nombre: 'Realme 12 5G',        specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
         ],
-        'TCL MX': [
+        'TCL CO': [
           { nombre: 'TCL 50 5G',    specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5010mAh', pantalla:'6.6"'  }, precioLista: null },
           { nombre: 'TCL 40 XL 5G', specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5010mAh', pantalla:'6.78"' }, precioLista: null },
           { nombre: 'TCL 40 SE',    specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5010mAh', pantalla:'6.75"' }, precioLista: null },
           { nombre: 'TCL 505',      specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.75"' }, precioLista: null },
           { nombre: 'TCL 30+',      specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.7"'  }, precioLista: null },
         ],
-        'Honor MX': [
+        'Honor CO': [
           { nombre: 'Honor X8b',        specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'4500mAh', pantalla:'6.7"'  }, precioLista: null },
           { nombre: 'Honor 90 Lite',    specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'100MP', bateria:'4500mAh', pantalla:'6.7"'  }, precioLista: null },
           { nombre: 'Honor X7b',        specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'6000mAh', pantalla:'6.8"'  }, precioLista: null },
           { nombre: 'Honor X6b',        specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.56"' }, precioLista: null },
           { nombre: 'Honor Magic6 Lite',specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'100MP', bateria:'5000mAh', pantalla:'6.78"' }, precioLista: null },
         ],
-        'Infinix MX': [
+        'Infinix CO': [
           { nombre: 'Infinix Note 40 Pro',  specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'4600mAh', pantalla:'6.78"' }, precioLista: null },
           { nombre: 'Infinix Hot 40i',      specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'48MP',  bateria:'5000mAh', pantalla:'6.56"' }, precioLista: null },
           { nombre: 'Infinix Zero 30 5G',   specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'5000mAh', pantalla:'6.78"' }, precioLista: null },
@@ -304,9 +304,9 @@ if (path === '/test-fetch') {
         { marca: 'Motorola CO', urls: ['https://www.motorola.com/mx/smartphones', 'https://www.motorola.com/cl/smartphones'] },
         { marca: 'OPPO CO',     urls: ['https://www.oppo.com/mx/smartphones/'] },
         { marca: 'Realme CO',   urls: ['https://www.realme.com/cl/smartphones/', 'https://www.realme.com/pe/smartphones/'] },
-        { marca: 'TCL MX',      urls: ['https://www.tcl.com/mx/es/smartphones', 'https://www.tcl.com/mx/es/smartphones.html'] },
-        { marca: 'Honor MX',    urls: ['https://www.honor.com/mx/phones/'] },
-        { marca: 'Infinix MX',  urls: ['https://www.infinixmobility.com/mx'] },
+        { marca: 'TCL CO',      urls: ['https://www.tcl.com/mx/es/smartphones', 'https://www.tcl.com/mx/es/smartphones.html'] },
+        { marca: 'Honor CO',    urls: ['https://www.honor.com/mx/phones/'] },
+        { marca: 'Infinix CO',  urls: ['https://www.infinixmobility.com/mx'] },
       ];
 
       // Lee hasta maxBytes del body para no cargar páginas enteras en memoria
@@ -375,6 +375,54 @@ if (path === '/test-fetch') {
       function parsePrice(text) {
         const m = text.match(/\$\s*([\d.,]{4,})/);
         return m ? '$' + m[1] : null;
+      }
+
+      // Google Shopping CO — fallback para marcas cuyo sitio oficial no es accesible
+      async function fetchGoogleShoppingModelos(marcaBase) {
+        const q = encodeURIComponent(marcaBase + ' celular colombia');
+        const url = `https://www.google.com.co/search?q=${q}&tbm=shop&hl=es&gl=co`;
+        try {
+          const { html, status } = await fetchHtml(url, 300_000);
+          if (!html || status !== 200) return null;
+          const seen = new Set();
+          const modelos = [];
+          const brandLc = marcaBase.toLowerCase();
+          for (const m of html.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi)) {
+            const text = stripTags(m[1]).trim();
+            if (!text || text.length > 120 || seen.has(text)) continue;
+            if (!text.toLowerCase().includes(brandLc)) continue;
+            seen.add(text);
+            modelos.push({ nombre: text, specs: parseSpecs(text), precioLista: parsePrice(text) });
+          }
+          for (const m of html.matchAll(/aria-label="([^"]{10,100})"/g)) {
+            const text = m[1].trim();
+            if (seen.has(text) || !text.toLowerCase().includes(brandLc)) continue;
+            seen.add(text);
+            modelos.push({ nombre: text, specs: parseSpecs(text), precioLista: null });
+          }
+          return modelos.length >= 2 ? modelos.slice(0, 10) : null;
+        } catch { return null; }
+      }
+
+      // Amazon MX — fallback secundario para specs técnicas
+      async function fetchAmazonModelos(marcaBase) {
+        const q = encodeURIComponent(marcaBase + ' celular');
+        const url = `https://www.amazon.com.mx/s?k=${q}&i=electronics`;
+        try {
+          const { html, status } = await fetchHtml(url, 300_000);
+          if (!html || status !== 200) return null;
+          const seen = new Set();
+          const modelos = [];
+          const brandLc = marcaBase.toLowerCase();
+          for (const m of html.matchAll(/<span\b[^>]*class="[^"]*a-size-medium[^"]*"[^>]*>([\s\S]*?)<\/span>/gi)) {
+            const text = stripTags(m[1]).trim();
+            if (!text || text.length < 8 || text.length > 150 || seen.has(text)) continue;
+            if (!text.toLowerCase().includes(brandLc)) continue;
+            seen.add(text);
+            modelos.push({ nombre: text.slice(0, 100), specs: parseSpecs(text), precioLista: null });
+          }
+          return modelos.length >= 2 ? modelos.slice(0, 10) : null;
+        } catch { return null; }
       }
 
       async function extractModels({ marca, urls }) {
@@ -452,8 +500,17 @@ if (path === '/test-fetch') {
               .replace(/<footer[\s\S]*?<\/footer>/gi, '')
           ).slice(0, 1000);
 
-          // Si el live-fetch no extrajo modelos, usar datos estáticos como respaldo
-          const finalModelos = modelos.length ? modelos.slice(0, 12) : (STATIC[marca] || []);
+          // Si el live-fetch no extrajo modelos, intentar Google Shopping + Amazon antes de static
+          let finalModelos = modelos.length ? modelos.slice(0, 12) : null;
+          if (!finalModelos) {
+            const marcaBase = marca.replace(/\s+(CO|MX|CL|PE)$/, '');
+            if (['OPPO', 'Realme', 'TCL', 'Infinix', 'Honor'].includes(marcaBase)) {
+              const gsResult = await fetchGoogleShoppingModelos(marcaBase);
+              finalModelos = gsResult?.length ? gsResult
+                : (await fetchAmazonModelos(marcaBase) || null);
+            }
+          }
+          finalModelos = finalModelos || STATIC[marca] || [];
           return {
             marca,
             status,
