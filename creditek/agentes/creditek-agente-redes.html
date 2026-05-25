@@ -2172,7 +2172,7 @@ async function generarImagen(callerBtn = null) {
   try {
     lastImgModelLabel = currentEngine === 'gemini' ? 'Gemini Flash 2.5' : 'GPT Image 2';
     const src = currentEngine === 'gemini'
-      ? await generarConGemini(key)
+      ? await generarConGemini(key, prompt)
       : await generarConDalle(key, prompt);
     imgHistory = [src];
     imgHistoryIdx = 0;
@@ -2193,18 +2193,8 @@ async function generarImagen(callerBtn = null) {
   spinner.style.display = 'none'; label.textContent = '🖼 Generar imagen';
 }
 
-async function generarConGemini(key) {
-  const producto = document.getElementById('producto')?.value.trim() || 'smartphone';
+async function generarConGemini(key, prompt) {
   const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
-  const prompt = [
-    `Professional studio product photograph of the ${producto}.`,
-    `Deep navy blue background #0B1E3D, clean and uniform, no gradients.`,
-    `Professional studio lighting: soft main side light with elegant edge highlights on the device.`,
-    `Device perfectly centered, slightly floating with a long soft shadow, slight 3/4 angle showing screen and side edge.`,
-    `Premium editorial style from a high-end technology magazine — cinematic, minimalist.`,
-    `NO text, NO banners, NO price tags, NO badges, NO slogans, NO overlaid graphic elements of any kind.`,
-    `High resolution, professional product photography quality.`,
-  ].join(' ');
 
   const reqBody = { prompt, aspectRatio };
   if (key?.length > 10) reqBody.apiKey = key;
@@ -2333,7 +2323,7 @@ async function aplicarCambioImagen() {
     if (currentEngine === 'gemini') {
       const key = localStorage.getItem('ck_gemini_key') || '';
       const editPrompt = `${promptBase}\n\nMODIFICACIÓN SOLICITADA: ${instruccion}`;
-      newSrc = await generarConGemini(key);
+      newSrc = await generarConGemini(key, editPrompt);
       document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
     } else {
       const key = localStorage.getItem('ck_openai_key');
@@ -2396,7 +2386,7 @@ async function generarAB() {
   resultDiv.style.display = 'block';
 
   const [gemRes, dalleRes] = await Promise.allSettled([
-    generarConGemini(keyGemini),
+    generarConGemini(keyGemini, prompt),
     generarConDalle(keyOpenAI, prompt)
   ]);
 
@@ -2467,7 +2457,7 @@ async function generarConModelos() {
 
   const callEngine = (id) => {
     const key = id === 'dalle' ? keyOpenAI : keyGemini;
-    if (id === 'gemini') return generarConGemini(key);
+    if (id === 'gemini') return generarConGemini(key, prompt);
     return generarConDalle(key, prompt);
   };
 
