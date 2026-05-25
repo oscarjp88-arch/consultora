@@ -361,9 +361,11 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 .refs-cancel-btn:hover{background:rgba(239,68,68,.18)}
 .refs-brand-list{font-size:10px;color:var(--text3);line-height:1.8;padding:0 4px;display:none}
 .refs-brand-item{display:flex;align-items:center;gap:5px}
-.refs-brand-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--turquesa)}
-.refs-dot-ok{background:#22c55e}
+.refs-brand-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:#f59e0b}
+.refs-dot-live{background:#22c55e}
+.refs-dot-static{background:var(--turquesa)}
 .refs-dot-fail{background:#f59e0b}
+.refs-dot-ok{background:#22c55e}
 .refs-stale{color:#f59e0b}
 .refs-images-wrap{padding:2px 4px 8px}
 .refs-brand-images{margin-bottom:10px}
@@ -1982,8 +1984,10 @@ function renderRefStatus() {
     listEl.innerHTML = Object.entries(stored.brands)
       .filter(([n]) => !n.endsWith(' MX'))
       .map(([n, d]) => {
-        const ok = d.keywords && d.keywords.length > 0;
-        return `<div class="refs-brand-item"><span class="refs-brand-dot ${ok ? 'refs-dot-ok' : 'refs-dot-fail'}"></span>${n}</div>`;
+        const hasLive   = (d.keywords?.length > 0) || d.src === 'live';
+        const hasStatic = (d.modelos?.length > 0)  || !!d.finInfo;
+        const dotClass  = hasLive ? 'refs-dot-live' : hasStatic ? 'refs-dot-static' : 'refs-dot-fail';
+        return `<div class="refs-brand-item"><span class="refs-brand-dot ${dotClass}"></span>${n}</div>`;
       }).join('');
     listEl.style.display = 'block';
   }
@@ -2028,8 +2032,11 @@ async function actualizarReferencias() {
       for (const r of workerData.results) {
         // Guardar nombre, specs e imagenRef. precioLista se descarta — el precio viene del formulario.
         const modelos = (r.modelos || []).map(({ nombre, specs, imagenRef }) => ({ nombre, specs, imagenRef }));
-        if (brands[r.marca]) brands[r.marca].modelos = modelos;
-        else brands[r.marca] = { url: '', keywords: '', modelos };
+        const src = r.url === 'static' ? 'static'
+          : (r.url === 'google-shopping' || r.url === 'amazon-mx') ? 'fallback'
+          : (r.url && r.status === 200 && modelos.length > 0) ? 'live' : 'static';
+        if (brands[r.marca]) { brands[r.marca].modelos = modelos; brands[r.marca].src = src; }
+        else brands[r.marca] = { url: r.url || '', keywords: '', modelos, src };
       }
     }
     if (workerData?.financieras) {
@@ -2064,8 +2071,11 @@ function showImgSection() {
       const brands = stored.brands || {};
       for (const r of (data.results || [])) {
         const modelos = (r.modelos || []).map(({ nombre, specs, imagenRef }) => ({ nombre, specs, imagenRef }));
-        if (brands[r.marca]) brands[r.marca].modelos = modelos;
-        else brands[r.marca] = { url: '', keywords: '', modelos };
+        const src = r.url === 'static' ? 'static'
+          : (r.url === 'google-shopping' || r.url === 'amazon-mx') ? 'fallback'
+          : (r.url && r.status === 200 && modelos.length > 0) ? 'live' : 'static';
+        if (brands[r.marca]) { brands[r.marca].modelos = modelos; brands[r.marca].src = src; }
+        else brands[r.marca] = { url: r.url || '', keywords: '', modelos, src };
       }
       for (const [nombre, info] of Object.entries(data.financieras || {})) {
         if (!brands[nombre]) brands[nombre] = { url: info.url || '', keywords: '' };
