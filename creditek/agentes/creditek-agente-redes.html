@@ -621,7 +621,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <div class="key-status" style="padding:3px 3px 0">
       <span style="font-size:12px;color:var(--text2)">
-        <span class="img-key-dot" id="sidebar-gemini-dot" style="width:7px;height:7px;margin-right:5px;display:inline-block"></span>Gemini AI Studio
+        <span class="img-key-dot" id="sidebar-gemini-dot" style="width:7px;height:7px;margin-right:5px;display:inline-block"></span>Vertex AI
       </span>
       <button onclick="abrirImgKeyModal('gemini')" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0">Configurar</button>
     </div>
@@ -1626,13 +1626,13 @@ function updateImgKeyStatus() {
   const useDalle  = document.getElementById('chk-dalle')?.checked;
   const keyGemini = localStorage.getItem('ck_gemini_key') || '';
   const keyOpenAI = localStorage.getItem('ck_openai_key') || '';
-  const geminiOk  = keyGemini.length > 10;
+  const geminiOk  = true; // Vertex AI via Worker — WIF auth, no key required
   const dalleOk   = keyOpenAI.length > 10;
   const btn = document.getElementById('img-key-row-btn');
 
   if (useGemini && !geminiOk) {
     document.getElementById('img-key-dot').className = 'img-key-dot';
-    document.getElementById('img-key-label').textContent = 'API key de Gemini AI Studio requerida';
+    document.getElementById('img-key-label').textContent = 'Vertex AI configurado via Worker';
     btn.textContent = 'Configurar key Gemini';
     btn.onclick = () => abrirImgKeyModal('gemini');
     btn.style.display = '';
@@ -1645,7 +1645,7 @@ function updateImgKeyStatus() {
   } else if (useGemini || useDalle) {
     document.getElementById('img-key-dot').className = 'img-key-dot ok';
     const parts = [];
-    if (useGemini && geminiOk) parts.push('Gemini');
+    if (useGemini && geminiOk) parts.push('Vertex AI');
     if (useDalle  && dalleOk)  parts.push('GPT Image 2');
     document.getElementById('img-key-label').textContent = parts.join(' · ') + ' configurado';
     btn.style.display = 'none';
@@ -2147,7 +2147,7 @@ async function generarImagen(callerBtn = null) {
   const isWorkerEngine = currentEngine === 'gemini';
   const keyName = isWorkerEngine ? 'ck_gemini_key' : 'ck_openai_key';
   const key = localStorage.getItem(keyName) || '';
-  if (key.length < 10) { abrirImgKeyModal(isWorkerEngine ? 'gemini' : 'openai'); return; }
+  if (!isWorkerEngine && key.length < 10) { abrirImgKeyModal('openai'); return; }
 
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) return;
@@ -2191,7 +2191,7 @@ async function generarImagen(callerBtn = null) {
 
 async function generarConGemini(key) {
   const producto = document.getElementById('producto')?.value.trim() || 'smartphone';
-
+  const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
   const prompt = [
     `Professional studio product photograph of the ${producto}.`,
     `Deep navy blue background #0B1E3D, clean and uniform, no gradients.`,
@@ -2202,36 +2202,28 @@ async function generarConGemini(key) {
     `High resolution, professional product photography quality.`,
   ].join(' ');
 
-  const MODELS = [
-    'gemini-2.0-flash-exp-image-generation',
-    'gemini-2.0-flash-preview-image-generation',
-  ];
-  const body = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
+  const reqBody = { prompt, aspectRatio };
+  if (key?.length > 10) reqBody.apiKey = key;
+
+  const res = await fetch('https://creditek-gemini-proxy.comercial-853.workers.dev/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(reqBody),
   });
 
-  let res, usedModel;
-  for (const model of MODELS) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
-    res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-    if (res.status !== 404) { usedModel = model; break; }
-  }
-
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    if (res.status === 400) throw new Error(e.error?.message || 'Solicitud inválida. Verifica que la API key tiene acceso a generación de imágenes.');
-    if (res.status === 401 || res.status === 403) throw new Error('API key de Gemini inválida o sin permisos. Verifica en Google AI Studio.');
-    throw new Error(e.error?.message || `Error Gemini ${res.status}`);
+    const msg = data.error || `Error ${res.status}`;
+    if (res.status === 401 || res.status === 403) throw new Error(`Sin acceso a Vertex AI: ${msg}`);
+    throw new Error(msg);
   }
 
-  const data = await res.json();
-  const part = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-  if (!part?.inlineData?.data) throw new Error('Gemini no devolvió imagen. Verifica que tu API key tiene acceso a generación de imágenes en AI Studio.');
+  const pred = data.predictions?.[0];
+  if (!pred?.bytesBase64Encoded) throw new Error('El Worker no devolvió imagen. Verifica la configuración WIF de Vertex AI.');
 
-  lastImgModelLabel = usedModel === 'gemini-2.0-flash-exp-image-generation' ? 'Gemini 2.0 Flash (exp)' : 'Gemini 2.0 Flash';
-  const mime = part.inlineData.mimeType || 'image/png';
-  return `data:${mime};base64,${part.inlineData.data}`;
+  lastImgModelLabel = data.label || 'Imagen 3 (Vertex)';
+  const mime = pred.mimeType || 'image/png';
+  return `data:${mime};base64,${pred.bytesBase64Encoded}`;
 }
 
 async function generarConDalle(key, prompt) {
@@ -2322,8 +2314,7 @@ async function aplicarCambioImagen() {
     let newSrc;
 
     if (currentEngine === 'gemini') {
-      const key = localStorage.getItem('ck_gemini_key');
-      if (!key || key.length < 10) throw new Error('Configura la API key de Gemini AI Studio para editar.');
+      const key = localStorage.getItem('ck_gemini_key') || '';
       const editPrompt = `${promptBase}\n\nMODIFICACIÓN SOLICITADA: ${instruccion}`;
       newSrc = await generarConGemini(key);
       document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
@@ -2364,9 +2355,8 @@ async function aplicarCambioImagen() {
 }
 
 async function generarAB() {
-  const keyGemini = localStorage.getItem('ck_gemini_key');
-  const keyOpenAI = localStorage.getItem('ck_openai_key');
-  if (!keyGemini || keyGemini.length < 10) { abrirImgKeyModal('gemini'); return; }
+  const keyGemini = localStorage.getItem('ck_gemini_key') || '';
+  const keyOpenAI = localStorage.getItem('ck_openai_key') || '';
   if (!keyOpenAI || keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
@@ -2448,8 +2438,7 @@ async function generarConModelos() {
 
   const keyGemini = localStorage.getItem('ck_gemini_key') || '';
   const keyOpenAI = localStorage.getItem('ck_openai_key') || '';
-  if (useGemini && keyGemini.length < 10) { abrirImgKeyModal('gemini'); return; }
-  if (useDalle  && keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
+  if (useDalle && keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
 
   const btn = document.getElementById('action-gen-btn');
   btn.disabled = true;
