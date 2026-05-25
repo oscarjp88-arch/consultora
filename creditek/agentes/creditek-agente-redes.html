@@ -1860,21 +1860,18 @@ const BRAND_COLORS = {
   'Alo Credit':  { primary: '#00B4D8', label: 'cyan — digital credit' },
 };
 const MARKET_REFS = [
-  ['Samsung CO',         'https://www.samsung.com/co/smartphones/'],
-  ['Samsung Tiendas CO', 'https://www.tiendas.samsung.com/co/celulares/'],
-  ['Xiaomi CO',          'https://www.mi.com/co'],
-  ['Motorola CO',        'https://www.motorola.com/co/smartphones'],
-  ['OPPO CO',            'https://www.oppo.com/co/smartphones/'],
-  ['Realme CO',          'https://www.realme.com/co/smartphones/'],
-  ['TCL CO',             'https://www.tcl.com/co/es/smartphones.html'],
-  ['Infinix CO',         'https://www.infinixmobility.com/co'],
-  ['Honor CO',           'https://www.honor.com/co/phones/'],
-  ['MercadoLibre CO',    'https://listado.mercadolibre.com.co/celulares-telefonos/celulares-smartphones/'],
-  ['Linio CO',           'https://www.linio.com.co/c/celulares-y-smartphones'],
-  ['PayJoy CO',          'https://www.payjoy.com/co'],
-  ['Krediya',            'https://www.krediya.com.co'],
-  ['Addi CO',            'https://www.addi.com/co'],
-  ['Alo Credit',         'https://www.alocredit.co'],
+  ['Samsung CO',  'https://www.samsung.com/co/smartphones/'],
+  ['Xiaomi CO',   'https://www.mi.com/co'],
+  ['Motorola CO', 'https://www.motorola.com/co/smartphones'],
+  ['OPPO CO',     'https://www.oppo.com/co/smartphones/'],
+  ['Realme CO',   'https://www.realme.com/co/smartphones/'],
+  ['TCL CO',      'https://www.tcl.com/co/es/smartphones.html'],
+  ['Infinix CO',  'https://www.infinixmobility.com/co'],
+  ['Honor CO',    'https://www.honor.com/co/phones/'],
+  ['PayJoy CO',   'https://www.payjoy.com/co'],
+  ['Krediya',     'https://www.krediya.com.co'],
+  ['Addi CO',     'https://www.addi.com/co'],
+  ['Alo Credit',  'https://www.alocredit.co'],
 ];
 const REFS_TTL = 15 * 24 * 60 * 60 * 1000;
 let refsCancelled = false;
@@ -1973,24 +1970,7 @@ function renderRefStatus() {
     }).join('');
     listEl.style.display = 'block';
   }
-  if (imagesEl && stored.brands) {
-    const withModels = Object.entries(stored.brands).filter(([, d]) => d.modelos?.length);
-    if (withModels.length) {
-      imagesEl.innerHTML = withModels.map(([name, d]) => `
-        <div class="refs-brand-images">
-          <div class="refs-brand-images-name">${name}</div>
-          <ul style="margin:4px 0 0 12px;padding:0;list-style:disc;font-size:11px;color:#ccc;line-height:1.7">${
-            d.modelos.slice(0, 6).map(m => {
-              const specs = m.specs ? ` <span style="color:#888;font-size:10px">${Object.values(m.specs).join(' · ')}</span>` : '';
-              return `<li>${m.nombre}${specs}</li>`;
-            }).join('')
-          }</ul>
-        </div>`).join('');
-      imagesEl.style.display = 'block';
-    } else {
-      imagesEl.style.display = 'none';
-    }
-  }
+  if (imagesEl) imagesEl.style.display = 'none';
 }
 
 function cancelarReferencias() {
