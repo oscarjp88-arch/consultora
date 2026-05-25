@@ -2216,6 +2216,16 @@ async function generarConGemini(key) {
   });
 
   const data = await res.json().catch(() => ({}));
+  console.log('[generarConGemini] Worker response:', {
+    status: res.status, ok: res.ok,
+    keys: Object.keys(data),
+    predictions: data.predictions?.length,
+    firstPredKeys: data.predictions?.[0] ? Object.keys(data.predictions[0]) : null,
+    b64Length: data.predictions?.[0]?.bytesBase64Encoded?.length,
+    label: data.label,
+    error: data.error,
+  });
+
   if (!res.ok) {
     const msg = data.error || `Error ${res.status}`;
     if (res.status === 401 || res.status === 403) throw new Error(`Sin acceso a Vertex AI: ${msg}`);
@@ -2227,7 +2237,10 @@ async function generarConGemini(key) {
 
   lastImgModelLabel = data.label || 'Imagen 3 (Vertex)';
   const mime = pred.mimeType || 'image/png';
-  return `data:${mime};base64,${pred.bytesBase64Encoded}`;
+  const b64 = pred.bytesBase64Encoded.replace(/\s/g, '');
+  const src = `data:${mime};base64,${b64}`;
+  console.log('[generarConGemini] data URL:', mime, 'b64 chars:', b64.length, 'src prefix:', src.slice(0, 40));
+  return src;
 }
 
 async function generarConDalle(key, prompt) {
@@ -2466,7 +2479,9 @@ async function generarConModelos() {
       const src = await callEngine(m.id);
       imgHistory = [src]; imgHistoryIdx = 0;
       mostrarImgVersion(src);
-      document.getElementById('img-result').style.display = 'block';
+      const imgResultEl = document.getElementById('img-result');
+      imgResultEl.style.display = 'block';
+      console.log('[generarConModelos] img-result display:', imgResultEl.style.display, '| img-section visible:', document.getElementById('img-section').classList.contains('visible'), '| img-output src length:', document.getElementById('img-output').src?.length);
       document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
       document.getElementById('img-editor').style.display = 'block';
       renderImgHistoryNav();
