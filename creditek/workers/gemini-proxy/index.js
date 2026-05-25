@@ -610,6 +610,7 @@ if (path === '/test-fetch') {
 
     const { prompt, aspectRatio = '1:1', apiKey, engine, imageUrl } = body;
     if (!prompt) return err('Campo "prompt" requerido', 400);
+    let via0Skip = null; // razón por la que Vía 0 fue omitida (para debug)
 
     // ── Gemini 3 Pro Image — endpoint global, generateContent multimodal ─────
     if (engine === 'gemini3pro') {
@@ -676,19 +677,14 @@ if (path === '/test-fetch') {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseModalities: ['IMAGE', 'TEXT'],
-              thinkingConfig: { thinkingBudget: -1 },
-              imageGenerationConfig: { imageSize: '2K' },
-            },
-            tools: [{ googleSearch: {} }],
+            contents: [{ parts: [{ text: prompt }] }],
           }),
           signal: AbortSignal.timeout(90_000),
         });
 
         if (nbRes.ok) {
-          const nbData = await nbRes.json().catch(() => ({}));
+          let nbData = {};
+          try { nbData = await nbRes.json(); } catch { /* ignore */ }
           const nbParts = nbData.candidates?.[0]?.content?.parts || [];
           const nbImg = nbParts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
           if (nbImg) {
@@ -698,10 +694,17 @@ if (path === '/test-fetch') {
               label: 'Nano Banana 2',
             }, '0: Nano Banana 2 (gemini-3.1-flash-image-preview)');
           }
+          // ok pero sin inlineData — exponer partes para diagnóstico
+          const partTypes = nbParts.map(p => p.inlineData ? `inlineData(${p.inlineData.mimeType})` : p.text ? 'text' : Object.keys(p).join(',')).join('|');
+          return err(`Via0: HTTP 200 pero sin imagen. parts=[${partTypes || 'vacío'}] candidates=${nbData.candidates?.length ?? 0}`, 502);
         } else if (nbRes.status === 401) {
           return err('GEMINI_API_KEY inválida.', 401);
+        } else {
+          // 404/400/403 → caer a Vertex AI, pero exponer el motivo como header debug
+          let errBody = '';
+          try { errBody = await nbRes.text(); } catch { /* ignore */ }
+          via0Skip = `Via0 skip: HTTP ${nbRes.status} — ${errBody.slice(0, 120)}`;
         }
-        // 404 / 400 / 403 → continuar con Vertex AI
       } catch (_) { /* timeout o red — continuar */ }
     }
 
@@ -740,7 +743,7 @@ if (path === '/test-fetch') {
           const b64 = data.predictions?.[0]?.bytesBase64Encoded;
           if (!b64) continue;
 
-          return ok({ predictions: data.predictions, model: model.id, label: model.label }, `1: Vertex AI (${model.id})`);
+          return ok({ predictions: data.predictions, model: model.id, label: model.label, ...(via0Skip && { via0Skip }) }, `1: Vertex AI (${model.id})`);
         }
       } catch (_e) {
         return err(`WIF error: ${_e.message}`, 500);
@@ -776,7 +779,7 @@ if (path === '/test-fetch') {
       const b64 = data.predictions?.[0]?.bytesBase64Encoded;
       if (!b64) continue;
 
-      return ok({ predictions: data.predictions, model: model.id, label: model.label }, `2: AI Studio Imagen (${model.id})`);
+      return ok({ predictions: data.predictions, model: model.id, label: model.label, ...(via0Skip && { via0Skip }) }, `2: AI Studio Imagen (${model.id})`);
     }
 
     for (const model of GEMINI_MODELS) {
@@ -807,6 +810,7 @@ if (path === '/test-fetch') {
         predictions: [{ bytesBase64Encoded: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType }],
         model: model.id,
         label: model.label,
+        ...(via0Skip && { via0Skip }),
       }, `2: AI Studio Gemini (${model.id})`);
     }
 
