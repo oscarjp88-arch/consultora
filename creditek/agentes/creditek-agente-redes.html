@@ -2172,17 +2172,21 @@ async function generarConGemini(key) {
     `High resolution, professional product photography quality.`,
   ].join(' ');
 
-  const MODEL = 'gemini-2.0-flash-exp-image-generation';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
-    })
+  const MODELS = [
+    'gemini-2.5-flash-preview-05-20',
+    'gemini-2.0-flash-preview-image-generation',
+  ];
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
   });
+
+  let res, usedModel;
+  for (const model of MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+    res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+    if (res.status !== 404) { usedModel = model; break; }
+  }
 
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
@@ -2195,7 +2199,7 @@ async function generarConGemini(key) {
   const part = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
   if (!part?.inlineData?.data) throw new Error('Gemini no devolvió imagen. Verifica que tu API key tiene acceso a generación de imágenes en AI Studio.');
 
-  lastImgModelLabel = 'Gemini Flash 2.5';
+  lastImgModelLabel = usedModel === 'gemini-2.5-flash-preview-05-20' ? 'Gemini 2.5 Flash' : 'Gemini 2.0 Flash';
   const mime = part.inlineData.mimeType || 'image/png';
   return `data:${mime};base64,${part.inlineData.data}`;
 }
