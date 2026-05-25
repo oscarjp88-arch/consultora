@@ -1825,7 +1825,7 @@ function buildImgPrompt() {
     ``,
     `PRODUCTO PRINCIPAL:`,
     `- Equipo: ${producto}`,
-    specsText && inclSpecs ? `- Especificaciones: ${specsText}` : null,
+    checkedSpecs.length > 0 && specsItems.length > 0 ? `- Especificaciones: ${specsItems.join(', ')}` : null,
     precio  ? `- Cuota mensual: ${precio}` : null,
     inicial ? `- Cuota inicial: ${inicial}` : null,
     `- Modalidad: ${modoLabel}`,
