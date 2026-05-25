@@ -523,6 +523,15 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <input type="text" id="inicial" placeholder="Ej: $314.500">
     </div>
     <div class="field-group">
+      <label class="checkbox-row" style="padding:6px 4px">
+        <input type="checkbox" id="chk-specs" onchange="buildImgPrompt(); document.getElementById('specs-input-wrap').style.display=this.checked?'block':'none'">
+        <label for="chk-specs" style="font-size:12px;color:var(--text2);cursor:pointer">Incluir specs técnicas en imagen</label>
+      </label>
+      <div id="specs-input-wrap" style="display:none;margin-top:4px">
+        <input type="text" id="img-specs" placeholder="Ej: 128GB, cámara 50MP, batería 5000mAh, pantalla 6.7&quot;" oninput="buildImgPrompt()" style="width:100%;background:#FFFFFF;border:1px solid rgba(11,30,61,.15);color:#0B1E3D;border-radius:var(--radius-sm);font-size:13px;padding:8px 12px;outline:none;font-family:'DM Sans',sans-serif">
+      </div>
+    </div>
+    <div class="field-group">
       <label class="field-label">Nota especial <span>opcional</span></label>
       <textarea id="nota" placeholder="Ej: Solo 3 unidades, promoción hasta el viernes..." oninput="buildImgPrompt()"></textarea>
     </div>
@@ -1746,7 +1755,10 @@ function buildImgPrompt() {
 
   const nota = document.getElementById('nota')?.value.trim() || '';
 
+  const inclSpecs = document.getElementById('chk-specs')?.checked || false;
+  const specsManual = document.getElementById('img-specs')?.value.trim() || '';
   const autoSpecs = (() => {
+    if (!inclSpecs) return '';
     const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
     if (!stored?.brands || producto.length <= 3) return '';
     const prod = producto.toLowerCase();
@@ -1760,8 +1772,11 @@ function buildImgPrompt() {
     }
     return '';
   })();
-  const specsBlock = autoSpecs
-    ? `ESPECIFICACIONES TÉCNICAS A MOSTRAR: Incluir callout labels flotantes alrededor del producto con estas specs: ${autoSpecs}. Cada label en fondo turquesa #00C4CC con texto blanco, tipografía pequeña y limpia, posicionados alrededor del teléfono sin tapar la pantalla.`
+  const specsText = specsManual || autoSpecs;
+  const specsBlock = inclSpecs
+    ? specsText
+      ? `ESPECIFICACIONES TÉCNICAS A MOSTRAR: Incluir callout labels flotantes alrededor del producto con estas specs: ${specsText}. Cada label en fondo turquesa #00C4CC con texto blanco, tipografía pequeña y limpia, posicionados alrededor del teléfono sin tapar la pantalla.`
+      : `Incluir callout labels flotantes alrededor del ${producto} con sus especificaciones técnicas clave (pantalla, cámara principal, batería, almacenamiento). Labels en fondo turquesa #00C4CC con texto blanco, tipografía pequeña, posicionados alrededor del teléfono.`
     : `NO mostrar especificaciones técnicas, callout labels ni chips de características alrededor del producto. Diseño limpio centrado en el producto y el mensaje principal.`;
 
   const refBlock = getRefBlock();
@@ -1832,18 +1847,21 @@ const BRAND_COLORS = {
   'Alo Credit':  { primary: '#00B4D8', label: 'cyan — digital credit' },
 };
 const MARKET_REFS = [
-  ['Samsung CO',  'https://www.samsung.com/co/smartphones/'],
-  ['Xiaomi CO',   'https://www.mi.com/co'],
-  ['Motorola CO', 'https://www.motorola.com/co/smartphones'],
-  ['OPPO CO',     'https://www.oppo.com/co/smartphones/'],
-  ['Realme CO',   'https://www.realme.com/co/smartphones/'],
-  ['TCL CO',      'https://www.tcl.com/co/es/smartphones.html'],
-  ['Infinix CO',  'https://www.infinixmobility.com/co'],
-  ['Honor CO',    'https://www.honor.com/co/phones/'],
-  ['PayJoy CO',   'https://www.payjoy.com/co'],
-  ['Krediya',     'https://www.krediya.com.co'],
-  ['Addi CO',     'https://www.addi.com/co'],
-  ['Alo Credit',  'https://www.alocredit.co'],
+  ['Samsung CO',         'https://www.samsung.com/co/smartphones/'],
+  ['Samsung Tiendas CO', 'https://www.tiendas.samsung.com/co/celulares/'],
+  ['Xiaomi CO',          'https://www.mi.com/co'],
+  ['Motorola CO',        'https://www.motorola.com/co/smartphones'],
+  ['OPPO CO',            'https://www.oppo.com/co/smartphones/'],
+  ['Realme CO',          'https://www.realme.com/co/smartphones/'],
+  ['TCL CO',             'https://www.tcl.com/co/es/smartphones.html'],
+  ['Infinix CO',         'https://www.infinixmobility.com/co'],
+  ['Honor CO',           'https://www.honor.com/co/phones/'],
+  ['MercadoLibre CO',    'https://listado.mercadolibre.com.co/celulares-telefonos/celulares-smartphones/'],
+  ['Linio CO',           'https://www.linio.com.co/c/celulares-y-smartphones'],
+  ['PayJoy CO',          'https://www.payjoy.com/co'],
+  ['Krediya',            'https://www.krediya.com.co'],
+  ['Addi CO',            'https://www.addi.com/co'],
+  ['Alo Credit',         'https://www.alocredit.co'],
 ];
 const REFS_TTL = 15 * 24 * 60 * 60 * 1000;
 let refsCancelled = false;
@@ -2141,7 +2159,7 @@ async function generarConGemini(key) {
     `High resolution, professional product photography quality.`,
   ].join(' ');
 
-  const MODEL = 'gemini-2.5-flash-preview-05-20';
+  const MODEL = 'gemini-2.0-flash-exp-image-generation';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
 
   const res = await fetch(url, {
@@ -2510,9 +2528,12 @@ function abrirPomelli() {
 function toggleCanvaBrief() {
   const panel = document.getElementById('canva-brief-panel');
   const btn   = document.getElementById('canva-btn');
+  const estadoAntes = { display: panel.style.display, active: btn.classList.contains('active') };
+  console.log('[toggleCanvaBrief] ANTES →', estadoAntes);
   if (btn.classList.contains('active')) {
     panel.style.display = 'none';
     btn.classList.remove('active');
+    console.log('[toggleCanvaBrief] DESPUÉS → cerrado');
     return;
   }
   buildImgPrompt(); // sync prompt antes de leer valores
@@ -2558,6 +2579,7 @@ function toggleCanvaBrief() {
   document.getElementById('canva-brief-content').innerHTML = html;
   panel.style.display = 'block';
   btn.classList.add('active');
+  console.log('[toggleCanvaBrief] DESPUÉS → abierto (display=block, active=true)');
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
