@@ -245,8 +245,8 @@ if (path === '/test-fetch') {
         'Xiaomi CO': [
           { nombre: 'Redmi Note 15 Pro 5G', specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'200MP', bateria:'5110mAh', pantalla:'6.67"' }, precioLista: null },
           { nombre: 'Redmi Note 14 5G',     specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'5110mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'Poco X7 Pro 5G',        specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'6000mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'Poco M6 Pro',           specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'64MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Poco X7 Pro 5G',       specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'6000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Poco M6 Pro',          specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'64MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
           { nombre: 'Redmi 14C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5160mAh', pantalla:'6.88"' }, precioLista: null },
           { nombre: 'Redmi 13C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.74"' }, precioLista: null },
         ],
@@ -259,30 +259,54 @@ if (path === '/test-fetch') {
           { nombre: 'Razr 50 5G',   specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'4200mAh', pantalla:'6.9"'  }, precioLista: null },
         ],
         'OPPO CO': [
-          { nombre: 'OPPO Reno14 5G',      specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'5800mAh', pantalla:'6.76"' }, precioLista: null },
-          { nombre: 'OPPO Reno14 F 5G',    specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'OPPO Reno12 F 5G',    specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'108MP', bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'OPPO A60',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'OPPO Find N6',        specs: { ram:'16GB RAM', almacenamiento:'512GB', camara:'50MP',  bateria:'5600mAh', pantalla:'8.0"'  }, precioLista: null },
-          { nombre: 'OPPO A6s',            specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'13MP',  bateria:'5100mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'OPPO Reno14 5G',    specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'5800mAh', pantalla:'6.76"' }, precioLista: null },
+          { nombre: 'OPPO Reno14 F 5G',  specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'OPPO Reno12 F 5G',  specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'108MP', bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'OPPO A60',          specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'OPPO Find N6',      specs: { ram:'16GB RAM', almacenamiento:'512GB', camara:'50MP',  bateria:'5600mAh', pantalla:'8.0"'  }, precioLista: null },
+          { nombre: 'OPPO A6s',          specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'13MP',  bateria:'5100mAh', pantalla:'6.67"' }, precioLista: null },
         ],
         'Realme CO': [
-          { nombre: 'Realme GT 6',        specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5500mAh', pantalla:'6.78"' }, precioLista: null },
-          { nombre: 'Realme 12 Pro+',     specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.7"'  }, precioLista: null },
-          { nombre: 'Realme C67',         specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP',bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
-          { nombre: 'Realme Narzo 70x 5G',specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'Realme C55',         specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'64MP', bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
-          { nombre: 'Realme 12 5G',       specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
+          { nombre: 'Realme GT 6',         specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'5500mAh', pantalla:'6.78"' }, precioLista: null },
+          { nombre: 'Realme 12 Pro+',      specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.7"'  }, precioLista: null },
+          { nombre: 'Realme C67',          specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
+          { nombre: 'Realme Narzo 70x 5G', specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Realme C55',          specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'64MP',  bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
+          { nombre: 'Realme 12 5G',        specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
+        ],
+        'TCL MX': [
+          { nombre: 'TCL 50 5G',    specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5010mAh', pantalla:'6.6"'  }, precioLista: null },
+          { nombre: 'TCL 40 XL 5G', specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5010mAh', pantalla:'6.78"' }, precioLista: null },
+          { nombre: 'TCL 40 SE',    specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5010mAh', pantalla:'6.75"' }, precioLista: null },
+          { nombre: 'TCL 505',      specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.75"' }, precioLista: null },
+          { nombre: 'TCL 30+',      specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.7"'  }, precioLista: null },
+        ],
+        'Honor MX': [
+          { nombre: 'Honor X8b',        specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'4500mAh', pantalla:'6.7"'  }, precioLista: null },
+          { nombre: 'Honor 90 Lite',    specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'100MP', bateria:'4500mAh', pantalla:'6.7"'  }, precioLista: null },
+          { nombre: 'Honor X7b',        specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'6000mAh', pantalla:'6.8"'  }, precioLista: null },
+          { nombre: 'Honor X6b',        specs: { ram:'6GB RAM',  almacenamiento:'128GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.56"' }, precioLista: null },
+          { nombre: 'Honor Magic6 Lite',specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'100MP', bateria:'5000mAh', pantalla:'6.78"' }, precioLista: null },
+        ],
+        'Infinix MX': [
+          { nombre: 'Infinix Note 40 Pro',  specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'4600mAh', pantalla:'6.78"' }, precioLista: null },
+          { nombre: 'Infinix Hot 40i',      specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'48MP',  bateria:'5000mAh', pantalla:'6.56"' }, precioLista: null },
+          { nombre: 'Infinix Zero 30 5G',   specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'5000mAh', pantalla:'6.78"' }, precioLista: null },
+          { nombre: 'Infinix Hot 30i',      specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'13MP',  bateria:'5000mAh', pantalla:'6.56"' }, precioLista: null },
+          { nombre: 'Infinix Smart 8',      specs: { ram:'4GB RAM',  almacenamiento:'64GB',  camara:'13MP',  bateria:'5000mAh', pantalla:'6.6"'  }, precioLista: null },
         ],
       };
 
-      // Samsung: fetch dinámico desde samsung.com/co (JSON-LD con modelos y precios actuales)
+      // Fetch dinámico: Samsung desde samsung.com/co (JSON-LD); demás marcas desde sus sitios MX/CL
       const brands = [
         { marca: 'Samsung CO',  urls: ['https://www.samsung.com/co/smartphones/all-smartphones/'] },
         { marca: 'Xiaomi CO',   urls: [] },
-        { marca: 'Motorola CO', urls: [] },
-        { marca: 'OPPO CO',     urls: [] },
-        { marca: 'Realme CO',   urls: [] },
+        { marca: 'Motorola CO', urls: ['https://www.motorola.com/mx/smartphones', 'https://www.motorola.com/cl/smartphones'] },
+        { marca: 'OPPO CO',     urls: ['https://www.oppo.com/mx/smartphones/'] },
+        { marca: 'Realme CO',   urls: ['https://www.realme.com/cl/smartphones/', 'https://www.realme.com/pe/smartphones/'] },
+        { marca: 'TCL MX',      urls: ['https://www.tcl.com/mx/es/smartphones', 'https://www.tcl.com/mx/es/smartphones.html'] },
+        { marca: 'Honor MX',    urls: ['https://www.honor.com/mx/phones/'] },
+        { marca: 'Infinix MX',  urls: ['https://www.infinixmobility.com/mx'] },
       ];
 
       // Lee hasta maxBytes del body para no cargar páginas enteras en memoria
@@ -318,17 +342,26 @@ if (path === '/test-fetch') {
         return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
       }
 
-      // Extrae specs de RAM/cámara/batería/pantalla de un bloque de texto
+      // Extrae specs de RAM/cámara/batería/pantalla de texto en español o inglés
       function parseSpecs(text) {
         const specs = {};
-        const ram     = text.match(/(\d+)\s*GB[\s+](?:de\s+)?RAM/i);
-        const storage = text.match(/(\d+)\s*GB[\s+](?:de\s+)?(?:almacenamiento|ROM|storage|memoria\s+interna)/i);
-        const cam     = text.match(/(\d+)\s*MP\s+(?:c[aá]mara|camera|principal|main)/i)
-                     || text.match(/c[aá]mara[^.]{0,30}?(\d+)\s*MP/i)
-                     || text.match(/(\d+)\s*MP/i);
-        const bat     = text.match(/(\d[\d.]*)\s*mAh/i);
-        const screen  = text.match(/(\d+[.,]\d+)\s*(?:pulgadas|pulg\b|["″]|inch)/i);
-        const chip    = text.match(/(?:Snapdragon|Dimensity|Exynos|Helio|MediaTek)\s+[\w\d]+/i);
+        // RAM — "8GB RAM" / "RAM: 8GB" / "8 GB de RAM"
+        const ram = text.match(/(\d+)\s*GB\s+(?:de\s+)?RAM/i)
+                 || text.match(/RAM[:\s]+(\d+)\s*GB/i);
+        // Almacenamiento — español e inglés (storage / ROM / internal)
+        const storage = text.match(/(\d+)\s*GB\s+(?:de\s+)?(?:almacenamiento|ROM|storage|memoria\s+interna|internal)/i)
+                     || text.match(/(?:storage|almacenamiento|ROM)[:\s]+(\d+)\s*GB/i);
+        // Cámara principal — con o sin la palabra cámara/camera
+        const cam = text.match(/(\d+)\s*MP\s+(?:c[aá]mara|camera|principal|main|rear|trasera)/i)
+                 || text.match(/(?:c[aá]mara|camera)[^.]{0,30}?(\d+)\s*MP/i)
+                 || text.match(/(\d+)\s*MP/i);
+        // Batería — mAh
+        const bat = text.match(/(\d[\d.]*)\s*mAh/i);
+        // Pantalla — pulgadas / inches / símbolo " ″
+        const screen = text.match(/(\d+[.,]\d+)\s*(?:pulgadas|pulg\b|["″]|inch(?:es)?)/i)
+                    || text.match(/(?:pantalla|display|screen)[:\s]+(\d+[.,]\d+)/i);
+        // Procesador
+        const chip = text.match(/(?:Snapdragon|Dimensity|Exynos|Helio[_ ]?[GP]?\d|MediaTek\s+\w+)\s*[\w\d+]*/i);
         if (ram)     specs.ram            = ram[1] + 'GB RAM';
         if (storage) specs.almacenamiento = storage[1] + 'GB';
         if (cam)     specs.camara         = cam[1] + 'MP';
@@ -402,7 +435,7 @@ if (path === '/test-fetch') {
             const text = stripTags(m[1]).trim();
             if (text.length < 6 || text.length > 120 || seen.has(text)) continue;
             // Detecta nombre de marca O specs inline (títulos MercadoLibre incluyen RAM/GB)
-            const hasModel = /Galaxy|Redmi|Poco|Narzo|Moto\s*[A-Z]|Razr|Stylus|OPPO\s*[A-Z]|Reno\d|Find\s*[NX]|Realme\s*\d|GT\s*\d|Note\s*\d+\s*Pro|Samsung|Xiaomi|Motorola/i.test(text);
+            const hasModel = /Galaxy|Redmi|Poco|Narzo|Moto\s*[A-Z]|Razr|Stylus|OPPO\s*[A-Z]|Reno\d|Find\s*[NX]|Realme\s*\d|GT\s*\d|Note\s*\d+\s*Pro|Samsung|Xiaomi|Motorola|TCL\s*\d|Honor\s*[X\d]|Magic\d|Infinix\s+(?:Hot|Note|Smart|Zero)|Infinix|Honor|TCL/i.test(text);
             const hasSpec  = /\d+\s*GB|\d+\s*MP|\d{4}\s*mAh/i.test(text);
             if (!hasModel && !hasSpec) continue;
             seen.add(text);
@@ -419,15 +452,17 @@ if (path === '/test-fetch') {
               .replace(/<footer[\s\S]*?<\/footer>/gi, '')
           ).slice(0, 1000);
 
+          // Si el live-fetch no extrajo modelos, usar datos estáticos como respaldo
+          const finalModelos = modelos.length ? modelos.slice(0, 12) : (STATIC[marca] || []);
           return {
             marca,
             status,
             url: usedUrl,
-            modelos: modelos.slice(0, 12),
+            modelos: finalModelos,
             contexto: [ogTitle, metaDesc].filter(Boolean).join(' | ').slice(0, 300) || plainText.slice(0, 300),
           };
         } catch (e) {
-          return { marca, modelos: [], contexto: '', status, url: usedUrl, error: e.message };
+          return { marca, modelos: STATIC[marca] || [], contexto: '', status, url: usedUrl, error: e.message };
         }
       }
 
