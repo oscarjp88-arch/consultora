@@ -1761,8 +1761,22 @@ function buildImgPrompt() {
 
   // ── Financieras ──────────────────────────────────────────────────
   const selectedFins = getSelectedFinancieras();
+  const _refsForFin = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
+  const FIN_CONTEXT_FALLBACK = {
+    payjoy:    { nombre: 'PayJoy CO',  tagline: 'Financia desde $0 de inicial', beneficios: 'Aprobación inmediata con cédula · Sin codeudor' },
+    krediya:   { nombre: 'Krediya',    tagline: 'Crédito digital rápido',       beneficios: 'Proceso 100% digital · Aprobación en minutos' },
+    addi:      { nombre: 'Addi CO',    tagline: 'Compra ahora, paga después',   beneficios: 'BNPL · Sin intereses en plazos cortos' },
+    alocredit: { nombre: 'Alo Credit', tagline: 'Crédito fácil',               beneficios: 'Inmediato · Sin historial crediticio requerido' },
+  };
   const finStrip = selectedFins.length
     ? `Franja inferior: banda horizontal delgada (fondo blanco o semitransparente) con logos pequeños de: ${selectedFins.map(f => f.label).join(', ')}. Logos limpios, legibles, alineados horizontalmente con espaciado uniforme.`
+    : '';
+  const finContextBlock = selectedFins.length
+    ? `\nFINANCIERAS ALIADAS — contexto de marca:\n${selectedFins.map(f => {
+        const stored = _refsForFin?.brands?.[FIN_CONTEXT_FALLBACK[f.id]?.nombre]?.finInfo;
+        const ctx = stored || FIN_CONTEXT_FALLBACK[f.id];
+        return ctx ? `- ${ctx.nombre || f.label}: ${ctx.tagline}. ${ctx.beneficios}.` : `- ${f.label}`;
+      }).join('\n')}`
     : '';
 
   // ── Precios ──────────────────────────────────────────────────────
@@ -1824,8 +1838,9 @@ function buildImgPrompt() {
     `- Dominio de color: azul marino + turquesa ocupan mínimo el 80% del diseño. Los colores naturales del producto (carcasa, pantalla) pueden aparecer pero no dominan.`,
     `- Logo Creditek: esquina superior derecha — símbolo circular turquesa con check/palomita + wordmark "Creditek" en Montserrat Bold. NO modificar, escalar de forma extraña ni ocultar el logo.`,
     `- Tipografía: Montserrat Bold para titulares y cifras; DM Sans para textos secundarios`,
-    finStrip     ? `- ${finStrip}`     : null,
-    fechaImgBlock ? `- ${fechaImgBlock}` : null,
+    finStrip        ? `- ${finStrip}`        : null,
+    finContextBlock ? finContextBlock         : null,
+    fechaImgBlock   ? `- ${fechaImgBlock}`    : null,
     ``,
     `RESTRICCIONES (cumplir todas sin excepción):`,
     `- IDIOMA: TODOS los textos en la imagen en español colombiano. Nunca en inglés, ni parcialmente.`,
@@ -2017,6 +2032,12 @@ async function actualizarReferencias() {
         else brands[r.marca] = { url: '', keywords: '', modelos };
       }
     }
+    if (workerData?.financieras) {
+      for (const [nombre, info] of Object.entries(workerData.financieras)) {
+        if (!brands[nombre]) brands[nombre] = { url: info.url || '', keywords: '' };
+        brands[nombre].finInfo = info;
+      }
+    }
     localStorage.setItem('ck_referencias', JSON.stringify({ timestamp: Date.now(), brands }));
     showToast('✓ Referencias del mercado actualizadas');
   }
@@ -2034,17 +2055,21 @@ function showImgSection() {
   updateImgKeyStatus();
   syncModelUI();
   loadLogoBase64();
-  // Refresh brand-refs modelos cache silently in background
+  // Refresh brand-refs modelos + financieras cache silently in background
   fetch('https://creditek-gemini-proxy.comercial-853.workers.dev/brand-references')
     .then(r => r.ok ? r.json() : null)
     .then(data => {
-      if (!data?.results) return;
+      if (!data) return;
       const stored = JSON.parse(localStorage.getItem('ck_referencias') || '{"brands":{}}');
       const brands = stored.brands || {};
-      for (const r of data.results) {
+      for (const r of (data.results || [])) {
         const modelos = (r.modelos || []).map(({ nombre, specs, imagenRef }) => ({ nombre, specs, imagenRef }));
         if (brands[r.marca]) brands[r.marca].modelos = modelos;
         else brands[r.marca] = { url: '', keywords: '', modelos };
+      }
+      for (const [nombre, info] of Object.entries(data.financieras || {})) {
+        if (!brands[nombre]) brands[nombre] = { url: info.url || '', keywords: '' };
+        brands[nombre].finInfo = info;
       }
       localStorage.setItem('ck_referencias', JSON.stringify({ timestamp: Date.now(), brands }));
     })

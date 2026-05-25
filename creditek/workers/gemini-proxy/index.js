@@ -297,6 +297,34 @@ if (path === '/test-fetch') {
         ],
       };
 
+      // Contexto estático de financieras aliadas — se usa para enriquecer prompts de imagen
+      const FINANCIERAS_INFO = {
+        'PayJoy CO': {
+          tagline: 'Financia tu celular desde $0 de inicial',
+          beneficios: 'Aprobación inmediata con cédula · Sin codeudor · Cuotas desde $29.900/mes',
+          url: 'https://www.payjoy.com/co',
+          color: '#00A651',
+        },
+        'Krediya': {
+          tagline: 'Crédito digital rápido para tu celular',
+          beneficios: 'Proceso 100% digital · Aprobación en minutos · Sin papelería',
+          url: 'https://www.krediya.com.co',
+          color: '#FF6B00',
+        },
+        'Addi CO': {
+          tagline: 'Compra ahora, paga después — BNPL',
+          beneficios: 'Divide en cuotas sin salir de la tienda · Sin intereses en plazos cortos · Aprobación instantánea',
+          url: 'https://www.addi.com/co',
+          color: '#A259FF',
+        },
+        'Alo Credit': {
+          tagline: 'Crédito fácil para tu celular',
+          beneficios: 'Crédito inmediato · Para todos los colombianos · Sin historial crediticio requerido',
+          url: 'https://www.alocredit.co',
+          color: '#00B4D8',
+        },
+      };
+
       // Fetch dinámico: Samsung desde samsung.com/co (JSON-LD); demás marcas desde sus sitios MX/CL
       const brands = [
         { marca: 'Samsung CO',  urls: ['https://www.samsung.com/co/smartphones/all-smartphones/'] },
@@ -524,7 +552,7 @@ if (path === '/test-fetch') {
       }
 
       const results = await Promise.all(brands.map(extractModels));
-      return ok({ results });
+      return ok({ results, financieras: FINANCIERAS_INFO });
     }
 
     if (path === '/health') {
