@@ -405,7 +405,18 @@ if (path === '/test-fetch') {
         return m ? '$' + m[1] : null;
       }
 
-      // Google Shopping CO — fallback para marcas cuyo sitio oficial no es accesible
+      // Palabras clave por marca para detectar modelos en títulos de Google Shopping / Amazon
+      const BRAND_KEYWORDS = {
+        'Xiaomi':   ['xiaomi', 'redmi', 'poco'],
+        'Motorola': ['motorola', 'moto g', 'moto e', 'moto s', 'razr'],
+        'Realme':   ['realme', 'narzo'],
+        'TCL':      ['tcl'],
+        'OPPO':     ['oppo', 'reno'],
+        'Honor':    ['honor'],
+        'Infinix':  ['infinix'],
+      };
+
+      // Google Shopping CO — fuente live para marcas sin web oficial accesible
       async function fetchGoogleShoppingModelos(marcaBase) {
         const q = encodeURIComponent(marcaBase + ' celular colombia');
         const url = `https://www.google.com.co/search?q=${q}&tbm=shop&hl=es&gl=co`;
@@ -414,17 +425,17 @@ if (path === '/test-fetch') {
           if (!html || status !== 200) return null;
           const seen = new Set();
           const modelos = [];
-          const brandLc = marcaBase.toLowerCase();
+          const keywords = BRAND_KEYWORDS[marcaBase] || [marcaBase.toLowerCase()];
+          const matches = (t) => keywords.some(kw => t.toLowerCase().includes(kw));
           for (const m of html.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi)) {
             const text = stripTags(m[1]).trim();
-            if (!text || text.length > 120 || seen.has(text)) continue;
-            if (!text.toLowerCase().includes(brandLc)) continue;
+            if (!text || text.length > 120 || seen.has(text) || !matches(text)) continue;
             seen.add(text);
             modelos.push({ nombre: text, specs: parseSpecs(text), precioLista: parsePrice(text) });
           }
           for (const m of html.matchAll(/aria-label="([^"]{10,100})"/g)) {
             const text = m[1].trim();
-            if (seen.has(text) || !text.toLowerCase().includes(brandLc)) continue;
+            if (seen.has(text) || !matches(text)) continue;
             seen.add(text);
             modelos.push({ nombre: text, specs: parseSpecs(text), precioLista: null });
           }
@@ -453,10 +464,18 @@ if (path === '/test-fetch') {
         } catch { return null; }
       }
 
+      const GS_BRANDS = ['Xiaomi', 'Motorola', 'Realme', 'TCL', 'OPPO', 'Infinix', 'Honor'];
+
       async function extractModels({ marca, urls }) {
-        // Marcas con datos estáticos: retornar directamente sin fetch
-        if (!urls.length && STATIC[marca]) {
-          return { marca, status: 200, url: 'static', modelos: STATIC[marca], contexto: '' };
+        const marcaBase = marca.replace(/\s+(CO|MX|CL|PE)$/, '');
+
+        // Sin URLs propias: intentar Google Shopping antes de caer a static
+        if (!urls.length) {
+          if (GS_BRANDS.includes(marcaBase)) {
+            const gsResult = await fetchGoogleShoppingModelos(marcaBase);
+            if (gsResult?.length) return { marca, status: 200, url: 'google-shopping', modelos: gsResult.slice(0, 12), contexto: '' };
+          }
+          if (STATIC[marca]) return { marca, status: 200, url: 'static', modelos: STATIC[marca], contexto: '' };
         }
 
         let html = '', status = 0, usedUrl = '';
@@ -466,7 +485,13 @@ if (path === '/test-fetch') {
           status = result.status;
         }
         try {
-          if (!html) return { marca, modelos: STATIC[marca] || [], status, url: usedUrl };
+          if (!html) {
+            if (GS_BRANDS.includes(marcaBase)) {
+              const gsResult = await fetchGoogleShoppingModelos(marcaBase);
+              if (gsResult?.length) return { marca, status: 200, url: 'google-shopping', modelos: gsResult.slice(0, 12), contexto: '' };
+            }
+            return { marca, modelos: STATIC[marca] || [], status, url: usedUrl };
+          }
 
           const seen   = new Set();
           const modelos = [];
@@ -530,19 +555,30 @@ if (path === '/test-fetch') {
 
           // Si el live-fetch no extrajo modelos, intentar Google Shopping + Amazon antes de static
           let finalModelos = modelos.length ? modelos.slice(0, 12) : null;
-          if (!finalModelos) {
-            const marcaBase = marca.replace(/\s+(CO|MX|CL|PE)$/, '');
-            if (['OPPO', 'Realme', 'TCL', 'Infinix', 'Honor'].includes(marcaBase)) {
-              const gsResult = await fetchGoogleShoppingModelos(marcaBase);
-              finalModelos = gsResult?.length ? gsResult
-                : (await fetchAmazonModelos(marcaBase) || null);
+          let gsUrl = null;   // 'google-shopping' | 'amazon-mx' | null
+
+          if (!finalModelos && GS_BRANDS.includes(marcaBase)) {
+            const gsResult = await fetchGoogleShoppingModelos(marcaBase);
+            if (gsResult?.length) { finalModelos = gsResult; gsUrl = 'google-shopping'; }
+            else {
+              const amzResult = await fetchAmazonModelos(marcaBase);
+              if (amzResult?.length) { finalModelos = amzResult; gsUrl = 'amazon-mx'; }
             }
           }
-          finalModelos = finalModelos || STATIC[marca] || [];
+
+          if (!finalModelos) finalModelos = STATIC[marca] || [];
+
+          // Preservar URL real cuando el sitio fue accesible (aunque los modelos vengan
+          // de GS/STATIC). El HTML usa url+status+n_modelos para clasificar live/static.
+          const returnUrl = gsUrl                          ? gsUrl
+            : (usedUrl && status === 200 && finalModelos.length) ? usedUrl
+            : finalModelos === STATIC[marca]              ? 'static'
+            : usedUrl || 'static';
+
           return {
             marca,
-            status,
-            url: usedUrl,
+            status: gsUrl ? 200 : status,
+            url: returnUrl,
             modelos: finalModelos,
             contexto: [ogTitle, metaDesc].filter(Boolean).join(' | ').slice(0, 300) || plainText.slice(0, 300),
           };

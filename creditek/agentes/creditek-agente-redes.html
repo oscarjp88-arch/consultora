@@ -2033,7 +2033,7 @@ async function actualizarReferencias() {
         // Guardar nombre, specs e imagenRef. precioLista se descarta — el precio viene del formulario.
         const modelos = (r.modelos || []).map(({ nombre, specs, imagenRef }) => ({ nombre, specs, imagenRef }));
         const src = r.url === 'static' ? 'static'
-          : (r.url === 'google-shopping' || r.url === 'amazon-mx') ? 'fallback'
+          : (r.url === 'google-shopping' || r.url === 'amazon-mx') ? (modelos.length > 0 ? 'live' : 'static')
           : (r.url && r.status === 200 && modelos.length > 0) ? 'live' : 'static';
         if (brands[r.marca]) { brands[r.marca].modelos = modelos; brands[r.marca].src = src; }
         else brands[r.marca] = { url: r.url || '', keywords: '', modelos, src };
@@ -2072,7 +2072,7 @@ function showImgSection() {
       for (const r of (data.results || [])) {
         const modelos = (r.modelos || []).map(({ nombre, specs, imagenRef }) => ({ nombre, specs, imagenRef }));
         const src = r.url === 'static' ? 'static'
-          : (r.url === 'google-shopping' || r.url === 'amazon-mx') ? 'fallback'
+          : (r.url === 'google-shopping' || r.url === 'amazon-mx') ? (modelos.length > 0 ? 'live' : 'static')
           : (r.url && r.status === 200 && modelos.length > 0) ? 'live' : 'static';
         if (brands[r.marca]) { brands[r.marca].modelos = modelos; brands[r.marca].src = src; }
         else brands[r.marca] = { url: r.url || '', keywords: '', modelos, src };
