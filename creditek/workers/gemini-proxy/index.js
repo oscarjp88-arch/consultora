@@ -197,6 +197,45 @@ if (path === '/test-fetch') {
       return ok({ results });
     }
 
+    if (path === '/test-brands') {
+      const TEST_URLS = [
+        'https://www.tcl.com/mx/es/smartphones.html',
+        'https://www.motorola.com/mx/smartphones',
+        'https://www.oppo.com/mx/smartphones/',
+        'https://www.realme.com/mx/smartphones/',
+        'https://www.infinixmobility.com/mx',
+        'https://www.honor.com/mx/phones/',
+        'https://listado.mercadolibre.com.co/celulares-telefonos/celulares-smartphones/',
+        'https://www.linio.com.co/c/celulares-y-smartphones',
+        'https://www.ktronix.com/celulares',
+        'https://www.falabella.com.co/falabella-co/category/cat40062/Celulares',
+      ];
+      const results = await Promise.all(TEST_URLS.map(async url => {
+        const t0 = Date.now();
+        try {
+          const res = await fetch(url, {
+            method: 'HEAD',
+            redirect: 'manual',
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              'Accept-Language': 'es-CO,es;q=0.9',
+            },
+            signal: AbortSignal.timeout(8_000),
+          });
+          return {
+            url,
+            status: res.status,
+            ok: res.status === 200 || res.status === 301 || res.status === 302,
+            location: res.headers.get('location') || null,
+            ms: Date.now() - t0,
+          };
+        } catch (e) {
+          return { url, status: null, ok: false, error: e.message, ms: Date.now() - t0 };
+        }
+      }));
+      return ok({ results });
+    }
+
     if (path === '/brand-references') {
       // Modelos populares en Colombia 2025 (actualizar manualmente c/trimestre)
       // Samsung se obtiene dinámicamente desde su sitio web (JSON-LD con precios)
