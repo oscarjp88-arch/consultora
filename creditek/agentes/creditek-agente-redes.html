@@ -1750,7 +1750,7 @@ function buildImgPrompt() {
     formal:
       `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
     costeno:
-      `Tono caribeño colombiano: alegre, festivo, cercano y con sabor costeño. Usar conceptos y frases como: "¡Pa que te veas bien papi!", "¡Ese sí es equipo, hermano!", "¡Lo mejor pa ti y pa tu familia!", "¡Sin cuento — entra y llévalo!". Energético, celebratorio, con el calor y la picardía del Caribe colombiano.`,
+      `Tono caribeño colombiano: alegre, festivo, cercano y con sabor costeño. Usar conceptos y frases como: "¡Pa que te veas bien papi!", "¡Ese sí es equipo, hermano!", "¡Lo mejor pa ti y pa tu familia!", "¡Sin cuento — entra y llévalo!". Energético, celebratorio, con el calor y la picardía del Caribe colombiano. ELEMENTOS VISUALES CARIBEÑOS OBLIGATORIOS: incluir elementos decorativos del Caribe colombiano como palmas, tamboras, sombrero vueltiao, colores vibrantes tropicales, confeti, ambiente festivo costeño — no solo texto, sino elementos visuales que transmitan la cultura caribeña colombiana.`,
     chistoso:
       `Tono de humor comercial ligero y desenfadado que genere deseo de compra con una sonrisa. Crear frases originales que incorporen específicamente el nombre "${producto}" y contrasten con el celular viejo del comprador. El humor debe hacer referencia directa al modelo, por ejemplo: "Deja ese ladrillo y pásate al ${producto}", "¿Tu cámara aún toma fotos en blanco y negro sin querer? El ${producto} te espera", "Tu celular ya pidió jubilación — el ${producto} llegó a rescatarte". Humor cálido, colombiano y comercial — divertido sin perder elegancia ni credibilidad.`,
     minimalista:
@@ -1787,7 +1787,7 @@ function buildImgPrompt() {
     alocredit: { nombre: 'Alo Credit', tagline: 'Crédito fácil',               beneficios: 'Inmediato · Sin historial crediticio requerido' },
   };
   const finStrip = selectedFins.length
-    ? `Franja inferior: banda horizontal delgada (fondo blanco o semitransparente) con logos pequeños de: ${selectedFins.map(f => f.label).join(', ')}. Logos limpios, legibles, alineados horizontalmente con espaciado uniforme.`
+    ? `Franja inferior: banda horizontal delgada (fondo blanco o semitransparente) con logos pequeños de: ${selectedFins.map(f => f.label).join(', ')}. Logos limpios, legibles, alineados horizontalmente con espaciado uniforme. Cada logo de financiera aparece UNA SOLA VEZ en la franja inferior. NO duplicar logos.`
     : '';
   const finContextBlock = selectedFins.length
     ? `\nFINANCIERAS ALIADAS — contexto de marca:\n${selectedFins.map(f => {
@@ -1867,7 +1867,7 @@ function buildImgPrompt() {
     `- NO modificar ni distorsionar el logo Creditek bajo ninguna circunstancia.`,
     `- NO pixelar, desenfocar ni cortar textos. Todos los textos deben ser legibles y nítidos.`,
     `- NO deformar el celular. Proporciones reales del dispositivo, iluminación de estudio profesional.`,
-    `- CELULAR EXACTO: el celular en la imagen debe ser exactamente el ${producto} — NO usar celular genérico ni inventar el diseño.`,
+    `- CELULAR EXACTO: El modelo en la imagen debe ser EXACTAMENTE el ${producto} especificado. NO inventar nombres de modelos inexistentes. NO usar celular genérico.`,
     `- NO incluir frases como "aprobado para todos sin condiciones", "sin ningún requisito", "compra ya o pierdes todo". Tono siempre comercial y confiable.`,
     `- PRECIOS: ${priceRule}`,
     brandBlock    ? `- ${brandBlock}`    : null,
