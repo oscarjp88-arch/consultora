@@ -96,11 +96,25 @@
   .pedido-tabla td{padding:10px;font-size:13px;border-bottom:1px solid var(--gris2);}
   .pedido-tabla tr:last-child td{border-bottom:none;}
   .sin-pedidos{text-align:center;padding:60px 20px;color:#7a8899;font-size:15px;}
+
+  .excel-section{background:var(--blanco);border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:0 2px 12px rgba(11,30,61,0.06);border:2px solid #e8f4fd;}
+  .excel-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#0D5FA3;letter-spacing:1px;margin-bottom:8px;}
+  .excel-desc{font-size:13px;color:#7a8899;margin-bottom:16px;line-height:1.5;}
+  .excel-drop{border:2px dashed #00C4CC;border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--gris);}
+  .excel-drop:hover{background:#f0fdfe;border-color:#0B1E3D;}
+  .excel-drop input{display:none;}
+  .excel-drop-icon{font-size:36px;margin-bottom:8px;}
+  .excel-drop-text{font-size:13px;color:#7a8899;}
+  .excel-drop-text strong{color:var(--azul);}
+  .excel-status{margin-top:12px;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;display:none;}
+  .excel-status.ok{background:#e8fdf0;color:#137333;display:block;}
+  .excel-status.err{background:#fce8e6;color:#c0392b;display:block;}
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:199;display:none;}
   .overlay.open{display:block;}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--azul);color:var(--turquesa);padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;z-index:999;transition:transform 0.3s;box-shadow:0 4px 20px rgba(11,30,61,0.4);}
   .toast.show{transform:translateX(-50%) translateY(0);}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <header>
@@ -200,6 +214,18 @@
         <div class="rstat"><div class="rstat-num" id="rTotalValor">$0</div><div class="rstat-label">Valor compra proveedor</div></div>
       </div>
     </div>
+    <!-- CARGA DE EXCEL -->
+    <div class="excel-section">
+      <div class="excel-title">📊 Actualizar Precios</div>
+      <div class="excel-desc">Sube el archivo <strong>Creditek_Matriz_Maestra_Proveedores_Formulada.xlsx</strong> para actualizar el catálogo con los precios de la semana. El portal lee la hoja <strong>Comparativo</strong>, columnas T (Proveedor), U (Referencia) y W (Precio Venta Tiendas).</div>
+      <div class="excel-drop" onclick="document.getElementById('excelInput').click()" id="excelDrop">
+        <input type="file" id="excelInput" accept=".xlsx,.xls" onchange="cargarExcel(this)">
+        <div class="excel-drop-icon">📁</div>
+        <div class="excel-drop-text">Clic para seleccionar el archivo Excel<br><strong>o arrastra y suelta aquí</strong></div>
+      </div>
+      <div class="excel-status" id="excelStatus"></div>
+    </div>
+
     <div class="cierre-section">
       <div class="cierre-title">🔴 Cierre de Periodo</div>
       <div class="cierre-desc">Envía email consolidado a <strong>comercial@crediteksas.com</strong> y <strong>gestion@crediteksas.com</strong> con el reporte: <strong>Proveedor → Ciudad → Productos</strong> + detalle de reparto por tienda.</div>
@@ -238,6 +264,133 @@ function cerrarSesion(){document.getElementById('oscarLogin').style.display='blo
 function cambiarTab(tab,btn){tabActual=tab;document.querySelectorAll('.tab-btn').forEach(b=>b.className='tab-btn');btn.className='tab-btn active';renderConsolidado();}
 function renderConsolidado(){const total=pedidosConfirmados.reduce((s,p)=>s+p.items.reduce((ss,i)=>ss+i.cantidad,0),0);const valor=pedidosConfirmados.reduce((s,p)=>s+p.items.reduce((ss,i)=>ss+i.producto.precioCompra*i.cantidad,0),0);document.getElementById('rTotalPedidos').textContent=pedidosConfirmados.length;document.getElementById('rTotalUnidades').textContent=total;document.getElementById('rTotalValor').textContent=formatCOP(valor);if(!pedidosConfirmados.length){document.getElementById('consolidadoContainer').innerHTML='<div class="sin-pedidos">📭 No hay pedidos confirmados aún.</div>';return;}if(tabActual==='pedidos'){document.getElementById('consolidadoContainer').innerHTML=pedidosConfirmados.map(p=>{const tot=p.items.reduce((s,i)=>s+i.producto.precioVenta*i.cantidad,0);return`<div class="pedido-card"><div class="pedido-card-header"><div><div class="pedido-tienda-nombre">🏪 ${p.tienda}</div><div class="pedido-ciudad">📍 ${p.ciudad} · ${p.fecha}</div></div><div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--turquesa)">${formatCOP(tot)}</div></div><table class="pedido-tabla"><tr><th>Producto</th><th>Proveedor</th><th>Cant.</th><th>Total</th></tr>${p.items.map(i=>`<tr><td>${i.producto.nombre}</td><td style="font-size:11px;color:#7a8899">${i.producto.proveedor}</td><td>${i.cantidad}</td><td>${formatCOP(i.producto.precioVenta*i.cantidad)}</td></tr>`).join('')}</table></div>`;}).join('');}else{const porCiudad={};pedidosConfirmados.forEach(p=>{if(!porCiudad[p.ciudad])porCiudad[p.ciudad]=[];porCiudad[p.ciudad].push(p);});document.getElementById('consolidadoContainer').innerHTML=Object.entries(porCiudad).map(([ciudad,pedidos])=>`<div class="pedido-card"><div class="pedido-card-header"><div class="pedido-tienda-nombre">📍 ${ciudad}</div></div>${pedidos.map(p=>`<div style="margin-bottom:12px"><div class="pedido-ciudad" style="margin-bottom:8px">🏪 ${p.tienda}</div><table class="pedido-tabla"><tr><th>Producto</th><th>Cant.</th></tr>${p.items.map(i=>`<tr><td>${i.producto.nombre}</td><td>${i.cantidad}</td></tr>`).join('')}</table></div>`).join('')}</div>`).join('');}}
 async function cerrarPeriodo(){if(!pedidosConfirmados.length){mostrarToast('⚠ No hay pedidos para cerrar');return;}const btn=document.getElementById('btnCierre');btn.disabled=true;btn.innerHTML='⏳ Enviando reporte...';const payload=[];pedidosConfirmados.forEach(pedido=>{pedido.items.forEach(item=>{payload.push({tienda:pedido.tienda,ciudad:pedido.ciudad,producto:item.producto.nombre,cantidad:item.cantidad,proveedor:item.producto.proveedor,precioProveedor:item.producto.precioCompra,precioCredilek:item.producto.precioVenta,fecha:pedido.fecha});});});try{await fetch(APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});mostrarToast('✅ Reporte enviado a comercial y gestion@crediteksas.com');setTimeout(()=>{if(confirm('¿Limpiar pedidos del periodo cerrado?')){pedidosConfirmados=[];renderConsolidado();mostrarToast('✓ Periodo reiniciado');}},2000);}catch(e){mostrarToast('❌ Error al enviar');}finally{btn.disabled=false;btn.innerHTML='📧 Cerrar Periodo y Enviar Reporte Consolidado';}}
+
+function cargarExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('excelStatus');
+  status.className = 'excel-status';
+  status.textContent = '⏳ Procesando archivo...';
+  status.style.display = 'block';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type: 'array'});
+      
+      // Buscar hoja Comparativo
+      const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('comparativo'));
+      if (!sheetName) {
+        status.className = 'excel-status err';
+        status.textContent = '❌ No se encontró la hoja "Comparativo" en el archivo';
+        return;
+      }
+      
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ''});
+      
+      // Buscar fila de encabezados para encontrar columnas T, U, W
+      // Columna T = índice 19, U = 20, W = 22 (0-indexed)
+      const colT = 19; // Proveedor
+      const colU = 20; // Referencia  
+      const colW = 22; // Precio Venta Tiendas
+      
+      const nuevoCatalogo = [];
+      let procesados = 0;
+      let saltados = 0;
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const proveedor = row[colT];
+        const referencia = row[colU];
+        const precioVenta = row[colW];
+        
+        if (!referencia || !precioVenta || isNaN(Number(precioVenta)) || Number(precioVenta) <= 0) {
+          saltados++;
+          continue;
+        }
+        
+        // Determinar marca desde nombre
+        const nombre = String(referencia).toUpperCase();
+        let marca = 'OTROS';
+        const marcas = ['SAMSUNG','XIAOMI','MOTOROLA','HONOR','INFINIX','TECNO','NOKIA','IPHONE','IPAD','JBL','OPPO','ZTE','REALME','VIVO','HUAWEI','ITEL','ALCATEL','CORN','FLY','PORTÁTIL','TABLET','TV'];
+        for (const m of marcas) {
+          if (nombre.includes(m)) { marca = m; break; }
+        }
+        
+        // Determinar categoría
+        let categoria = 'Celular';
+        if (nombre.includes('TABLET') || nombre.includes('IPAD') || nombre.includes('PAD')) categoria = 'Tablet';
+        else if (nombre.includes('PORTATIL') || nombre.includes('LAPTOP') || nombre.includes('NOTEBOOK')) categoria = 'Portátil';
+        else if (nombre.includes('TV ') || nombre.includes('TELEVISOR')) categoria = 'Televisor';
+        else if (nombre.includes('AIRE')) categoria = 'Aire acondicionado';
+        else if (nombre.includes('JBL') || nombre.includes('BOSE') || nombre.includes('PARLANTE') || nombre.includes('AUDIFONO') || nombre.includes('EARBUDS') || nombre.includes('WATCH') || nombre.includes('BAND') || nombre.includes('CARGADOR') || nombre.includes('ADAPTADOR') || nombre.includes('POWER BANK') || nombre.includes('SPEAKER')) categoria = 'Accesorio';
+        else if (nombre.includes('PATINETA') || nombre.includes('SCOOTER')) categoria = 'Scooter';
+
+        nuevoCatalogo.push({
+          id: nuevoCatalogo.length,
+          proveedor: String(proveedor || 'Sin proveedor'),
+          nombre: String(referencia),
+          precioCompra: Math.round(Number(precioVenta) - 20000),
+          precioVenta: Math.round(Number(precioVenta)),
+          marca: marca,
+          categoria: categoria
+        });
+        procesados++;
+      }
+      
+      if (procesados === 0) {
+        status.className = 'excel-status err';
+        status.textContent = '❌ No se encontraron precios válidos en las columnas T, U, W';
+        return;
+      }
+      
+      // Actualizar catálogo global
+      catalogo.length = 0;
+      nuevoCatalogo.forEach(p => catalogo.push(p));
+      productosFiltrados = [...catalogo];
+      
+      // Resetear filtros
+      document.getElementById('buscar').value = '';
+      document.getElementById('filtroMarca').innerHTML = '<option value="">Todas las marcas</option>';
+      document.getElementById('filtroCategoria').innerHTML = '<option value="">Todas las categorías</option>';
+      poblarFiltros();
+      
+      document.getElementById('statTotal').textContent = catalogo.length;
+      renderProductos();
+      
+      status.className = 'excel-status ok';
+      status.textContent = '✅ Catálogo actualizado — ' + procesados + ' referencias cargadas desde ' + sheetName;
+      
+      // Reset input
+      input.value = '';
+      
+    } catch(err) {
+      status.className = 'excel-status err';
+      status.textContent = '❌ Error al leer el archivo: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Drag and drop
+document.addEventListener('DOMContentLoaded', function() {
+  const drop = document.getElementById('excelDrop');
+  if (!drop) return;
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.background = '#f0fdfe'; });
+  drop.addEventListener('dragleave', () => { drop.style.background = 'var(--gris)'; });
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    drop.style.background = 'var(--gris)';
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      document.getElementById('excelInput').files = e.dataTransfer.files;
+      cargarExcel(document.getElementById('excelInput'));
+    }
+  });
+});
+
 function mostrarToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
 poblarFiltros();productosFiltrados=[...catalogo];document.getElementById('statTotal').textContent=catalogo.length;renderProductos();
 </script>
