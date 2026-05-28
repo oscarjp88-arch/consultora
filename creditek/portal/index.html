@@ -349,6 +349,8 @@ function cargarExcel(input) {
       // Actualizar catálogo global
       catalogo.length = 0;
       nuevoCatalogo.forEach(p => catalogo.push(p));
+      // Enviar al Sheet para que todas las tiendas lo vean
+      fetch(APPS_SCRIPT_URL+'?action=catalogo',{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(nuevoCatalogo)}).catch(()=>{});
       productosFiltrados = [...catalogo];
       
       // Resetear filtros
@@ -392,7 +394,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function mostrarToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
-poblarFiltros();productosFiltrados=[...catalogo];document.getElementById('statTotal').textContent=catalogo.length;renderProductos();
+async function cargarCatalogoDesdeSheet(){try{const r=await fetch(APPS_SCRIPT_URL+'?action=catalogo');const d=await r.json();if(d.ok&&d.productos&&d.productos.length){catalogo.length=0;d.productos.forEach((p,i)=>catalogo.push({...p,id:i,categoria:p.categoria||'General'}));productosFiltrados=[...catalogo];document.getElementById('filtroMarca').innerHTML='<option value="">Todas las marcas</option>';document.getElementById('filtroCategoria').innerHTML='<option value="">Todas las categorías</option>';poblarFiltros();document.getElementById('statTotal').textContent=catalogo.length;renderProductos();}}catch(e){}}
+poblarFiltros();productosFiltrados=[...catalogo];document.getElementById('statTotal').textContent=catalogo.length;renderProductos();cargarCatalogoDesdeSheet();
 </script>
 </body>
 </html>
