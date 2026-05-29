@@ -491,7 +491,11 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <option value="promo">🎁 Promoción especial</option>
         <option value="tienda">🏪 Contenido de tienda</option>
         <option value="servicio">✅ Servicio / beneficio</option>
+        <option value="captacion">👥 Captación de seguidores</option>
+        <option value="jornada">💳 Jornada de crédito</option>
+        <option value="institucional">🏢 Institucional / Marca</option>
       </select>
+      <div id="modo-desc" style="font-size:11px;color:var(--text3);padding:5px 4px 0;line-height:1.5;"></div>
     </div>
     <div class="field-group">
       <label class="field-label">Tipo de pieza</label>
@@ -504,7 +508,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <option value="detras_camara">🎬 Detrás de cámara</option>
       </select>
     </div>
-    <div class="field-group">
+    <div class="field-group" id="fg-producto">
       <label class="field-label">Producto / equipo <span>opcional</span></label>
       <div class="prod-toggle">
         <button class="prod-tab active" onclick="toggleProdMode('texto',this)">✏️ Descripción</button>
@@ -524,7 +528,15 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <label class="field-label">Cuota inicial <span>opcional</span></label>
       <input type="text" id="inicial" placeholder="Ej: $314.500">
     </div>
-    <div class="field-group">
+    <div class="field-group" id="fg-jornada" style="display:none">
+      <label class="field-label">Fecha del evento</label>
+      <input type="text" id="jornada-fecha" placeholder="Ej: sábado 15 de junio">
+      <label class="field-label" style="margin-top:8px">Lugar / Tienda</label>
+      <input type="text" id="jornada-lugar" placeholder="Ej: Tienda Chinú Cell, Cra 7">
+      <label class="field-label" style="margin-top:8px">Hora</label>
+      <input type="text" id="jornada-hora" placeholder="Ej: 9am – 5pm">
+    </div>
+    <div class="field-group" id="fg-specs">
       <label class="field-label">Specs técnicas en imagen <span>opcional</span></label>
       <div style="display:flex;flex-direction:column;gap:3px;margin-top:6px">
         <label class="checkbox-row"><input type="checkbox" id="spec-ram" checked onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">RAM</span></label>
@@ -682,6 +694,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     <button class="action-btn" id="canva-btn" onclick="toggleCanvaBrief()">◧ Prompt Canva</button>
     <button class="action-btn" onclick="abrirPomelli()">✦ Abrir en Pomelli</button>
     <button class="action-btn" id="action-gen-btn" onclick="showImgSection(); generarConModelos()">🖼 Generar imagen</button>
+    <button class="action-btn" id="cola-btn" onclick="enviarACola()">📤 Enviar a cola</button>
   </div>
   <!-- ══ CANVA BRIEF PANEL ══════════════════════════════════════════ -->
   <div id="canva-brief-panel" style="display:none">
@@ -944,9 +957,25 @@ function getActivePlatforms() { return [...document.querySelectorAll('.platform-
 
 function updateModoUI() {
   const modo = document.getElementById('modo').value;
-  const show = modo === 'credito';
-  document.getElementById('fg-cuota').style.display   = show ? 'block' : 'none';
-  document.getElementById('fg-inicial').style.display = show ? 'block' : 'none';
+  const showCredito  = modo === 'credito';
+  const showProducto = ['credito','promo','tienda','servicio'].includes(modo);
+  const showJornada  = modo === 'jornada';
+  document.getElementById('fg-cuota').style.display    = showCredito  ? 'block' : 'none';
+  document.getElementById('fg-inicial').style.display  = showCredito  ? 'block' : 'none';
+  document.getElementById('fg-jornada').style.display  = showJornada  ? 'block' : 'none';
+  document.getElementById('fg-producto').style.display = showProducto ? 'block' : 'none';
+  document.getElementById('fg-specs').style.display    = showProducto ? 'block' : 'none';
+  const modoDescMap = {
+    credito:'Venta de celular a crédito con cuotas y financieras aliadas.',
+    promo:'Oferta especial o precio de contado. Sin mencionar crédito.',
+    tienda:'Muestra la tienda y la experiencia. Sin crédito ni precios.',
+    servicio:'Destaca un servicio o beneficio. Sin crédito ni producto.',
+    captacion:'Para ganar seguidores. Sin producto ni precio — solo comunidad y engagement.',
+    jornada:'Invitación a evento presencial de crédito. Fecha + lugar + urgencia.',
+    institucional:'Apertura, aniversario o valores de marca. Sin producto ni precio.',
+  };
+  const descEl = document.getElementById('modo-desc');
+  if (descEl) descEl.textContent = modoDescMap[modo] || '';
 }
 
 function toggleKey(inputId, btn) {
@@ -1003,7 +1032,7 @@ async function generarContenido() {
   document.getElementById('copy-all-btn').style.display = 'none';
 
   const platformsList = platforms.join(', ');
-  const modoLabel = { credito:'Celular a crédito', promo:'Promoción especial', tienda:'Contenido de tienda', servicio:'Servicio / beneficio' }[modo];
+  const modoLabel = { credito:'Celular a crédito', promo:'Promoción especial', tienda:'Contenido de tienda', servicio:'Servicio / beneficio', captacion:'Captación de seguidores', jornada:'Jornada de crédito', institucional:'Institucional / Marca' }[modo];
   const brandBase = [
     'IDENTIDAD DE MARCA CREDITEK v2.0:',
     '- Creditek es una empresa COMERCIAL de venta de celulares a crédito — NO es fintech, NO es banco, NO es app de préstamos.',
@@ -1076,7 +1105,7 @@ PATRONES DE COPY MODO SERVICIO (cita textualmente o adapta mínimo):
 "Llevamos años en [ciudad]. Si tienes dudas sobre tu celular, pregunta — te respondemos."
 WhatsApp: "¿Problema con tu equipo? Cuéntanos qué tiene. En [tienda] miramos qué se puede hacer."`;
   }
-  const hashtagsCtx = modo === 'credito' ? 'ciudad, producto, crédito, Colombia' : 'ciudad, producto, Colombia';
+  const hashtagsCtx = modo === 'credito' ? 'ciudad, producto, crédito, Colombia' : modo === 'captacion' ? 'humor, colombiano, tecnología, comunidad, lifestyle' : modo === 'jornada' ? 'ciudad, crédito, evento, Colombia, oportunidad' : modo === 'institucional' ? 'marca, empresa, Colombia, Caribe, Creditek' : 'ciudad, producto, Colombia';
   const tipoEstructura = {
     oferta_semana:    'Urgencia de cantidad o tiempo → beneficio con precio → CTA presencial.',
     showcase_producto:'Característica más llamativa del producto → beneficio directo para el cliente → precio o CTA.',
