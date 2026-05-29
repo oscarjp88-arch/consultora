@@ -1758,13 +1758,85 @@ function buildImgPrompt() {
 
   // ── MODOS SIN CELULAR (captacion, institucional, jornada) ────────
   if (['captacion','institucional','jornada'].includes(modo)) {
-    const tipoPersonalizadoCheck = document.getElementById('tipo-personalizado')?.value.trim() || '';
-    const titularVal = document.getElementById('img-titular')?.value.trim() || (tipoPersonalizadoCheck ? tipoPersonalizadoCheck.split('.')[0].slice(0,60) : 'Aquí te atendemos bien, siempre.');
-    const ctaVal     = document.getElementById('img-cta')?.value.trim() || `Visítanos en ${nombreCta}`;
     const tipoPersonalizado = document.getElementById('tipo-personalizado')?.value.trim() || '';
+    const titularVal = document.getElementById('img-titular')?.value.trim() || (tipoPersonalizado ? tipoPersonalizado.split('.')[0].slice(0,60) : 'Aquí te atendemos bien, siempre.');
+    const ctaVal     = document.getElementById('img-cta')?.value.trim() || `Visítanos en ${nombreCta}`;
     const jornadaFecha = document.getElementById('jornada-fecha')?.value.trim() || '';
     const jornadaLugar = document.getElementById('jornada-lugar')?.value.trim() || '';
     const jornadaHora  = document.getElementById('jornada-hora')?.value.trim()  || '';
+
+    // ── Cuando hay texto personalizado, ese texto manda completamente ──
+    const conceptoPrincipal = tipoPersonalizado
+      ? `The operator has defined the core message: "${tipoPersonalizado}". Build the entire visual concept around this message. Extract the key themes, products, and ideas from this text and make them the visual heroes of the image. If the message mentions technology, show technology. If it mentions credit, show accessibility and trust. If it mentions specific products, show those products. The message defines what goes in the image — not the mode defaults.`
+      : {
+          institucional: 'Brand institutional post. Pure brand identity. Clean minimal premium design — large logo, bold headline, generous white space.',
+          captacion:     'Community engagement post. Bold large typography as visual hero. Caribbean Colombian energy. Fun turquoise graphic elements.',
+          jornada:       `Credit event poster. EVENT DATE "${jornadaFecha}" as visual hero in large turquoise numbers. Location: "${jornadaLugar}". Time: "${jornadaHora}".`,
+        }[modo] || 'Brand identity post. Creditek logo prominent. Clean, commercial, compelling.';
+
+    const estiloRico = {
+      formal:     'Professional, trustworthy, aspirational. Geometric accents in turquoise at low opacity. Corporate credibility.',
+      costeno:    'Caribbean Colombian energy. Add tropical decorative elements: palm silhouettes, tropical flowers, warm colors, Caribbean cultural motifs. Integrated naturally, not pasted.',
+      chistoso:   'Playful commercial humor. Fun graphic elements, confetti, speech bubbles in turquoise. Brand that smiles.',
+      minimalista:'Ultra minimal. Maximum white space. One strong visual. Elegant restraint.',
+      custom:     estiloCustomVal ? `Custom style: ${estiloCustomVal}` : 'Professional clean modern.',
+    }[currentEstilo] || 'Professional brand design.';
+
+    const reglas = tipoPersonalizado
+      ? [
+          '- Interpret the operator message visually — show what it describes.',
+          '- NO invented prices or specific financial amounts.',
+          '- ALL text in Spanish. Brand always "Creditek".',
+          '- Logo must be recognizable, unmodified.',
+          '- All text sharp and fully legible.',
+        ]
+      : [
+          '- NO smartphones or device renders.',
+          '- NO prices, NO peso signs, NO credit terms.',
+          '- ALL text in Spanish. Brand always "Creditek".',
+          '- Logo must be recognizable, unmodified.',
+          '- All text sharp and fully legible.',
+        ];
+
+    const prompt = [
+      'ROLE: Senior advertising art director for Colombian Caribbean brand. Create a commercially compelling, visually rich image.',
+      `FORMAT: ${formatSpec}`,
+      '',
+      `CORE CONCEPT: ${conceptoPrincipal}`,
+      tipoPersonalizado ? null : (
+        { inst_apertura:'ADD: celebratory ribbon or confetti in turquoise.',
+          inst_aniversario:'ADD: large milestone number in turquoise.',
+          inst_valores:'ADD: clean icon — heart or shield — in turquoise.',
+          inst_logro:'ADD: trophy or star graphic.',
+          captacion_pregunta:'ADD: oversized question mark in turquoise as background element.',
+          captacion_humor:'ADD: playful Caribbean elements — palms, sun, waves.',
+          jornada_urgencia:'ADD: countdown clock in turquoise. Maximum urgency.',
+        }[tipo] || null
+      ),
+      '',
+      `VISUAL STYLE: ${estiloRico}`,
+      '',
+      'BRAND IDENTITY:',
+      '- Deep navy #0B1E3D | Turquoise #00C4CC | White #FFFFFF',
+      '- Creditek logo: circular turquoise checkmark + wordmark Montserrat Bold. Prominent, unmodified.',
+      '- Typography: Montserrat ExtraBold headlines, DM Sans body.',
+      '',
+      'EXACT SPANISH TEXT TO RENDER:',
+      `- HEADLINE: "${titularVal}" — large, prominent, Montserrat ExtraBold`,
+      `- CTA BUTTON: "${ctaVal}" — turquoise background, navy text`,
+      jornadaFecha ? `- DATE (VERY LARGE): "${jornadaFecha}"` : null,
+      jornadaLugar ? `- LOCATION: "${jornadaLugar}"` : null,
+      nota ? `- ADDITIONAL: "${nota}"` : null,
+      '',
+      'RULES:',
+      reglas.join('\n'),
+      '- Make it COMMERCIALLY COMPELLING. No empty backgrounds. Every element intentional.',
+      refBlock,
+    ].filter(l => l !== null).join('\n');
+
+    document.getElementById('img-prompt-ta').value = prompt;
+    return;
+  }
     const conceptMap = {
       institucional: 'Brand institutional post. ABSOLUTELY NO smartphones, NO product renders, NO prices, NO credit terms. Pure brand identity. Clean minimal premium design — large logo centered, bold headline, generous white space. Think Apple Store aesthetic with Colombian warmth.',
       captacion:     'Community engagement social post. NO smartphones, NO products, NO prices. Bold large typography is the visual hero occupying 70% of design. Fun graphic elements in turquoise #00C4CC. Caribbean Colombian energy. Vibrant, warm, inviting.',
