@@ -499,14 +499,16 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <div class="field-group">
       <label class="field-label">Tipo de pieza</label>
-      <select id="tipo">
+      <select id="tipo" onchange="updateTipoUI()">
         <option value="oferta_semana">🎯 Oferta de la semana</option>
         <option value="showcase_producto">📱 Showcase de producto</option>
         <option value="testimonio">⭐ Testimonio de cliente</option>
         <option value="educativo">📚 Educación financiera</option>
         <option value="promo_urgencia">⚡ Promo con urgencia</option>
         <option value="detras_camara">🎬 Detrás de cámara</option>
+        <option value="personalizado">✏️ Personalizado</option>
       </select>
+      <input type="text" id="tipo-personalizado" placeholder="Describe el tipo de pieza..." style="display:none;margin-top:6px">
     </div>
     <div class="field-group" id="fg-producto">
       <label class="field-label">Producto / equipo <span>opcional</span></label>
@@ -863,7 +865,14 @@ const PLATFORMS_META = {
 const TIPO_META = {
   oferta_semana:'Oferta de la semana', showcase_producto:'Showcase de producto',
   testimonio:'Testimonio de cliente', educativo:'Educación financiera',
-  promo_urgencia:'Promo con urgencia', detras_camara:'Detrás de cámara'
+  promo_urgencia:'Promo con urgencia', detras_camara:'Detrás de cámara',
+  captacion_pregunta:'Pregunta de engagement', captacion_humor:'Humor costeño',
+  captacion_reto:'Reto / Tag a amigo', captacion_opinion:'Debate / Opinión',
+  jornada_invitacion:'Invitación al evento', jornada_urgencia:'Urgencia de fecha',
+  jornada_recordatorio:'Recordatorio de jornada',
+  inst_apertura:'Apertura de tienda', inst_aniversario:'Aniversario',
+  inst_valores:'Valores de marca', inst_logro:'Logro o reconocimiento',
+  personalizado:'Personalizado'
 };
 const FECHAS_ESPECIALES = {
   madre:   { label:'Día de la Madre', colores:'rosa cálido #FFB6C1, rosa dorado #C8965A, blanco', elementos:'flores sutiles, corazones, lazo rosado', tono:'emotivo, cálido, gratitud y amor familiar', ganchos:['El mejor regalo para tu mamá este mayo','Dale lo que ella siempre quiso','Este Día de la Madre, hazla feliz con su celular nuevo'] },
@@ -976,6 +985,32 @@ function updateModoUI() {
   };
   const descEl = document.getElementById('modo-desc');
   if (descEl) descEl.textContent = modoDescMap[modo] || '';
+  actualizarTiposPorModo(modo);
+}
+
+const TIPOS_POR_MODO = {
+  credito:       [['oferta_semana','🎯 Oferta de la semana'],['showcase_producto','📱 Showcase de producto'],['testimonio','⭐ Testimonio de cliente'],['educativo','📚 Educación financiera'],['promo_urgencia','⚡ Promo con urgencia'],['detras_camara','🎬 Detrás de cámara'],['personalizado','✏️ Personalizado']],
+  promo:         [['oferta_semana','🎯 Oferta de la semana'],['promo_urgencia','⚡ Promo con urgencia'],['showcase_producto','📱 Showcase de producto'],['personalizado','✏️ Personalizado']],
+  tienda:        [['detras_camara','🎬 Detrás de cámara'],['testimonio','⭐ Testimonio de cliente'],['oferta_semana','🎯 Oferta de la semana'],['personalizado','✏️ Personalizado']],
+  servicio:      [['educativo','📚 Educación financiera'],['testimonio','⭐ Testimonio de cliente'],['detras_camara','🎬 Detrás de cámara'],['personalizado','✏️ Personalizado']],
+  captacion:     [['captacion_pregunta','❓ Pregunta de engagement'],['captacion_humor','😂 Humor costeño'],['captacion_reto','👥 Reto / Tag a amigo'],['captacion_opinion','🔥 Debate / Opinión'],['personalizado','✏️ Personalizado']],
+  jornada:       [['jornada_invitacion','📣 Invitación al evento'],['jornada_urgencia','⚡ Urgencia de fecha'],['jornada_recordatorio','🔔 Recordatorio'],['personalizado','✏️ Personalizado']],
+  institucional: [['inst_apertura','🏪 Apertura de tienda'],['inst_aniversario','🎂 Aniversario'],['inst_valores','💙 Valores de marca'],['inst_logro','🏆 Logro o reconocimiento'],['personalizado','✏️ Personalizado']],
+};
+
+function actualizarTiposPorModo(modo) {
+  const sel = document.getElementById('tipo');
+  const tipos = TIPOS_POR_MODO[modo] || TIPOS_POR_MODO.credito;
+  const current = sel.value;
+  sel.innerHTML = tipos.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
+  if (tipos.find(([v]) => v === current)) sel.value = current;
+  updateTipoUI();
+}
+
+function updateTipoUI() {
+  const tipo = document.getElementById('tipo').value;
+  const custom = document.getElementById('tipo-personalizado');
+  if (custom) custom.style.display = tipo === 'personalizado' ? 'block' : 'none';
 }
 
 function toggleKey(inputId, btn) {
