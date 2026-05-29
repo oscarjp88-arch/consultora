@@ -1791,10 +1791,8 @@ function buildImgPrompt() {
     document.getElementById('img-prompt-ta').value = prompt;
     return;
   }
-  tipo      = document.getElementById('tipo')?.value || 'oferta_semana';
   const cuota     = document.getElementById('cuota').value.trim();
   const inicial   = document.getElementById('inicial').value.trim();
-  const nota      = document.getElementById('nota')?.value.trim() || '';
   const fechaKey  = document.getElementById('fecha-especial')?.value || '';
   const fechaData = FECHAS_ESPECIALES[fechaKey] || null;
 
