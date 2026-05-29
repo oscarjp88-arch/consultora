@@ -1035,6 +1035,7 @@ async function generarContenido() {
   const cuota = document.getElementById('cuota').value.trim();
   const inicial = document.getElementById('inicial').value.trim();
   const nota = document.getElementById('nota').value.trim();
+  const tipoPersonalizadoTxt = document.getElementById('tipo-personalizado')?.value.trim() || '';
   const fechaKey = document.getElementById('fecha-especial')?.value || '';
   const fechaData = FECHAS_ESPECIALES[fechaKey] || null;
   const platforms = getActivePlatforms();
@@ -1176,7 +1177,8 @@ CAPA 7 - CIUDAD Y DIRECCIÓN: nombre de tienda${direccion ? ' (' + direccion + '
 PARÁMETROS:
 - Modo de publicidad: ${modoLabel}
 - Ciudad/tienda: ${ciudadDisplay}
-- Tipo de pieza: ${TIPO_META[tipo]}
+- Tipo de pieza: ${TIPO_META[tipo]}${tipoPersonalizadoTxt ? ' — ' + tipoPersonalizadoTxt : ''}
+${tipoPersonalizadoTxt ? '- MENSAJE CENTRAL (eje obligatorio del copy y los titulares): ' + tipoPersonalizadoTxt : ''}
 ${producto ? '- Producto: ' + producto : ''}
 ${cuota && modo === 'credito' ? '- Precio cuota mensual: ' + cuota : ''}
 ${inicial && modo === 'credito' ? '- Cuota inicial: ' + inicial : ''}
@@ -1184,7 +1186,11 @@ ${nota ? '- Nota especial / información del contenido: ' + nota : ''}
 ${direccion ? '- Dirección(es) de tienda: ' + direccion : ''}
 - Plataformas: ${platformsList}
 
-PERFIL DEL CLIENTE REAL (habla DIRECTAMENTE a esta persona):
+${['captacion','institucional','jornada'].includes(modo) ? `PERFIL DE AUDIENCIA — MODO ${modoLabel.toUpperCase()}:
+${modo === 'captacion' ? '- Audiencia general en redes sociales. Objetivo: engagement, likes, comentarios, seguidores nuevos. NO vender, NO mencionar crédito ni precios.' : ''}
+${modo === 'institucional' ? '- Audiencia general e inversionistas sociales. Objetivo: construir confianza y reconocimiento de marca Creditek. NO mencionar precios ni condiciones de crédito.' : ''}
+${modo === 'jornada' ? '- Clientes potenciales de la zona que quieren crédito ese día. Objetivo: asistencia al evento presencial. Urgencia de fecha.' : ''}` :
+`PERFIL DEL CLIENTE REAL (habla DIRECTAMENTE a esta persona):
 - Hombre o mujer, 25-45 años, ingreso familiar $1.2M–$2.5M/mes
 - Usa Nequi o Daviplata, no tiene cuenta bancaria formal
 - No tiene historial crediticio o lo tiene manchado
@@ -1193,7 +1199,7 @@ PERFIL DEL CLIENTE REAL (habla DIRECTAMENTE a esta persona):
 - Ha ido a otras tiendas y lo han tratado mal porque "no tiene cupo"
 - Le da vergüenza preguntar si le aprueban
 - Cuando le dicen que sí, siente alivio y orgullo
-El copy debe hacerlo sentir que Creditek es diferente: aquí sí lo atienden bien, aquí sí le aprueban, aquí nadie lo juzga.
+El copy debe hacerlo sentir que Creditek es diferente: aquí sí lo atienden bien, aquí sí le aprueban, aquí nadie lo juzga.`}
 
 ${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudadDisplay}:\n${culturaCtx}\n${!esCiudad && getTiendaInfo(ciudad)?.nombre ? `Tienda: ${getTiendaInfo(ciudad).nombre}. Puedes mencionar este nombre cuando aporte autenticidad local (ej: "Visítanos en ${getTiendaInfo(ciudad).nombre}").` : `CTA de ciudad: usa "Visítanos en ${ciudadDisplay}" sin nombrar tienda específica.`}\n\n` : ''}LENGUAJE Y TONO OBLIGATORIO:
 - Habla como un vendedor colombiano cercano y respetuoso, no como una marca corporativa
