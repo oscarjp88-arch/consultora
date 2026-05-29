@@ -1647,11 +1647,20 @@ function resetPreviewFields() {
   const modo  = document.getElementById('modo')?.value || 'credito';
   const cuota = document.getElementById('cuota').value.trim();
   const ciudad = document.getElementById('ciudad').value;
+  const esCiudadReset = isCiudadCompleta(ciudad);
+  const tiendaInfo = getTiendaInfo(ciudad);
+  const nombreCta = esCiudadReset ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
+  const sinPrecio = ['captacion','institucional','jornada'].includes(modo);
+  const precioWrap = document.getElementById('img-precio')?.closest('.img-prev-field');
+  if (precioWrap) precioWrap.style.display = sinPrecio ? 'none' : 'block';
   const titularDefaults = {
-    credito:  cuota ? `¡Tu celular desde ${cuota}!` : '¡El tuyo te está esperando!',
-    promo:    '¡Oferta limitada!',
-    tienda:   '¡Visítanos hoy!',
-    servicio: 'Te atendemos con gusto'
+    credito:       cuota ? `¡Tu celular desde ${cuota}!` : '¡El tuyo te está esperando!',
+    promo:         '¡Oferta limitada — solo por hoy!',
+    tienda:        '¡Visítanos hoy!',
+    servicio:      'Te atendemos con gusto',
+    captacion:     '¿A quién le ha pasado esto? 👇',
+    jornada:       '¡Ven y estrena ese mismo día!',
+    institucional: `Creditek en ${nombreCta || 'el Caribe colombiano'}`,
   };
   const precioDefaults = {
     credito:  cuota,   // vacío si el usuario no escribió precio — nunca inventar
