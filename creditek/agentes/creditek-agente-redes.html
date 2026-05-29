@@ -1739,17 +1739,17 @@ function buildImgPrompt() {
   const producto  = document.getElementById('producto').value.trim() || 'smartphone';
   const ciudad    = document.getElementById('ciudad').value || 'Colombia';
   const modo      = document.getElementById('modo')?.value || 'credito';
-  const tipo      = document.getElementById('tipo')?.value || 'oferta_semana';
-  const nota      = document.getElementById('nota')?.value.trim() || '';
+  const isStories = currentFormat === 'stories';
+  const formatSpec = isStories ? '1080x1920px vertical (Stories/Reels)' : '1080x1080px square (Feed)';
   const esCiudad  = isCiudadCompleta(ciudad);
   const tiendaInfo = getTiendaInfo(ciudad);
   const nombreCta = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
-  const isStories = currentFormat === 'stories';
-  const formatSpec = isStories ? '1080x1920px vertical (Stories/Reels)' : '1080x1080px square (Feed)';
   const titularEl = document.getElementById('img-titular');
   const ctaEl     = document.getElementById('img-cta');
   const titular   = titularEl?.value.trim() || `Visitanos en ${nombreCta}`;
   const cta       = ctaEl?.value.trim() || `Visitanos en ${nombreCta}`;
+  const tipo      = document.getElementById('tipo')?.value || 'oferta_semana';
+  const nota      = document.getElementById('nota')?.value.trim() || '';
   const refBlock  = getRefBlock();
   const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
 
