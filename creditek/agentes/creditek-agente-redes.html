@@ -1752,8 +1752,10 @@ function buildImgPrompt() {
 
   // ── MODOS SIN CELULAR (captacion, institucional, jornada) ────────
   if (['captacion','institucional','jornada'].includes(modo)) {
-    const titularVal = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
+    const tipoPersonalizadoCheck = document.getElementById('tipo-personalizado')?.value.trim() || '';
+    const titularVal = document.getElementById('img-titular')?.value.trim() || (tipoPersonalizadoCheck ? tipoPersonalizadoCheck.split('.')[0].slice(0,60) : 'Aquí te atendemos bien, siempre.');
     const ctaVal     = document.getElementById('img-cta')?.value.trim() || `Visítanos en ${nombreCta}`;
+    const tipoPersonalizado = document.getElementById('tipo-personalizado')?.value.trim() || '';
     const jornadaFecha = document.getElementById('jornada-fecha')?.value.trim() || '';
     const jornadaLugar = document.getElementById('jornada-lugar')?.value.trim() || '';
     const jornadaHora  = document.getElementById('jornada-hora')?.value.trim()  || '';
@@ -1787,6 +1789,7 @@ function buildImgPrompt() {
       `FORMAT: ${formatSpec}`,
       `CONCEPT: ${conceptMap[modo] || conceptMap.institucional}`,
       tipoDetail[tipo] ? `TYPE DIRECTION: ${tipoDetail[tipo]}` : null,
+      tipoPersonalizado ? `CUSTOM CONCEPT FROM OPERATOR (priority — use this as the core message and visual concept): ${tipoPersonalizado}` : null,
       '',
       'BRAND IDENTITY — CREDITEK:',
       '- Primary: deep navy #0B1E3D | Accent: turquoise #00C4CC | Text: white #FFFFFF',
