@@ -1796,25 +1796,25 @@ function buildImgPrompt() {
   const fechaKey  = document.getElementById('fecha-especial')?.value || '';
   const fechaData = FECHAS_ESPECIALES[fechaKey] || null;
 
-  const titularEl = document.getElementById('img-titular');
+  titularEl = document.getElementById('img-titular');
   const precioEl  = document.getElementById('img-precio');
-  const ctaEl     = document.getElementById('img-cta');
+  ctaEl     = document.getElementById('img-cta');
 
-  const esCiudad     = isCiudadCompleta(ciudad);
-  const tiendaInfo   = getTiendaInfo(ciudad);
-  const nombreCta    = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
+  esCiudad     = isCiudadCompleta(ciudad);
+  tiendaInfo   = getTiendaInfo(ciudad);
+  nombreCta    = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
   const inclDir      = !esCiudad && document.getElementById('chk-direccion').checked;
   const dir          = inclDir ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
   const ctaFallback  = dir ? `Visítanos en ${nombreCta} · ${dir}` : `Visítanos en ${nombreCta}`;
 
-  const titular = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCta}!`);
+  titular = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCta}!`);
   const precio  = precioEl?.value.trim() || '';
-  const cta     = ctaEl?.value.trim() || ctaFallback;
+  cta     = ctaEl?.value.trim() || ctaFallback;
 
   const modoLabel = { credito:'Crédito de celular', arriendo:'Arriendo de celular', seguro:'Seguro de celular' }[modo] || modo;
 
   // ── Formato y composición por plataforma ────────────────────────
-  const isStories   = currentFormat === 'stories';
+  isStories   = currentFormat === 'stories';
   const formatoLabel = isStories ? 'Stories / TikTok vertical 1080×1920 px' : 'Feed cuadrado 1080×1080 px';
   const layoutGuide = isStories
     ? 'Composición VERTICAL 1080×1920 px: zona superior (0–20%) → logo Creditek centrado. Zona media (20–70%) → producto protagonista grande, bien iluminado, con iluminación de estudio. Zona inferior (70–100%) → titular en Montserrat Bold + precio en turquesa + botón CTA. Aprovechar toda la altura con espaciado generoso.'
@@ -1864,7 +1864,7 @@ function buildImgPrompt() {
     : `Sin especificaciones técnicas ni callout labels alrededor del producto. Diseño limpio centrado en el producto y el mensaje.`;
 
   // ── Identidad visual por estilo ──────────────────────────────────
-  const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
+  estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
   const mensajeMap = {
     formal:
       `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
@@ -1935,7 +1935,7 @@ function buildImgPrompt() {
     ? `CRÍTICO — NOMBRE DE TIENDA: el botón CTA debe decir exactamente "${tiendaInfo.nombre}". No abreviar, truncar ni modificar este nombre bajo ninguna circunstancia.`
     : '';
 
-  const refBlock = getRefBlock();
+  refBlock = getRefBlock();
 
   // ── Construir prompt estructurado ────────────────────────────────
   const lineas = [
