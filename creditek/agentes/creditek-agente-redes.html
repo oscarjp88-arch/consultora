@@ -1672,11 +1672,8 @@ function resetPreviewFields() {
   document.getElementById('img-precio').value  = precioDefaults[modo] ?? '';
   const chkEl = document.getElementById('chk-direccion');
   const inclDirImg = chkEl ? chkEl.checked : false;
-  const esCiudadReset = isCiudadCompleta(ciudad);
-  const tiendaInfo = getTiendaInfo(ciudad);
   if (inclDirImg && (esCiudadReset || ciudad === 'general')) showToast('Dirección no disponible para esta selección', '#f59e0b');
   const dirImg = (!esCiudadReset && inclDirImg) ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
-  const nombreCta = esCiudadReset ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
   console.log('[chk-direccion] checkbox activo:', inclDirImg,
     '| chkEl encontrado:', !!chkEl,
     '| ciudad:', ciudad,
