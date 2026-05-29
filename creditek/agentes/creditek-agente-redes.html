@@ -1736,91 +1736,106 @@ function updateImgKeyStatus() {
 }
 
 function buildImgPrompt() {
-  const producto  = document.getElementById('producto').value.trim() || 'smartphone';
-  const ciudad    = document.getElementById('ciudad').value || 'Colombia';
-  const modo      = document.getElementById('modo')?.value || 'credito';
-  const isStories = currentFormat === 'stories';
-  const formatSpec = isStories ? '1080x1920px vertical (Stories/Reels)' : '1080x1080px square (Feed)';
-  const esCiudad  = isCiudadCompleta(ciudad);
-  const tiendaInfo = getTiendaInfo(ciudad);
-  const nombreCta = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
-  const titularEl = document.getElementById('img-titular');
-  const ctaEl     = document.getElementById('img-cta');
-  const titular   = titularEl?.value.trim() || `Visitanos en ${nombreCta}`;
-  const cta       = ctaEl?.value.trim() || `Visitanos en ${nombreCta}`;
-  const tipo      = document.getElementById('tipo')?.value || 'oferta_semana';
-  const nota      = document.getElementById('nota')?.value.trim() || '';
-  const refBlock  = getRefBlock();
+  // ── Variables comunes ────────────────────────────────────────────
+  const producto       = document.getElementById('producto').value.trim() || 'smartphone';
+  const ciudad         = document.getElementById('ciudad').value || 'Colombia';
+  const modo           = document.getElementById('modo')?.value || 'credito';
+  const tipo           = document.getElementById('tipo')?.value || 'oferta_semana';
+  const nota           = document.getElementById('nota')?.value.trim() || '';
+  const isStories      = currentFormat === 'stories';
+  const formatSpec     = isStories ? '1080x1920px vertical (Stories/Reels)' : '1080x1080px square (Feed)';
+  const esCiudad       = isCiudadCompleta(ciudad);
+  const tiendaInfo     = getTiendaInfo(ciudad);
+  const nombreCta      = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
   const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
+  const refBlock       = getRefBlock();
 
+  // ── MODOS SIN CELULAR (captacion, institucional, jornada) ────────
   if (['captacion','institucional','jornada'].includes(modo)) {
+    const titularVal = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
+    const ctaVal     = document.getElementById('img-cta')?.value.trim() || `Visítanos en ${nombreCta}`;
     const jornadaFecha = document.getElementById('jornada-fecha')?.value.trim() || '';
     const jornadaLugar = document.getElementById('jornada-lugar')?.value.trim() || '';
     const jornadaHora  = document.getElementById('jornada-hora')?.value.trim()  || '';
     const conceptMap = {
-      institucional: 'Brand institutional post. NO smartphones, NO products, NO prices. Pure brand identity. Clean minimal premium — large logo, bold headline, generous white space.',
-      captacion:     'Community engagement post. NO smartphones, NO products, NO prices. Bold large typography is hero — 70% of design. Fun turquoise graphic elements. Caribbean Colombian energy.',
-      jornada:       `Credit event poster. EVENT DATE as visual hero in large turquoise numbers. Clear hierarchy: date → headline → location → CTA. High urgency. ${jornadaFecha ? `DATE (very large): "${jornadaFecha}".` : ''} ${jornadaLugar ? `LOCATION: "${jornadaLugar}".` : ''} ${jornadaHora ? `TIME: "${jornadaHora}".` : ''}`,
+      institucional: 'Brand institutional post. ABSOLUTELY NO smartphones, NO product renders, NO prices, NO credit terms. Pure brand identity. Clean minimal premium design — large logo centered, bold headline, generous white space. Think Apple Store aesthetic with Colombian warmth.',
+      captacion:     'Community engagement social post. NO smartphones, NO products, NO prices. Bold large typography is the visual hero occupying 70% of design. Fun graphic elements in turquoise #00C4CC. Caribbean Colombian energy. Vibrant, warm, inviting.',
+      jornada:       `Credit event announcement poster. EVENT DATE is the visual hero in large bold turquoise numbers. Clear hierarchy: date → headline → location → CTA. High urgency feel.${jornadaFecha ? ` DATE TO DISPLAY LARGE: "${jornadaFecha}".` : ''}${jornadaLugar ? ` LOCATION: "${jornadaLugar}".` : ''}${jornadaHora ? ` TIME: "${jornadaHora}".` : ''}`,
     };
     const tipoDetail = {
-      inst_apertura:'Grand opening. Celebratory ribbon or confetti in turquoise.',
-      inst_aniversario:'Anniversary. Large milestone number in turquoise.',
-      inst_valores:'Brand values. Clean icon — heart or shield — in turquoise.',
-      inst_logro:'Achievement. Trophy or star graphic.',
-      captacion_pregunta:'Giant question mark in turquoise. Large conversational text.',
-      captacion_humor:'Playful Caribbean elements — palms, sun, waves.',
-      captacion_reto:'Two elements side by side. Bold VS graphic.',
-      captacion_opinion:'Split design — two halves, A vs B.',
-      jornada_invitacion:'Welcoming open-door feeling.',
-      jornada_urgencia:'Countdown clock in turquoise. Maximum urgency.',
-      jornada_recordatorio:'Notification bell graphic.',
+      inst_apertura:'Grand opening feel. Celebratory ribbon or confetti element in turquoise. Elegant and warm.',
+      inst_aniversario:'Anniversary celebration. Large milestone number in turquoise. Proud and grateful tone.',
+      inst_valores:'Brand values post. Clean icon — heart, handshake, or shield — in turquoise. Corporate manifesto feel.',
+      inst_logro:'Achievement announcement. Trophy or star graphic element. Pride and confidence.',
+      captacion_pregunta:'Giant question mark in turquoise. Question text very large. Conversational and inviting.',
+      captacion_humor:'Playful Caribbean elements — palm trees, sun, tropical waves. Humor through visual contrast.',
+      captacion_reto:'Two contrasting elements side by side. Bold VS or arrow graphic. Challenge energy.',
+      captacion_opinion:'Split design — two halves representing two options. Bold A vs B layout.',
+      jornada_invitacion:'Welcoming open-door feeling. Warm but urgent.',
+      jornada_urgencia:'Countdown clock or calendar in turquoise. Maximum urgency.',
+      jornada_recordatorio:'Notification bell graphic. Friendly but firm reminder tone.',
+    };
+    const estiloMap = {
+      costeno:    'Caribbean Colombian visual style: tropical warm colors, festive energy, cultural elements like palms, flowers, Caribbean sea.',
+      minimalista:'Ultra minimal: maximum white space, one strong visual element only. Elegant restraint.',
+      chistoso:   'Light playful humor in design. Fun graphic elements. Warm Colombian smile.',
+      custom:     estiloCustomVal ? `Custom style: ${estiloCustomVal}` : 'Professional clean modern.',
+      formal:     'Professional, clean, corporate credibility meets Caribbean warmth.',
     };
     const prompt = [
-      'ROLE: Senior brand designer for Colombian Caribbean retail brand.',
+      'ROLE: Senior brand designer specializing in Colombian Caribbean retail brands.',
       `FORMAT: ${formatSpec}`,
-      `CONCEPT: ${conceptMap[modo]}`,
-      tipoDetail[tipo] ? `TYPE: ${tipoDetail[tipo]}` : null,
-      'BRAND CREDITEK: Navy #0B1E3D | Turquoise #00C4CC | White #FFFFFF. Logo: circular turquoise checkmark + Creditek wordmark Montserrat Bold — top corner.',
-      `TEXT IN SPANISH: Headline: "${titular}" | CTA button turquoise: "${cta}"`,
-      jornadaFecha ? `Event date VERY LARGE: "${jornadaFecha}"` : null,
-      jornadaLugar ? `Location: "${jornadaLugar}"` : null,
-      nota ? `Note: ${nota}` : null,
-      'RULES: NO smartphones. NO prices. ALL text in Spanish. Brand always Creditek. Logo must be recognizable.',
+      `CONCEPT: ${conceptMap[modo] || conceptMap.institucional}`,
+      tipoDetail[tipo] ? `TYPE DIRECTION: ${tipoDetail[tipo]}` : null,
+      '',
+      'BRAND IDENTITY — CREDITEK:',
+      '- Primary: deep navy #0B1E3D | Accent: turquoise #00C4CC | Text: white #FFFFFF',
+      '- Logo: circular turquoise checkmark symbol + "Creditek" wordmark in Montserrat Bold. Place in corner. DO NOT modify, distort or recreate.',
+      '- Typography: Montserrat Bold for headlines, DM Sans for body text.',
+      '',
+      'EXACT TEXT TO RENDER (in Spanish — do not translate):',
+      `- Main headline: "${titularVal}" — Montserrat Bold, large and prominent`,
+      `- CTA button: "${ctaVal}" — turquoise #00C4CC background, navy #0B1E3D text, rounded corners`,
+      jornadaFecha ? `- Event date (VERY LARGE, dominant): "${jornadaFecha}"` : null,
+      jornadaLugar ? `- Location text: "${jornadaLugar}"` : null,
+      jornadaHora  ? `- Time: "${jornadaHora}"` : null,
+      nota ? `- Operator note: ${nota}` : null,
+      '',
+      `VISUAL STYLE: ${estiloMap[currentEstilo] || estiloMap.formal}`,
+      '',
+      'STRICT RULES:',
+      '- NO smartphones or device renders whatsoever.',
+      '- NO prices, NO peso signs, NO credit terms, NO financial amounts.',
+      '- ALL text in the image must be in Spanish. Never in English.',
+      '- Brand name always written exactly as "Creditek" — no spelling variations.',
+      '- Logo must remain recognizable — never distort or reinvent it.',
+      '- All text must be sharp, fully legible, never blurry or clipped.',
       refBlock,
-    ].filter(Boolean).join('\n');
+    ].filter(l => l !== null).join('\n');
     document.getElementById('img-prompt-ta').value = prompt;
     return;
   }
-  const cuota     = document.getElementById('cuota').value.trim();
-  const inicial   = document.getElementById('inicial').value.trim();
-  const fechaKey  = document.getElementById('fecha-especial')?.value || '';
-  const fechaData = FECHAS_ESPECIALES[fechaKey] || null;
 
-  titularEl = document.getElementById('img-titular');
-  const precioEl  = document.getElementById('img-precio');
-  ctaEl     = document.getElementById('img-cta');
-
-  esCiudad     = isCiudadCompleta(ciudad);
-  tiendaInfo   = getTiendaInfo(ciudad);
-  nombreCta    = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
-  const inclDir      = !esCiudad && document.getElementById('chk-direccion').checked;
-  const dir          = inclDir ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
-  const ctaFallback  = dir ? `Visítanos en ${nombreCta} · ${dir}` : `Visítanos en ${nombreCta}`;
-
-  titular = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCta}!`);
-  const precio  = precioEl?.value.trim() || '';
-  cta     = ctaEl?.value.trim() || ctaFallback;
-
-  const modoLabel = { credito:'Crédito de celular', arriendo:'Arriendo de celular', seguro:'Seguro de celular' }[modo] || modo;
-
-  // ── Formato y composición por plataforma ────────────────────────
-  isStories   = currentFormat === 'stories';
+  // ── MODOS CON CELULAR ────────────────────────────────────────────
+  const cuota      = document.getElementById('cuota').value.trim();
+  const inicial    = document.getElementById('inicial').value.trim();
+  const precioEl   = document.getElementById('img-precio');
+  const titularEl  = document.getElementById('img-titular');
+  const ctaEl      = document.getElementById('img-cta');
+  const fechaKey   = document.getElementById('fecha-especial')?.value || '';
+  const fechaData  = FECHAS_ESPECIALES[fechaKey] || null;
+  const inclDir    = !esCiudad && document.getElementById('chk-direccion').checked;
+  const dir        = inclDir ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
+  const ctaFallback = dir ? `Visítanos en ${nombreCta} · ${dir}` : `Visítanos en ${nombreCta}`;
+  const titular    = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCta}!`);
+  const precio     = precioEl?.value.trim() || '';
+  const cta        = ctaEl?.value.trim() || ctaFallback;
+  const modoLabel  = { credito:'Crédito de celular', promo:'Promoción', tienda:'Tienda', servicio:'Servicio' }[modo] || modo;
   const formatoLabel = isStories ? 'Stories / TikTok vertical 1080×1920 px' : 'Feed cuadrado 1080×1080 px';
   const layoutGuide = isStories
     ? 'Composición VERTICAL 1080×1920 px: zona superior (0–20%) → logo Creditek centrado. Zona media (20–70%) → producto protagonista grande, bien iluminado, con iluminación de estudio. Zona inferior (70–100%) → titular en Montserrat Bold + precio en turquesa + botón CTA. Aprovechar toda la altura con espaciado generoso.'
     : 'Composición CUADRADA 1080×1080 px: producto en primer plano a la derecha (55% del ancho), textos jerarquizados a la izquierda (titular → precio → CTA), logo Creditek esquina superior derecha. Equilibrio visual horizontal, punto focal central fuerte.';
 
-  // ── Tipo de pieza y composición específica ──────────────────────
   const tipoImgMap = {
     oferta_semana:    `Oferta de la semana: ${producto} protagonista grande y bien iluminado.${precio ? ` Badge de precio "${precio}" muy prominente en turquesa #00C4CC, números grandes y en negrita, posición superior izquierda.` : ''} Titular en Montserrat Bold en la zona izquierda. Jerarquía visual clara: titular → precio → producto → CTA.`,
     showcase_producto:`Showcase del producto: ${producto} centrado como imagen héroe, flotando con sombra suave, bordes nítidos y fondo limpio. Texto mínimo. El producto ocupa el 60–65% de la composición. Etiquetas de specs flotantes si aplica.`,
@@ -1831,15 +1846,11 @@ function buildImgPrompt() {
   };
   const tipoDesc = tipoImgMap[tipo] || tipoImgMap.oferta_semana;
 
-  // ── Specs del producto ──────────────────────────────────────────
   const SPEC_FIELDS = [
-    { id: 'spec-ram',     label: 'RAM',            key: 'ram' },
-    { id: 'spec-storage', label: 'Almacenamiento', key: 'almacenamiento' },
-    { id: 'spec-camera',  label: 'Cámara',         key: 'camara' },
-    { id: 'spec-battery', label: 'Batería',        key: 'bateria' },
-    { id: 'spec-screen',  label: 'Pantalla',       key: 'pantalla' },
-    { id: 'spec-chip',    label: 'Procesador',     key: 'procesador' },
-    { id: 'spec-5g',      label: '5G',             key: null },
+    { id:'spec-ram', label:'RAM', key:'ram' }, { id:'spec-storage', label:'Almacenamiento', key:'almacenamiento' },
+    { id:'spec-camera', label:'Cámara', key:'camara' }, { id:'spec-battery', label:'Batería', key:'bateria' },
+    { id:'spec-screen', label:'Pantalla', key:'pantalla' }, { id:'spec-chip', label:'Procesador', key:'procesador' },
+    { id:'spec-5g', label:'5G', key:null },
   ];
   const checkedSpecs = SPEC_FIELDS.filter(s => document.getElementById(s.id)?.checked);
   let foundSpecs = {};
@@ -1850,10 +1861,7 @@ function buildImgPrompt() {
       outer: for (const [, d] of Object.entries(stored.brands)) {
         for (const m of (d.modelos || [])) {
           const n = m.nombre.toLowerCase();
-          if (n.includes(prod) || prod.includes(n.split(' ').slice(0, 3).join(' '))) {
-            foundSpecs = m.specs || {};
-            break outer;
-          }
+          if (n.includes(prod) || prod.includes(n.split(' ').slice(0,3).join(' '))) { foundSpecs = m.specs||{}; break outer; }
         }
       }
     }
@@ -1863,139 +1871,89 @@ function buildImgPrompt() {
     ? `Incluir callout labels flotantes alrededor del ${producto} con estas specs técnicas: ${specsItems.join(', ')}. Cada label: fondo turquesa #00C4CC, texto blanco, tipografía pequeña y limpia, sin tapar la pantalla.`
     : `Sin especificaciones técnicas ni callout labels alrededor del producto. Diseño limpio centrado en el producto y el mensaje.`;
 
-  // ── Identidad visual por estilo ──────────────────────────────────
-  estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
   const mensajeMap = {
-    formal:
-      `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
-    costeno:
-      `Tono caribeño colombiano: alegre, festivo, cercano y con sabor costeño. Usar conceptos y frases como: "¡Pa que te veas bien papi!", "¡Ese sí es equipo, hermano!", "¡Lo mejor pa ti y pa tu familia!", "¡Sin cuento — entra y llévalo!". Energético, celebratorio, con el calor y la picardía del Caribe colombiano. ELEMENTOS VISUALES CARIBEÑOS OBLIGATORIOS: seleccionar exactamente 3 o 4 elementos de la siguiente lista y distribuirlos como decoración en la composición — elegir elementos VARIADOS y DIFERENTES en cada generación para que cada imagen sea única: palmas de coco, tamboras vallenatas, sombrero vueltiao, mariposas amarillas, flores tropicales, confeti multicolor, acordeón vallenato, mar caribeño turquesa, atardecer costeño, hamacas coloridas, frutas tropicales (mango / guanábana / maracuyá), gaitas colombianas, mochilas wayuu, flor de mayo amarilla, pájaros tropicales, canoas en el mar, manglares, arena blanca, olas del mar, estrellas de mar, conchas marinas, colores vibrantes del Carnaval de Barranquilla, disfraz de marimonda, cumbiamba, piñatas, farolitos. Los elementos elegidos deben integrarse naturalmente en el diseño — no solo texto, sino ilustraciones o texturas decorativas que transmitan la cultura caribeña colombiana.`,
-    chistoso:
-      `Tono de humor comercial ligero y desenfadado que genere deseo de compra con una sonrisa. Crear frases originales que incorporen específicamente el nombre "${producto}" y contrasten con el celular viejo del comprador. El humor debe hacer referencia directa al modelo, por ejemplo: "Deja ese ladrillo y pásate al ${producto}", "¿Tu cámara aún toma fotos en blanco y negro sin querer? El ${producto} te espera", "Tu celular ya pidió jubilación — el ${producto} llegó a rescatarte". Humor cálido, colombiano y comercial — divertido sin perder elegancia ni credibilidad.`,
-    minimalista:
-      `Tono sereno y aspiracional. Menos texto, más espacio en blanco. El producto habla solo. Mensaje único, breve y poderoso — máximo una idea por imagen.`,
-    custom:
-      estiloCustomVal || `Estilo libre definido por el operador. Aplicar criterio artístico y de diseño según las instrucciones anteriores.`,
+    formal:      `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
+    costeno:     `Tono caribeño colombiano: alegre, festivo, cercano y con sabor costeño. Energético, celebratorio, con el calor y la picardía del Caribe colombiano. ELEMENTOS VISUALES CARIBEÑOS OBLIGATORIOS: seleccionar exactamente 3 o 4 elementos: palmas de coco, tamboras vallenatas, sombrero vueltiao, mariposas amarillas, flores tropicales, confeti multicolor, acordeón vallenato, mar caribeño turquesa, atardecer costeño, hamacas coloridas, frutas tropicales, gaitas colombianas, mochilas wayuu. Los elementos elegidos deben integrarse naturalmente en el diseño.`,
+    chistoso:    `Tono de humor comercial ligero. Crear contraste entre celular viejo y ${producto}. Humor cálido colombiano — divertido sin perder credibilidad.`,
+    minimalista: `Tono sereno y aspiracional. Menos texto, más espacio en blanco. El producto habla solo. Mensaje único, breve y poderoso.`,
+    custom:      estiloCustomVal || `Estilo libre. Aplicar criterio artístico según las instrucciones.`,
   };
   const mensajeEstilo = mensajeMap[currentEstilo] || mensajeMap.formal;
 
-  // ── Fondo según fecha especial ───────────────────────────────────
   const fechaBgMap = {
     madre:'fondo blanco #FFFFFF, texto azul marino #0B1E3D, acentos rosado #FF85A2',
-    padre:'fondo azul marino profundo #0B1E3D',
-    mundial:'fondo azul marino muy oscuro #001233',
-    navidad:'fondo verde bosque profundo #0A2015',
-    amistad:'fondo borgoña oscuro #1A0010',
-    halloween:'fondo casi negro #0D0D0D',
-    anonuevo:'fondo negro #050505',
+    padre:'fondo azul marino profundo #0B1E3D', mundial:'fondo azul marino muy oscuro #001233',
+    navidad:'fondo verde bosque profundo #0A2015', amistad:'fondo borgoña oscuro #1A0010',
+    halloween:'fondo casi negro #0D0D0D', anonuevo:'fondo negro #050505',
     clases:'fondo blanco #FFFFFF con acentos azul cielo #87CEEB',
   };
   const bgSpec = (fechaData && fechaBgMap[fechaKey]) ? fechaBgMap[fechaKey] : 'azul marino profundo #0B1E3D';
+  const fechaImgBlock = fechaData ? `Temática ${fechaData.label}: incorporar paleta secundaria (${fechaData.colores}) y elementos decorativos sutiles (${fechaData.elementos}). Estos acentos estacionales complementan la identidad Creditek, no la reemplazan.` : '';
 
-  const fechaImgBlock = fechaData
-    ? `Temática ${fechaData.label}: incorporar paleta secundaria (${fechaData.colores}) y elementos decorativos sutiles (${fechaData.elementos}). Estos acentos estacionales complementan la identidad Creditek, no la reemplazan.`
-    : '';
-
-  // ── Financieras ──────────────────────────────────────────────────
   const selectedFins = getSelectedFinancieras();
   const _refsForFin = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
   const FIN_CONTEXT_FALLBACK = {
-    payjoy:    { nombre: 'PayJoy CO',  tagline: 'Financia desde $0 de inicial', beneficios: 'Aprobación inmediata con cédula · Sin codeudor' },
-    krediya:   { nombre: 'Krediya',    tagline: 'Crédito digital rápido',       beneficios: 'Proceso 100% digital · Aprobación en minutos' },
-    addi:      { nombre: 'Addi CO',    tagline: 'Compra ahora, paga después',   beneficios: 'BNPL · Sin intereses en plazos cortos' },
-    alocredit: { nombre: 'Alo Credit', tagline: 'Crédito fácil',               beneficios: 'Inmediato · Sin historial crediticio requerido' },
+    payjoy:    { nombre:'PayJoy CO',  tagline:'Financia desde $0 de inicial', beneficios:'Aprobación inmediata con cédula · Sin codeudor' },
+    krediya:   { nombre:'Krediya',    tagline:'Crédito digital rápido',       beneficios:'Proceso 100% digital · Aprobación en minutos' },
+    addi:      { nombre:'Addi CO',    tagline:'Compra ahora, paga después',   beneficios:'BNPL · Sin intereses en plazos cortos' },
+    alocredit: { nombre:'Alo Credit', tagline:'Crédito fácil',               beneficios:'Inmediato · Sin historial crediticio requerido' },
   };
-  const finStrip = selectedFins.length
-    ? `Franja inferior: banda horizontal delgada (fondo blanco o semitransparente) con logos pequeños de: ${selectedFins.map(f => f.label).join(', ')}. Logos limpios, legibles, alineados horizontalmente con espaciado uniforme. Cada logo de financiera aparece UNA SOLA VEZ en la franja inferior. NO duplicar logos. NO inventar ni rediseñar logos — si no conoces el logo exacto, escribir solo el nombre en texto blanco simple.`
-    : '';
-  const finContextBlock = selectedFins.length
-    ? `\nFINANCIERAS ALIADAS — contexto de marca:\n${selectedFins.map(f => {
-        const stored = _refsForFin?.brands?.[FIN_CONTEXT_FALLBACK[f.id]?.nombre]?.finInfo;
-        const ctx = stored || FIN_CONTEXT_FALLBACK[f.id];
-        return ctx ? `- ${ctx.nombre || f.label}: ${ctx.tagline}. ${ctx.beneficios}.` : `- ${f.label}`;
-      }).join('\n')}`
-    : '';
+  const finStrip = selectedFins.length ? `Franja inferior: banda horizontal delgada (fondo blanco o semitransparente) con logos pequeños de: ${selectedFins.map(f=>f.label).join(', ')}. Logos limpios, legibles, alineados horizontalmente. Cada logo aparece UNA SOLA VEZ. NO duplicar logos.` : '';
+  const finContextBlock = selectedFins.length ? `\nFINANCIERAS ALIADAS:\n${selectedFins.map(f => { const stored2 = _refsForFin?.brands?.[FIN_CONTEXT_FALLBACK[f.id]?.nombre]?.finInfo; const ctx = stored2 || FIN_CONTEXT_FALLBACK[f.id]; return ctx ? `- ${ctx.nombre||f.label}: ${ctx.tagline}. ${ctx.beneficios}.` : `- ${f.label}`; }).join('\n')}` : '';
 
-  // ── Precios ──────────────────────────────────────────────────────
   const priceRule = (precio || inicial)
-    ? `Mostrar ÚNICAMENTE estos valores exactos: ${[precio && `cuota ${precio}`, inicial && `inicial ${inicial}`].filter(Boolean).join(' / ')}. NO agregar, inventar ni modificar ningún otro monto.`
+    ? `Mostrar ÚNICAMENTE estos valores exactos: ${[precio&&`cuota ${precio}`, inicial&&`inicial ${inicial}`].filter(Boolean).join(' / ')}. NO agregar, inventar ni modificar ningún otro monto.`
     : 'NO mostrar ningún precio, número con signo de pesos, monto ni cifra financiera. Sin "$", sin "COP", sin badges de precio. Omitir completamente el área de precio.';
 
-  // ── Marca/brand del celular ──────────────────────────────────────
   const knownBrands = ['Samsung','Xiaomi','Motorola','OPPO','Realme','Infinix','Honor','TCL','iPhone','Apple'];
   const detectedBrand = knownBrands.find(b => producto.toLowerCase().includes(b.toLowerCase()));
-  const isApple   = detectedBrand === 'iPhone' || detectedBrand === 'Apple';
-  const brandBlock = (detectedBrand && !isApple)
-    ? `CRÍTICO — MARCA DEL CELULAR: El smartphone en la imagen DEBE ser un ${producto}. NO generar un iPhone ni ningún producto Apple. El teléfono debe tener diseño Android con la marca ${detectedBrand} claramente visible. Si no es posible renderizar ese modelo exacto, usar un Android genérico — jamás un iPhone.`
-    : isApple
-      ? `El smartphone en la imagen es un ${producto} (producto Apple). Respetar el diseño exacto de Apple, con botones y notch/Dynamic Island correctos.`
-      : '';
+  const isApple = detectedBrand === 'iPhone' || detectedBrand === 'Apple';
+  const brandBlock = (detectedBrand && !isApple) ? `CRÍTICO: El smartphone DEBE ser un ${producto} Android con marca ${detectedBrand} visible. NUNCA un iPhone.` : isApple ? `Dispositivo es ${producto} (Apple). Respetar diseño exacto de Apple.` : '';
+  const storeNameBlock = (tiendaInfo?.nombre && !esCiudad) ? `CRÍTICO: el botón CTA debe decir exactamente "${tiendaInfo.nombre}". No modificar.` : '';
 
-  const storeNameBlock = (tiendaInfo?.nombre && !esCiudad)
-    ? `CRÍTICO — NOMBRE DE TIENDA: el botón CTA debe decir exactamente "${tiendaInfo.nombre}". No abreviar, truncar ni modificar este nombre bajo ninguna circunstancia.`
-    : '';
-
-  refBlock = getRefBlock();
-
-  // ── Construir prompt estructurado ────────────────────────────────
   const lineas = [
-    `ROL:`,
-    `Actúa como director de arte publicitario senior especializado en piezas para redes sociales, retail de celulares y marcas de crédito comercial colombiano.`,
-    ``,
-    `FORMATO:`,
-    `${formatoLabel}`,
-    `${layoutGuide}`,
-    ``,
-    `PRODUCTO PRINCIPAL:`,
-    `- Equipo: ${producto}`,
-    checkedSpecs.length > 0 && specsItems.length > 0 ? `- Especificaciones: ${specsItems.join(', ')}` : null,
-    precio  ? `- Cuota mensual: ${precio}` : null,
-    inicial ? `- Cuota inicial: ${inicial}` : null,
-    `- Modalidad: ${modoLabel}`,
-    `- Tipo de pieza: ${{ oferta_semana:'Oferta de la semana', showcase_producto:'Showcase del producto', testimonio:'Testimonio', educativo:'Educativo', promo_urgencia:'Promo con urgencia', detras_camara:'Detrás de cámara' }[tipo] || tipo}`,
-    ``,
-    `COMPOSICIÓN:`,
-    tipoDesc,
-    specsBlock,
-    ``,
-    `MENSAJE PUBLICITARIO — estilo "${currentEstilo}":`,
-    mensajeEstilo,
-    nota ? `Instrucción adicional del operador: ${nota}` : null,
-    ``,
-    `TEXTOS EXACTOS EN LA IMAGEN (renderizar tal cual, sin modificar ni traducir):`,
-    `1. Titular principal: "${titular}" — Montserrat Bold, posición destacada, máximo 2 líneas`,
-    precio  ? `2. Cuota mensual: "${precio}" — números grandes en negrita, turquesa #00C4CC, muy visible` : null,
-    inicial ? `${precio ? '3' : '2'}. Cuota inicial: "Inicial desde ${inicial}" — badge turquesa #00C4CC` : null,
-    `${[precio, inicial].filter(Boolean).length + 2}. Botón CTA: "${cta}" — fondo turquesa #00C4CC, texto azul marino #0B1E3D, esquinas redondeadas`,
-    `${[precio, inicial].filter(Boolean).length + 3}. Ciudad / Tienda: "${nombreCta}"`,
-    ``,
+    `ROL: Director de arte publicitario senior especializado en redes sociales, retail de celulares y crédito comercial colombiano.`,
+    `FORMATO: ${formatoLabel}`, `LAYOUT: ${layoutGuide}`, ``,
+    `PRODUCTO: ${producto}`,
+    checkedSpecs.length > 0 && specsItems.length > 0 ? `SPECS: ${specsItems.join(', ')}` : null,
+    precio  ? `CUOTA MENSUAL: ${precio}` : null,
+    inicial ? `CUOTA INICIAL: ${inicial}` : null,
+    `MODALIDAD: ${modoLabel}`, ``,
+    `COMPOSICIÓN: ${tipoDesc}`, specsBlock, ``,
+    `ESTILO "${currentEstilo}": ${mensajeEstilo}`,
+    nota ? `INSTRUCCIÓN OPERADOR: ${nota}` : null, ``,
+    `TEXTOS EXACTOS EN LA IMAGEN (en español colombiano, sin traducir):`,
+    `1. Titular: "${titular}" — Montserrat Bold, posición destacada, máx. 2 líneas`,
+    precio  ? `2. Cuota: "${precio}" — números grandes, turquesa #00C4CC, muy visible` : null,
+    inicial ? `${precio?'3':'2'}. Inicial: "Desde ${inicial}" — badge turquesa #00C4CC` : null,
+    `${[precio,inicial].filter(Boolean).length+2}. Botón CTA: "${cta}" — fondo turquesa, texto azul marino, esquinas redondeadas`,
+    `${[precio,inicial].filter(Boolean).length+3}. Tienda/Ciudad: "${nombreCta}"`, ``,
     `IDENTIDAD VISUAL:`,
-    `- Fondo principal: ${bgSpec}`,
-    `- Paleta de marca: azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF`,
-    `- Dominio de color: azul marino + turquesa ocupan mínimo el 80% del diseño. Los colores naturales del producto (carcasa, pantalla) pueden aparecer pero no dominan.`,
-    `- Logo Creditek: esquina superior derecha — símbolo circular turquesa con check/palomita + wordmark "Creditek" en Montserrat Bold. NO modificar, escalar de forma extraña ni ocultar el logo.`,
-    `- Tipografía: Montserrat Bold para titulares y cifras; DM Sans para textos secundarios`,
-    finStrip        ? `- ${finStrip}`        : null,
-    finContextBlock ? finContextBlock         : null,
-    fechaImgBlock   ? `- ${fechaImgBlock}`    : null,
-    ``,
-    `RESTRICCIONES (cumplir todas sin excepción):`,
-    `- IDIOMA: TODOS los textos en la imagen en español colombiano. Nunca en inglés, ni parcialmente.`,
-    `- MARCA: siempre escrita "Creditek" — ninguna variación ortográfica (no "Crediteck", "Crediitek", "CreditEk" ni ninguna otra).`,
-    `- NO inventar datos del celular (specs, precios, modelos) que no se hayan indicado explícitamente.`,
-    `- NO modificar ni distorsionar el logo Creditek bajo ninguna circunstancia.`,
-    `- NO pixelar, desenfocar ni cortar textos. Todos los textos deben ser legibles y nítidos.`,
-    `- NO deformar el celular. Proporciones reales del dispositivo, iluminación de estudio profesional.`,
-    `- CELULAR EXACTO: El modelo en la imagen debe ser EXACTAMENTE el ${producto} especificado. NO inventar nombres de modelos inexistentes. NO usar celular genérico.`,
-    `- NO incluir frases como "aprobado para todos sin condiciones", "sin ningún requisito", "compra ya o pierdes todo". Tono siempre comercial y confiable.`,
+    `- Fondo: ${bgSpec}`,
+    `- Paleta: azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF`,
+    `- Dominio: azul marino + turquesa mínimo 80% del diseño.`,
+    `- Logo Creditek: esquina superior derecha — check circular turquesa + wordmark Montserrat Bold. NO modificar.`,
+    `- Tipografía: Montserrat Bold titulares; DM Sans secundarios`,
+    finStrip        ? `- ${finStrip}`     : null,
+    finContextBlock ? finContextBlock      : null,
+    fechaImgBlock   ? `- ${fechaImgBlock}` : null, ``,
+    `RESTRICCIONES:`,
+    `- IDIOMA: todos los textos en español colombiano. Nunca en inglés.`,
+    `- MARCA: siempre "Creditek" — sin variaciones ortográficas.`,
+    `- NO inventar specs, precios o modelos no especificados.`,
+    `- NO modificar el logo Creditek.`,
+    `- Textos nítidos y completamente legibles.`,
+    `- Proporciones reales del dispositivo, iluminación de estudio.`,
+    `- CELULAR EXACTO: debe ser ${producto}. No inventar modelos.`,
     `- PRECIOS: ${priceRule}`,
-    brandBlock    ? `- ${brandBlock}`    : null,
+    brandBlock     ? `- ${brandBlock}`     : null,
     storeNameBlock ? `- ${storeNameBlock}` : null,
     refBlock,
   ].filter(l => l !== null).join('\n');
 
   document.getElementById('img-prompt-ta').value = lineas;
 }
+
 
 // ── Sistema de referencias visuales del mercado ─────────────────
 const BRAND_COLORS = {
