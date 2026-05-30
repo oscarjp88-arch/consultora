@@ -1236,7 +1236,12 @@ COPY MALO — NUNCA HACER ESTO (anti-patrones prohibidos):
 ❌ "Compra ya o pierdes todo" / lenguaje de urgencia agresiva o amenazante
 PROHIBIDO además: "upgrade", "top", "lifestyle", "innovador", "potencia tu experiencia", "descubre", "soluciones", "adquirir", "tecnología de punta", "fintech", "crédito digital"
 
-ORTOGRAFÍA OBLIGATORIA: Antes de entregar el copy, revisa y corrige TODOS los errores ortográficos. Tildes, signos de puntuación, mayúsculas. Ningún texto con errores puede salir.
+ORTOGRAFÍA Y REDACCIÓN OBLIGATORIA — aplicar SIEMPRE antes de entregar:
+1. Primera letra de cada texto en MAYÚSCULA
+2. Tildes correctas (tecnología, electrodomésticos, crédito, fácil, etc.)
+3. Corregir redacción del usuario — "lo mejor que electrodomésticos" → "lo mejor en electrodomésticos"
+4. Signos de puntuación correctos
+5. NUNCA copiar texto del usuario con errores — siempre corregir antes de usar
 
 LÍMITES DE CARACTERES (respetar siempre):
 - Facebook: 300–400 caracteres · storytelling breve, gancho emocional · Gancho → beneficio → CTA a tienda
@@ -1722,7 +1727,16 @@ function resetPreviewFields() {
     '| tiendaInfo encontrada:', tiendaInfo ? `${tiendaInfo.nombre} / ${tiendaInfo.direccion}` : null,
     '| dirección resultante:', dirImg,
     '| CTA final:', dirImg ? `Visítanos en ${nombreCta} · ${dirImg}` : `Visítanos en ${nombreCta}`);
-  const ctaBase = ciudad ? `Visítanos en ${nombreCta}` : 'Visítanos hoy';
+  const ctaDefaults = {
+    captacion:     'Síguenos en Creditek',
+    institucional: 'Síguenos en Creditek',
+    jornada:       `Visítanos en ${nombreCta}`,
+    credito:       ciudad && ciudad !== 'general' ? `Visítanos en ${nombreCta}` : 'Visítanos en Creditek',
+    promo:         ciudad && ciudad !== 'general' ? `Visítanos en ${nombreCta}` : 'Visítanos en Creditek',
+    tienda:        ciudad && ciudad !== 'general' ? `Visítanos en ${nombreCta}` : 'Visítanos en Creditek',
+    servicio:      ciudad && ciudad !== 'general' ? `Contáctanos en ${nombreCta}` : 'Contáctanos',
+  };
+  const ctaBase = ctaDefaults[modo] || `Visítanos en ${nombreCta}`;
   document.getElementById('img-cta').value = dirImg ? `${ctaBase} · ${dirImg}` : ctaBase;
   buildImgPrompt();
 }
