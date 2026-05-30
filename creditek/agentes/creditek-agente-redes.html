@@ -745,7 +745,10 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <div class="img-preview-panel" id="img-preview-panel">
         <span class="img-preview-lbl-sec">Vista previa del aviso — revisa y edita antes de generar imagen</span>
         <div id="titulares-field" style="margin-bottom:14px">
-          <span class="img-prev-fl" style="display:block;margin-bottom:6px">Titulares sugeridos — clic para usar</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span class="img-prev-fl">Titulares sugeridos — clic para usar</span>
+            <button id="mas-titulares-btn" onclick="generarMasTitulares()" style="background:rgba(0,196,204,.1);border:1px solid var(--turquesa);border-radius:6px;color:var(--turquesa);font-size:11px;font-weight:600;padding:3px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s">✦ Más</button>
+          </div>
           <div id="titulares-opts"><span style="font-size:11px;color:var(--text3)">Genera contenido primero para ver opciones...</span></div>
         </div>
         <div class="img-prev-field">
@@ -821,6 +824,86 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 
 <script>
 function showToast(msg, color='#22c55e'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+// ── Generar más titulares con Claude ────────────────────────────
+async function generarMasTitulares() {
+  const apiKey = sessionStorage.getItem('ck_api_key') || '';
+  if (!apiKey.startsWith('sk-ant-')) { abrirModal(); return; }
+  const btn = document.getElementById('mas-titulares-btn');
+  btn.disabled = true; btn.textContent = '...';
+  const modo = document.getElementById('modo').value;
+  const nota = document.getElementById('nota').value.trim();
+  const tipoPersonalizado = document.getElementById('tipo-personalizado')?.value.trim() || '';
+  const mensajeSecundario = document.getElementById('img-mensaje')?.value.trim() || '';
+  const estiloBtn = document.querySelector('.estilo-btn.active');
+  const estilo = estiloBtn ? estiloBtn.textContent.trim().replace(/^[^\w]+/,'') : 'Formal';
+  const modoLabel = {credito:'Celular a crédito',promo:'Promoción especial',tienda:'Contenido de tienda',servicio:'Servicio / beneficio',captacion:'Captación de seguidores',jornada:'Jornada de crédito',institucional:'Institucional / Marca'}[modo] || modo;
+  const estiloInstrucciones = {
+    'alegre costeño': 'Expresiones caribeñas reales: ombe, llave, mija, qué lo que, papi. Calor humano del Caribe colombiano.',
+    'chistoso': 'Humor colombiano actual: memes, referencias pop, POV, comparaciones inesperadas, giros cómicos. Cambia el formato cada vez.',
+    'formal': 'Profesional, aspiracional, confiable. Lenguaje cuidado sin jerga.',
+    'minimalista': 'Una idea poderosa. Muy corto. Menos es más. Impacto máximo con mínimas palabras.',
+  };
+  const estiloKey = Object.keys(estiloInstrucciones).find(k => estilo.toLowerCase().includes(k.split(' ')[0])) || 'formal';
+  const prompt = `Eres experto en copywriting para Creditek, empresa colombiana de tecnología a crédito en el Caribe colombiano.
+
+CONTEXTO DE ESTA PIEZA:
+- Modo: ${modoLabel}
+- Estilo: ${estilo}
+- Mensaje central: ${tipoPersonalizado || '—'}
+- Nota del operador: ${nota || '—'}
+- Mensaje secundario: ${mensajeSecundario || '—'}
+
+GENERA 3 TITULARES para imagen publicitaria con estas reglas:
+- Máximo 6 palabras cada uno
+- Sin emojis. Sin "Creditek" (está en el logo)
+- TONO OBLIGATORIO para estilo "${estilo}": ${estiloInstrucciones[estiloKey]}
+- Basarse en el mensaje central y nota del operador — usar sus palabras clave
+- Nivel: Coca-Cola, Éxito, Claro Colombia
+- PROHIBIDO: "Aquí te atendemos bien", frases genéricas de servicio
+- Titular 1: emocional | Titular 2: directo/comercial | Titular 3: creativo según el tono
+
+Responde ÚNICAMENTE con los 3 titulares numerados, sin explicaciones:
+1. {titular}
+2. {titular}
+3. {titular}`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:200,messages:[{role:'user',content:prompt}]})
+    });
+    const data = await res.json();
+    const text = data.content?.find(b=>b.type==='text')?.text || '';
+    const titulares = text.split('\n').filter(l=>l.trim()).map(l=>l.replace(/^\d+\.\s*/,'').trim()).filter(Boolean).slice(0,3);
+    if (titulares.length > 0) { renderTitulares(titulares); showToast('✓ Nuevos titulares generados'); }
+    else showToast('No se generaron titulares', '#f59e0b');
+  } catch(e) { showToast('Error al generar titulares', '#ef4444'); }
+  btn.disabled = false; btn.textContent = '✦ Más';
+}
+
+// ── Corregir mensaje secundario con Claude antes de generar imagen ──
+async function corregirMensajeSecundario() {
+  const apiKey = sessionStorage.getItem('ck_api_key') || '';
+  if (!apiKey.startsWith('sk-ant-')) return;
+  const el = document.getElementById('img-mensaje');
+  if (!el || !el.value.trim()) return;
+  const texto = el.value.trim();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:150,messages:[{role:'user',content:`Corrige este texto en español colombiano. Aplica: primera letra en mayúscula, tildes correctas, corrige errores gramaticales y de redacción. Devuelve SOLO el texto corregido, sin explicaciones ni comillas:\n\n${texto}`}]})
+    });
+    const data = await res.json();
+    const corregido = data.content?.find(b=>b.type==='text')?.text?.trim() || '';
+    if (corregido && corregido !== texto) {
+      el.value = corregido;
+      el.dataset.editado = '1';
+      buildImgPrompt();
+    }
+  } catch(e) { /* silencioso — no bloquear generación */ }
+}
 
 // ── Modal API Key ───────────────────────────────────────────────
 function toggleModalKey() {
@@ -2320,6 +2403,7 @@ function submitImgKey() {
 }
 
 async function generarImagen(callerBtn = null) {
+  await corregirMensajeSecundario();
   const isWorkerEngine = currentEngine === 'gemini';
   const keyName = isWorkerEngine ? 'ck_gemini_key' : 'ck_openai_key';
   const key = localStorage.getItem(keyName) || '';
@@ -2600,6 +2684,7 @@ function descargarImagenAB(side) {
 
 
 async function generarConModelos() {
+  await corregirMensajeSecundario();
   buildImgPrompt();
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
