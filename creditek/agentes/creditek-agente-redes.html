@@ -764,7 +764,13 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
           <input type="text" class="img-prev-input" id="img-precio" placeholder="Cuotas desde $157.000/mes" oninput="buildImgPrompt()">
         </div>
         <div class="img-prev-field">
-          <span class="img-prev-fl">Call to action (CTA)</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span class="img-prev-fl">Call to action (CTA)</span>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer">
+              <input type="checkbox" id="chk-cta-activo" checked onchange="buildImgPrompt()" style="accent-color:var(--turquesa);cursor:pointer">
+              Incluir en imagen
+            </label>
+          </div>
           <input type="text" class="img-prev-input" id="img-cta" placeholder="Síguenos en Creditek" oninput="buildImgPrompt()">
         </div>
       </div>
@@ -1158,8 +1164,8 @@ async function generarContenido() {
   const modoLabel = { credito:'Celular a crédito', promo:'Promoción especial', tienda:'Contenido de tienda', servicio:'Servicio / beneficio', captacion:'Captación de seguidores', jornada:'Jornada de crédito', institucional:'Institucional / Marca' }[modo];
   const brandBase = [
     'IDENTIDAD DE MARCA CREDITEK v2.0:',
-    '- Creditek es una empresa COMERCIAL de venta de celulares a crédito — NO es fintech, NO es banco, NO es app de préstamos.',
-    '- Mensaje rector: "Estrena celular hoy y págalo fácil con Creditek."',
+    '- Creditek es una empresa COMERCIAL de venta de tecnología a crédito (celulares, electrodomésticos, línea blanca, electrónica) — NO es fintech, NO es banco, NO es app de préstamos.',
+    '- Mensaje rector: "Estrena lo que necesitas hoy y págalo fácil con Creditek."',
     '- Logo: check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA usar versiones alternativas o modificadas.',
     '- Colores: Azul profundo #0B1E3D (fondos, títulos, base) · Turquesa #00C4CC (CTA, acentos, checks, badges de precio) · Blanco #FFFFFF (textos sobre azul)',
     '- Tipografía: Montserrat Bold — titulares y CTA · Montserrat Medium — subtítulos · Montserrat Regular / DM Sans — textos · Poppins — alternativa si Montserrat no está disponible',
@@ -1264,12 +1270,12 @@ CAPA 7 - CIUDAD Y DIRECCIÓN: nombre de tienda${direccion ? ' (' + direccion + '
 PARÁMETROS:
 - Modo de publicidad: ${modoLabel}
 - Ciudad/tienda: ${ciudadDisplay}
-- Tipo de pieza: ${TIPO_META[tipo]}${tipoPersonalizadoTxt ? ' — ' + tipoPersonalizadoTxt : ''}
-${tipoPersonalizadoTxt ? '- MENSAJE CENTRAL (eje obligatorio del copy y los titulares): ' + tipoPersonalizadoTxt : ''}
+- Tipo de pieza: ${TIPO_META[tipo]}
+${tipoPersonalizadoTxt ? '- CONTEXTO INTERNO DE CREACIÓN (usa para entender el propósito de la pieza — NUNCA mencionar en el copy ni en la imagen): ' + tipoPersonalizadoTxt : ''}
 ${producto ? '- Producto: ' + producto : ''}
 ${cuota && modo === 'credito' ? '- Precio cuota mensual: ' + cuota : ''}
 ${inicial && modo === 'credito' ? '- Cuota inicial: ' + inicial : ''}
-${nota ? '- Nota especial / información del contenido: ' + nota : ''}
+${nota ? '- MENSAJE PÚBLICO (base obligatoria del copy — usa estas palabras, corrígelas si tienen errores ortográficos, y construye el copy alrededor de esta idea): ' + nota : ''}
 ${direccion ? '- Dirección(es) de tienda: ' + direccion : ''}
 - Plataformas: ${platformsList}
 
@@ -1358,7 +1364,7 @@ ${briefBlock}
 Después añade:
 [TITULARES]
 3 opciones de titular para la imagen. REGLAS OBLIGATORIAS:
-- Basarse en el MENSAJE CENTRAL y la NOTA ESPECIAL de esta pieza — usar sus palabras clave
+- Basarse en la NOTA ESPECIAL (mensaje público) de esta pieza — usar sus palabras clave. El 'Tipo de pieza personalizado' es contexto interno, nunca base de titulares
 - Máximo 6 palabras. Sin emojis. Sin "Creditek".
 - PROHIBIDO: "Aquí te atendemos bien", "visítanos", frases genéricas de atención al cliente
 - Nivel: Coca-Cola, Éxito, Claro Colombia — cortos, memorables, directos
@@ -1909,7 +1915,7 @@ function buildImgPrompt() {
 
     // ── Cuando hay texto personalizado, ese texto manda completamente ──
     const conceptoPrincipal = tipoPersonalizado
-      ? `CREATIVE DIRECTION (context for visual concept — do NOT render this text as a headline or literal text in the image): "${tipoPersonalizado}". Use these themes to guide the visual: what concepts does it evoke? What emotions? What products or services does it imply? Translate the idea into visuals, not into text on the image.`
+      ? `INTERNAL BRIEF (private — NEVER show, mention or render any part of this in the image): "${tipoPersonalizado}". Use only to understand the purpose of this piece.`
       : {
           institucional: 'Brand institutional post. Pure brand identity. Clean minimal premium design — large logo, bold headline, generous white space.',
           captacion:     'Community engagement post. Bold large typography as visual hero. Caribbean Colombian energy. Fun turquoise graphic elements.',
@@ -1966,7 +1972,7 @@ function buildImgPrompt() {
       'EXACT SPANISH TEXT TO RENDER IN IMAGE:',
       `- HEADLINE (large, bold): "${titularVal}"`,
       mensajeVal ? `- SECONDARY MESSAGE (smaller, below headline): "${mensajeVal}"` : null,
-      `- CTA BUTTON (MANDATORY — always visible): "${ctaVal}" — turquoise #00C4CC background, navy #0B1E3D text, rounded corners`,
+      document.getElementById('chk-cta-activo')?.checked !== false ? `- CTA BUTTON: "${ctaVal}" — turquoise #00C4CC background, navy #0B1E3D text, rounded corners` : null,
       jornadaFecha ? `- EVENT DATE (VERY LARGE): "${jornadaFecha}"` : null,
       jornadaLugar ? `- LOCATION: "${jornadaLugar}"` : null,
       jornadaHora  ? `- TIME: "${jornadaHora}"` : null,
@@ -2099,7 +2105,7 @@ function buildImgPrompt() {
     mensajeVal ? `${2}. Mensaje secundario: "${mensajeVal}" — texto pequeño bajo el titular` : null,
     precio  ? `${mensajeVal?3:2}. Cuota: "${precio}" — números grandes, turquesa #00C4CC, muy visible` : null,
     inicial ? `${[mensajeVal,precio].filter(Boolean).length+2}. Inicial: "Desde ${inicial}" — badge turquesa #00C4CC` : null,
-    `${[mensajeVal,precio,inicial].filter(Boolean).length+2}. Botón CTA: "${cta}" — fondo turquesa, texto azul marino, esquinas redondeadas`,
+    document.getElementById('chk-cta-activo')?.checked !== false ? `${[mensajeVal,precio,inicial].filter(Boolean).length+2}. Botón CTA: "${cta}" — fondo turquesa, texto azul marino, esquinas redondeadas` : null,
     `${[mensajeVal,precio,inicial].filter(Boolean).length+3}. Tienda/Ciudad: "${nombreCta}"`, ``,
     `CORRECCIÓN ORTOGRÁFICA OBLIGATORIA — antes de renderizar cualquier texto:`,
     `- Primera letra de cada frase en mayúscula. "Creditek" siempre con C mayúscula.`,
