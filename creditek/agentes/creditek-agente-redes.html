@@ -593,7 +593,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <label for="chk-hashtags">Incluir hashtags sugeridos</label>
     </div>
     <div class="checkbox-row">
-      <input type="checkbox" id="chk-brief">
+      <input type="checkbox" id="chk-brief" checked>
       <label for="chk-brief">Brief visual para Canva</label>
     </div>
     <div class="checkbox-row">
@@ -1071,8 +1071,8 @@ async function generarContenido() {
   const modoLabel = { credito:'Celular a crédito', promo:'Promoción especial', tienda:'Contenido de tienda', servicio:'Servicio / beneficio', captacion:'Captación de seguidores', jornada:'Jornada de crédito', institucional:'Institucional / Marca' }[modo];
   const brandBase = [
     'IDENTIDAD DE MARCA CREDITEK v2.0:',
-    '- Creditek es una empresa COMERCIAL de venta de tecnología a crédito (celulares, electrodomésticos, línea blanca, electrónica) — NO es fintech, NO es banco, NO es app de préstamos.',
-    '- Mensaje rector: "Estrena lo que necesitas hoy y págalo fácil con Creditek."',
+    '- Creditek es una empresa COMERCIAL de venta de celulares a crédito — NO es fintech, NO es banco, NO es app de préstamos.',
+    '- Mensaje rector: "Estrena celular hoy y págalo fácil con Creditek."',
     '- Logo: check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA usar versiones alternativas o modificadas.',
     '- Colores: Azul profundo #0B1E3D (fondos, títulos, base) · Turquesa #00C4CC (CTA, acentos, checks, badges de precio) · Blanco #FFFFFF (textos sobre azul)',
     '- Tipografía: Montserrat Bold — titulares y CTA · Montserrat Medium — subtítulos · Montserrat Regular / DM Sans — textos · Poppins — alternativa si Montserrat no está disponible',
@@ -1246,7 +1246,7 @@ ${briefBlock}
 
 Después añade:
 [TITULARES]
-3 opciones de titular para la imagen. OBLIGATORIO: basarse en el mensaje central de esta pieza. Máximo 6 palabras. Sin emojis. Sin mencionar "Creditek". Nivel Coca-Cola/Éxito/Claro Colombia. Uno emocional, uno directo, uno costeño. Formato exacto:
+3 opciones de titular corto para la imagen de esta pieza. Máximo 7 palabras, directo, con sabor costeño. Sin emojis. Formato exacto:
 1. {titular}
 2. {titular}
 3. {titular}
@@ -1834,6 +1834,65 @@ function buildImgPrompt() {
       refBlock,
     ].filter(l => l !== null).join('\n');
 
+    document.getElementById('img-prompt-ta').value = prompt;
+    return;
+  }
+    const conceptMap = {
+      institucional: 'Brand institutional post. ABSOLUTELY NO smartphones, NO product renders, NO prices, NO credit terms. Pure brand identity. Clean minimal premium design — large logo centered, bold headline, generous white space. Think Apple Store aesthetic with Colombian warmth.',
+      captacion:     'Community engagement social post. NO smartphones, NO products, NO prices. Bold large typography is the visual hero occupying 70% of design. Fun graphic elements in turquoise #00C4CC. Caribbean Colombian energy. Vibrant, warm, inviting.',
+      jornada:       `Credit event announcement poster. EVENT DATE is the visual hero in large bold turquoise numbers. Clear hierarchy: date → headline → location → CTA. High urgency feel.${jornadaFecha ? ` DATE TO DISPLAY LARGE: "${jornadaFecha}".` : ''}${jornadaLugar ? ` LOCATION: "${jornadaLugar}".` : ''}${jornadaHora ? ` TIME: "${jornadaHora}".` : ''}`,
+    };
+    const tipoDetail = {
+      inst_apertura:'Grand opening feel. Celebratory ribbon or confetti element in turquoise. Elegant and warm.',
+      inst_aniversario:'Anniversary celebration. Large milestone number in turquoise. Proud and grateful tone.',
+      inst_valores:'Brand values post. Clean icon — heart, handshake, or shield — in turquoise. Corporate manifesto feel.',
+      inst_logro:'Achievement announcement. Trophy or star graphic element. Pride and confidence.',
+      captacion_pregunta:'Giant question mark in turquoise. Question text very large. Conversational and inviting.',
+      captacion_humor:'Playful Caribbean elements — palm trees, sun, tropical waves. Humor through visual contrast.',
+      captacion_reto:'Two contrasting elements side by side. Bold VS or arrow graphic. Challenge energy.',
+      captacion_opinion:'Split design — two halves representing two options. Bold A vs B layout.',
+      jornada_invitacion:'Welcoming open-door feeling. Warm but urgent.',
+      jornada_urgencia:'Countdown clock or calendar in turquoise. Maximum urgency.',
+      jornada_recordatorio:'Notification bell graphic. Friendly but firm reminder tone.',
+    };
+    const estiloMap = {
+      costeno:    'Caribbean Colombian visual style: tropical warm colors, festive energy, cultural elements like palms, flowers, Caribbean sea.',
+      minimalista:'Ultra minimal: maximum white space, one strong visual element only. Elegant restraint.',
+      chistoso:   'Light playful humor in design. Fun graphic elements. Warm Colombian smile.',
+      custom:     estiloCustomVal ? `Custom style: ${estiloCustomVal}` : 'Professional clean modern.',
+      formal:     'Professional, clean, corporate credibility meets Caribbean warmth.',
+    };
+    const prompt = [
+      'ROLE: Senior brand designer specializing in Colombian Caribbean retail brands.',
+      `FORMAT: ${formatSpec}`,
+      `CONCEPT: ${conceptMap[modo] || conceptMap.institucional}`,
+      tipoDetail[tipo] ? `TYPE DIRECTION: ${tipoDetail[tipo]}` : null,
+      tipoPersonalizado ? `CUSTOM CONCEPT FROM OPERATOR (priority — use this as the core message and visual concept): ${tipoPersonalizado}` : null,
+      '',
+      'BRAND IDENTITY — CREDITEK:',
+      '- Primary: deep navy #0B1E3D | Accent: turquoise #00C4CC | Text: white #FFFFFF',
+      '- Logo: circular turquoise checkmark symbol + "Creditek" wordmark in Montserrat Bold. Place in corner. DO NOT modify, distort or recreate.',
+      '- Typography: Montserrat Bold for headlines, DM Sans for body text.',
+      '',
+      'EXACT TEXT TO RENDER (in Spanish — do not translate):',
+      `- Main headline: "${titularVal}" — Montserrat Bold, large and prominent`,
+      `- CTA button: "${ctaVal}" — turquoise #00C4CC background, navy #0B1E3D text, rounded corners`,
+      jornadaFecha ? `- Event date (VERY LARGE, dominant): "${jornadaFecha}"` : null,
+      jornadaLugar ? `- Location text: "${jornadaLugar}"` : null,
+      jornadaHora  ? `- Time: "${jornadaHora}"` : null,
+      nota ? `- Operator note: ${nota}` : null,
+      '',
+      `VISUAL STYLE: ${estiloMap[currentEstilo] || estiloMap.formal}`,
+      '',
+      'STRICT RULES:',
+      '- NO smartphones or device renders whatsoever.',
+      '- NO prices, NO peso signs, NO credit terms, NO financial amounts.',
+      '- ALL text in the image must be in Spanish. Never in English.',
+      '- Brand name always written exactly as "Creditek" — no spelling variations.',
+      '- Logo must remain recognizable — never distort or reinvent it.',
+      '- All text must be sharp, fully legible, never blurry or clipped.',
+      refBlock,
+    ].filter(l => l !== null).join('\n');
     document.getElementById('img-prompt-ta').value = prompt;
     return;
   }
