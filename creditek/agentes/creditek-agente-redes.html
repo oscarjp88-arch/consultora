@@ -743,7 +743,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <button class="img-key-btn" id="img-key-row-btn" onclick="updateImgKeyStatus()">Configurar key</button>
       </div>
       <div class="img-preview-panel" id="img-preview-panel">
-        <span class="img-preview-lbl-sec">Vista previa del aviso</span>
+        <span class="img-preview-lbl-sec">Vista previa del aviso — revisa y edita antes de generar imagen</span>
         <div id="titulares-field" style="margin-bottom:14px">
           <span class="img-prev-fl" style="display:block;margin-bottom:6px">Titulares sugeridos — clic para usar</span>
           <div id="titulares-opts"><span style="font-size:11px;color:var(--text3)">Genera contenido primero para ver opciones...</span></div>
@@ -753,12 +753,16 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
           <input type="text" class="img-prev-input" id="img-titular" placeholder="¡Tu celular desde $157.000/mes!" oninput="buildImgPrompt()">
         </div>
         <div class="img-prev-field">
+          <span class="img-prev-fl">Mensaje secundario <span style="color:var(--text3);font-size:10px">revisa ortografía y redacción</span></span>
+          <textarea class="img-prev-input" id="img-mensaje" placeholder="Texto secundario que aparecerá en la imagen..." oninput="buildImgPrompt()" style="min-height:60px;resize:vertical;line-height:1.5"></textarea>
+        </div>
+        <div class="img-prev-field">
           <span class="img-prev-fl">Precio / cuota mensual</span>
           <input type="text" class="img-prev-input" id="img-precio" placeholder="Cuotas desde $157.000/mes" oninput="buildImgPrompt()">
         </div>
         <div class="img-prev-field">
           <span class="img-prev-fl">Call to action (CTA)</span>
-          <input type="text" class="img-prev-input" id="img-cta" placeholder="Visítanos en Corozal" oninput="buildImgPrompt()">
+          <input type="text" class="img-prev-input" id="img-cta" placeholder="Síguenos en Creditek" oninput="buildImgPrompt()">
         </div>
       </div>
       <div class="img-prompt-wrap">
@@ -1716,6 +1720,10 @@ function resetPreviewFields() {
     document.getElementById('img-titular').value = titularDefaults[modo] || titularDefaults.credito;
   }
   document.getElementById('img-precio').value  = precioDefaults[modo] ?? '';
+  // Llenar mensaje secundario con la nota especial
+  const notaVal = document.getElementById('nota')?.value.trim() || '';
+  const mensajeEl = document.getElementById('img-mensaje');
+  if (mensajeEl && notaVal) mensajeEl.value = notaVal;
   const chkEl = document.getElementById('chk-direccion');
   const inclDirImg = chkEl ? chkEl.checked : false;
   if (inclDirImg && (esCiudadReset || ciudad === 'general')) showToast('Dirección no disponible para esta selección', '#f59e0b');
@@ -1809,7 +1817,8 @@ function buildImgPrompt() {
   if (['captacion','institucional','jornada'].includes(modo)) {
     const tipoPersonalizado = document.getElementById('tipo-personalizado')?.value.trim() || '';
     const titularVal = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
-    const ctaVal     = document.getElementById('img-cta')?.value.trim() || `Visítanos en ${nombreCta}`;
+    const ctaVal     = document.getElementById('img-cta')?.value.trim() || `Síguenos en Creditek`;
+    const mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
     const jornadaFecha = document.getElementById('jornada-fecha')?.value.trim() || '';
     const jornadaLugar = document.getElementById('jornada-lugar')?.value.trim() || '';
     const jornadaHora  = document.getElementById('jornada-hora')?.value.trim()  || '';
@@ -1870,12 +1879,19 @@ function buildImgPrompt() {
       '- Creditek logo: circular turquoise checkmark + wordmark Montserrat Bold. Prominent, unmodified.',
       '- Typography: Montserrat ExtraBold headlines, DM Sans body.',
       '',
-      'EXACT SPANISH TEXT TO RENDER:',
-      `- HEADLINE: "${titularVal}" — large, prominent, Montserrat ExtraBold`,
-      ciudad && ciudad !== 'general' ? `- CTA BUTTON: "${ctaVal}" — turquoise #00C4CC background, navy text, rounded corners` : `- CTA BUTTON (optional): "${ctaVal}" — only if it fits naturally in the composition`,
-      jornadaFecha ? `- DATE (VERY LARGE): "${jornadaFecha}"` : null,
+      'EXACT SPANISH TEXT TO RENDER IN IMAGE:',
+      `- HEADLINE (large, bold): "${titularVal}"`,
+      mensajeVal ? `- SECONDARY MESSAGE (smaller, below headline): "${mensajeVal}"` : null,
+      `- CTA BUTTON (MANDATORY — always visible): "${ctaVal}" — turquoise #00C4CC background, navy #0B1E3D text, rounded corners`,
+      jornadaFecha ? `- EVENT DATE (VERY LARGE): "${jornadaFecha}"` : null,
       jornadaLugar ? `- LOCATION: "${jornadaLugar}"` : null,
-      nota ? `- ADDITIONAL: "${nota}"` : null,
+      jornadaHora  ? `- TIME: "${jornadaHora}"` : null,
+      '',
+      'SPANISH PROOFREADING — CRITICAL before rendering any text:',
+      '- Capitalize first letter of every sentence and "Creditek"',
+      '- Fix grammar: "de acercamos"→"nos acercamos", "la tecnología de que"→"la tecnología que"',
+      '- Correct accents: tecnología, crédito, cuotas, fácil, etc.',
+      '- Natural Colombian Spanish — no awkward phrasing',
       '',
       'RULES:',
       reglas.join('\n'),
@@ -1893,6 +1909,7 @@ function buildImgPrompt() {
   const precioEl   = document.getElementById('img-precio');
   const titularEl  = document.getElementById('img-titular');
   const ctaEl      = document.getElementById('img-cta');
+  const mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
   const fechaKey   = document.getElementById('fecha-especial')?.value || '';
   const fechaData  = FECHAS_ESPECIALES[fechaKey] || null;
   const inclDir    = !esCiudad && document.getElementById('chk-direccion').checked;
@@ -1995,10 +2012,16 @@ function buildImgPrompt() {
     nota ? `INSTRUCCIÓN OPERADOR: ${nota}` : null, ``,
     `TEXTOS EXACTOS EN LA IMAGEN (en español colombiano, sin traducir):`,
     `1. Titular: "${titular}" — Montserrat Bold, posición destacada, máx. 2 líneas`,
-    precio  ? `2. Cuota: "${precio}" — números grandes, turquesa #00C4CC, muy visible` : null,
-    inicial ? `${precio?'3':'2'}. Inicial: "Desde ${inicial}" — badge turquesa #00C4CC` : null,
-    `${[precio,inicial].filter(Boolean).length+2}. Botón CTA: "${cta}" — fondo turquesa, texto azul marino, esquinas redondeadas`,
-    `${[precio,inicial].filter(Boolean).length+3}. Tienda/Ciudad: "${nombreCta}"`, ``,
+    mensajeVal ? `${2}. Mensaje secundario: "${mensajeVal}" — texto pequeño bajo el titular` : null,
+    precio  ? `${mensajeVal?3:2}. Cuota: "${precio}" — números grandes, turquesa #00C4CC, muy visible` : null,
+    inicial ? `${[mensajeVal,precio].filter(Boolean).length+2}. Inicial: "Desde ${inicial}" — badge turquesa #00C4CC` : null,
+    `${[mensajeVal,precio,inicial].filter(Boolean).length+2}. Botón CTA: "${cta}" — fondo turquesa, texto azul marino, esquinas redondeadas`,
+    `${[mensajeVal,precio,inicial].filter(Boolean).length+3}. Tienda/Ciudad: "${nombreCta}"`, ``,
+    `CORRECCIÓN ORTOGRÁFICA OBLIGATORIA — antes de renderizar cualquier texto:`,
+    `- Primera letra de cada frase en mayúscula. "Creditek" siempre con C mayúscula.`,
+    `- Tildes correctas: tecnología, crédito, cuotas, fácil, también, etc.`,
+    `- Corregir gramática: "de acercamos"→"nos acercamos", preposiciones correctas`,
+    `- Español colombiano natural — sin frases forzadas`,
     `IDENTIDAD VISUAL:`,
     `- Fondo: ${bgSpec}`,
     `- Paleta: azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF`,
