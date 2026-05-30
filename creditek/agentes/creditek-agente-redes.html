@@ -1486,7 +1486,7 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
   const tm = text.match(/\[TITULARES\]([\s\S]*?)$/i);
   if (tm) {
     const titLines = tm[1].trim().split('\n').filter(l => l.trim());
-    const titulares = titLines.map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean).slice(0, 3);
+    const titulares = titLines.map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean).slice(0, 6);
     renderTitulares(titulares);
   }
 
