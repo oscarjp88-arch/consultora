@@ -754,7 +754,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         </div>
         <div class="img-prev-field">
           <span class="img-prev-fl">Mensaje secundario <span style="color:var(--text3);font-size:10px">revisa ortografía y redacción</span></span>
-          <textarea class="img-prev-input" id="img-mensaje" placeholder="Texto secundario que aparecerá en la imagen..." oninput="buildImgPrompt()" style="min-height:60px;resize:vertical;line-height:1.5"></textarea>
+          <textarea class="img-prev-input" id="img-mensaje" placeholder="Texto secundario que aparecerá en la imagen..." oninput="this.dataset.editado='1';buildImgPrompt()" style="min-height:60px;resize:vertical;line-height:1.5"></textarea>
         </div>
         <div class="img-prev-field">
           <span class="img-prev-fl">Precio / cuota mensual</span>
@@ -1334,6 +1334,7 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
     document.getElementById('action-btns-row').style.display = 'flex';
     document.getElementById('canva-brief-panel').style.display = 'none';
     document.getElementById('canva-btn').classList.remove('active');
+    document.getElementById('img-mensaje').dataset.editado = '';
     showToast('✓ Piezas generadas correctamente');
     showImgSection();
     setTimeout(() => {
@@ -1723,7 +1724,7 @@ function resetPreviewFields() {
   // Llenar mensaje secundario con la nota especial
   const notaVal = document.getElementById('nota')?.value.trim() || '';
   const mensajeEl = document.getElementById('img-mensaje');
-  if (mensajeEl && notaVal) mensajeEl.value = notaVal;
+  if (mensajeEl && notaVal && !mensajeEl.dataset.editado) mensajeEl.value = notaVal;
   const chkEl = document.getElementById('chk-direccion');
   const inclDirImg = chkEl ? chkEl.checked : false;
   if (inclDirImg && (esCiudadReset || ciudad === 'general')) showToast('Dirección no disponible para esta selección', '#f59e0b');
