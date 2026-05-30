@@ -1252,7 +1252,7 @@ Después añade:
 3. {titular}
 
 Formato EXACTO de la respuesta completa:
-${platforms.map(p => `[PLATAFORMA: ${PLATFORMS_META[p].label}]\n[A] {copy variación A — emocional}\n[B] {copy variación B — directo}\n[C] {copy variación C — costeño}`).join('\n\n')}
+${platforms.map(p => `[PLATAFORMA: ${PLATFORMS_META[p].label}]\n{copy}`).join('\n\n')}
 
 ${inclHashtags ? '[HASHTAGS]\n{hashtags}' : ''}
 ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
