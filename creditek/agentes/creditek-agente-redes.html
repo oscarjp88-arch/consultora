@@ -851,37 +851,43 @@ async function generarMasTitulares() {
     'minimalista': 'Una idea poderosa. Muy corto. Menos es más. Impacto máximo con mínimas palabras.',
   };
   const estiloKey = Object.keys(estiloInstrucciones).find(k => estilo.toLowerCase().includes(k.split(' ')[0])) || 'formal';
-  const prompt = `Eres experto en copywriting para Creditek, empresa colombiana de tecnología a crédito en el Caribe colombiano.
+  const prompt = `Eres el mejor copywriter de Colombia especializado en publicidad comercial para el Caribe colombiano. Trabajas para Creditek, empresa de tecnología a crédito (celulares, electrodomésticos, electrónica).
 
-CONTEXTO DE ESTA PIEZA:
-- Modo: ${modoLabel}
-- Estilo: ${estilo}
-- Mensaje central: ${tipoPersonalizado || '—'}
-- Nota del operador: ${nota || '—'}
-- Mensaje secundario: ${mensajeSecundario || '—'}
+MENSAJE DEL CLIENTE (corrígelo antes de usarlo):
+"${mensajeSecundario || nota || 'Tecnología a crédito en el Caribe colombiano'}"
 
-GENERA 3 TITULARES para imagen publicitaria con estas reglas:
-- Máximo 6 palabras cada uno
+CORRECCIÓN OBLIGATORIA: Antes de usarlo, corrige ortografía, tildes, gramática y redacción del mensaje anterior.
+
+MODO: ${modoLabel} | ESTILO: ${estilo}
+TONO PARA ESTE ESTILO: ${estiloInstrucciones[estiloKey]}
+
+GENERA 6 TITULARES de alto impacto para imagen publicitaria en redes sociales.
+
+REGLAS:
+- Máximo 6 palabras por titular
 - Sin emojis. Sin "Creditek" (está en el logo)
-- TONO OBLIGATORIO para estilo "${estilo}": ${estiloInstrucciones[estiloKey]}
-- Basarse en el mensaje central y nota del operador — usar sus palabras clave
-- Nivel: Coca-Cola, Éxito, Claro Colombia
-- PROHIBIDO: "Aquí te atendemos bien", frases genéricas de servicio
-- Titular 1: emocional | Titular 2: directo/comercial | Titular 3: creativo según el tono
+- Basarse en el mensaje del cliente corregido
+- Nivel: Coca-Cola, Claro Colombia, Éxito — cortos, memorables, que venden
+- TONO según estilo "${estilo}": ${estiloInstrucciones[estiloKey]}
+- PROHIBIDO: "Aquí te atendemos bien", frases genéricas de atención
+- Varía los enfoques: urgencia / emoción / beneficio directo / humor / aspiracional / costeño
 
-Responde ÚNICAMENTE con los 3 titulares numerados, sin explicaciones:
+Responde ÚNICAMENTE con los 6 titulares numerados, sin explicaciones:
 1. {titular}
 2. {titular}
-3. {titular}`;
+3. {titular}
+4. {titular}
+5. {titular}
+6. {titular}\`;
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:200,messages:[{role:'user',content:prompt}]})
+      body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:prompt}]})
     });
     const data = await res.json();
     const text = data.content?.find(b=>b.type==='text')?.text || '';
-    const titulares = text.split('\n').filter(l=>l.trim()).map(l=>l.replace(/^\d+\.\s*/,'').trim()).filter(Boolean).slice(0,3);
+    const titulares = text.split('\n').filter(l=>l.trim()).map(l=>l.replace(/^\d+\.\s*/,'').trim()).filter(Boolean).slice(0,6);
     if (titulares.length > 0) { renderTitulares(titulares); showToast('✓ Nuevos titulares generados'); }
     else showToast('No se generaron titulares', '#f59e0b');
   } catch(e) { showToast('Error al generar titulares', '#ef4444'); }
