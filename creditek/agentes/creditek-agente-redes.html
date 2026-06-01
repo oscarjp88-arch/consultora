@@ -1993,6 +1993,7 @@ function buildImgPrompt() {
       reglas.join('\n'),
       '- Make it COMMERCIALLY COMPELLING. No empty backgrounds. Every element intentional.',
       refBlock,
+      aliadoBlock,
     ].filter(l => l !== null).join('\n');
 
     document.getElementById('img-prompt-ta').value = prompt;
@@ -2139,6 +2140,7 @@ function buildImgPrompt() {
     brandBlock     ? `- ${brandBlock}`     : null,
     storeNameBlock ? `- ${storeNameBlock}` : null,
     refBlock,
+    aliadoBlock,
   ].filter(l => l !== null).join('\n');
 
   document.getElementById('img-prompt-ta').value = lineas;
