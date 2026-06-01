@@ -626,6 +626,17 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </label>
     </div>
     <div class="fin-note">Aparecerán en la franja inferior de la imagen, alineados horizontalmente</div>
+      <div class="section-label" style="margin-top:18px">ALIADOS COMERCIALES</div>
+      <p class="fin-note">Opcional — aparecerán en la esquina superior izquierda</p>
+      <div class="financieras-grid" id="aliados-grid">
+        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Chinu Cell"><img src="https://drive.google.com/thumbnail?id=10ezmeEcH-xM5D29g2A1rhVLzOZUZzam6&sz=w120" alt="Chinu Cell" loading="lazy"><span>Chinu Cell</span></label>
+        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Creditel"><img src="https://drive.google.com/thumbnail?id=1Js1huFxBvqjotUPzqJUwwmu0NNQoaikM&sz=w120" alt="Creditel" loading="lazy"><span>Creditel</span></label>
+        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Sonivox"><img src="https://drive.google.com/thumbnail?id=15FFEu0YvSu4dnlJWalgxQE-zkW0c4X7D&sz=w120" alt="Sonivox" loading="lazy"><span>Sonivox</span></label>
+        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Kredisinu Technology"><img src="https://drive.google.com/thumbnail?id=1UziuLnT8GGfYLUiuOLZnB13wGy2Q9Txn&sz=w120" alt="Kredisinu" loading="lazy"><span>Kredisinu</span></label>
+        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Movil Shopping"><img src="https://drive.google.com/thumbnail?id=1iHjvrqJuZsenQ9hkEhTROnCqXR0atujA&sz=w120" alt="Movil Shopping" loading="lazy"><span>Movil Shopping</span></label>
+        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Cellfiao"><img src="https://drive.google.com/thumbnail?id=1aPvKO-uMke0xg4wtvwB-fX3yjeXcf0fw&sz=w120" alt="Cellfiao" loading="lazy"><span>Cellfiao</span></label>
+        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Oro Cell"><img src="https://drive.google.com/thumbnail?id=1E49WYYCJ85NBJteTwc6tQxC21FmrfHp-&sz=w120" alt="Oro Cell" loading="lazy"><span>Oro Cell</span></label>
+      </div>
   </div>
   <div class="sidebar-section" style="padding-bottom:10px">
     <div class="sidebar-label">API Key</div>
@@ -1993,6 +2004,7 @@ function buildImgPrompt() {
       reglas.join('\n'),
       '- Make it COMMERCIALLY COMPELLING. No empty backgrounds. Every element intentional.',
       refBlock,
+    aliadoBlock,
       aliadoBlock,
     ].filter(l => l !== null).join('\n');
 
