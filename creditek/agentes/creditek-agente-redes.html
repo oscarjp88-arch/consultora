@@ -905,7 +905,7 @@ async function corregirMensajeSecundario() {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:150,messages:[{role:'user',content:`Corrige este texto en español colombiano. Aplica: primera letra en mayúscula, tildes correctas, corrige errores gramaticales y de redacción. Devuelve SOLO el texto corregido, sin explicaciones ni comillas:\n\n${texto}`}]})
+      body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:150,messages:[{role:'user',content:'Corrige este texto en español colombiano. Aplica: primera letra en mayúscula, tildes correctas, corrige errores gramaticales y de redacción. Devuelve SOLO el texto corregido, sin explicaciones ni comillas:\n\n' + texto}]})
     });
     const data = await res.json();
     const corregido = data.content?.find(b=>b.type==='text')?.text?.trim() || '';
