@@ -1919,6 +1919,8 @@ function buildImgPrompt() {
   const nombreCta      = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
   const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
   const refBlock       = getRefBlock();
+  const aliadoLogos    = [...document.querySelectorAll('.aliado-chk:checked')].map(c => c.dataset.nombre);
+  const aliadoBlock    = aliadoLogos.length ? `COMMERCIAL PARTNER LOGO(S) — place in top-left corner, small white pill background: ${aliadoLogos.join(', ')}` : null;
 
   // ── MODOS SIN CELULAR (captacion, institucional, jornada) ────────
   if (['captacion','institucional','jornada'].includes(modo)) {
