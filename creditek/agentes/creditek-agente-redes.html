@@ -1920,7 +1920,7 @@ function buildImgPrompt() {
   const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
   const refBlock       = getRefBlock();
   const aliadoLogos = [...document.querySelectorAll('.aliado-chk:checked')].map(c => c.dataset.nombre);
-  const aliadoBlock = aliadoLogos.length ? `COMMERCIAL PARTNER LOGO(S) — top-left corner: ${aliadoLogos.join(', ')}` : null;
+  const aliadoBlock = null; // Logos de aliados se superponen via canvas, no en el prompt
 
   // ── MODOS SIN CELULAR (captacion, institucional, jornada) ────────
   if (['captacion','institucional','jornada'].includes(modo)) {
@@ -2566,11 +2566,89 @@ async function generarConDalle(key, prompt) {
   return 'data:image/png;base64,' + b64;
 }
 
-function mostrarImgVersion(src) {
+
+// ── Canvas overlay: superponer logos de aliados sobre imagen generada ──
+const ALIADO_URLS = {
+  'Chinu Cell':       'https://drive.usercontent.google.com/download?id=10ezmeEcH-xM5D29g2A1rhVLzOZUZzam6&export=download',
+  'Creditel':         'https://drive.usercontent.google.com/download?id=1Js1huFxBvqjotUPzqJUwwmu0NNQoaikM&export=download',
+  'Sonivox':          'https://drive.usercontent.google.com/download?id=15FFEu0YvSu4dnlJWalgxQE-zkW0c4X7D&export=download',
+  'Kredisinu Technology': 'https://drive.usercontent.google.com/download?id=1UziuLnT8GGfYLUiuOLZnB13wGy2Q9Txn&export=download',
+  'Movil Shopping':   'https://drive.usercontent.google.com/download?id=1iHjvrqJuZsenQ9hkEhTROnCqXR0atujA&export=download',
+  'Cellfiao':         'https://drive.usercontent.google.com/download?id=1aPvKO-uMke0xg4wtvwB-fX3yjeXcf0fw&export=download',
+  'Oro Cell':         'https://drive.usercontent.google.com/download?id=1E49WYYCJ85NBJteTwc6tQxC21FmrfHp-&export=download',
+};
+
+async function superponerLogosAliados(imageSrc) {
+  const aliados = [...document.querySelectorAll('.aliado-chk:checked')].map(c => c.dataset.nombre);
+  if (!aliados.length) return imageSrc;
+
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const baseImg = new Image();
+    baseImg.crossOrigin = 'anonymous';
+    baseImg.onload = async () => {
+      canvas.width  = baseImg.width;
+      canvas.height = baseImg.height;
+      ctx.drawImage(baseImg, 0, 0);
+
+      // Posición: esquina superior izquierda con padding
+      const padding = Math.round(canvas.width * 0.03);
+      let xOffset = padding;
+      const yPos = padding;
+      const logoH = Math.round(canvas.height * 0.08); // 8% del alto
+
+      for (const nombre of aliados) {
+        const url = ALIADO_URLS[nombre];
+        if (!url) continue;
+        await new Promise((res) => {
+          const logo = new Image();
+          logo.crossOrigin = 'anonymous';
+          logo.onload = () => {
+            const ratio = logo.naturalWidth / logo.naturalHeight;
+            const logoW = Math.round(logoH * ratio);
+            // Fondo blanco redondeado
+            const pad = Math.round(logoH * 0.15);
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            roundRect(ctx, xOffset - pad, yPos - pad, logoW + pad*2, logoH + pad*2, Math.round(logoH * 0.18));
+            ctx.fill();
+            ctx.drawImage(logo, xOffset, yPos, logoW, logoH);
+            xOffset += logoW + pad*2 + Math.round(padding * 0.5);
+            res();
+          };
+          logo.onerror = res;
+          logo.src = url;
+        });
+      }
+      resolve(canvas.toDataURL('image/png'));
+    };
+    baseImg.onerror = () => resolve(imageSrc);
+    baseImg.src = imageSrc;
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+async function mostrarImgVersion(src) {
   const el = document.getElementById('img-output');
   el.classList.remove('fade-in');
   void el.offsetWidth;
-  el.src = src;
+  const finalSrc = await superponerLogosAliados(src);
+  el.src = finalSrc;
+  // Actualizar historial con imagen final (con logos)
+  if (imgHistory.length > 0) imgHistory[imgHistoryIdx] = finalSrc;
   el.classList.add('fade-in');
 }
 
