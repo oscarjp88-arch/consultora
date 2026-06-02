@@ -1369,18 +1369,16 @@ ${briefBlock}
 
 Después añade:
 [TITULARES]
-3 opciones de titular para la imagen. REGLAS OBLIGATORIAS:
-- Basarse en la NOTA ESPECIAL (mensaje público) de esta pieza — usar sus palabras clave. El 'Tipo de pieza personalizado' es contexto interno, nunca base de titulares
-- Máximo 6 palabras. Sin emojis. Sin "Creditek".
-- PROHIBIDO: "Aquí te atendemos bien", "visítanos", frases genéricas de atención al cliente
-- Nivel: Coca-Cola, Éxito, Claro Colombia — cortos, memorables, directos
-- Titular 1: emocional (conecta con sentimiento del cliente)
-- Titular 2: directo (beneficio concreto del mensaje)
-- Titular 3: creativo o con humor según el tono seleccionado
+3 titulares de ALTO IMPACTO para imagen publicitaria. TRANSFORMA el mensaje — NO lo copies.
+Extrae la emoción o beneficio central y exprésalo de forma nueva e inesperada.
+- Máximo 6 palabras cada uno. Sin emojis. Sin "Creditek".
+- Nivel: Nike, Coca-Cola, Claro Colombia
+- PROHIBIDO: copiar palabras del mensaje, frases genéricas
+- Uno emocional, uno directo con giro creativo, uno con sabor costeño
 Formato exacto:
-1. {titular emocional}
-2. {titular directo}
-3. {titular creativo}
+1. {titular}
+2. {titular}
+3. {titular}
 
 Formato EXACTO de la respuesta completa:
 ${platforms.map(p => `[PLATAFORMA: ${PLATFORMS_META[p].label}]\n{copy}`).join('\n\n')}
@@ -1432,6 +1430,7 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
     document.getElementById('img-mensaje').dataset.editado = '';
     showToast('✓ Piezas generadas correctamente');
     showImgSection();
+    setTimeout(() => generarMasTitulares(), 500);
     setTimeout(() => {
       const firstBtn = document.querySelector('.titular-opt');
       if (firstBtn) firstBtn.click();
