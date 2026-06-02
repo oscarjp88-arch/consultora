@@ -2539,13 +2539,17 @@ async function generarConDalle(key, prompt) {
   } else {
     inputPayload = prompt;
   }
-  const res = await fetch('https://api.openai.com/v1/responses', {
+  const imgSize = currentFormat === 'stories' ? '1024x1536' : '1024x1024';
+  const promptText = typeof inputPayload === 'string' ? inputPayload : inputPayload?.[0]?.content?.find?.(c => c.type === 'input_text')?.text || prompt;
+  const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
     body: JSON.stringify({
-      model: 'gpt-4o',
-      input: inputPayload,
-      tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1536' : '1024x1024' }]
+      model: 'gpt-image-1',
+      prompt: promptText,
+      n: 1,
+      size: imgSize,
+      quality: 'high'
     })
   });
   if (!res.ok) {
@@ -2557,8 +2561,7 @@ async function generarConDalle(key, prompt) {
     );
   }
   const data = await res.json();
-  const imageCall = data.output?.find(o => o.type === 'image_generation_call');
-  const b64 = imageCall?.result;
+  const b64 = data.data?.[0]?.b64_json;
   if (!b64) throw new Error('OpenAI no devolvió imagen. Revisa la consola para ver la respuesta completa.');
   return 'data:image/png;base64,' + b64;
 }
