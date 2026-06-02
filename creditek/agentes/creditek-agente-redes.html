@@ -626,17 +626,6 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </label>
     </div>
     <div class="fin-note">Aparecerán en la franja inferior de la imagen, alineados horizontalmente</div>
-      <div class="section-label" style="margin-top:18px">ALIADOS COMERCIALES</div>
-      <p class="fin-note">Opcional — aparecerán en la esquina superior izquierda</p>
-      <div class="financieras-grid" id="aliados-grid">
-        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Chinu Cell"><img src="https://drive.google.com/thumbnail?id=10ezmeEcH-xM5D29g2A1rhVLzOZUZzam6&sz=w120" alt="Chinu Cell" loading="lazy"><span>Chinu Cell</span></label>
-        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Creditel"><img src="https://drive.google.com/thumbnail?id=1Js1huFxBvqjotUPzqJUwwmu0NNQoaikM&sz=w120" alt="Creditel" loading="lazy"><span>Creditel</span></label>
-        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Sonivox"><img src="https://drive.google.com/thumbnail?id=15FFEu0YvSu4dnlJWalgxQE-zkW0c4X7D&sz=w120" alt="Sonivox" loading="lazy"><span>Sonivox</span></label>
-        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Kredisinu Technology"><img src="https://drive.google.com/thumbnail?id=1UziuLnT8GGfYLUiuOLZnB13wGy2Q9Txn&sz=w120" alt="Kredisinu" loading="lazy"><span>Kredisinu</span></label>
-        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Movil Shopping"><img src="https://drive.google.com/thumbnail?id=1iHjvrqJuZsenQ9hkEhTROnCqXR0atujA&sz=w120" alt="Movil Shopping" loading="lazy"><span>Movil Shopping</span></label>
-        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Cellfiao"><img src="https://drive.google.com/thumbnail?id=1aPvKO-uMke0xg4wtvwB-fX3yjeXcf0fw&sz=w120" alt="Cellfiao" loading="lazy"><span>Cellfiao</span></label>
-        <label class="fin-item"><input type="checkbox" class="aliado-chk" data-nombre="Oro Cell"><img src="https://drive.google.com/thumbnail?id=1E49WYYCJ85NBJteTwc6tQxC21FmrfHp-&sz=w120" alt="Oro Cell" loading="lazy"><span>Oro Cell</span></label>
-      </div>
   </div>
   <div class="sidebar-section" style="padding-bottom:10px">
     <div class="sidebar-label">API Key</div>
@@ -889,7 +878,7 @@ Responde ÚNICAMENTE con los 6 titulares numerados, sin explicaciones:
 3. {titular}
 4. {titular}
 5. {titular}
-6. {titular}`;
+6. {titular}\`;
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -1183,7 +1172,7 @@ async function generarContenido() {
     'IDENTIDAD DE MARCA CREDITEK v2.0:',
     '- Creditek es una empresa COMERCIAL de venta de tecnología a crédito (celulares, electrodomésticos, línea blanca, electrónica) — NO es fintech, NO es banco, NO es app de préstamos.',
     '- Mensaje rector: "Estrena lo que necesitas hoy y págalo fácil con Creditek."',
-    '- Creditek logo: check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA usar versiones alternativas o modificadas.',
+    '- Logo: check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA usar versiones alternativas o modificadas.',
     '- Colores: Azul profundo #0B1E3D (fondos, títulos, base) · Turquesa #00C4CC (CTA, acentos, checks, badges de precio) · Blanco #FFFFFF (textos sobre azul)',
     '- Tipografía: Montserrat Bold — titulares y CTA · Montserrat Medium — subtítulos · Montserrat Regular / DM Sans — textos · Poppins — alternativa si Montserrat no está disponible',
     '- Tono: comercial, directo y confiable — vender con claridad sin sonar agresivo ni desesperado. El cliente debe sentir que lo tratan bien, no que lo están presionando.'
@@ -1265,7 +1254,7 @@ WhatsApp: "¿Problema con tu equipo? Cuéntanos qué tiene. En [tienda] miramos 
   const briefBlock = inclBrief ? `Después añade un BRIEF VISUAL CANVA capa por capa con estas especificaciones exactas del manual de marca Creditek:
 
 MANUAL DE MARCA CREDITEK (usa estos datos, no inventes nada):
-- Creditek logo: check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA usar versiones alternativas o modificadas.
+- Logo: símbolo de check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA logos alternativos.
 - Colores oficiales: Azul profundo #0B1E3D (fondos, títulos) · Turquesa #00C4CC (CTA, checks, acentos) · Blanco #FFFFFF (textos sobre azul)
 - Tipografía: Montserrat Bold — titulares y CTA · Montserrat Medium — subtítulos · Montserrat Regular — textos
 - Formato activo: ${briefFormat}
@@ -1380,22 +1369,18 @@ ${briefBlock}
 
 Después añade:
 [TITULARES]
-3 opciones de titular para imagen publicitaria. REGLAS:
-- TRANSFORMA el mensaje — NO lo parafrasees ni copies las palabras literalmente
-- Extrae la EMOCIÓN o BENEFICIO central del mensaje y exprésalo de forma nueva e impactante
-- Si el mensaje habla de "iniciales bajas" el titular NO debe decir "iniciales bajas" — debe decir algo como "Estrena sin vacilar" o "El sí que esperabas"
+3 opciones de titular para la imagen. REGLAS OBLIGATORIAS:
+- Basarse en la NOTA ESPECIAL (mensaje público) de esta pieza — usar sus palabras clave. El 'Tipo de pieza personalizado' es contexto interno, nunca base de titulares
 - Máximo 6 palabras. Sin emojis. Sin "Creditek".
-- PROHIBIDO: copiar palabras del mensaje, "visítanos", frases genéricas
-- Nivel: Nike, Coca-Cola, Claro Colombia — cortos, memorables, que generan emoción
-- Titular 1: emocional — conecta con el sentimiento del cliente
-- Titular 2: directo — beneficio transformado en frase de impacto
-- Titular 3: creativo — sorprendente, con giro o humor colombiano
+- PROHIBIDO: "Aquí te atendemos bien", "visítanos", frases genéricas de atención al cliente
+- Nivel: Coca-Cola, Éxito, Claro Colombia — cortos, memorables, directos
+- Titular 1: emocional (conecta con sentimiento del cliente)
+- Titular 2: directo (beneficio concreto del mensaje)
+- Titular 3: creativo o con humor según el tono seleccionado
 Formato exacto:
-1. {titular}
-2. {titular}
-3. {titular}
-2. {titular}
-3. {titular}
+1. {titular emocional}
+2. {titular directo}
+3. {titular creativo}
 
 Formato EXACTO de la respuesta completa:
 ${platforms.map(p => `[PLATAFORMA: ${PLATFORMS_META[p].label}]\n{copy}`).join('\n\n')}
@@ -1923,8 +1908,6 @@ function buildImgPrompt() {
   const nombreCta      = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
   const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
   const refBlock       = getRefBlock();
-  const aliadoLogos = [...document.querySelectorAll('.aliado-chk:checked')].map(c => c.dataset.nombre);
-  const aliadoBlock = null; // Logos de aliados se superponen via canvas, no en el prompt
 
   // ── MODOS SIN CELULAR (captacion, institucional, jornada) ────────
   if (['captacion','institucional','jornada'].includes(modo)) {
@@ -1989,7 +1972,7 @@ function buildImgPrompt() {
       '',
       'BRAND IDENTITY:',
       '- Deep navy #0B1E3D | Turquoise #00C4CC | White #FFFFFF',
-      '- Creditek logo: check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA usar versiones alternativas o modificadas.',
+      '- Creditek logo: circular turquoise checkmark + wordmark Montserrat Bold. Prominent, unmodified.',
       '- Typography: Montserrat ExtraBold headlines, DM Sans body.',
       '',
       'EXACT SPANISH TEXT TO RENDER IN IMAGE:',
@@ -2010,8 +1993,6 @@ function buildImgPrompt() {
       reglas.join('\n'),
       '- Make it COMMERCIALLY COMPELLING. No empty backgrounds. Every element intentional.',
       refBlock,
-    aliadoBlock,
-      aliadoBlock,
     ].filter(l => l !== null).join('\n');
 
     document.getElementById('img-prompt-ta').value = prompt;
@@ -2141,7 +2122,7 @@ function buildImgPrompt() {
     `- Fondo: ${bgSpec}`,
     `- Paleta: azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF`,
     `- Dominio: azul marino + turquesa mínimo 80% del diseño.`,
-    `- LOGO CREDITEK (esquina superior derecha): Creditek logo: check circular (✓) + wordmark "Creditek". Versión blanca/turquesa sobre fondo azul oscuro. NUNCA usar versiones alternativas o modificadas.. Tamaño ~15% del ancho total.`,
+    `- Logo Creditek: esquina superior derecha — check circular turquesa + wordmark Montserrat Bold. NO modificar.`,
     `- Tipografía: Montserrat Bold titulares; DM Sans secundarios`,
     finStrip        ? `- ${finStrip}`     : null,
     finContextBlock ? finContextBlock      : null,
@@ -2158,7 +2139,6 @@ function buildImgPrompt() {
     brandBlock     ? `- ${brandBlock}`     : null,
     storeNameBlock ? `- ${storeNameBlock}` : null,
     refBlock,
-    aliadoBlock,
   ].filter(l => l !== null).join('\n');
 
   document.getElementById('img-prompt-ta').value = lineas;
@@ -2567,89 +2547,11 @@ async function generarConDalle(key, prompt) {
   return 'data:image/png;base64,' + b64;
 }
 
-
-// ── Canvas overlay: superponer logos de aliados sobre imagen generada ──
-const ALIADO_URLS = {
-  'Chinu Cell':       'https://drive.usercontent.google.com/download?id=10ezmeEcH-xM5D29g2A1rhVLzOZUZzam6&export=download',
-  'Creditel':         'https://drive.usercontent.google.com/download?id=1Js1huFxBvqjotUPzqJUwwmu0NNQoaikM&export=download',
-  'Sonivox':          'https://drive.usercontent.google.com/download?id=15FFEu0YvSu4dnlJWalgxQE-zkW0c4X7D&export=download',
-  'Kredisinu Technology': 'https://drive.usercontent.google.com/download?id=1UziuLnT8GGfYLUiuOLZnB13wGy2Q9Txn&export=download',
-  'Movil Shopping':   'https://drive.usercontent.google.com/download?id=1iHjvrqJuZsenQ9hkEhTROnCqXR0atujA&export=download',
-  'Cellfiao':         'https://drive.usercontent.google.com/download?id=1aPvKO-uMke0xg4wtvwB-fX3yjeXcf0fw&export=download',
-  'Oro Cell':         'https://drive.usercontent.google.com/download?id=1E49WYYCJ85NBJteTwc6tQxC21FmrfHp-&export=download',
-};
-
-async function superponerLogosAliados(imageSrc) {
-  const aliados = [...document.querySelectorAll('.aliado-chk:checked')].map(c => c.dataset.nombre);
-  if (!aliados.length) return imageSrc;
-
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const baseImg = new Image();
-    baseImg.crossOrigin = 'anonymous';
-    baseImg.onload = async () => {
-      canvas.width  = baseImg.width;
-      canvas.height = baseImg.height;
-      ctx.drawImage(baseImg, 0, 0);
-
-      // Posición: esquina superior izquierda con padding
-      const padding = Math.round(canvas.width * 0.03);
-      let xOffset = padding;
-      const yPos = padding;
-      const logoH = Math.round(canvas.height * 0.08); // 8% del alto
-
-      for (const nombre of aliados) {
-        const url = ALIADO_URLS[nombre];
-        if (!url) continue;
-        await new Promise((res) => {
-          const logo = new Image();
-          logo.crossOrigin = 'anonymous';
-          logo.onload = () => {
-            const ratio = logo.naturalWidth / logo.naturalHeight;
-            const logoW = Math.round(logoH * ratio);
-            // Fondo blanco redondeado
-            const pad = Math.round(logoH * 0.15);
-            ctx.fillStyle = 'rgba(255,255,255,0.92)';
-            roundRect(ctx, xOffset - pad, yPos - pad, logoW + pad*2, logoH + pad*2, Math.round(logoH * 0.18));
-            ctx.fill();
-            ctx.drawImage(logo, xOffset, yPos, logoW, logoH);
-            xOffset += logoW + pad*2 + Math.round(padding * 0.5);
-            res();
-          };
-          logo.onerror = res;
-          logo.src = url;
-        });
-      }
-      resolve(canvas.toDataURL('image/png'));
-    };
-    baseImg.onerror = () => resolve(imageSrc);
-    baseImg.src = imageSrc;
-  });
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-async function mostrarImgVersion(src) {
+function mostrarImgVersion(src) {
   const el = document.getElementById('img-output');
   el.classList.remove('fade-in');
   void el.offsetWidth;
-  const finalSrc = await superponerLogosAliados(src);
-  el.src = finalSrc;
-  // Actualizar historial con imagen final (con logos)
-  if (imgHistory.length > 0) imgHistory[imgHistoryIdx] = finalSrc;
+  el.src = src;
   el.classList.add('fade-in');
 }
 
