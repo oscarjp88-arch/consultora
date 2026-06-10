@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creditek · Agente 3 · Meta Ads Intelligence</title>
+<style>
+:root {
+  --navy:    #0B1E3D;
+  --turq:    #00C4CC;
+  --turq2:   #00A8AF;
+  --white:   #FFFFFF;
+  --bg:      #F0F4F8;
+  --card:    #FFFFFF;
+  --border:  #E2E8F0;
+  --text1:   #0B1E3D;
+  --text2:   #4A5568;
+  --text3:   #94A3B8;
+  --green:   #10B981;
+  --red:     #EF4444;
+  --yellow:  #F59E0B;
+  --font:    'DM Sans', system-ui, sans-serif;
+  --radius:  12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh}
+
+/* Header */
+.header{background:var(--navy);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo-mark{width:32px;height:32px;background:var(--turq);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--navy);flex-shrink:0}
+.header-title{color:var(--white);font-size:15px;font-weight:600}
+.header-sub{color:rgba(255,255,255,.5);font-size:12px}
+.header-right{display:flex;align-items:center;gap:12px}
+.config-btn{background:rgba(0,196,204,.15);border:1px solid rgba(0,196,204,.3);color:var(--turq);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.config-btn:hover{background:rgba(0,196,204,.25)}
+.refresh-btn{background:var(--turq);border:none;color:var(--navy);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px}
+.refresh-btn:hover{background:var(--turq2)}
+.refresh-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Layout */
+.main{max-width:1200px;margin:0 auto;padding:24px 16px}
+
+/* Period selector */
+.period-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.period-label{font-size:13px;color:var(--text2)}
+.period-tabs{display:flex;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.period-tab{padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;font-family:var(--font);color:var(--text2)}
+.period-tab.active{background:var(--navy);color:var(--white)}
+.last-update{font-size:11px;color:var(--text3)}
+
+/* AI Analysis banner */
+.ai-banner{background:linear-gradient(135deg,var(--navy) 0%,#1a3a6e 100%);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;display:none}
+.ai-banner.visible{display:block}
+.ai-banner-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ai-badge{background:var(--turq);color:var(--navy);font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
+.ai-banner-title{color:var(--white);font-size:14px;font-weight:600}
+.ai-content{color:rgba(255,255,255,.85);font-size:13px;line-height:1.7}
+.ai-alerts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ai-alert{padding:6px 12px;border-radius:6px;font-size:12px;font-weight:500}
+.ai-alert.warn{background:rgba(245,158,11,.2);color:#FCD34D;border:1px solid rgba(245,158,11,.3)}
+.ai-alert.good{background:rgba(16,185,129,.2);color:#6EE7B7;border:1px solid rgba(16,185,129,.3)}
+.ai-alert.bad{background:rgba(239,68,68,.2);color:#FCA5A5;border:1px solid rgba(239,68,68,.3)}
+
+/* KPI Grid */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
+.kpi-rank{position:absolute;top:10px;right:12px;font-size:10px;font-weight:700;color:var(--text3)}
+.kpi-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.kpi-value{font-size:26px;font-weight:700;color:var(--text1);line-height:1;margin-bottom:6px}
+.kpi-value.turq{color:var(--turq2)}
+.kpi-delta{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:500}
+.kpi-delta.up{color:var(--green)}
+.kpi-delta.down{color:var(--red)}
+.kpi-delta.neutral{color:var(--text3)}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.kpi-alert{position:absolute;bottom:0;left:0;right:0;height:3px}
+.kpi-alert.red{background:var(--red)}
+.kpi-alert.green{background:var(--green)}
+.kpi-alert.yellow{background:var(--yellow)}
+
+/* Charts row */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:20px}
+@media(max-width:768px){.charts-row{grid-template-columns:1fr}}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text1);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-badge{background:var(--bg);color:var(--text2);font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.chart-area{height:180px;position:relative}
+canvas{width:100%!important}
+
+/* Campaigns table */
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.table-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.table-title{font-size:13px;font-weight:600}
+.table-wrapper{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text1)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F8FAFC}
+.camp-name{font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.status-badge.active{background:rgba(16,185,129,.1);color:var(--green)}
+.status-badge.paused{background:rgba(148,163,184,.1);color:var(--text3)}
+.perf-bar{height:4px;background:var(--border);border-radius:2px;width:80px;display:inline-block;vertical-align:middle}
+.perf-fill{height:100%;border-radius:2px;background:var(--turq)}
+.action-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--font)}
+.action-btn:hover{border-color:var(--turq);color:var(--turq)}
+
+/* Trend row */
+.trend-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:768px){.trend-row{grid-template-columns:repeat(2,1fr)}}
+.trend-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.trend-week{font-size:10px;font-weight:600;color:var(--text3);margin-bottom:4px}
+.trend-spend{font-size:18px;font-weight:700;color:var(--text1)}
+.trend-results{font-size:11px;color:var(--text2);margin-top:2px}
+.trend-bar-wrap{margin-top:8px;height:4px;background:var(--border);border-radius:2px}
+.trend-bar-fill{height:100%;border-radius:2px;background:var(--turq)}
+
+/* Modal config */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border-radius:16px;padding:28px;width:90%;max-width:480px}
+.modal-title{font-size:16px;font-weight:700;color:var(--text1);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.field input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);color:var(--text1);outline:none}
+.field input:focus{border-color:var(--turq)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-primary{flex:1;background:var(--navy);color:var(--white);border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.btn-secondary{background:none;border:1.5px solid var(--border);color:var(--text2);padding:11px 16px;border-radius:8px;font-size:14px;cursor:pointer;font-family:var(--font)}
+
+/* Empty / Loading states */
+.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
+.empty-state .icon{font-size:40px;margin-bottom:12px}
+.empty-state h3{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.empty-state p{font-size:13px;line-height:1.5}
+.loading-pulse{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.skeleton{background:var(--border);border-radius:4px;display:inline-block}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:var(--white);padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transition:opacity .3s;z-index:300;pointer-events:none}
+#toast.show{opacity:1}
+
+/* Budget bar */
+.budget-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.budget-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.budget-title{font-size:13px;font-weight:600}
+.budget-pct{font-size:20px;font-weight:700;color:var(--turq2)}
+.budget-bar-wrap{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.budget-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--turq),var(--turq2));transition:width .5s}
+.budget-bar-fill.warn{background:linear-gradient(90deg,var(--yellow),#D97706)}
+.budget-bar-fill.over{background:linear-gradient(90deg,var(--red),#DC2626)}
+.budget-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text2)}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-mark">✓</div>
+    <div>
+      <div class="header-title">Creditek · Meta Ads Intelligence</div>
+      <div class="header-sub">Agente 3 · Reporte de rendimiento publicitario</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="config-btn" onclick="abrirConfig()">⚙ Configurar</button>
+    <button class="refresh-btn" id="refresh-btn" onclick="cargarDatos()">
+      <span id="refresh-icon">↻</span> Actualizar
+    </button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Period bar -->
+  <div class="period-bar">
+    <span class="period-label" id="period-label">Selecciona un período</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="period-tabs">
+        <button class="period-tab active" onclick="setPeriod(7,this)">7 días</button>
+        <button class="period-tab" onclick="setPeriod(14,this)">14 días</button>
+        <button class="period-tab" onclick="setPeriod(30,this)">30 días</button>
+      </div>
+      <span class="last-update" id="last-update">Sin datos</span>
+    </div>
+  </div>
+
+  <!-- Budget bar -->
+  <div class="budget-section" id="budget-section" style="display:none">
+    <div class="budget-header">
+      <div class="budget-title">💰 Presupuesto semanal — $50 USD</div>
+      <div class="budget-pct" id="budget-pct">0%</div>
+    </div>
+    <div class="budget-bar-wrap">
+      <div class="budget-bar-fill" id="budget-bar" style="width:0%"></div>
+    </div>
+    <div class="budget-meta">
+      <span id="budget-spent">Gastado: $0</span>
+      <span id="budget-remain">Restante: $50.00</span>
+    </div>
+  </div>
+
+  <!-- AI Analysis -->
+  <div class="ai-banner" id="ai-banner">
+    <div class="ai-banner-header">
+      <span class="ai-badge">IA · Claude</span>
+      <span class="ai-banner-title">Análisis inteligente de rendimiento</span>
+    </div>
+    <div class="ai-content" id="ai-content">Analizando datos...</div>
+    <div class="ai-alerts" id="ai-alerts"></div>
+  </div>
+
+  <!-- KPI Grid -->
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-rank">#1</div>
+      <div class="kpi-label">ROAS</div>
+      <div class="kpi-value turq" id="kpi-roas">—</div>
+      <div class="kpi-delta neutral" id="delta-roas">Sin datos</div>
+      <div class="kpi-sub">Retorno por peso invertido</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">#2</div>
+      <div class="kpi-label">Costo por resultado</div>
+      <div class="kpi-value" id="kpi-cpr">—</div>
+      <div class="kpi-delta neutral" id="delta-cpr">Sin datos</div>
+      <div class="kpi-sub">CPR — lead / mensaje</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">#3</div>
+      <div class="kpi-label">CTR</div>
+      <div class="kpi-value" id="kpi-ctr">—</div>
+      <div class="kpi-delta neutral" id="delta-ctr">Sin datos</div>
+      <div class="kpi-sub">Tasa de clics</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">#4</div>
+      <div class="kpi-label">Alcance</div>
+      <div class="kpi-value" id="kpi-reach">—</div>
+      <div class="kpi-delta neutral" id="delta-reach">Sin datos</div>
+      <div class="kpi-sub">Personas únicas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">#5</div>
+      <div class="kpi-label">Frecuencia</div>
+      <div class="kpi-value" id="kpi-freq">—</div>
+      <div class="kpi-delta neutral" id="delta-freq">Sin datos</div>
+      <div class="kpi-sub" id="freq-alert">Alerta en 3.5</div>
+      <div class="kpi-alert" id="freq-bar"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">#6</div>
+      <div class="kpi-label">Gasto total</div>
+      <div class="kpi-value" id="kpi-spend">—</div>
+      <div class="kpi-delta neutral" id="delta-spend">Sin datos</div>
+      <div class="kpi-sub">USD del período</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">#7</div>
+      <div class="kpi-label">Impresiones</div>
+      <div class="kpi-value" id="kpi-impr">—</div>
+      <div class="kpi-delta neutral" id="delta-impr">Sin datos</div>
+      <div class="kpi-sub">Total de veces visto</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">#8</div>
+      <div class="kpi-label">CPM</div>
+      <div class="kpi-value" id="kpi-cpm">—</div>
+      <div class="kpi-delta neutral" id="delta-cpm">Sin datos</div>
+      <div class="kpi-sub">Costo por mil impresiones</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">#9</div>
+      <div class="kpi-label">Conversiones</div>
+      <div class="kpi-value" id="kpi-conv">—</div>
+      <div class="kpi-delta neutral" id="delta-conv">Sin datos</div>
+      <div class="kpi-sub">Acciones completadas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">#10</div>
+      <div class="kpi-label">CPC</div>
+      <div class="kpi-value" id="kpi-cpc">—</div>
+      <div class="kpi-delta neutral" id="delta-cpc">Sin datos</div>
+      <div class="kpi-sub">Costo por clic</div>
+    </div>
+  </div>
+
+  <!-- Tendencia 4 semanas -->
+  <div class="trend-row" id="trend-row" style="display:none">
+  </div>
+
+  <!-- Campaigns table -->
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">📊 Campañas — Ranking por rendimiento</div>
+    </div>
+    <div id="campaigns-wrap">
+      <div class="empty-state">
+        <div class="icon">📡</div>
+        <h3>Sin datos aún</h3>
+        <p>Configura tu token de Meta Ads y haz clic en Actualizar para ver tus campañas.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal config -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">⚙ Configuración Meta Ads</div>
+    <div class="modal-sub">Tus credenciales se guardan solo en este navegador.</div>
+    <div class="field">
+      <label>Token de acceso Meta Ads</label>
+      <input type="password" id="inp-token" placeholder="EAAxxxxxxxxxxxxx">
+    </div>
+    <div class="field">
+      <label>ID de cuenta publicitaria</label>
+      <input type="text" id="inp-account" placeholder="123456789012345">
+    </div>
+    <div class="field">
+      <label>API key Anthropic (para análisis IA)</label>
+      <input type="password" id="inp-claude" placeholder="sk-ant-api03-xxx">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="cerrarConfig()">Cancelar</button>
+      <button class="btn-primary" onclick="guardarConfig()">Guardar y conectar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Estado ────────────────────────────────────────────────────────
+let currentDays = 7;
+let lastData = null;
+
+// ── Config ───────────────────────────────────────────────────────
+function abrirConfig() {
+  document.getElementById('inp-token').value   = localStorage.getItem('ck_meta_token') || '';
+  document.getElementById('inp-account').value = localStorage.getItem('ck_meta_account') || '';
+  document.getElementById('inp-claude').value  = localStorage.getItem('ck_claude_key') || '';
+  document.getElementById('modal').classList.add('open');
+}
+function cerrarConfig() {
+  document.getElementById('modal').classList.remove('open');
+}
+function guardarConfig() {
+  const t = document.getElementById('inp-token').value.trim();
+  const a = document.getElementById('inp-account').value.trim();
+  const c = document.getElementById('inp-claude').value.trim();
+  if (!t || !a) { showToast('Token e ID son obligatorios', '#EF4444'); return; }
+  localStorage.setItem('ck_meta_token',   t);
+  localStorage.setItem('ck_meta_account', a);
+  if (c) localStorage.setItem('ck_claude_key', c);
+  cerrarConfig();
+  showToast('✓ Configuración guardada');
+  cargarDatos();
+}
+
+// ── Period ───────────────────────────────────────────────────────
+function setPeriod(days, btn) {
+  currentDays = days;
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (localStorage.getItem('ck_meta_token')) cargarDatos();
+}
+
+// ── Fechas ───────────────────────────────────────────────────────
+function getFechas(days) {
+  const end   = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - days);
+  return {
+    since: start.toISOString().split('T')[0],
+    until: end.toISOString().split('T')[0],
+  };
+}
+
+// ── Cargar datos Meta API ─────────────────────────────────────────
+async function cargarDatos() {
+  const token   = localStorage.getItem('ck_meta_token');
+  const account = localStorage.getItem('ck_meta_account');
+  if (!token || !account) { abrirConfig(); return; }
+
+  const btn = document.getElementById('refresh-btn');
+  const icon = document.getElementById('refresh-icon');
+  btn.disabled = true;
+  icon.style.animation = 'spin 1s linear infinite';
+  icon.style.display = 'inline-block';
+
+  try {
+    const { since, until } = getFechas(currentDays);
+    const prevFechas = getFechas(currentDays * 2);
+
+    // Actualizar label período
+    document.getElementById('period-label').textContent =
+      `${since} → ${until} (últimos ${currentDays} días)`;
+
+    // Fields a pedir
+    const fields = 'spend,impressions,clicks,reach,frequency,cpm,cpc,ctr,actions,cost_per_action_type,conversions';
+
+    // Petición principal
+    const url = `https://graph.facebook.com/v20.0/act_${account}/insights?fields=${fields}&time_range={"since":"${since}","until":"${until}"}&level=account&access_token=${token}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error.message);
+
+    // Petición período anterior (comparación)
+    const urlPrev = `https://graph.facebook.com/v20.0/act_${account}/insights?fields=${fields}&time_range={"since":"${prevFechas.since}","until":"${since}"}&level=account&access_token=${token}`;
+    const resPrev = await fetch(urlPrev);
+    const dataPrev = await resPrev.json();
+
+    // Campañas
+    const urlCamp = `https://graph.facebook.com/v20.0/act_${account}/insights?fields=campaign_name,spend,impressions,clicks,reach,frequency,ctr,cpm,cpc,actions,status&time_range={"since":"${since}","until":"${until}"}&level=campaign&access_token=${token}`;
+    const resCamp = await fetch(urlCamp);
+    const dataCamp = await resCamp.json();
+
+    // Tendencia semanal (4 semanas)
+    const trendData = [];
+    for (let w = 3; w >= 0; w--) {
+      const wEnd   = new Date(); wEnd.setDate(wEnd.getDate() - w*7);
+      const wStart = new Date(); wStart.setDate(wStart.getDate() - (w+1)*7);
+      const wUrl = `https://graph.facebook.com/v20.0/act_${account}/insights?fields=spend,actions&time_range={"since":"${wStart.toISOString().split('T')[0]}","until":"${wEnd.toISOString().split('T')[0]}"}&level=account&access_token=${token}`;
+      const wRes = await fetch(wUrl);
+      const wDat = await wRes.json();
+      trendData.push({ week: w, data: wDat.data?.[0] || null });
+    }
+
+    lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: dataCamp.data || [], trend: trendData };
+    renderDatos(lastData);
+    document.getElementById('last-update').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CO');
+
+    // Análisis IA
+    if (localStorage.getItem('ck_claude_key')) {
+      analizarConIA(lastData);
+    }
+
+  } catch(e) {
+    showToast('Error: ' + e.message, '#EF4444');
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  icon.style.animation = '';
+}
+
+// ── Render datos ─────────────────────────────────────────────────
+function renderDatos(d) {
+  const m = d.main || {};
+  const p = d.prev || {};
+
+  const spend   = parseFloat(m.spend || 0);
+  const impr    = parseInt(m.impressions || 0);
+  const clicks  = parseInt(m.clicks || 0);
+  const reach   = parseInt(m.reach || 0);
+  const freq    = parseFloat(m.frequency || 0);
+  const cpm     = parseFloat(m.cpm || 0);
+  const cpc     = parseFloat(m.cpc || 0);
+  const ctr     = parseFloat(m.ctr || 0);
+
+  // Conversiones / resultados
+  const actions = m.actions || [];
+  const results = actions.reduce((s, a) => s + parseInt(a.value || 0), 0);
+  const cpr     = results > 0 ? spend / results : 0;
+  const roas    = spend > 0 ? (results * 50000 / (spend * 4000)) : 0; // estimado en COP
+
+  // Previo
+  const pSpend  = parseFloat(p.spend || 0);
+  const pImpr   = parseInt(p.impressions || 0);
+  const pReach  = parseInt(p.reach || 0);
+  const pCtr    = parseFloat(p.ctr || 0);
+  const pFreq   = parseFloat(p.frequency || 0);
+  const pCpm    = parseFloat(p.cpm || 0);
+  const pCpc    = parseFloat(p.cpc || 0);
+  const pAct    = (p.actions||[]).reduce((s,a) => s + parseInt(a.value||0), 0);
+  const pCpr    = pAct > 0 ? pSpend / pAct : 0;
+
+  // KPIs
+  setKPI('kpi-roas',   roas > 0 ? roas.toFixed(1)+'x' : 'N/A', null, null, 'Retorno estimado');
+  setKPI('kpi-cpr',    cpr > 0 ? '$'+cpr.toFixed(2) : 'N/A', pCpr, cpr, 'Por lead/mensaje');
+  setKPI('kpi-ctr',    ctr.toFixed(2)+'%', pCtr, ctr, 'vs período anterior');
+  setKPI('kpi-reach',  fmtNum(reach), pReach, reach, 'vs período anterior');
+  setKPI('kpi-freq',   freq.toFixed(2), pFreq, freq, freq >= 3.5 ? '⚠ Saturación' : 'Saludable');
+  setKPI('kpi-spend',  '$'+spend.toFixed(2), pSpend, spend, 'USD');
+  setKPI('kpi-impr',   fmtNum(impr), pImpr, impr, 'vs período anterior');
+  setKPI('kpi-cpm',    '$'+cpm.toFixed(2), pCpm, cpm, 'Por mil impresiones');
+  setKPI('kpi-conv',   fmtNum(results), pAct, results, 'Acciones totales');
+  setKPI('kpi-cpc',    '$'+cpc.toFixed(2), pCpc, cpc, 'Por clic');
+
+  // Alerta frecuencia
+  const freqBar = document.getElementById('freq-bar');
+  if (freq >= 4) { freqBar.className = 'kpi-alert red'; }
+  else if (freq >= 3) { freqBar.className = 'kpi-alert yellow'; }
+  else { freqBar.className = 'kpi-alert green'; }
+
+  // Budget bar
+  const weeklyBudget = 50;
+  const spendWeekly  = currentDays === 7 ? spend : spend * (7 / currentDays);
+  const pct          = Math.min((spendWeekly / weeklyBudget) * 100, 100);
+  document.getElementById('budget-pct').textContent = pct.toFixed(0) + '%';
+  const bar = document.getElementById('budget-bar');
+  bar.style.width = pct + '%';
+  bar.className = 'budget-bar-fill' + (pct >= 100 ? ' over' : pct >= 80 ? ' warn' : '');
+  document.getElementById('budget-spent').textContent    = 'Gastado: $' + spendWeekly.toFixed(2);
+  document.getElementById('budget-remain').textContent   = 'Restante: $' + Math.max(0, weeklyBudget - spendWeekly).toFixed(2);
+  document.getElementById('budget-section').style.display = 'block';
+
+  // Campañas
+  renderCampañas(d.camps);
+
+  // Tendencia
+  renderTendencia(d.trend);
+}
+
+function setKPI(id, val, prev, curr, sub) {
+  document.getElementById(id).textContent = val;
+  if (sub) {
+    const subEl = document.getElementById(id).nextElementSibling?.nextElementSibling;
+    if (subEl?.classList.contains('kpi-sub')) subEl.textContent = sub;
+  }
+  if (prev !== null && curr !== null) {
+    const deltaId = 'delta-' + id.replace('kpi-','');
+    const el = document.getElementById(deltaId);
+    if (!el) return;
+    if (prev === 0) { el.textContent = 'Sin comparación'; el.className = 'kpi-delta neutral'; return; }
+    const pct = ((curr - prev) / prev) * 100;
+    const isPositive = id === 'kpi-cpr' || id === 'kpi-cpc' || id === 'kpi-cpm' ? pct < 0 : pct > 0;
+    el.textContent = (pct > 0 ? '▲ +' : '▼ ') + Math.abs(pct).toFixed(1) + '% vs anterior';
+    el.className = 'kpi-delta ' + (isPositive ? 'up' : pct === 0 ? 'neutral' : 'down');
+  }
+}
+
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1)+'M';
+  if (n >= 1000) return (n/1000).toFixed(1)+'K';
+  return n.toString();
+}
+
+function renderCampañas(camps) {
+  const wrap = document.getElementById('campaigns-wrap');
+  if (!camps || camps.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Sin campañas activas</h3><p>No se encontraron campañas en el período seleccionado.</p></div>';
+    return;
+  }
+
+  // Ordenar por gasto descendente
+  const sorted = [...camps].sort((a, b) => parseFloat(b.spend||0) - parseFloat(a.spend||0));
+  const maxSpend = parseFloat(sorted[0]?.spend || 1);
+
+  wrap.innerHTML = `<div class="table-wrapper"><table>
+    <thead><tr>
+      <th>#</th><th>Campaña</th><th>Estado</th>
+      <th>Gasto</th><th>Alcance</th><th>CTR</th>
+      <th>CPC</th><th>Resultados</th><th>Rendimiento</th>
+    </tr></thead>
+    <tbody>
+    ${sorted.map((c, i) => {
+      const spend   = parseFloat(c.spend || 0);
+      const ctr     = parseFloat(c.ctr || 0);
+      const cpc     = parseFloat(c.cpc || 0);
+      const reach   = parseInt(c.reach || 0);
+      const actions = (c.actions || []).reduce((s, a) => s + parseInt(a.value || 0), 0);
+      const perfPct = Math.round((spend / maxSpend) * 100);
+      return `<tr>
+        <td style="font-weight:700;color:var(--text3)">${i+1}</td>
+        <td class="camp-name" title="${c.campaign_name}">${c.campaign_name || '—'}</td>
+        <td><span class="status-badge active">● Activa</span></td>
+        <td style="font-weight:600">$${spend.toFixed(2)}</td>
+        <td>${fmtNum(reach)}</td>
+        <td>${ctr.toFixed(2)}%</td>
+        <td>$${cpc.toFixed(2)}</td>
+        <td style="font-weight:600;color:var(--turq2)">${fmtNum(actions)}</td>
+        <td><div class="perf-bar"><div class="perf-fill" style="width:${perfPct}%"></div></div></td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+function renderTendencia(trend) {
+  if (!trend || trend.every(t => !t.data)) return;
+  const row = document.getElementById('trend-row');
+  const labels = ['Hace 4 sem','Hace 3 sem','Hace 2 sem','Esta semana'];
+  const maxSpend = Math.max(...trend.map(t => parseFloat(t.data?.spend || 0)), 1);
+
+  row.innerHTML = trend.map((t, i) => {
+    const spend   = parseFloat(t.data?.spend || 0);
+    const results = (t.data?.actions || []).reduce((s, a) => s + parseInt(a.value || 0), 0);
+    const pct     = Math.round((spend / maxSpend) * 100);
+    return `<div class="trend-card">
+      <div class="trend-week">${labels[i]}</div>
+      <div class="trend-spend">$${spend.toFixed(2)}</div>
+      <div class="trend-results">${fmtNum(results)} resultados</div>
+      <div class="trend-bar-wrap"><div class="trend-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  row.style.display = 'grid';
+}
+
+// ── Análisis IA con Claude ────────────────────────────────────────
+async function analizarConIA(data) {
+  const key = localStorage.getItem('ck_claude_key');
+  if (!key || !data.main) return;
+
+  const m = data.main;
+  const spend   = parseFloat(m.spend || 0);
+  const ctr     = parseFloat(m.ctr || 0);
+  const freq    = parseFloat(m.frequency || 0);
+  const cpm     = parseFloat(m.cpm || 0);
+  const results = (m.actions || []).reduce((s, a) => s + parseInt(a.value || 0), 0);
+  const cpr     = results > 0 ? (spend / results).toFixed(2) : 'N/A';
+
+  const prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza estos datos de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
+
+DATOS DEL PERÍODO (${currentDays} días):
+- Gasto: $${spend.toFixed(2)} USD (presupuesto semanal: $50 USD)
+- CTR: ${ctr.toFixed(2)}%
+- Frecuencia: ${freq.toFixed(2)}
+- CPM: $${cpm.toFixed(2)}
+- Resultados totales: ${results}
+- Costo por resultado: $${cpr}
+
+Campañas activas: ${data.camps?.length || 0}
+
+DA UN ANÁLISIS BREVE (3-4 oraciones) que incluya:
+1. Evaluación general del rendimiento
+2. El problema más urgente a resolver
+3. La oportunidad más clara a aprovechar
+
+Luego genera exactamente 3 alertas en este formato JSON:
+{"alerts": [{"type": "warn|good|bad", "text": "mensaje corto"}]}
+
+Responde primero el análisis en texto, luego el JSON en una línea separada.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 500,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const d = await res.json();
+    const text = d.content?.[0]?.text || '';
+
+    // Separar análisis de JSON
+    const jsonMatch = text.match(/\{[\s\S]*"alerts"[\s\S]*\}/);
+    const analisis  = text.replace(jsonMatch?.[0] || '', '').trim();
+
+    document.getElementById('ai-content').textContent = analisis;
+
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        const alertsHtml = parsed.alerts.map(a =>
+          `<span class="ai-alert ${a.type}">${a.text}</span>`
+        ).join('');
+        document.getElementById('ai-alerts').innerHTML = alertsHtml;
+      } catch(e) {}
+    }
+
+    document.getElementById('ai-banner').classList.add('visible');
+  } catch(e) {
+    console.error('Error IA:', e);
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg, color = '#0B1E3D') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  if (localStorage.getItem('ck_meta_token') && localStorage.getItem('ck_meta_account')) {
+    cargarDatos();
+  } else {
+    setTimeout(abrirConfig, 500);
+  }
+});
+
+// CSS spin animation
+const style = document.createElement('style');
+style.textContent = '@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
+</script>
+</body>
+</html>
