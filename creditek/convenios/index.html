@@ -427,18 +427,43 @@ ciudadInput.addEventListener('input', () => document.getElementById('prevCiudad'
 
 // ---------- Carga de documentos ----------
 const archivos = {};
+
+function comprimirImagen(file, maxAncho){
+  return new Promise((resolve) => {
+    if(file.type === 'application/pdf'){
+      const reader = new FileReader();
+      reader.onload = () => resolve({ base64: reader.result.split(',')[1], tipo: file.type, nombre: file.name });
+      reader.readAsDataURL(file);
+      return;
+    }
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => { img.src = e.target.result; };
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if(w > maxAncho){
+        h = Math.round(h * (maxAncho / w));
+        w = maxAncho;
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = c.toDataURL('image/jpeg', 0.7);
+      resolve({ base64: dataUrl.split(',')[1], tipo: 'image/jpeg', nombre: file.name });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 document.querySelectorAll('.upload-item input[type="file"]').forEach(input => {
-  input.addEventListener('change', (e) => {
+  input.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     const item = input.closest('.upload-item');
     if(!file){ return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      archivos[input.dataset.key] = { nombre: file.name, tipo: file.type, base64: reader.result.split(',')[1] };
-      item.classList.add('filled');
-      item.querySelector('.status').style.display = 'inline';
-    };
-    reader.readAsDataURL(file);
+    const resultado = await comprimirImagen(file, 1280);
+    archivos[input.dataset.key] = resultado;
+    item.classList.add('filled');
+    item.querySelector('.status').style.display = 'inline';
   });
 });
 
@@ -490,7 +515,7 @@ document.getElementById('formAliado').addEventListener('submit', async (e) => {
     document.getElementById('overlayText').textContent = 'Convenio enviado. Gracias.';
   }catch(err){
     overlay.classList.remove('show');
-    alert('Hubo un error al enviar. Intenta nuevamente.');
+    alert('Hubo un error al enviar: ' + err.message);
   }
 });
 </script>
