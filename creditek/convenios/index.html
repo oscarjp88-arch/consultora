@@ -76,6 +76,7 @@
   }
   .field input[type="text"],
   .field input[type="tel"],
+  .field input[type="email"],
   .field textarea{
     width:100%;
     padding:10px 12px;
@@ -289,8 +290,16 @@
         <textarea id="direccion" required placeholder="Ej: Calle 15 # 8-22, Barrio Centro, Tolú, Sucre"></textarea>
       </div>
       <div class="field">
+        <label for="ciudad">Ciudad donde firmas el convenio</label>
+        <input type="text" id="ciudad" required placeholder="Ej: Tolú, Sucre">
+      </div>
+      <div class="field">
         <label for="telefono">Teléfono de contacto</label>
         <input type="tel" id="telefono" required inputmode="tel" placeholder="Ej: 3001234567">
+      </div>
+      <div class="field">
+        <label for="correo">Correo electrónico</label>
+        <input type="email" id="correo" required inputmode="email" placeholder="Ej: tunegocio@correo.com">
       </div>
     </div>
 
@@ -299,9 +308,9 @@
 
       <div class="upload-item" id="up_camara">
         <span class="icon">&#128196;</span>
-        <span class="label-text">Cámara de comercio<small>Documento vigente del negocio</small></span>
+        <span class="label-text">Cámara de comercio<small>Foto o archivo PDF del documento vigente</small></span>
         <span class="status" style="display:none;">Listo</span>
-        <input type="file" accept="image/*,.pdf" capture="environment" data-key="camaraComercio">
+        <input type="file" accept="image/*,.pdf" data-key="camaraComercio">
       </div>
 
       <div class="upload-item" id="up_cedfrontal">
@@ -325,7 +334,7 @@
         <input type="file" accept="image/*" capture="environment" data-key="fotoLocal">
       </div>
 
-      <p class="upload-hint">Toca cualquier casilla para abrir tu cámara</p>
+      <p class="upload-hint">Toca cualquier casilla para adjuntar el documento o tomar una foto</p>
     </div>
 
     <div class="card">
@@ -335,7 +344,8 @@
         Empresa: <b>CREDITEK SAS</b> — NIT 901.259.859<br>
         Aliado: <span class="hl" id="prevNombre">[tu nombre]</span><br>
         C.C.: <span class="hl" id="prevCedula">[tu cédula]</span><br>
-        Nombre comercial: <span class="hl" id="prevComercial">[tu negocio]</span>
+        Nombre comercial: <span class="hl" id="prevComercial">[tu negocio]</span><br>
+        Ciudad de firma: <span class="hl" id="prevCiudad">[tu ciudad]</span>
       </div>
     </div>
 
@@ -409,9 +419,11 @@ document.getElementById('btnLimpiarFirma').addEventListener('click', () => {
 const nombreInput = document.getElementById('nombre');
 const cedulaInput = document.getElementById('cedula');
 const comercialInput = document.getElementById('comercial');
+const ciudadInput = document.getElementById('ciudad');
 nombreInput.addEventListener('input', () => document.getElementById('prevNombre').textContent = nombreInput.value || '[tu nombre]');
 cedulaInput.addEventListener('input', () => document.getElementById('prevCedula').textContent = cedulaInput.value || '[tu cédula]');
 comercialInput.addEventListener('input', () => document.getElementById('prevComercial').textContent = comercialInput.value || '[tu negocio]');
+ciudadInput.addEventListener('input', () => document.getElementById('prevCiudad').textContent = ciudadInput.value || '[tu ciudad]');
 
 // ---------- Carga de documentos ----------
 const archivos = {};
@@ -458,7 +470,9 @@ document.getElementById('formAliado').addEventListener('submit', async (e) => {
     cedula: cedulaInput.value.trim(),
     nombreComercial: comercialInput.value.trim(),
     direccion: document.getElementById('direccion').value.trim(),
+    ciudad: ciudadInput.value.trim(),
     telefono: document.getElementById('telefono').value.trim(),
+    correo: document.getElementById('correo').value.trim(),
     firmaBase64: canvas.toDataURL('image/png').split(',')[1],
     documentos: archivos,
     fecha: new Date().toLocaleDateString('es-CO')
