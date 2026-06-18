@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convenio de alianza comercial · Creditek</title>
+<style>
+  :root{
+    --navy:#0B1E3D;
+    --navy-light:#13294D;
+    --turq:#1CBAD0;
+    --turq-dark:#0F6E56;
+    --gray-bg:#F4F6F8;
+    --border:#E2E8F0;
+    --text:#1A202C;
+    --text-secondary:#64748B;
+    --danger:#C0392B;
+    --success:#1D9E75;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--gray-bg);
+    color:var(--text);
+    line-height:1.5;
+    padding-bottom:40px;
+  }
+  .header{
+    background:var(--navy);
+    padding:28px 20px 22px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .header img{width:160px;height:auto;}
+  .header-text{text-align:center;}
+  .header-text h1{color:#FFFFFF;font-size:16px;font-weight:600;margin-bottom:4px;}
+  .header-text p{color:#9FE1CB;font-size:12.5px;}
+
+  .container{max-width:480px;margin:0 auto;padding:20px 16px;}
+
+  .card{
+    background:#FFFFFF;
+    border-radius:14px;
+    border:1px solid var(--border);
+    padding:20px 18px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-size:14px;
+    font-weight:600;
+    color:var(--navy);
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card h2 .num{
+    background:var(--turq);
+    color:#04342C;
+    width:20px;height:20px;
+    border-radius:50%;
+    font-size:11px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    color:var(--text-secondary);
+    margin-bottom:5px;
+    font-weight:500;
+  }
+  .field input[type="text"],
+  .field input[type="tel"],
+  .field textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:14px;
+    color:var(--text);
+    background:#FAFBFC;
+    font-family:inherit;
+  }
+  .field input:focus,
+  .field textarea:focus{
+    outline:none;
+    border-color:var(--turq);
+    background:#FFFFFF;
+  }
+  .field textarea{resize:vertical;min-height:60px;}
+
+  .upload-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:1.5px dashed var(--border);
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    position:relative;
+  }
+  .upload-item:last-child{margin-bottom:0;}
+  .upload-item.filled{
+    border-style:solid;
+    border-color:var(--success);
+    background:#F0FBF6;
+  }
+  .upload-item .icon{
+    font-size:18px;
+    color:var(--navy);
+    flex-shrink:0;
+    width:22px;
+    text-align:center;
+  }
+  .upload-item.filled .icon{color:var(--success);}
+  .upload-item .label-text{
+    flex:1;
+    font-size:13.5px;
+    color:var(--text);
+  }
+  .upload-item .label-text small{
+    display:block;
+    font-size:11px;
+    color:var(--text-secondary);
+    margin-top:1px;
+  }
+  .upload-item .status{
+    font-size:11.5px;
+    color:var(--success);
+    font-weight:600;
+    flex-shrink:0;
+  }
+  .upload-item input[type="file"]{
+    position:absolute;
+    inset:0;
+    opacity:0;
+    cursor:pointer;
+  }
+  .upload-hint{
+    font-size:11.5px;
+    color:var(--text-secondary);
+    margin-top:8px;
+  }
+
+  .preview-doc{
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:#FAFBFC;
+    padding:12px 14px;
+    font-size:11px;
+    color:var(--text-secondary);
+    line-height:1.6;
+  }
+  .preview-doc b{color:var(--text);}
+  .preview-doc .hl{color:var(--navy);font-weight:600;}
+
+  .sig-wrap{
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    background:#FAFBFC;
+    overflow:hidden;
+  }
+  #sigCanvas{
+    width:100%;
+    height:160px;
+    display:block;
+    touch-action:none;
+    cursor:crosshair;
+  }
+  .sig-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 12px;
+    border-top:1px solid var(--border);
+    background:#FFFFFF;
+  }
+  .sig-actions span{font-size:11px;color:var(--text-secondary);}
+  .sig-actions button{
+    background:none;
+    border:none;
+    color:var(--navy);
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    padding:4px 8px;
+  }
+
+  .submit-btn{
+    width:100%;
+    background:var(--turq);
+    color:#04342C;
+    border:none;
+    font-weight:600;
+    font-size:15px;
+    padding:14px;
+    border-radius:10px;
+    cursor:pointer;
+    margin-top:4px;
+    transition:opacity .15s;
+  }
+  .submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .submit-btn:active:not(:disabled){opacity:.85;}
+
+  .legal-note{
+    font-size:11px;
+    color:var(--text-secondary);
+    text-align:center;
+    margin-top:12px;
+    padding:0 10px;
+  }
+
+  .error-msg{
+    color:var(--danger);
+    font-size:12px;
+    margin-top:6px;
+    display:none;
+  }
+
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(11,30,61,.92);
+    display:none;
+    align-items:center;justify-content:center;
+    flex-direction:column;
+    gap:14px;
+    z-index:999;
+    text-align:center;
+    padding:30px;
+  }
+  .overlay.show{display:flex;}
+  .overlay .spinner{
+    width:36px;height:36px;
+    border:3px solid rgba(255,255,255,.25);
+    border-top-color:var(--turq);
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .overlay p{color:#FFFFFF;font-size:14px;}
+  .overlay.success .spinner{display:none;}
+  .overlay.success .check{
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--turq);
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;
+    color:#04342C;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek">
+  <div class="header-text">
+    <h1>Convenio de alianza comercial</h1>
+    <p>Completa tus datos, adjunta tus documentos y firma</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <form id="formAliado" autocomplete="off">
+
+    <div class="card">
+      <h2><span class="num">1</span>Datos del representante legal</h2>
+      <div class="field">
+        <label for="nombre">Nombre completo</label>
+        <input type="text" id="nombre" required placeholder="Ej: Luisa Fernanda Salgado Rada">
+      </div>
+      <div class="field">
+        <label for="cedula">Cédula de ciudadanía</label>
+        <input type="text" id="cedula" required inputmode="numeric" placeholder="Ej: 1067880655">
+      </div>
+      <div class="field">
+        <label for="comercial">Nombre comercial del negocio</label>
+        <input type="text" id="comercial" required placeholder="Ej: Celuflash">
+      </div>
+      <div class="field">
+        <label for="direccion">Dirección del negocio</label>
+        <textarea id="direccion" required placeholder="Ej: Calle 15 # 8-22, Barrio Centro, Tolú, Sucre"></textarea>
+      </div>
+      <div class="field">
+        <label for="telefono">Teléfono de contacto</label>
+        <input type="tel" id="telefono" required inputmode="tel" placeholder="Ej: 3001234567">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">2</span>Documentos requeridos</h2>
+
+      <div class="upload-item" id="up_camara">
+        <span class="icon">&#128196;</span>
+        <span class="label-text">Cámara de comercio<small>Documento vigente del negocio</small></span>
+        <span class="status" style="display:none;">Listo</span>
+        <input type="file" accept="image/*,.pdf" capture="environment" data-key="camaraComercio">
+      </div>
+
+      <div class="upload-item" id="up_cedfrontal">
+        <span class="icon">&#128100;</span>
+        <span class="label-text">Cédula — lado frontal<small>Foto clara y legible</small></span>
+        <span class="status" style="display:none;">Listo</span>
+        <input type="file" accept="image/*" capture="environment" data-key="cedulaFrontal">
+      </div>
+
+      <div class="upload-item" id="up_cedtrasera">
+        <span class="icon">&#128100;</span>
+        <span class="label-text">Cédula — lado trasero<small>Foto clara y legible</small></span>
+        <span class="status" style="display:none;">Listo</span>
+        <input type="file" accept="image/*" capture="environment" data-key="cedulaTrasera">
+      </div>
+
+      <div class="upload-item" id="up_local">
+        <span class="icon">&#127970;</span>
+        <span class="label-text">Foto del local<small>Fachada o interior del negocio</small></span>
+        <span class="status" style="display:none;">Listo</span>
+        <input type="file" accept="image/*" capture="environment" data-key="fotoLocal">
+      </div>
+
+      <p class="upload-hint">Toca cualquier casilla para abrir tu cámara</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">3</span>Vista previa del convenio</h2>
+      <div class="preview-doc">
+        <b>CONVENIO DE ALIANZA COMERCIAL</b><br>
+        Empresa: <b>CREDITEK SAS</b> — NIT 901.259.859<br>
+        Aliado: <span class="hl" id="prevNombre">[tu nombre]</span><br>
+        C.C.: <span class="hl" id="prevCedula">[tu cédula]</span><br>
+        Nombre comercial: <span class="hl" id="prevComercial">[tu negocio]</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">4</span>Firma sobre el convenio</h2>
+      <div class="sig-wrap">
+        <canvas id="sigCanvas"></canvas>
+        <div class="sig-actions">
+          <span>Dibuja tu firma con el dedo</span>
+          <button type="button" id="btnLimpiarFirma">Borrar</button>
+        </div>
+      </div>
+      <p class="error-msg" id="errFirma">Por favor firma antes de continuar.</p>
+    </div>
+
+    <button type="submit" class="submit-btn" id="btnEnviar">Firmar y enviar convenio</button>
+    <p class="legal-note">Al firmar aceptas los términos del convenio de alianza comercial con Creditek SAS, documento protegido bajo la Ley 527 de 1999.</p>
+  </form>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+  <div class="check" style="display:none;">&#10003;</div>
+  <p id="overlayText">Enviando tu convenio...</p>
+</div>
+
+<script>
+// ---------- Firma (signature pad sobre canvas) ----------
+const canvas = document.getElementById('sigCanvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let hasSignature = false;
+
+function resizeCanvas(){
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * ratio;
+  canvas.height = rect.height * ratio;
+  ctx.scale(ratio, ratio);
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#0B1E3D';
+}
+window.addEventListener('resize', () => { const data = hasSignature ? canvas.toDataURL() : null; resizeCanvas(); if(data){ const img = new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width/(window.devicePixelRatio||1),canvas.height/(window.devicePixelRatio||1)); img.src = data; } });
+resizeCanvas();
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+}
+function startDraw(e){ e.preventDefault(); drawing = true; hasSignature = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+function moveDraw(e){ if(!drawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+function endDraw(){ drawing = false; }
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', moveDraw);
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+canvas.addEventListener('touchstart', startDraw, {passive:false});
+canvas.addEventListener('touchmove', moveDraw, {passive:false});
+canvas.addEventListener('touchend', endDraw);
+
+document.getElementById('btnLimpiarFirma').addEventListener('click', () => {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  hasSignature = false;
+});
+
+// ---------- Vista previa en vivo ----------
+const nombreInput = document.getElementById('nombre');
+const cedulaInput = document.getElementById('cedula');
+const comercialInput = document.getElementById('comercial');
+nombreInput.addEventListener('input', () => document.getElementById('prevNombre').textContent = nombreInput.value || '[tu nombre]');
+cedulaInput.addEventListener('input', () => document.getElementById('prevCedula').textContent = cedulaInput.value || '[tu cédula]');
+comercialInput.addEventListener('input', () => document.getElementById('prevComercial').textContent = comercialInput.value || '[tu negocio]');
+
+// ---------- Carga de documentos ----------
+const archivos = {};
+document.querySelectorAll('.upload-item input[type="file"]').forEach(input => {
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    const item = input.closest('.upload-item');
+    if(!file){ return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      archivos[input.dataset.key] = { nombre: file.name, tipo: file.type, base64: reader.result.split(',')[1] };
+      item.classList.add('filled');
+      item.querySelector('.status').style.display = 'inline';
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+// ---------- Envío ----------
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYrPbQ4hdb5KVaLry8h19re0yM-M6fwLHLit8Ai7Q8Lj8x4wbR91yzudBpQp5AmWUM/exec';
+
+document.getElementById('formAliado').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if(!hasSignature){
+    document.getElementById('errFirma').style.display = 'block';
+    document.getElementById('errFirma').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  document.getElementById('errFirma').style.display = 'none';
+
+  const requeridos = ['camaraComercio','cedulaFrontal','cedulaTrasera','fotoLocal'];
+  const faltantes = requeridos.filter(k => !archivos[k]);
+  if(faltantes.length){
+    alert('Falta adjuntar: ' + faltantes.join(', '));
+    return;
+  }
+
+  const overlay = document.getElementById('overlay');
+  overlay.classList.add('show');
+
+  const payload = {
+    nombre: nombreInput.value.trim(),
+    cedula: cedulaInput.value.trim(),
+    nombreComercial: comercialInput.value.trim(),
+    direccion: document.getElementById('direccion').value.trim(),
+    telefono: document.getElementById('telefono').value.trim(),
+    firmaBase64: canvas.toDataURL('image/png').split(',')[1],
+    documentos: archivos,
+    fecha: new Date().toLocaleDateString('es-CO')
+  };
+
+  try{
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify(payload)
+    });
+    overlay.classList.add('success');
+    overlay.querySelector('.check').style.display = 'flex';
+    document.getElementById('overlayText').textContent = 'Convenio enviado. Gracias.';
+  }catch(err){
+    overlay.classList.remove('show');
+    alert('Hubo un error al enviar. Intenta nuevamente.');
+  }
+});
+</script>
+</body>
+</html>
