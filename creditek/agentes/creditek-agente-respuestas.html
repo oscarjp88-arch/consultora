@@ -37,10 +37,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tab-badge{background:#e2e8f0;color:var(--text2);padding:1px 6px;border-radius:8px;font-size:10px}
 .sidebar-tab.active .tab-badge{background:#e0f2fe;color:var(--accent)}
 
-.sidebar-filters{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-shrink:0}
-.search-box{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;outline:none;background:var(--bg)}
+.sidebar-filters{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.search-box{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;outline:none;background:var(--bg)}
 .search-box:focus{border-color:var(--accent)}
-.filter-sel{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--card);cursor:pointer;outline:none}
+.filter-sel{flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--card);cursor:pointer;outline:none;min-width:0}
 
 .conv-scroll{flex:1;overflow-y:auto}
 .conv-item{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s;position:relative}
@@ -230,7 +230,6 @@ async function loadClients(){
 function applyFilters(){
   const s=document.getElementById('searchInput').value.toLowerCase();
   const df=document.getElementById('filterDate').value;
-  const cf=document.getElementById('filterCity').value;
   const cf=document.getElementById('filterCity').value;
   const sf=document.getElementById('filterStatus').value;
   let entries=Object.entries(grouped);
