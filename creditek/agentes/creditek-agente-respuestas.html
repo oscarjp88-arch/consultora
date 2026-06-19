@@ -3,327 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Creditek · Respuestas Automáticas</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Creditek · Sofia — Panel de Respuestas</title>
 <style>
-:root{--azul:#0B1E3D;--turquesa:#00C4CC;--bg:#0B1E3D;--bg2:#112444;--bg3:#172d54;--bord:rgba(0,196,204,0.15);--bord2:rgba(0,196,204,0.35);--txt:#F0EFEB;--txt2:#9BB8CC;--txt3:#567890;--r:14px;--rs:8px}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:15px;line-height:1.6}
-.shell{display:flex;flex:1;min-height:0;overflow:hidden}
-.sidebar{width:300px;min-width:300px;background:var(--bg2);border-right:1px solid var(--bord);display:flex;flex-direction:column;overflow-y:auto}
-.logo-wrap{padding:18px 18px 14px;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:10px}
-.logo-img{height:38px;object-fit:contain}
-.logo-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px;color:var(--turquesa);letter-spacing:.04em}
-.logo-sub{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-top:1px}
-.sec{padding:13px 15px 6px}
-.lbl{font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;padding:0 3px 7px;display:block}
-.fg{margin-bottom:11px}
-.fl{font-size:11px;color:var(--txt2);margin-bottom:4px;display:block;padding:0 3px}
-select,input,textarea{width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--txt);border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 11px;outline:none;transition:border-color .2s;appearance:none}
-select:focus,input:focus,textarea:focus{border-color:var(--turquesa)}
-select option{background:var(--bg2)}
-textarea{resize:vertical;min-height:80px;line-height:1.5}
-.fgrid{display:flex;flex-direction:column;gap:4px}
-.fchip{background:var(--bg3);border:1px solid var(--bord);border-radius:var(--rs);padding:6px 10px;cursor:pointer;font-size:12px;color:var(--txt2);transition:all .15s;font-family:'DM Sans',sans-serif;text-align:left}
-.fchip:hover{border-color:var(--turquesa);color:var(--turquesa)}
-.fchip.active{border-color:var(--turquesa);background:rgba(0,196,204,.1);color:var(--turquesa)}
-.cg{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.cbtn{background:var(--bg3);border:1px solid var(--bord);border-radius:var(--rs);padding:7px 9px;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;color:var(--txt2);transition:all .15s;font-family:'DM Sans',sans-serif}
-.cbtn.active{border-color:var(--turquesa);background:rgba(0,196,204,.1);color:var(--turquesa)}
-.cbtn:hover:not(.active){border-color:var(--bord2);color:var(--txt)}
-.tg{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.tbtn{background:var(--bg3);border:1px solid var(--bord);border-radius:var(--rs);padding:7px 9px;cursor:pointer;font-size:12px;color:var(--txt2);transition:all .15s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px}
-.tbtn.active{border-color:var(--turquesa);background:rgba(0,196,204,.1);color:var(--turquesa)}
-.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.gbtn{margin:7px 15px 18px;width:calc(100% - 30px);background:var(--turquesa);border:none;border-radius:var(--rs);color:var(--azul);font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;letter-spacing:.02em;padding:11px 15px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px}
-.gbtn:hover{background:#00e0e8;transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,196,204,.3)}
-.gbtn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
-.sp{width:14px;height:14px;border:2px solid rgba(11,30,61,.3);border-top-color:var(--azul);border-radius:50%;animation:spin .7s linear infinite;display:none}
-@keyframes spin{to{transform:rotate(360deg)}}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{padding:16px 26px 13px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.ttl{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700}
-.tsub{font-size:12px;color:var(--txt3);margin-top:1px}
-.cabtn{background:var(--bg3);border:1px solid var(--bord);border-radius:var(--rs);color:var(--txt2);font-size:12px;padding:6px 13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
-.cabtn:hover{border-color:var(--turquesa);color:var(--turquesa)}
-.ca{flex:1;overflow-y:auto;padding:22px 26px}
-.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;opacity:.4}
-.eico{width:62px;height:62px;border-radius:16px;background:var(--bg3);border:1px solid var(--bord);display:flex;align-items:center;justify-content:center}
-.eico img{height:34px;object-fit:contain}
-.etit{font-family:'Montserrat',sans-serif;font-size:15px;font-weight:700}
-.edsc{font-size:13px;color:var(--txt2);max-width:290px}
-.rgrid{display:flex;flex-direction:column;gap:15px}
-.rcard{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;animation:fi .3s ease}
-@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.rh{padding:12px 17px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between}
-.rp{display:flex;align-items:center;gap:7px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-.cpbtn{background:transparent;border:1px solid var(--bord);border-radius:6px;color:var(--txt3);font-size:11px;padding:4px 9px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
-.cpbtn:hover{border-color:var(--turquesa);color:var(--turquesa)}
-.cpbtn.copied{border-color:var(--turquesa);color:var(--turquesa)}
-.rb{padding:17px}
-.rt{font-size:14px;line-height:1.8;color:var(--txt);white-space:pre-wrap;word-break:break-word}
-.rt em{font-style:normal;color:var(--turquesa);font-weight:500}
-.rf{padding:9px 17px;border-top:1px solid var(--bord);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.tag{font-size:11px;padding:3px 7px;background:var(--bg3);border:1px solid var(--bord);border-radius:20px;color:var(--txt3)}
-.shcard{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--r);padding:19px 17px;display:none}
-.shline{height:12px;background:linear-gradient(90deg,var(--bg3) 25%,rgba(0,196,204,.1) 50%,var(--bg3) 75%);background-size:200% 100%;border-radius:6px;animation:sh 1.5s infinite;margin-bottom:9px}
-@keyframes sh{to{background-position:-200% 0}}
-.shline.s{width:60%}.shline.m{width:80%}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bord);border-radius:2px}
-
-/* ── MODAL API KEY ─────────────────────────────────────────────── */
-#apiModal{position:fixed;inset:0;background:rgba(5,12,26,.93);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
-#apiModal.hidden{display:none}
-.m-card{background:#112444;border:1px solid rgba(0,196,204,.3);border-radius:16px;padding:36px 32px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;box-shadow:0 24px 64px rgba(0,0,0,.6)}
-.m-logo{display:flex;align-items:center;gap:12px}
-.m-logo img{height:34px;object-fit:contain}
-.m-logo-name{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:#00C4CC;letter-spacing:.05em}
-.m-title{font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.05rem;color:#F0EFEB;margin-bottom:3px}
-.m-desc{font-size:13px;color:#9BB8CC;line-height:1.6}
-.m-field{position:relative}
-.m-input{width:100%;background:#172d54;border:1px solid rgba(0,196,204,.2);color:#F0EFEB;border-radius:8px;font-family:monospace;font-size:13px;padding:12px 52px 12px 14px;outline:none;transition:border-color .2s;letter-spacing:.02em}
-.m-input:focus{border-color:#00C4CC;box-shadow:0 0 0 3px rgba(0,196,204,.1)}
-.m-input::placeholder{color:#567890;font-family:'DM Sans',sans-serif;letter-spacing:0;font-size:12px}
-.m-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#567890;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;padding:4px;transition:color .15s}
-.m-eye:hover{color:#00C4CC}
-.m-error{font-size:12px;color:#fc814a;display:none;padding:2px 0}
-.m-submit{background:#00C4CC;border:none;border-radius:8px;color:#0B1E3D;font-family:'Montserrat',sans-serif;font-weight:700;font-size:14px;letter-spacing:.02em;padding:13px;cursor:pointer;transition:all .2s;width:100%}
-.m-submit:hover{background:#00dde6;transform:translateY(-1px);box-shadow:0 6px 22px rgba(0,196,204,.35)}
-.m-note{font-size:11px;color:#567890;text-align:center;line-height:1.6}
-.m-note a{color:#00C4CC;text-decoration:none}
-.m-note a:hover{text-decoration:underline}
-.key-status{display:flex;align-items:center;justify-content:space-between;padding:6px 3px}
-.key-dot{width:7px;height:7px;border-radius:50%;background:#00C4CC;display:inline-block;margin-right:5px}
-.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;background:#112444;border-bottom:1px solid rgba(0,196,204,.15);padding:10px 20px;flex-shrink:0}
-.breadcrumb a{color:#00C4CC;text-decoration:none;font-weight:600}
-.breadcrumb a:hover{text-decoration:underline}
-.breadcrumb .sep{color:#567890}
-.breadcrumb .cur{color:#9BB8CC}
-.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:500;color:#fff}
-.toast.show{opacity:1;transform:translateY(0)}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #1a1a2e; }
+.header { background: #fff; padding: 16px 24px; border-bottom: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 18px; font-weight: 600; }
+.header h1 span { color: #0ea5e9; }
+.btn-refresh { background: #0ea5e9; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.btn-refresh:hover { background: #0284c7; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 20px 24px; }
+.stat-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef; }
+.stat-card .label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+.stat-card.highlight { border-left: 4px solid #0ea5e9; }
+.section { padding: 0 24px 20px; }
+.section h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #374151; }
+.conv-list { background: #fff; border-radius: 12px; border: 1px solid #e9ecef; overflow: hidden; }
+.conv-item { padding: 14px 18px; border-bottom: 1px solid #f3f4f6; display: flex; gap: 12px; align-items: flex-start; }
+.conv-item:last-child { border-bottom: none; }
+.conv-item:hover { background: #f8f9fa; }
+.conv-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #fff; flex-shrink: 0; }
+.conv-avatar.entrada { background: #6366f1; }
+.conv-avatar.salida { background: #0ea5e9; }
+.conv-body { flex: 1; min-width: 0; }
+.conv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.conv-name { font-size: 13px; font-weight: 600; }
+.conv-time { font-size: 11px; color: #9ca3af; }
+.conv-text { font-size: 13px; color: #4b5563; line-height: 1.4; }
+.conv-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; margin-top: 4px; }
+.conv-badge.entrada { background: #eef2ff; color: #6366f1; }
+.conv-badge.salida { background: #e0f2fe; color: #0284c7; }
+.conv-badge.intent { background: #fef3c7; color: #92400e; }
+.clients-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e9ecef; }
+.clients-table th { text-align: left; padding: 10px 14px; font-size: 11px; color: #6b7280; text-transform: uppercase; background: #f9fafb; border-bottom: 1px solid #e9ecef; }
+.clients-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
+.badge-optin { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.badge-optin.si { background: #22c55e; }
+.badge-optin.no { background: #ef4444; }
+.loading { text-align: center; padding: 40px; color: #9ca3af; }
+.empty { text-align: center; padding: 40px; color: #9ca3af; font-size: 14px; }
+@media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
-<nav class="breadcrumb"><a href="index.html">Agentes</a><span class="sep">›</span><span class="cur">Respuestas</span></nav>
-<div id="toast" class="toast"></div>
 
-<!-- ══ MODAL API KEY ══════════════════════════════════════════════ -->
-<div id="apiModal">
-  <div class="m-card">
-    <div class="m-logo">
-      <img src="logo.png" alt="Creditek">
-      <span class="m-logo-name">CREDITEK</span>
-    </div>
-    <div>
-      <div class="m-title">Ingresa tu API Key de Anthropic</div>
-      <div class="m-desc">Para usar este agente necesitas una API key de Anthropic. Se guarda de forma segura en este navegador y se comparte entre todos los agentes Creditek.</div>
-    </div>
-    <div class="m-field">
-      <input class="m-input" id="modalKey" type="password" placeholder="sk-ant-api03-..." autocomplete="off"
-        onkeydown="if(event.key==='Enter')submitKey()">
-      <button class="m-eye" id="modalEye" onclick="toggleModalKey()">Ver</button>
-    </div>
-    <div class="m-error" id="modalError">La key debe comenzar con <strong>sk-ant-</strong>. Verifica e intenta de nuevo.</div>
-    <button class="m-submit" onclick="submitKey()">Continuar →</button>
-    <div class="m-note">
-      Obtén tu key en <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a><br>
-      Esta key nunca se sube al repositorio ni se comparte.
-    </div>
-  </div>
+<div class="header">
+  <h1>Sofia · <span>Panel de Respuestas</span></h1>
+  <button class="btn-refresh" onclick="loadAll()">Actualizar</button>
 </div>
-<div class="shell">
-<aside class="sidebar">
-  <div class="logo-wrap">
-    <img class="logo-img" src="logo.png" alt="Creditek">
-    <div><div class="logo-title">CREDITEK</div><div class="logo-sub">Agente 2 · Respuestas</div></div>
-  </div>
-  <div class="sec">
-    <span class="lbl">Consulta del cliente</span>
-    <div class="fg"><label class="fl">Mensaje recibido</label><textarea id="consulta" placeholder="Ej: ¿Qué necesito para que me aprueben el crédito?"></textarea></div>
-    <div class="fg"><label class="fl">Ciudad de la tienda</label>
-    <select id="ciudad"><option value="nuestra tienda">Sin especificar</option><option value="Tolú">Tolú</option><option value="Corozal">Corozal</option><option value="Chinú">Chinú</option><option value="Ciénaga de Oro">Ciénaga de Oro</option><option value="Coveñas">Coveñas</option></select></div>
-  </div>
-  <div class="sec">
-    <span class="lbl">Preguntas frecuentes</span>
-    <div class="fgrid">
-      <button class="fchip" onclick="setF(this,'¿Qué documentos necesito para el crédito?')">📋 ¿Qué documentos necesito?</button>
-      <button class="fchip" onclick="setF(this,'¿Cuáles celulares tienen disponibles?')">📱 ¿Qué celulares tienen?</button>
-      <button class="fchip" onclick="setF(this,'¿Cuánto tiempo tarda la aprobación?')">⏱ ¿Cuánto tarda la aprobación?</button>
-      <button class="fchip" onclick="setF(this,'¿En cuántas cuotas puedo pagar?')">💳 ¿Cuántas cuotas hay?</button>
-      <button class="fchip" onclick="setF(this,'¿Cuál es la cuota inicial?')">💰 ¿Cuál es la inicial?</button>
-      <button class="fchip" onclick="setF(this,'¿Aceptan personas sin historial crediticio?')">🆕 ¿Sin historial crediticio?</button>
-      <button class="fchip" onclick="setF(this,'¿Cuál es el horario de atención?')">🕐 ¿Horario de atención?</button>
-      <button class="fchip" onclick="setF(this,'Quiero hacer una queja por el servicio')">😤 Queja o reclamo</button>
-    </div>
-  </div>
-  <div class="sec">
-    <span class="lbl">Canal de respuesta</span>
-    <div class="cg">
-      <button class="cbtn active" data-c="whatsapp" onclick="tC(this)"><div class="dot" style="background:#25D366"></div>WhatsApp</button>
-      <button class="cbtn" data-c="dm" onclick="tC(this)"><div class="dot" style="background:#E1306C"></div>DM Instagram</button>
-      <button class="cbtn" data-c="messenger" onclick="tC(this)"><div class="dot" style="background:#0084FF"></div>Messenger</button>
-      <button class="cbtn" data-c="comentario" onclick="tC(this)"><div class="dot" style="background:#00C4CC"></div>Comentario</button>
-    </div>
-  </div>
-  <div class="sec" style="padding-bottom:3px">
-    <span class="lbl">Tono de respuesta</span>
-    <div class="tg">
-      <button class="tbtn active" data-t="amigable" onclick="sT(this)">😊 Amigable</button>
-      <button class="tbtn" data-t="formal" onclick="sT(this)">👔 Formal</button>
-      <button class="tbtn" data-t="urgente" onclick="sT(this)">⚡ Urgente</button>
-      <button class="tbtn" data-t="empatico" onclick="sT(this)">🤝 Empático</button>
-    </div>
-  </div>
-  <div class="sec" style="padding-bottom:10px">
-    <span class="lbl">API Key</span>
-    <div class="key-status">
-      <span style="font-size:12px;color:var(--txt2)"><span class="key-dot"></span>Configurada esta sesión</span>
-      <button onclick="abrirModal()" style="background:none;border:none;color:var(--txt3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0">Cambiar</button>
-    </div>
-  </div>
-  <button class="gbtn" id="gbtn" onclick="gen()"><div class="sp" id="sp"></div><span id="gl">✦ Generar respuesta</span></button>
-</aside>
-<main class="main">
-  <div class="topbar">
-    <div><div class="ttl">Respuestas generadas</div><div class="tsub" id="ts">Ingresa la consulta del cliente y genera la respuesta perfecta</div></div>
-    <button class="cabtn" id="cab" onclick="cpAll()" style="display:none">Copiar todo</button>
-  </div>
-  <div class="ca" id="ca">
-    <div class="empty" id="em">
-      <div class="eico"><img src="logo.png" alt="Creditek"></div>
-      <div class="etit">Sin respuestas aún</div>
-      <div class="edsc">Pega la pregunta de un cliente, elige el canal y genera la respuesta con el tono de Creditek.</div>
-    </div>
-    <div class="shcard" id="sc"><div class="shline s"></div><div class="shline m"></div><div class="shline"></div><div class="shline s"></div><div class="shline m"></div></div>
-    <div class="rgrid" id="rg"></div>
-  </div>
-</main>
+
+<div class="stats" id="stats">
+  <div class="stat-card highlight"><div class="label">Total Clientes</div><div class="value" id="s-clientes">-</div></div>
+  <div class="stat-card highlight"><div class="label">Conversaciones Hoy</div><div class="value" id="s-convs">-</div></div>
+  <div class="stat-card highlight"><div class="label">Opt-ins Activos</div><div class="value" id="s-optins">-</div></div>
+  <div class="stat-card highlight"><div class="label">Leads Nuevos</div><div class="value" id="s-leads">-</div></div>
 </div>
+
+<div class="section">
+  <h2>Conversaciones Recientes</h2>
+  <div class="conv-list" id="conversations"><div class="loading">Cargando...</div></div>
+</div>
+
+<div class="section">
+  <h2>Clientes</h2>
+  <table class="clients-table" id="clients-table">
+    <thead><tr><th>Nombre</th><th>Telefono</th><th>Segmento</th><th>Datos</th><th>Operativo</th><th>Comercial</th><th>Estado</th></tr></thead>
+    <tbody id="clients-body"><tr><td colspan="7" class="loading">Cargando...</td></tr></tbody>
+  </table>
+</div>
+
 <script>
-function showToast(msg, color='#22c55e'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+const API = 'https://creditek-bot.comercial-853.workers.dev';
 
-// ── Modal API Key ───────────────────────────────────────────────
-function toggleModalKey(){const el=document.getElementById('modalKey');const btn=document.getElementById('modalEye');const show=el.type==='password';el.type=show?'text':'password';btn.textContent=show?'Ocultar':'Ver'}
-function submitKey(){const val=document.getElementById('modalKey').value.trim();const err=document.getElementById('modalError');if(!val.startsWith('sk-ant-')){err.style.display='block';document.getElementById('modalKey').focus();return}err.style.display='none';localStorage.setItem('ck_api_key',val);sessionStorage.setItem('ck_api_key',val);document.getElementById('apiModal').classList.add('hidden')}
-function abrirModal(){document.getElementById('modalKey').value='';document.getElementById('modalError').style.display='none';document.getElementById('apiModal').classList.remove('hidden');setTimeout(()=>document.getElementById('modalKey').focus(),80)}
-window.addEventListener('DOMContentLoaded',()=>{const stored=localStorage.getItem('ck_api_key');if(stored)sessionStorage.setItem('ck_api_key',stored);if(!sessionStorage.getItem('ck_api_key')){setTimeout(()=>document.getElementById('modalKey').focus(),80)}else{document.getElementById('apiModal').classList.add('hidden')}})
-const CM={whatsapp:{label:'WhatsApp',color:'#25D366',emoji:'💬'},dm:{label:'DM Instagram',color:'#E1306C',emoji:'📸'},messenger:{label:'Messenger',color:'#0084FF',emoji:'💙'},comentario:{label:'Comentario',color:'#00C4CC',emoji:'💬'}};
-const TN={amigable:'amigable, cercano y costeño',formal:'formal y profesional sin perder calidez',urgente:'rápido, directo y orientado a la acción',empatico:'empático, comprensivo y resolutivo'};
-let respHistory = [];
-function setF(btn,txt){document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('consulta').value=txt}
-function tC(btn){btn.classList.toggle('active')}
-function sT(btn){document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
-function gAC(){return[...document.querySelectorAll('.cbtn.active')].map(b=>b.dataset.c)}
-function gAT(){const b=document.querySelector('.tbtn.active');return b?b.dataset.t:'amigable'}
-async function gen(){
-  const consulta=document.getElementById('consulta').value.trim();
-  const ciudad=document.getElementById('ciudad').value;
-  const apiKey=sessionStorage.getItem('ck_api_key')||'';
-  if(!apiKey.startsWith('sk-ant-')){abrirModal();return}
-  const channels=gAC();
-  const tono=gAT();
-  if(!consulta){alert('Escribe o selecciona la consulta del cliente.');return}
-  if(!channels.length){alert('Selecciona al menos un canal.');return}
-  const btn=document.getElementById('gbtn');const sp=document.getElementById('sp');const gl=document.getElementById('gl');
-  btn.disabled=true;sp.style.display='block';gl.textContent='Generando...';
-  document.getElementById('em').style.display='none';document.getElementById('rg').innerHTML='';document.getElementById('sc').style.display='block';document.getElementById('cab').style.display='none';
-  const chList=channels.map(c=>CM[c].label).join(', ');
-  const prompt=`Eres el asistente de atención al cliente de Creditek SAS, empresa que vende celulares a crédito en el Caribe colombiano (Tolú, Corozal, Chinú, Ciénaga de Oro, Coveñas).
-
-CONTEXTO:
-- Celulares a crédito sin banco, aprobación en minutos
-- Plazos: 4, 6 u 8 meses
-- Plataformas: PayJoy, Alo Credit, Krediya, Addi
-- Marcas: Samsung, Xiaomi, Infinix, Tecno, Motorola
-- Requisitos: cédula + cuota inicial (aprox 25%)
-- Horario: lunes a sábado 8am-6pm
-- Ciudad: ${ciudad}
-- Tono: ${TN[tono]}
-
-CONSULTA: "${consulta}"
-CANALES: ${chList}
-
-Genera respuesta para CADA canal:
-- WhatsApp: directo, amigable, máx 5 líneas, emojis discretos
-- DM Instagram: corto 2-3 líneas, emoji relevante, CTA a perfil/tienda
-- Messenger: conversacional 3-4 líneas, cálido
-- Comentario: 1-2 líneas público y positivo, invita a DM para más info
-
-REGLAS: menciona la ciudad, no inventes precios ni stock exacto, termina siempre con CTA.
-
-Formato EXACTO:
-[CANAL: WhatsApp]
-{respuesta}
-
-[CANAL: DM Instagram]
-{respuesta}
-
-etc.`;
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':sessionStorage.getItem('ck_api_key')||'','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:3000,messages:[{role:'user',content:prompt}]})});
-    if(!r.ok){const errData=await r.json().catch(()=>({}));const msg=r.status===401?'API key inválida. Presiona "Cambiar key" y verifica.':r.status===429?'Límite de uso alcanzado. Espera un momento e intenta de nuevo.':errData.error?.message||`Error ${r.status}`;throw new Error(msg)}
-    const d=await r.json();
-    const txt=d.content?.find(b=>b.type==='text')?.text||'';
-    document.getElementById('sc').style.display='none';
-    renderResp(txt,channels,consulta,ciudad);
-    document.getElementById('ts').textContent='"'+consulta.substring(0,45)+(consulta.length>45?'...':'')+'" · '+ciudad;
-    document.getElementById('cab').style.display='block';
-    showToast('✓ Respuestas generadas correctamente');
-    respHistory.unshift({consulta, ciudad, channels, txt, time: new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})});
-    if (respHistory.length > 5) respHistory.pop();
-    renderHistory();
-  }catch(e){
-    document.getElementById('sc').style.display='none';
-    const msg = e.message || 'Error de conexión. Intenta de nuevo.';
-    document.getElementById('rg').innerHTML=`<div style="color:#ff6b6b;font-size:13px;padding:18px 0;line-height:1.6">${msg}</div>`;
-    showToast(msg, '#ef4444');
-  }
-  btn.disabled=false;sp.style.display='none';gl.textContent='✦ Generar respuesta';
+async function loadAll() {
+  await Promise.all([loadStats(), loadConversations(), loadClients()]);
 }
-function renderResp(text,channels,consulta,ciudad){
-  const g=document.getElementById('rg');g.innerHTML='';
-  channels.forEach(ch=>{
-    const m=CM[ch];const lk=m.label;
-    const rx=new RegExp('\[CANAL:\s*'+lk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\]([\s\S]*?)(?=\[CANAL:|$)','i');
-    const match=text.match(rx);if(!match)return;
-    const resp=match[1].trim();
-    const c=document.createElement('div');c.className='rcard';
-    c.innerHTML=`<div class="rh"><div class="rp"><div class="dot" style="background:${m.color}"></div>${m.emoji} ${m.label}</div><button class="cpbtn" onclick="cp(this,\`${e(resp)}\`)">Copiar</button></div><div class="rb"><div class="rt">${fmt(resp)}</div></div><div class="rf"><span class="tag">${ciudad}</span><span class="tag">${m.label}</span></div>`;
-    g.appendChild(c);
-  });
-}
-function fmt(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<em>$1</em>').replace(/\*(.+?)\*/g,'<em>$1</em>')}
-function e(s){return s.replace(/`/g,'\`').replace(/\$/g,'\$')}
-function cp(btn,txt){navigator.clipboard.writeText(txt).then(()=>{btn.classList.add('copied');btn.textContent='✓';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='Copiar';},2000)})}
-function renderHistory() {
-  let wrap = document.getElementById('hist-wrap');
-  if (!wrap) {
-    wrap = document.createElement('div');
-    wrap.id = 'hist-wrap';
-    wrap.style.cssText = 'padding:12px 16px 16px;border-top:1px solid rgba(0,196,204,0.15);margin-top:4px';
-    document.querySelector('.sidebar').appendChild(wrap);
-  }
-  if (!respHistory.length) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  wrap.innerHTML = '<div style="font-size:10px;font-weight:600;color:#567890;letter-spacing:0.1em;text-transform:uppercase;padding:0 4px 8px">Historial reciente</div>' +
-    respHistory.map((h, i) => `<div style="background:#172d54;border:1px solid rgba(0,196,204,0.1);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer" onclick="usarPlantilla(${i})">
-      <div style="font-size:12px;color:#9BB8CC;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">"${h.consulta.substring(0,40)}${h.consulta.length>40?'...':''}"</div>
-      <div style="font-size:10px;color:#567890">${h.ciudad} · ${h.time} <span style="color:#00C4CC;text-decoration:underline;margin-left:4px">Usar como plantilla</span></div>
-    </div>`).join('');
-}
-function usarPlantilla(idx) {
-  const h = respHistory[idx];
-  if (!h) return;
-  document.getElementById('consulta').value = h.consulta;
-  document.getElementById('ciudad').value = h.ciudad;
-  document.querySelectorAll('.cbtn').forEach(b => b.classList.toggle('active', h.channels.includes(b.dataset.c)));
-  document.getElementById('consulta').scrollIntoView({behavior:'smooth', block:'center'});
-}
-function cpAll(){const cards=document.querySelectorAll('.rt');let all='';cards.forEach(c=>{all+=c.innerText+'
 
----
+async function loadStats() {
+  try {
+    const res = await fetch(API + '/api/stats');
+    const d = await res.json();
+    document.getElementById('s-clientes').textContent = d.total_clientes || 0;
+    document.getElementById('s-convs').textContent = d.conversaciones_hoy || 0;
+    document.getElementById('s-optins').textContent = d.optins_activos || 0;
+    document.getElementById('s-leads').textContent = d.leads_nuevos || 0;
+  } catch(e) { console.error('Stats error:', e); }
+}
 
-'});navigator.clipboard.writeText(all.trim()).then(()=>{const btn=document.getElementById('cab');btn.textContent='✓ Copiado';setTimeout(()=>{btn.textContent='Copiar todo';},2000)})}
+async function loadConversations() {
+  try {
+    const res = await fetch(API + '/api/conversations');
+    const data = await res.json();
+    const el = document.getElementById('conversations');
+    if (!data.length) { el.innerHTML = '<div class="empty">Sin conversaciones aun</div>'; return; }
+    el.innerHTML = data.map(c => {
+      const isEntrada = c.direccion === 'entrada';
+      const initials = isEntrada ? '👤' : '🤖';
+      const time = new Date(c.timestamp).toLocaleString('es-CO', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' });
+      const intentBadge = c.intent ? '<span class="conv-badge intent">' + c.intent + '</span>' : '';
+      return '<div class="conv-item">' +
+        '<div class="conv-avatar ' + c.direccion + '">' + initials + '</div>' +
+        '<div class="conv-body">' +
+          '<div class="conv-header"><span class="conv-name">' + (c.telefono || '') + '</span><span class="conv-time">' + time + '</span></div>' +
+          '<div class="conv-text">' + (c.contenido || '').substring(0, 200) + '</div>' +
+          '<span class="conv-badge ' + c.direccion + '">' + (isEntrada ? 'Cliente' : 'Sofia') + '</span> ' + intentBadge +
+        '</div></div>';
+    }).join('');
+  } catch(e) { console.error('Conversations error:', e); }
+}
+
+async function loadClients() {
+  try {
+    const res = await fetch(API + '/api/clients');
+    const data = await res.json();
+    const el = document.getElementById('clients-body');
+    if (!data.length) { el.innerHTML = '<tr><td colspan="7" class="empty">Sin clientes aun</td></tr>'; return; }
+    el.innerHTML = data.map(c => {
+      const badge = (v) => '<span class="badge-optin ' + (v ? 'si' : 'no') + '"></span>';
+      return '<tr>' +
+        '<td>' + (c.nombre || 'Sin nombre') + '</td>' +
+        '<td>' + (c.telefono || '') + '</td>' +
+        '<td>' + (c.segmento || '-') + '</td>' +
+        '<td>' + badge(c.optin_datos) + '</td>' +
+        '<td>' + badge(c.optin_operativo) + '</td>' +
+        '<td>' + badge(c.optin_comercial) + '</td>' +
+        '<td>' + (c.estado_funnel || '-') + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch(e) { console.error('Clients error:', e); }
+}
+
+loadAll();
+setInterval(loadAll, 30000);
 </script>
 </body>
 </html>
