@@ -3,351 +3,353 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sofia · Panel de Respuestas</title>
+<title>Sofia · CRM WhatsApp</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #1a1a2e; }
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f0f2f5;--card:#fff;--border:#e2e8f0;--text:#1a1a2e;--text2:#64748b;--text3:#94a3b8;--accent:#0ea5e9;--accent2:#0284c7;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--purple:#8b5cf6;--sidebar-w:340px;--topbar:56px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-/* Header */
-.header { background: #fff; padding: 14px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-.header-left { display: flex; align-items: center; gap: 12px; }
-.header h1 { font-size: 18px; font-weight: 600; }
-.header h1 span { color: #0ea5e9; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; }
-.btn { border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
-.btn-primary { background: #0ea5e9; color: #fff; }
-.btn-primary:hover { background: #0284c7; }
-.btn-outline { background: #fff; color: #374151; border: 1px solid #d1d5db; }
-.btn-outline:hover { background: #f3f4f6; }
-.header-actions { display: flex; gap: 8px; }
+.topbar{height:var(--topbar);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-left h1{font-size:16px;font-weight:600}
+.topbar-left h1 span{color:var(--accent)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.topbar-stats{display:flex;gap:20px}
+.top-stat{text-align:center}
+.top-stat-val{font-size:18px;font-weight:600}
+.top-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.topbar-actions{display:flex;gap:8px}
+.btn{border:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;display:flex;align-items:center;gap:5px;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{background:#f8fafc}
 
-/* Stats */
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 18px 24px; }
-.stat-card { background: #fff; border-radius: 12px; padding: 16px 20px; border: 1px solid #e2e8f0; border-left: 4px solid #0ea5e9; }
-.stat-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-.stat-value { font-size: 26px; font-weight: 700; color: #1a1a2e; }
+.main{display:flex;flex:1;overflow:hidden}
 
-/* Filters */
-.filters { display: flex; gap: 10px; padding: 0 24px 14px; flex-wrap: wrap; align-items: center; }
-.search-input { padding: 8px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; width: 240px; outline: none; }
-.search-input:focus { border-color: #0ea5e9; box-shadow: 0 0 0 2px rgba(14,165,233,0.15); }
-.filter-select { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; background: #fff; cursor: pointer; outline: none; }
-.filter-select:focus { border-color: #0ea5e9; }
-.filter-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #e0f2fe; color: #0284c7; border-radius: 20px; font-size: 11px; font-weight: 500; cursor: pointer; }
-.filter-tag:hover { background: #bae6fd; }
+.sidebar{width:var(--sidebar-w);background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-tab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+.sidebar-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.sidebar-tab:hover{color:var(--text)}
+.tab-badge{background:#e2e8f0;color:var(--text2);padding:1px 6px;border-radius:8px;font-size:10px}
+.sidebar-tab.active .tab-badge{background:#e0f2fe;color:var(--accent)}
 
-/* Tabs */
-.tabs { display: flex; gap: 0; padding: 0 24px; border-bottom: 1px solid #e2e8f0; }
-.tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
-.tab.active { color: #0ea5e9; border-bottom-color: #0ea5e9; }
-.tab:hover { color: #374151; }
-.tab .badge { background: #e2e8f0; color: #374151; padding: 1px 7px; border-radius: 10px; font-size: 11px; margin-left: 6px; }
-.tab.active .badge { background: #e0f2fe; color: #0284c7; }
+.sidebar-filters{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-shrink:0}
+.search-box{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;outline:none;background:var(--bg)}
+.search-box:focus{border-color:var(--accent)}
+.filter-sel{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--card);cursor:pointer;outline:none}
 
-/* Main content */
-.content { display: flex; height: calc(100vh - 240px); }
+.conv-scroll{flex:1;overflow-y:auto}
+.conv-item{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s;position:relative}
+.conv-item:hover{background:#f8fafc}
+.conv-item.active{background:#e0f2fe;border-left:3px solid var(--accent)}
+.conv-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0;background:var(--purple)}
+.conv-info{flex:1;min-width:0}
+.conv-row{display:flex;justify-content:space-between;align-items:center}
+.conv-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-time{font-size:10px;color:var(--text3);flex-shrink:0}
+.conv-preview{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.conv-tags{display:flex;gap:3px;margin-top:4px}
+.tag{font-size:9px;padding:1px 6px;border-radius:6px;font-weight:500}
+.tag-new{background:#dbeafe;color:#1d4ed8}
+.tag-optin{background:#dcfce7;color:#15803d}
+.tag-lead{background:#fef3c7;color:#92400e}
+.tag-baja{background:#fee2e2;color:#991b1b}
+.unread-dot{position:absolute;top:14px;left:6px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
 
-/* Conversation list */
-.conv-list { width: 420px; border-right: 1px solid #e2e8f0; background: #fff; overflow-y: auto; flex-shrink: 0; }
-.conv-item { padding: 14px 18px; border-bottom: 1px solid #f3f4f6; cursor: pointer; display: flex; gap: 12px; transition: background 0.15s; }
-.conv-item:hover { background: #f8f9fa; }
-.conv-item.selected { background: #e0f2fe; border-left: 3px solid #0ea5e9; }
-.conv-avatar { width: 40px; height: 40px; border-radius: 50%; background: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #fff; font-weight: 600; flex-shrink: 0; }
-.conv-preview { flex: 1; min-width: 0; }
-.conv-preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
-.conv-preview-name { font-size: 13px; font-weight: 600; color: #1a1a2e; }
-.conv-preview-time { font-size: 11px; color: #9ca3af; }
-.conv-preview-text { font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.conv-preview-badges { display: flex; gap: 4px; margin-top: 4px; }
-.mini-badge { font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 500; }
-.mini-badge.nuevo { background: #dbeafe; color: #1d4ed8; }
-.mini-badge.optin { background: #dcfce7; color: #15803d; }
-.mini-badge.lead { background: #fef3c7; color: #92400e; }
-.mini-badge.baja { background: #fee2e2; color: #991b1b; }
+.center-panel{flex:1;display:flex;flex-direction:column;background:#f8fafc;min-width:0}
+.chat-header{background:var(--card);padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.chat-header-left h3{font-size:14px;font-weight:600}
+.chat-header-left p{font-size:11px;color:var(--text2)}
+.chat-badges{display:flex;gap:4px}
+.optin-pill{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:500}
+.optin-si{background:#dcfce7;color:#15803d}
+.optin-no{background:#fee2e2;color:#991b1b}
 
-/* Chat detail */
-.chat-detail { flex: 1; display: flex; flex-direction: column; background: #f1f5f9; }
-.chat-header { background: #fff; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-.chat-header-info h3 { font-size: 15px; font-weight: 600; }
-.chat-header-info p { font-size: 12px; color: #6b7280; }
-.chat-client-badges { display: flex; gap: 6px; }
-.optin-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 500; }
-.optin-badge.si { background: #dcfce7; color: #15803d; }
-.optin-badge.no { background: #fee2e2; color: #991b1b; }
-.chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-.chat-msg { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; }
-.chat-msg.entrada { background: #fff; border: 1px solid #e2e8f0; align-self: flex-start; border-bottom-left-radius: 4px; }
-.chat-msg.salida { background: #0ea5e9; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
-.chat-msg .msg-time { font-size: 10px; opacity: 0.7; margin-top: 4px; }
-.chat-msg.salida .msg-time { color: rgba(255,255,255,0.7); }
-.chat-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #9ca3af; font-size: 14px; }
+.chat-msgs{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:70%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;position:relative}
+.msg-in{background:var(--card);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+.msg-out{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg-meta{font-size:10px;margin-top:4px;opacity:.6}
+.msg-intent{display:inline-block;font-size:9px;padding:1px 6px;border-radius:6px;background:rgba(0,0,0,.08);margin-top:4px}
+.msg-out .msg-intent{background:rgba(255,255,255,.2)}
 
-/* Clients table */
-.clients-section { display: none; padding: 20px 24px; overflow-y: auto; height: calc(100vh - 240px); }
-.clients-section.active { display: block; }
-.clients-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
-.clients-table th { text-align: left; padding: 10px 14px; font-size: 11px; color: #6b7280; text-transform: uppercase; background: #f9fafb; border-bottom: 1px solid #e2e8f0; }
-.clients-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
-.clients-table tr:hover { background: #f8f9fa; }
-.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
-.dot.green { background: #22c55e; }
-.dot.red { background: #ef4444; }
+.chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--text3);gap:8px}
+.chat-empty i{font-size:48px;opacity:.3}
 
-/* Optins section */
-.optins-section { display: none; padding: 20px 24px; overflow-y: auto; height: calc(100vh - 240px); }
-.optins-section.active { display: block; }
+.right-panel{width:280px;background:var(--card);border-left:1px solid var(--border);overflow-y:auto;flex-shrink:0;display:none}
+.right-panel.show{display:block}
+.client-profile{padding:20px;text-align:center;border-bottom:1px solid var(--border)}
+.client-avatar-lg{width:56px;height:56px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;color:#fff;margin:0 auto 10px}
+.client-name{font-size:15px;font-weight:600}
+.client-phone{font-size:12px;color:var(--text2)}
+.client-detail{padding:14px 20px}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;border-bottom:1px solid #f1f5f9}
+.detail-label{color:var(--text2)}
+.detail-val{font-weight:500}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.dot-g{background:var(--green)}
+.dot-r{background:var(--red)}
+.section-head{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:14px 20px 6px;font-weight:500}
 
-.loading { text-align: center; padding: 40px; color: #9ca3af; }
-@media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } .conv-list { width: 100%; } .chat-detail { display: none; } }
+.table-view{display:none;flex:1;overflow-y:auto;padding:16px 20px;background:var(--bg)}
+.table-view.active{display:block}
+.data-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--border);font-size:12px}
+.data-table th{text-align:left;padding:10px 12px;font-size:10px;color:var(--text3);text-transform:uppercase;background:#f9fafb;border-bottom:1px solid var(--border);font-weight:500}
+.data-table td{padding:9px 12px;border-bottom:1px solid #f8fafc}
+.data-table tr:hover{background:#f8fafc}
+
+.chart-container{padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--card)}
+.chart-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-left">
-    <h1>Sofia · <span>Panel de Respuestas</span></h1>
-    <span class="status-dot"></span>
+<div class="topbar">
+  <div class="topbar-left">
+    <h1><i class="ti ti-message-chatbot" style="color:var(--accent);font-size:20px" aria-hidden="true"></i> Sofia · <span>CRM WhatsApp</span></h1>
+    <span class="live-dot"></span>
   </div>
-  <div class="header-actions">
-    <button class="btn btn-outline" onclick="exportData()">Exportar</button>
-    <button class="btn btn-primary" onclick="loadAll()">Actualizar</button>
+  <div class="topbar-stats">
+    <div class="top-stat"><div class="top-stat-val" id="s-clientes">-</div><div class="top-stat-label">Clientes</div></div>
+    <div class="top-stat"><div class="top-stat-val" id="s-convs">-</div><div class="top-stat-label">Hoy</div></div>
+    <div class="top-stat"><div class="top-stat-val" id="s-optins">-</div><div class="top-stat-label">Opt-ins</div></div>
+    <div class="top-stat"><div class="top-stat-val" id="s-leads">-</div><div class="top-stat-label">Leads</div></div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-outline" onclick="exportCSV()"><i class="ti ti-download" aria-hidden="true"></i> Exportar</button>
+    <button class="btn btn-primary" onclick="loadAll()"><i class="ti ti-refresh" aria-hidden="true"></i> Actualizar</button>
   </div>
 </div>
 
-<div class="stats" id="stats">
-  <div class="stat-card"><div class="stat-label">Total Clientes</div><div class="stat-value" id="s-clientes">-</div></div>
-  <div class="stat-card"><div class="stat-label">Conversaciones Hoy</div><div class="stat-value" id="s-convs">-</div></div>
-  <div class="stat-card"><div class="stat-label">Opt-ins Activos</div><div class="stat-value" id="s-optins">-</div></div>
-  <div class="stat-card"><div class="stat-label">Leads Nuevos</div><div class="stat-value" id="s-leads">-</div></div>
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <div class="sidebar-tab active" onclick="switchView('chats',this)"><i class="ti ti-messages" aria-hidden="true"></i> Chats <span class="tab-badge" id="b-chats">0</span></div>
+      <div class="sidebar-tab" onclick="switchView('clients',this)"><i class="ti ti-users" aria-hidden="true"></i> Clientes <span class="tab-badge" id="b-clients">0</span></div>
+      <div class="sidebar-tab" onclick="switchView('optins',this)"><i class="ti ti-shield-check" aria-hidden="true"></i> Legal <span class="tab-badge" id="b-optins">0</span></div>
+    </div>
+    <div class="sidebar-filters">
+      <input type="text" class="search-box" id="searchInput" placeholder="Buscar nombre o telefono..." oninput="applyFilters()">
+      <select class="filter-sel" id="filterDate" onchange="applyFilters()">
+        <option value="all">Fecha</option>
+        <option value="today">Hoy</option>
+        <option value="yesterday">Ayer</option>
+        <option value="week">7 dias</option>
+        <option value="month">30 dias</option>
+      </select>
+      <select class="filter-sel" id="filterCity" onchange="applyFilters()"><option value="all">Ciudad</option></select>
+      <select class="filter-sel" id="filterStatus" onchange="applyFilters()">
+        <option value="all">Estado</option>
+        <option value="nuevo">Nuevos</option>
+        <option value="con_optin">Con opt-in</option>
+        <option value="sin_optin">Sin opt-in</option>
+        <option value="lead">Leads</option>
+        <option value="baja">Baja</option>
+      </select>
+    </div>
+    <div class="conv-scroll" id="conv-list"></div>
+  </div>
+
+  <div class="center-panel" id="center-chats">
+    <div id="chat-area">
+      <div class="chat-empty"><i class="ti ti-message-2" aria-hidden="true"></i><span>Selecciona una conversacion</span></div>
+    </div>
+  </div>
+
+  <div class="table-view" id="center-clients">
+    <table class="data-table">
+      <thead><tr><th>Nombre</th><th>Telefono</th><th>Segmento</th><th>Estado</th><th>Datos</th><th>Op.</th><th>Com.</th><th>Fuente</th><th>Fecha</th></tr></thead>
+      <tbody id="clients-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="table-view" id="center-optins">
+    <table class="data-table">
+      <thead><tr><th>Nombre</th><th>Telefono</th><th>Datos</th><th>Operativo</th><th>Comercial</th><th>Fecha autorizacion</th><th>Canal</th></tr></thead>
+      <tbody id="optins-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="right-panel" id="right-panel"></div>
 </div>
 
-<div class="filters">
-  <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre o telefono..." onkeyup="applyFilters()">
-  <select class="filter-select" id="filterDate" onchange="applyFilters()">
-    <option value="all">Todas las fechas</option>
-    <option value="today">Hoy</option>
-    <option value="yesterday">Ayer</option>
-    <option value="week">Ultima semana</option>
-    <option value="month">Ultimo mes</option>
-  </select>
-  <select class="filter-select" id="filterStatus" onchange="applyFilters()">
-    <option value="all">Todos los estados</option>
-    <option value="nuevo">Nuevos</option>
-    <option value="con_optin">Con opt-in</option>
-    <option value="sin_optin">Sin opt-in</option>
-    <option value="lead">Leads</option>
-    <option value="baja">Dados de baja</option>
-  </select>
-</div>
-
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('conversations', this)">Conversaciones <span class="badge" id="tab-conv-count">0</span></div>
-  <div class="tab" onclick="switchTab('clients', this)">Clientes <span class="badge" id="tab-client-count">0</span></div>
-  <div class="tab" onclick="switchTab('optins', this)">Autorizaciones <span class="badge" id="tab-optin-count">0</span></div>
-</div>
-
-<!-- Conversations view -->
-<div class="content" id="conversations-view">
-  <div class="conv-list" id="conv-list"><div class="loading">Cargando...</div></div>
-  <div class="chat-detail" id="chat-detail"><div class="chat-empty">Selecciona una conversacion para ver el hilo completo</div></div>
-</div>
-
-<!-- Clients view -->
-<div class="clients-section" id="clients-view">
-  <table class="clients-table">
-    <thead><tr><th>Nombre</th><th>Telefono</th><th>Segmento</th><th>Funnel</th><th>Datos</th><th>Operativo</th><th>Comercial</th><th>Fuente</th><th>Fecha</th></tr></thead>
-    <tbody id="clients-body"><tr><td colspan="9" class="loading">Cargando...</td></tr></tbody>
-  </table>
-</div>
-
-<!-- Optins view -->
-<div class="optins-section" id="optins-view">
-  <table class="clients-table">
-    <thead><tr><th>Nombre</th><th>Telefono</th><th>Datos</th><th>Operativo</th><th>Comercial</th><th>Fecha autorizacion</th><th>Canal</th></tr></thead>
-    <tbody id="optins-body"><tr><td colspan="7" class="loading">Cargando...</td></tr></tbody>
-  </table>
-</div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const API = 'https://creditek-bot.comercial-853.workers.dev';
-let allConversations = [];
-let allClients = [];
-let groupedConvs = {};
+const API='https://creditek-bot.comercial-853.workers.dev';
+let cityMap={};let allTiendas=[];
+let allConvs=[],allClients=[],grouped={},currentTel=null;
+const colors=['#8b5cf6','#0ea5e9','#f59e0b','#ef4444','#22c55e','#ec4899','#6366f1','#14b8a6'];
 
-async function loadAll() {
-  await Promise.all([loadStats(), loadConversations(), loadClients()]);
+async function loadTiendas(){
+  try{
+    allTiendas=await(await fetch(API+'/api/tiendas')).json();
+    cityMap={};
+    const ciudades=new Set();
+    allTiendas.forEach(t=>{cityMap[t.id]=t.ciudad;ciudades.add(t.ciudad)});
+    const sel=document.getElementById('filterCity');
+    sel.innerHTML='<option value="all">Ciudad</option>';
+    [...ciudades].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o)});
+  }catch(e){console.error(e)}
+}
+async function loadAll(){await loadTiendas();await Promise.all([loadStats(),loadConvs(),loadClients()])}
+
+async function loadStats(){
+  try{
+    const d=await(await fetch(API+'/api/stats')).json();
+    document.getElementById('s-clientes').textContent=d.total_clientes||0;
+    document.getElementById('s-convs').textContent=d.conversaciones_hoy||0;
+    document.getElementById('s-optins').textContent=d.optins_activos||0;
+    document.getElementById('s-leads').textContent=d.leads_nuevos||0;
+  }catch(e){console.error(e)}
 }
 
-async function loadStats() {
-  try {
-    const d = await (await fetch(API + '/api/stats')).json();
-    document.getElementById('s-clientes').textContent = d.total_clientes || 0;
-    document.getElementById('s-convs').textContent = d.conversaciones_hoy || 0;
-    document.getElementById('s-optins').textContent = d.optins_activos || 0;
-    document.getElementById('s-leads').textContent = d.leads_nuevos || 0;
-  } catch(e) { console.error(e); }
-}
-
-async function loadConversations() {
-  try {
-    allConversations = await (await fetch(API + '/api/conversations')).json();
-    groupedConvs = {};
-    allConversations.forEach(c => {
-      if (!groupedConvs[c.telefono]) groupedConvs[c.telefono] = [];
-      groupedConvs[c.telefono].push(c);
-    });
-    document.getElementById('tab-conv-count').textContent = Object.keys(groupedConvs).length;
+async function loadConvs(){
+  try{
+    allConvs=await(await fetch(API+'/api/conversations')).json();
+    grouped={};
+    allConvs.forEach(c=>{if(!grouped[c.telefono])grouped[c.telefono]=[];grouped[c.telefono].push(c)});
+    document.getElementById('b-chats').textContent=Object.keys(grouped).length;
     applyFilters();
-  } catch(e) { console.error(e); }
+  }catch(e){console.error(e)}
 }
 
-async function loadClients() {
-  try {
-    allClients = await (await fetch(API + '/api/clients')).json();
-    document.getElementById('tab-client-count').textContent = allClients.length;
-    document.getElementById('tab-optin-count').textContent = allClients.filter(c => c.optin_datos).length;
-    renderClients(allClients);
-    renderOptins(allClients);
-  } catch(e) { console.error(e); }
+async function loadClients(){
+  try{
+    allClients=await(await fetch(API+'/api/clients')).json();
+    document.getElementById('b-clients').textContent=allClients.length;
+    document.getElementById('b-optins').textContent=allClients.filter(c=>c.optin_datos).length;
+    renderClients();
+    renderOptins();
+  }catch(e){console.error(e)}
 }
 
-function applyFilters() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const dateFilter = document.getElementById('filterDate').value;
-  const statusFilter = document.getElementById('filterStatus').value;
-
-  let filtered = Object.entries(groupedConvs);
-
-  if (search) {
-    filtered = filtered.filter(([tel, msgs]) => {
-      const client = allClients.find(c => c.telefono === tel);
-      const name = (client?.nombre || '').toLowerCase();
-      return tel.includes(search) || name.includes(search);
-    });
-  }
-
-  if (dateFilter !== 'all') {
-    const now = new Date();
-    let since;
-    if (dateFilter === 'today') { since = new Date(now.getFullYear(), now.getMonth(), now.getDate()); }
-    else if (dateFilter === 'yesterday') { since = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1); }
-    else if (dateFilter === 'week') { since = new Date(now.getTime() - 7*24*60*60*1000); }
-    else if (dateFilter === 'month') { since = new Date(now.getTime() - 30*24*60*60*1000); }
-    filtered = filtered.filter(([tel, msgs]) => msgs.some(m => new Date(m.timestamp) >= since));
-  }
-
-  if (statusFilter !== 'all') {
-    filtered = filtered.filter(([tel]) => {
-      const client = allClients.find(c => c.telefono === tel);
-      if (!client) return false;
-      if (statusFilter === 'nuevo') return client.estado_funnel === 'nuevo';
-      if (statusFilter === 'con_optin') return client.optin_datos === true;
-      if (statusFilter === 'sin_optin') return client.optin_datos !== true;
-      if (statusFilter === 'lead') return client.estado_funnel === 'lead' || client.estado_funnel === 'comprador';
-      if (statusFilter === 'baja') return client.estado_funnel === 'baja';
-      return true;
-    });
-  }
-
-  renderConvList(filtered);
+function applyFilters(){
+  const s=document.getElementById('searchInput').value.toLowerCase();
+  const df=document.getElementById('filterDate').value;
+  const cf=document.getElementById('filterCity').value;
+  const cf=document.getElementById('filterCity').value;
+  const sf=document.getElementById('filterStatus').value;
+  let entries=Object.entries(grouped);
+  if(s)entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);return t.includes(s)||(c?.nombre||'').toLowerCase().includes(s)});
+  if(df!=='all'){const now=new Date();let since;
+    if(df==='today')since=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    else if(df==='yesterday')since=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+    else if(df==='week')since=new Date(now.getTime()-7*864e5);
+    else since=new Date(now.getTime()-30*864e5);
+    entries=entries.filter(([,m])=>m.some(x=>new Date(x.timestamp)>=since))}
+  if(cf!=='all')entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);if(!c||!c.tienda_origen_id)return false;return cityMap[c.tienda_origen_id]===cf});
+  if(sf!=='all')entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);if(!c)return false;
+    if(sf==='nuevo')return c.estado_funnel==='nuevo';if(sf==='con_optin')return c.optin_datos;
+    if(sf==='sin_optin')return!c.optin_datos;if(sf==='lead')return c.estado_funnel==='lead';
+    if(sf==='baja')return c.estado_funnel==='baja';return true});
+  renderConvList(entries);
 }
 
-function renderConvList(entries) {
-  const el = document.getElementById('conv-list');
-  if (!entries.length) { el.innerHTML = '<div class="loading">Sin resultados</div>'; return; }
-
-  el.innerHTML = entries.map(([tel, msgs]) => {
-    const client = allClients.find(c => c.telefono === tel);
-    const name = client?.nombre || tel;
-    const lastMsg = msgs[0];
-    const time = new Date(lastMsg.timestamp).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-    const preview = (lastMsg.contenido || '').substring(0, 60);
-    const initials = name.substring(0, 2).toUpperCase();
-    let badges = '';
-    if (client) {
-      if (client.estado_funnel === 'nuevo' && !client.optin_datos) badges += '<span class="mini-badge nuevo">Nuevo</span>';
-      if (client.optin_datos) badges += '<span class="mini-badge optin">Opt-in</span>';
-      if (client.estado_funnel === 'baja') badges += '<span class="mini-badge baja">Baja</span>';
+function renderConvList(entries){
+  const el=document.getElementById('conv-list');
+  if(!entries.length){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px"><i class="ti ti-inbox-off" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4" aria-hidden="true"></i>Sin resultados</div>';return}
+  entries.sort((a,b)=>new Date(b[1][0].timestamp)-new Date(a[1][0].timestamp));
+  el.innerHTML=entries.map(([tel,msgs])=>{
+    const cl=allClients.find(c=>c.telefono===tel);
+    const name=cl?.nombre||tel;
+    const last=msgs[0];
+    const t=timeAgo(last.timestamp);
+    const prev=(last.contenido||'').substring(0,50);
+    const init=name.substring(0,2).toUpperCase();
+    const ci=Math.abs(hashCode(tel))%colors.length;
+    const hasUnread=last.direccion==='entrada'&&last.respondido_por===null;
+    let tags='';
+    if(cl){
+      if(!cl.optin_datos)tags+='<span class="tag tag-new">Nuevo</span>';
+      if(cl.optin_datos)tags+='<span class="tag tag-optin">Opt-in</span>';
+      if(cl.estado_funnel==='baja')tags+='<span class="tag tag-baja">Baja</span>';
     }
-    return '<div class="conv-item" onclick="openChat(\'' + tel + '\', this)">' +
-      '<div class="conv-avatar">' + initials + '</div>' +
-      '<div class="conv-preview">' +
-        '<div class="conv-preview-header"><span class="conv-preview-name">' + name + '</span><span class="conv-preview-time">' + time + '</span></div>' +
-        '<div class="conv-preview-text">' + preview + '</div>' +
-        '<div class="conv-preview-badges">' + badges + '</div>' +
-      '</div></div>';
+    return '<div class="conv-item'+(currentTel===tel?' active':'')+'" onclick="openChat(\''+tel+'\')">'+(hasUnread?'<div class="unread-dot"></div>':'')+'<div class="conv-avatar" style="background:'+colors[ci]+'">'+init+'</div><div class="conv-info"><div class="conv-row"><span class="conv-name">'+name+'</span><span class="conv-time">'+t+'</span></div><div class="conv-preview">'+(last.direccion==='salida'?'Sofia: ':'')+prev+'</div><div class="conv-tags">'+tags+'</div></div></div>'
   }).join('');
 }
 
-function openChat(tel, element) {
-  document.querySelectorAll('.conv-item').forEach(i => i.classList.remove('selected'));
-  if (element) element.classList.add('selected');
-
-  const msgs = groupedConvs[tel] || [];
-  const client = allClients.find(c => c.telefono === tel);
-  const detail = document.getElementById('chat-detail');
-
-  let badgesHtml = '';
-  if (client) {
-    badgesHtml += '<span class="optin-badge ' + (client.optin_datos ? 'si' : 'no') + '">Datos: ' + (client.optin_datos ? 'Si' : 'No') + '</span>';
-    badgesHtml += '<span class="optin-badge ' + (client.optin_operativo ? 'si' : 'no') + '">Operativo: ' + (client.optin_operativo ? 'Si' : 'No') + '</span>';
-    badgesHtml += '<span class="optin-badge ' + (client.optin_comercial ? 'si' : 'no') + '">Comercial: ' + (client.optin_comercial ? 'Si' : 'No') + '</span>';
+function openChat(tel){
+  currentTel=tel;
+  const msgs=grouped[tel]||[];
+  const cl=allClients.find(c=>c.telefono===tel);
+  const area=document.getElementById('chat-area');
+  const rp=document.getElementById('right-panel');
+  let badges='';
+  if(cl){
+    badges+='<span class="optin-pill '+(cl.optin_datos?'optin-si':'optin-no')+'"><i class="ti ti-shield-check" style="font-size:12px" aria-hidden="true"></i> Datos</span>';
+    badges+='<span class="optin-pill '+(cl.optin_operativo?'optin-si':'optin-no')+'"><i class="ti ti-bell" style="font-size:12px" aria-hidden="true"></i> Op.</span>';
+    badges+='<span class="optin-pill '+(cl.optin_comercial?'optin-si':'optin-no')+'"><i class="ti ti-megaphone" style="font-size:12px" aria-hidden="true"></i> Com.</span>';
   }
-
-  const messagesHtml = [...msgs].reverse().map(m => {
-    const time = new Date(m.timestamp).toLocaleString('es-CO', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' });
-    const who = m.direccion === 'entrada' ? '👤 Cliente' : '🤖 Sofia';
-    return '<div class="chat-msg ' + m.direccion + '">' +
-      '<div>' + (m.contenido || '') + '</div>' +
-      '<div class="msg-time">' + who + ' · ' + time + '</div>' +
-    '</div>';
+  const msgsHtml=[...msgs].reverse().map(m=>{
+    const t=new Date(m.timestamp).toLocaleString('es-CO',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'});
+    const isIn=m.direccion==='entrada';
+    const intentTag=m.intent?'<div class="msg-intent">'+m.intent+'</div>':'';
+    return '<div class="msg '+(isIn?'msg-in':'msg-out')+'"><div>'+(m.contenido||'')+'</div><div class="msg-meta">'+(isIn?'Cliente':'Sofia')+' · '+t+'</div>'+intentTag+'</div>'
   }).join('');
-
-  detail.innerHTML = '<div class="chat-header"><div class="chat-header-info"><h3>' + (client?.nombre || tel) + '</h3><p>' + tel + ' · ' + (client?.segmento || 'sin clasificar') + ' · ' + (client?.fuente || '') + '</p></div><div class="chat-client-badges">' + badgesHtml + '</div></div>' +
-    '<div class="chat-messages">' + messagesHtml + '</div>';
+  area.innerHTML='<div class="chat-header"><div class="chat-header-left"><h3>'+(cl?.nombre||tel)+'</h3><p>'+tel+' · '+(cl?.segmento||'sin clasificar')+'</p></div><div class="chat-badges">'+badges+'</div></div><div class="chat-msgs">'+msgsHtml+'</div>';
+  rp.className='right-panel show';
+  const ci=Math.abs(hashCode(tel))%colors.length;
+  const init=(cl?.nombre||tel).substring(0,2).toUpperCase();
+  rp.innerHTML='<div class="client-profile"><div class="client-avatar-lg" style="background:'+colors[ci]+'">'+init+'</div><div class="client-name">'+(cl?.nombre||'Sin nombre')+'</div><div class="client-phone">'+tel+'</div></div>'+
+    '<div class="section-head">Informacion</div><div class="client-detail">'+
+    '<div class="detail-row"><span class="detail-label">Segmento</span><span class="detail-val">'+(cl?.segmento||'-')+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Estado</span><span class="detail-val">'+(cl?.estado_funnel||'-')+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Fuente</span><span class="detail-val">'+(cl?.fuente||'-')+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Registro</span><span class="detail-val">'+(cl?.created_at?new Date(cl.created_at).toLocaleDateString('es-CO'):'-')+'</span></div></div>'+
+    '<div class="section-head">Autorizaciones</div><div class="client-detail">'+
+    '<div class="detail-row"><span class="detail-label">Datos personales</span><span><span class="dot '+(cl?.optin_datos?'dot-g':'dot-r')+'"></span></span></div>'+
+    '<div class="detail-row"><span class="detail-label">Operativo</span><span><span class="dot '+(cl?.optin_operativo?'dot-g':'dot-r')+'"></span></span></div>'+
+    '<div class="detail-row"><span class="detail-label">Comercial</span><span><span class="dot '+(cl?.optin_comercial?'dot-g':'dot-r')+'"></span></span></div></div>'+
+    '<div class="section-head">Mensajes</div><div class="client-detail">'+
+    '<div class="detail-row"><span class="detail-label">Total mensajes</span><span class="detail-val">'+msgs.length+'</span></div>'+
+    '<div class="detail-row"><span class="detail-label">Ultimo contacto</span><span class="detail-val">'+(msgs[0]?timeAgo(msgs[0].timestamp):'-')+'</span></div></div>';
+  applyFilters();
 }
 
-function renderClients(clients) {
-  const el = document.getElementById('clients-body');
-  if (!clients.length) { el.innerHTML = '<tr><td colspan="9" class="loading">Sin clientes</td></tr>'; return; }
-  el.innerHTML = clients.map(c => {
-    const dot = (v) => '<span class="dot ' + (v ? 'green' : 'red') + '"></span>';
-    const fecha = c.created_at ? new Date(c.created_at).toLocaleDateString('es-CO') : '-';
-    return '<tr><td>' + (c.nombre || 'Sin nombre') + '</td><td>' + c.telefono + '</td><td>' + (c.segmento || '-') + '</td><td>' + (c.estado_funnel || '-') + '</td><td>' + dot(c.optin_datos) + '</td><td>' + dot(c.optin_operativo) + '</td><td>' + dot(c.optin_comercial) + '</td><td>' + (c.fuente || '-') + '</td><td>' + fecha + '</td></tr>';
-  }).join('');
+function renderClients(){
+  const el=document.getElementById('clients-tbody');
+  const dot=v=>'<span class="dot '+(v?'dot-g':'dot-r')+'"></span>';
+  el.innerHTML=allClients.map(c=>'<tr><td style="font-weight:500">'+(c.nombre||'Sin nombre')+'</td><td>'+c.telefono+'</td><td>'+(c.segmento||'-')+'</td><td>'+(c.estado_funnel||'-')+'</td><td>'+dot(c.optin_datos)+'</td><td>'+dot(c.optin_operativo)+'</td><td>'+dot(c.optin_comercial)+'</td><td>'+(c.fuente||'-')+'</td><td>'+(c.created_at?new Date(c.created_at).toLocaleDateString('es-CO'):'-')+'</td></tr>').join('');
 }
 
-function renderOptins(clients) {
-  const el = document.getElementById('optins-body');
-  const withOptin = clients.filter(c => c.optin_datos);
-  if (!withOptin.length) { el.innerHTML = '<tr><td colspan="7" class="loading">Sin autorizaciones registradas</td></tr>'; return; }
-  el.innerHTML = withOptin.map(c => {
-    const dot = (v) => '<span class="dot ' + (v ? 'green' : 'red') + '"></span>';
-    const fecha = c.optin_fecha ? new Date(c.optin_fecha).toLocaleString('es-CO') : '-';
-    return '<tr><td>' + (c.nombre || 'Sin nombre') + '</td><td>' + c.telefono + '</td><td>' + dot(c.optin_datos) + '</td><td>' + dot(c.optin_operativo) + '</td><td>' + dot(c.optin_comercial) + '</td><td>' + fecha + '</td><td>' + (c.optin_canal || '-') + '</td></tr>';
-  }).join('');
+function renderOptins(){
+  const el=document.getElementById('optins-tbody');
+  const dot=v=>'<span class="dot '+(v?'dot-g':'dot-r')+'"></span>';
+  const list=allClients;
+  el.innerHTML=list.map(c=>'<tr><td style="font-weight:500">'+(c.nombre||'Sin nombre')+'</td><td>'+c.telefono+'</td><td>'+dot(c.optin_datos)+'</td><td>'+dot(c.optin_operativo)+'</td><td>'+dot(c.optin_comercial)+'</td><td>'+(c.optin_fecha?new Date(c.optin_fecha).toLocaleString('es-CO'):'-')+'</td><td>'+(c.optin_canal||'-')+'</td></tr>').join('');
 }
 
-function switchTab(tab, element) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  element.classList.add('active');
-  document.getElementById('conversations-view').style.display = tab === 'conversations' ? 'flex' : 'none';
-  document.getElementById('clients-view').className = tab === 'clients' ? 'clients-section active' : 'clients-section';
-  document.getElementById('optins-view').className = tab === 'optins' ? 'optins-section active' : 'optins-section';
+function switchView(view,el){
+  document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('center-chats').style.display=view==='chats'?'flex':'none';
+  document.getElementById('center-clients').className=view==='clients'?'table-view active':'table-view';
+  document.getElementById('center-optins').className=view==='optins'?'table-view active':'table-view';
+  document.getElementById('right-panel').className=view==='chats'&&currentTel?'right-panel show':'right-panel';
 }
 
-function exportData() {
-  const data = allClients.map(c => [c.nombre || '', c.telefono, c.segmento || '', c.optin_datos ? 'SI' : 'NO', c.optin_operativo ? 'SI' : 'NO', c.optin_comercial ? 'SI' : 'NO', c.estado_funnel || '', c.fuente || ''].join(',')).join('\n');
-  const csv = 'Nombre,Telefono,Segmento,OptinDatos,OptinOperativo,OptinComercial,Estado,Fuente\n' + data;
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'creditek_clientes_' + new Date().toISOString().split('T')[0] + '.csv';
-  a.click();
+function exportCSV(){
+  const rows=allClients.map(c=>[c.nombre||'',c.telefono,c.segmento||'',c.optin_datos?'SI':'NO',c.optin_operativo?'SI':'NO',c.optin_comercial?'SI':'NO',c.estado_funnel||'',c.fuente||''].join(','));
+  const csv='Nombre,Telefono,Segmento,Datos,Operativo,Comercial,Estado,Fuente\n'+rows.join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='creditek_clientes_'+new Date().toISOString().split('T')[0]+'.csv';a.click();
 }
+
+function timeAgo(ts){
+  const d=new Date(ts);const now=new Date();const diff=Math.floor((now-d)/1e3);
+  if(diff<60)return'ahora';if(diff<3600)return Math.floor(diff/60)+'m';
+  if(diff<86400)return Math.floor(diff/3600)+'h';
+  return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short'});
+}
+
+function hashCode(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return h}
 
 loadAll();
-setInterval(loadAll, 30000);
+setInterval(loadAll,15000);
 </script>
 </body>
 </html>
