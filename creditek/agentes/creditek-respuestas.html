@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creditek · Sofia — Panel de Respuestas</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #1a1a2e; }
+.header { background: #fff; padding: 16px 24px; border-bottom: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 18px; font-weight: 600; }
+.header h1 span { color: #0ea5e9; }
+.btn-refresh { background: #0ea5e9; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.btn-refresh:hover { background: #0284c7; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 20px 24px; }
+.stat-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef; }
+.stat-card .label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+.stat-card.highlight { border-left: 4px solid #0ea5e9; }
+.section { padding: 0 24px 20px; }
+.section h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #374151; }
+.conv-list { background: #fff; border-radius: 12px; border: 1px solid #e9ecef; overflow: hidden; }
+.conv-item { padding: 14px 18px; border-bottom: 1px solid #f3f4f6; display: flex; gap: 12px; align-items: flex-start; }
+.conv-item:last-child { border-bottom: none; }
+.conv-item:hover { background: #f8f9fa; }
+.conv-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #fff; flex-shrink: 0; }
+.conv-avatar.entrada { background: #6366f1; }
+.conv-avatar.salida { background: #0ea5e9; }
+.conv-body { flex: 1; min-width: 0; }
+.conv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.conv-name { font-size: 13px; font-weight: 600; }
+.conv-time { font-size: 11px; color: #9ca3af; }
+.conv-text { font-size: 13px; color: #4b5563; line-height: 1.4; }
+.conv-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; margin-top: 4px; }
+.conv-badge.entrada { background: #eef2ff; color: #6366f1; }
+.conv-badge.salida { background: #e0f2fe; color: #0284c7; }
+.conv-badge.intent { background: #fef3c7; color: #92400e; }
+.clients-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e9ecef; }
+.clients-table th { text-align: left; padding: 10px 14px; font-size: 11px; color: #6b7280; text-transform: uppercase; background: #f9fafb; border-bottom: 1px solid #e9ecef; }
+.clients-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
+.badge-optin { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.badge-optin.si { background: #22c55e; }
+.badge-optin.no { background: #ef4444; }
+.loading { text-align: center; padding: 40px; color: #9ca3af; }
+.empty { text-align: center; padding: 40px; color: #9ca3af; font-size: 14px; }
+@media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Sofia · <span>Panel de Respuestas</span></h1>
+  <button class="btn-refresh" onclick="loadAll()">Actualizar</button>
+</div>
+
+<div class="stats" id="stats">
+  <div class="stat-card highlight"><div class="label">Total Clientes</div><div class="value" id="s-clientes">-</div></div>
+  <div class="stat-card highlight"><div class="label">Conversaciones Hoy</div><div class="value" id="s-convs">-</div></div>
+  <div class="stat-card highlight"><div class="label">Opt-ins Activos</div><div class="value" id="s-optins">-</div></div>
+  <div class="stat-card highlight"><div class="label">Leads Nuevos</div><div class="value" id="s-leads">-</div></div>
+</div>
+
+<div class="section">
+  <h2>Conversaciones Recientes</h2>
+  <div class="conv-list" id="conversations"><div class="loading">Cargando...</div></div>
+</div>
+
+<div class="section">
+  <h2>Clientes</h2>
+  <table class="clients-table" id="clients-table">
+    <thead><tr><th>Nombre</th><th>Telefono</th><th>Segmento</th><th>Datos</th><th>Operativo</th><th>Comercial</th><th>Estado</th></tr></thead>
+    <tbody id="clients-body"><tr><td colspan="7" class="loading">Cargando...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+const API = 'https://creditek-bot.comercial-853.workers.dev';
+
+async function loadAll() {
+  await Promise.all([loadStats(), loadConversations(), loadClients()]);
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch(API + '/api/stats');
+    const d = await res.json();
+    document.getElementById('s-clientes').textContent = d.total_clientes || 0;
+    document.getElementById('s-convs').textContent = d.conversaciones_hoy || 0;
+    document.getElementById('s-optins').textContent = d.optins_activos || 0;
+    document.getElementById('s-leads').textContent = d.leads_nuevos || 0;
+  } catch(e) { console.error('Stats error:', e); }
+}
+
+async function loadConversations() {
+  try {
+    const res = await fetch(API + '/api/conversations');
+    const data = await res.json();
+    const el = document.getElementById('conversations');
+    if (!data.length) { el.innerHTML = '<div class="empty">Sin conversaciones aun</div>'; return; }
+    el.innerHTML = data.map(c => {
+      const isEntrada = c.direccion === 'entrada';
+      const initials = isEntrada ? '👤' : '🤖';
+      const time = new Date(c.timestamp).toLocaleString('es-CO', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' });
+      const intentBadge = c.intent ? '<span class="conv-badge intent">' + c.intent + '</span>' : '';
+      return '<div class="conv-item">' +
+        '<div class="conv-avatar ' + c.direccion + '">' + initials + '</div>' +
+        '<div class="conv-body">' +
+          '<div class="conv-header"><span class="conv-name">' + (c.telefono || '') + '</span><span class="conv-time">' + time + '</span></div>' +
+          '<div class="conv-text">' + (c.contenido || '').substring(0, 200) + '</div>' +
+          '<span class="conv-badge ' + c.direccion + '">' + (isEntrada ? 'Cliente' : 'Sofia') + '</span> ' + intentBadge +
+        '</div></div>';
+    }).join('');
+  } catch(e) { console.error('Conversations error:', e); }
+}
+
+async function loadClients() {
+  try {
+    const res = await fetch(API + '/api/clients');
+    const data = await res.json();
+    const el = document.getElementById('clients-body');
+    if (!data.length) { el.innerHTML = '<tr><td colspan="7" class="empty">Sin clientes aun</td></tr>'; return; }
+    el.innerHTML = data.map(c => {
+      const badge = (v) => '<span class="badge-optin ' + (v ? 'si' : 'no') + '"></span>';
+      return '<tr>' +
+        '<td>' + (c.nombre || 'Sin nombre') + '</td>' +
+        '<td>' + (c.telefono || '') + '</td>' +
+        '<td>' + (c.segmento || '-') + '</td>' +
+        '<td>' + badge(c.optin_datos) + '</td>' +
+        '<td>' + badge(c.optin_operativo) + '</td>' +
+        '<td>' + badge(c.optin_comercial) + '</td>' +
+        '<td>' + (c.estado_funnel || '-') + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch(e) { console.error('Clients error:', e); }
+}
+
+loadAll();
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>
