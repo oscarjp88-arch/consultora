@@ -420,10 +420,20 @@ async function cargarDatos() {
     const resPrev = await fetch(urlPrev);
     const dataPrev = await resPrev.json();
 
-    // Campañas
-    const urlCamp = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=campaign_name,spend,impressions,clicks,reach,frequency,ctr,cpm,cpc,actions,status&time_range={"since":"${since}","until":"${until}"}&level=campaign&access_token=${token}`;
+    // Campañas — status removido (inválido en insights) + fallback date_preset=today
+    const urlCamp = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=campaign_id,campaign_name,spend,impressions,clicks,reach,frequency,ctr,cpm,cpc,actions&time_range={"since":"${since}","until":"${until}"}&level=campaign&access_token=${token}`;
     const resCamp = await fetch(urlCamp);
     const dataCamp = await resCamp.json();
+
+    let campsData = dataCamp.data || [];
+    if (campsData.length === 0 && dataCamp.error === undefined) {
+      const urlCampToday = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=campaign_id,campaign_name,spend,impressions,clicks,reach,frequency,ctr,cpm,cpc,actions&date_preset=today&level=campaign&access_token=${token}`;
+      const resCampToday = await fetch(urlCampToday);
+      const dataCampToday = await resCampToday.json();
+      if (dataCampToday.data && dataCampToday.data.length > 0) {
+        campsData = dataCampToday.data;
+      }
+    }
 
     // Tendencia semanal (4 semanas)
     const trendData = [];
@@ -436,7 +446,7 @@ async function cargarDatos() {
       trendData.push({ week: w, data: wDat.data?.[0] || null });
     }
 
-    lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: dataCamp.data || [], trend: trendData };
+    lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: campsData, trend: trendData };
     renderDatos(lastData);
     document.getElementById('last-update').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CO');
 
