@@ -192,7 +192,7 @@ tr:hover td{background:#F8FAFC}
   <!-- Budget bar -->
   <div class="budget-section" id="budget-section" style="display:none">
     <div class="budget-header">
-      <div class="budget-title">💰 Presupuesto semanal — $50 USD (~$210,000 COP)</div>
+      <div class="budget-title" id="budget-title">💰 Presupuesto semanal — $50 USD</div>
       <div class="budget-pct" id="budget-pct">0%</div>
     </div>
     <div class="budget-bar-wrap">
@@ -326,6 +326,10 @@ tr:hover td{background:#F8FAFC}
       <label>API key Anthropic (para análisis IA)</label>
       <input type="password" id="inp-claude" placeholder="sk-ant-api03-xxx">
     </div>
+    <div class="field">
+      <label>Presupuesto semanal (USD)</label>
+      <input type="number" id="inp-budget" placeholder="50" min="1" step="1">
+    </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="cerrarConfig()">Cancelar</button>
       <button class="btn-primary" onclick="guardarConfig()">Guardar y conectar</button>
@@ -347,6 +351,7 @@ function abrirConfig() {
   document.getElementById('inp-token').value   = localStorage.getItem('ck_meta_token') || '';
   document.getElementById('inp-account').value = localStorage.getItem('ck_meta_account') || '';
   document.getElementById('inp-claude').value  = localStorage.getItem('ck_claude_key') || '';
+  document.getElementById('inp-budget').value  = localStorage.getItem('ck_weekly_budget') || '50';
   document.getElementById('modal').classList.add('open');
 }
 function cerrarConfig() {
@@ -357,9 +362,11 @@ function guardarConfig() {
   const a = document.getElementById('inp-account').value.trim();
   const c = document.getElementById('inp-claude').value.trim();
   if (!t || !a) { showToast('Token e ID son obligatorios', '#EF4444'); return; }
+  const b = document.getElementById('inp-budget').value.trim();
   localStorage.setItem('ck_meta_token',   t);
   localStorage.setItem('ck_meta_account', a);
   if (c) localStorage.setItem('ck_claude_key', c);
+  if (b) localStorage.setItem('ck_weekly_budget', b);
   cerrarConfig();
   showToast('✓ Configuración guardada');
   cargarDatos();
@@ -516,7 +523,7 @@ function renderDatos(d) {
   else { freqBar.className = 'kpi-alert green'; }
 
   // Budget bar
-  const weeklyBudget = 50;
+  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
   const spendWeekly  = currentDays === 7 ? spend : spend * (7 / currentDays);
   const pct          = Math.min((spendWeekly / weeklyBudget) * 100, 100);
   document.getElementById('budget-pct').textContent = pct.toFixed(0) + '%';
@@ -526,6 +533,8 @@ function renderDatos(d) {
   document.getElementById('budget-spent').textContent    = 'Gastado: $' + spendWeekly.toFixed(2);
   document.getElementById('budget-remain').textContent   = 'Restante: $' + Math.max(0, weeklyBudget - spendWeekly).toFixed(2);
   document.getElementById('budget-section').style.display = 'block';
+  const copEquiv = (weeklyBudget * 4200).toLocaleString('es-CO');
+  document.getElementById('budget-title').textContent = `💰 Presupuesto semanal — $${weeklyBudget} USD (~$${copEquiv} COP)`;
 
   // Campañas
   renderCampañas(d.camps);
