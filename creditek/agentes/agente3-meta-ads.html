@@ -409,19 +409,19 @@ async function cargarDatos() {
 
 
     // Petición principal
-    const url = `https://graph.facebook.com/v20.0/act_${account}/insights?fields=${fields}&time_range={"since":"${since}","until":"${until}"}&level=account&access_token=${token}`;
+    const url = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=${fields}&time_range={"since":"${since}","until":"${until}"}&level=account&access_token=${token}`;
     const res = await fetch(url);
     const data = await res.json();
 
     if (data.error) throw new Error(data.error.message);
 
     // Petición período anterior (comparación)
-    const urlPrev = `https://graph.facebook.com/v20.0/act_${account}/insights?fields=${fields}&time_range={"since":"${prevFechas.since}","until":"${since}"}&level=account&access_token=${token}`;
+    const urlPrev = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=${fields}&time_range={"since":"${prevFechas.since}","until":"${since}"}&level=account&access_token=${token}`;
     const resPrev = await fetch(urlPrev);
     const dataPrev = await resPrev.json();
 
     // Campañas
-    const urlCamp = `https://graph.facebook.com/v20.0/act_${account}/insights?fields=campaign_name,spend,impressions,clicks,reach,frequency,ctr,cpm,cpc,actions,status&time_range={"since":"${since}","until":"${until}"}&level=campaign&access_token=${token}`;
+    const urlCamp = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=campaign_name,spend,impressions,clicks,reach,frequency,ctr,cpm,cpc,actions,status&time_range={"since":"${since}","until":"${until}"}&level=campaign&access_token=${token}`;
     const resCamp = await fetch(urlCamp);
     const dataCamp = await resCamp.json();
 
@@ -430,7 +430,7 @@ async function cargarDatos() {
     for (let w = 3; w >= 0; w--) {
       const wEnd   = new Date(); wEnd.setDate(wEnd.getDate() - w*7);
       const wStart = new Date(); wStart.setDate(wStart.getDate() - (w+1)*7);
-      const wUrl = `https://graph.facebook.com/v20.0/act_${account}/insights?fields=spend,actions&time_range={"since":"${wStart.toISOString().split('T')[0]}","until":"${wEnd.toISOString().split('T')[0]}"}&level=account&access_token=${token}`;
+      const wUrl = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=spend,actions&time_range={"since":"${wStart.toISOString().split('T')[0]}","until":"${wEnd.toISOString().split('T')[0]}"}&level=account&access_token=${token}`;
       const wRes = await fetch(wUrl);
       const wDat = await wRes.json();
       trendData.push({ week: w, data: wDat.data?.[0] || null });
