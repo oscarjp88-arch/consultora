@@ -605,7 +605,7 @@ async function publicarCampana() {
       body: new URLSearchParams({ access_token: token, bytes: wizImageBase64 })
     });
     const imgData = await imgRes.json();
-    if (imgData.error) throw new Error('Imagen: ' + imgData.error.message);
+    if (imgData.error) throw new Error('Imagen: ' + (imgData.error.error_user_msg || imgData.error.message));
     const imageHash = Object.values(imgData.images)[0].hash;
 
     // 2. Crear campaña
@@ -622,7 +622,7 @@ async function publicarCampana() {
       })
     });
     const campData = await campRes.json();
-    if (campData.error) throw new Error('Campaña: ' + campData.error.message);
+    if (campData.error) throw new Error('Campaña: ' + (campData.error.error_user_msg || campData.error.message));
 
     // 3. Crear ad set
     progress.textContent = 'Configurando segmentación...';
@@ -656,7 +656,7 @@ async function publicarCampana() {
       })
     });
     const adsetData = await adsetRes.json();
-    if (adsetData.error) throw new Error('Ad set: ' + adsetData.error.message);
+    if (adsetData.error) throw new Error('Ad set: ' + (adsetData.error.error_user_msg || adsetData.error.message));
 
     // 4. Crear creative
     progress.textContent = 'Creando anuncio...';
@@ -679,7 +679,7 @@ async function publicarCampana() {
       })
     });
     const creativeData = await creativeRes.json();
-    if (creativeData.error) throw new Error('Creative: ' + creativeData.error.message);
+    if (creativeData.error) throw new Error('Creative: ' + (creativeData.error.error_user_msg || creativeData.error.message));
 
     // 5. Crear ad
     progress.textContent = 'Publicando...';
@@ -694,7 +694,7 @@ async function publicarCampana() {
       })
     });
     const adData = await adRes.json();
-    if (adData.error) throw new Error('Ad: ' + adData.error.message);
+    if (adData.error) throw new Error('Ad: ' + (adData.error.error_user_msg || adData.error.message));
 
     progress.textContent = '✓ ¡Campaña publicada!';
     showToast('✓ Campaña creada en Meta correctamente', '#10B981');
