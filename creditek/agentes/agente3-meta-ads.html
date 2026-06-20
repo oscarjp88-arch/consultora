@@ -131,6 +131,34 @@ tr:hover td{background:#F8FAFC}
 .btn-primary{flex:1;background:var(--navy);color:var(--white);border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)}
 .btn-secondary{background:none;border:1.5px solid var(--border);color:var(--text2);padding:11px 16px;border-radius:8px;font-size:14px;cursor:pointer;font-family:var(--font)}
 
+/* Wizard de campañas */
+.modal-wizard{max-width:560px;max-height:85vh;overflow-y:auto}
+.wiz-stepper{display:flex;align-items:center;gap:8px;margin-bottom:20px}
+.wiz-dot{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);font-weight:600;white-space:nowrap}
+.wiz-dot.active{color:var(--turq)}
+.wiz-dot.done{color:var(--green)}
+.wiz-circle{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.wiz-dot.active .wiz-circle{background:var(--turq);border-color:var(--turq);color:#fff}
+.wiz-dot.done .wiz-circle{background:var(--green);border-color:var(--green);color:#fff}
+.wiz-line{flex:1;height:1px;background:var(--border)}
+.wiz-step{display:none}
+.wiz-step.active{display:block}
+.zone-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:14px}
+.zone-card{border:1.5px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;text-align:center;font-size:12px;font-weight:600;color:var(--text2);transition:.15s}
+.zone-card.sel{border-color:var(--turq);background:rgba(0,196,204,.1);color:var(--turq)}
+.zone-card .sub{font-size:10px;color:var(--text3);font-weight:400;margin-top:2px}
+.zone-card.sel .sub{color:var(--turq)}
+.dur-group{display:flex;gap:8px;flex-wrap:wrap}
+.dur-btn{border:1.5px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;background:none;font-family:var(--font)}
+.dur-btn.sel{border-color:var(--turq);background:rgba(0,196,204,.1);color:var(--turq)}
+.wiz-nav{display:flex;justify-content:space-between;margin-top:18px}
+.upload-zone{border:1.5px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;font-size:13px;color:var(--text2)}
+.upload-zone img{max-width:100%;max-height:160px;border-radius:8px}
+.wiz-review-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid var(--border)}
+.wiz-review-row .lbl{color:var(--text2)}
+.wiz-review-row .val{font-weight:600;text-align:right}
+.wiz-progress{font-size:12px;color:var(--text2);text-align:center;padding:8px;background:var(--bg);border-radius:8px;margin-top:10px;display:none}
+
 /* Empty / Loading states */
 .empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
 .empty-state .icon{font-size:40px;margin-bottom:12px}
@@ -167,6 +195,7 @@ tr:hover td{background:#F8FAFC}
     </div>
   </div>
   <div class="header-right">
+    <button class="refresh-btn" onclick="abrirWizard()" style="background:var(--turq)">+ Crear campaña</button>
     <button class="config-btn" onclick="abrirConfig()">⚙ Configurar</button>
     <button class="refresh-btn" id="refresh-btn" onclick="cargarDatos()">
       <span id="refresh-icon">↻</span> Actualizar
@@ -337,11 +366,354 @@ tr:hover td{background:#F8FAFC}
   </div>
 </div>
 
+<!-- Wizard crear campaña -->
+<div class="modal-overlay" id="modal-wizard">
+  <div class="modal modal-wizard">
+    <div class="modal-title">🚀 Crear campaña</div>
+    <div class="modal-sub">Se publica automáticamente en Facebook e Instagram</div>
+
+    <div class="wiz-stepper">
+      <div class="wiz-dot active" data-wiz-step="1"><span class="wiz-circle">1</span>Zona</div>
+      <div class="wiz-line"></div>
+      <div class="wiz-dot" data-wiz-step="2"><span class="wiz-circle">2</span>Presupuesto</div>
+      <div class="wiz-line"></div>
+      <div class="wiz-dot" data-wiz-step="3"><span class="wiz-circle">3</span>Creative</div>
+      <div class="wiz-line"></div>
+      <div class="wiz-dot" data-wiz-step="4"><span class="wiz-circle">4</span>Revisar</div>
+    </div>
+
+    <!-- Paso 1: Zona -->
+    <div class="wiz-step active" id="wiz-step-1">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Elige una o varias zonas</div>
+      <div class="zone-grid" id="wiz-zone-grid"></div>
+      <div class="wiz-nav">
+        <span></span>
+        <button class="btn-primary" style="flex:none;padding:10px 20px" onclick="wizGoStep(2)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- Paso 2: Presupuesto -->
+    <div class="wiz-step" id="wiz-step-2">
+      <div class="field">
+        <label>Presupuesto semanal</label>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span style="font-size:20px;font-weight:700" id="wiz-budget-out">$50 USD</span>
+          <span style="font-size:12px;color:var(--text3)" id="wiz-budget-cop">≈ $210.000 COP</span>
+        </div>
+        <input type="range" id="wiz-budget-slider" min="15" max="200" step="5" value="50" style="width:100%">
+      </div>
+      <div class="field">
+        <label>Duración</label>
+        <div class="dur-group" id="wiz-dur-group"></div>
+      </div>
+      <div class="field">
+        <label>Objetivo</label>
+        <select id="wiz-objective">
+          <option value="seguidores">Seguidores (interacción con perfil) ✓ probado</option>
+          <option value="mensajes" disabled>Mensajes WhatsApp — próximamente</option>
+          <option value="trafico" disabled>Tráfico al portal — próximamente</option>
+        </select>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-secondary" onclick="wizGoStep(1)">← Atrás</button>
+        <button class="btn-primary" style="flex:none;padding:10px 20px" onclick="wizGoStep(3)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- Paso 3: Creative -->
+    <div class="wiz-step" id="wiz-step-3">
+      <div class="field">
+        <label>Imagen del anuncio</label>
+        <div class="upload-zone" id="wiz-upload-zone" onclick="document.getElementById('wiz-file-input').click()">
+          <div id="wiz-upload-placeholder">📷 Clic para subir una imagen</div>
+          <img id="wiz-img-preview" style="display:none">
+        </div>
+        <input type="file" id="wiz-file-input" accept="image/*" style="display:none">
+      </div>
+      <div class="field">
+        <label>Texto del anuncio</label>
+        <textarea id="wiz-ad-text" rows="4" style="width:100%;font-size:13px;font-family:var(--font);padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;outline:none;resize:vertical" placeholder="📱 ¡Estrena celular hoy mismo! Financiación fácil y rápida en Creditek..."></textarea>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Sin hashtags — no aplican en anuncios pagados</div>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-secondary" onclick="wizGoStep(2)">← Atrás</button>
+        <button class="btn-primary" style="flex:none;padding:10px 20px" onclick="wizGoStep(4)">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- Paso 4: Revisar -->
+    <div class="wiz-step" id="wiz-step-4">
+      <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+        <div class="wiz-review-row"><span class="lbl">📍 Zona</span><span class="val" id="wiz-rev-zone">—</span></div>
+        <div class="wiz-review-row"><span class="lbl">💰 Presupuesto</span><span class="val" id="wiz-rev-budget">—</span></div>
+        <div class="wiz-review-row"><span class="lbl">📅 Duración</span><span class="val" id="wiz-rev-duration">—</span></div>
+        <div class="wiz-review-row"><span class="lbl">🎯 Objetivo</span><span class="val" id="wiz-rev-objective">—</span></div>
+        <div class="wiz-review-row" style="border-bottom:none"><span class="lbl">📲 Placements</span><span class="val" style="color:var(--turq)">Facebook + Instagram</span></div>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="wiz-activar-ya" checked style="width:auto">
+          Activar la campaña inmediatamente (si no, queda pausada para revisarla en Meta)
+        </label>
+      </div>
+      <div class="wiz-progress" id="wiz-progress">Publicando...</div>
+      <div class="wiz-nav">
+        <button class="btn-secondary" onclick="wizGoStep(3)">← Atrás</button>
+        <button class="btn-primary" style="flex:none;padding:10px 20px" id="wiz-publish-btn" onclick="publicarCampana()">🚀 Publicar en Meta</button>
+      </div>
+    </div>
+
+    <div class="wiz-nav" style="margin-top:6px">
+      <button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="cerrarWizard()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
 // ── Estado ────────────────────────────────────────────────────────
 let currentDays = 7;
+
+// ── Wizard de campañas ──────────────────────────────────────────
+const WIZ_PAGE_ID = '1191052130747281';
+const WIZ_IG_USER_ID = '17841476738628018';
+const WIZ_ZONES = {
+  tolu:     { name: 'Tolú',            key: '480653', region: 'Sucre',    region_id: '740' },
+  corozal:  { name: 'Corozal',         key: '461261', region: 'Sucre',    region_id: '740' },
+  chinu:    { name: 'Chinú',           key: '460682', region: 'Cordoba',  region_id: '726' },
+  ciedeoro: { name: 'Ciénaga de Oro',  key: '460853', region: 'Cordoba',  region_id: '726' },
+  covenas:  { name: 'Coveñas',         key: '461708', region: 'Sucre',    region_id: '740' },
+  tropas:   { name: 'Tropas',          key: '457644', region: 'Atlantico',region_id: '719', sub: 'Barranquilla' }
+};
+
+let wizSelectedZones = new Set();
+let wizDuration = 7;
+let wizImageBase64 = null;
+
+function abrirWizard() {
+  if (!localStorage.getItem('ck_meta_token') || !localStorage.getItem('ck_meta_account')) {
+    showToast('Primero configura tu token y cuenta de Meta', '#EF4444');
+    abrirConfig();
+    return;
+  }
+  renderWizZones();
+  renderWizDuration();
+  wizGoStep(1);
+  document.getElementById('modal-wizard').classList.add('open');
+}
+
+function cerrarWizard() {
+  document.getElementById('modal-wizard').classList.remove('open');
+}
+
+function renderWizZones() {
+  const grid = document.getElementById('wiz-zone-grid');
+  grid.innerHTML = '';
+  Object.entries(WIZ_ZONES).forEach(([id, z]) => {
+    const card = document.createElement('div');
+    card.className = 'zone-card' + (wizSelectedZones.has(id) ? ' sel' : '');
+    card.innerHTML = `${z.name}<div class="sub">${z.sub || z.region}</div>`;
+    card.onclick = () => {
+      if (wizSelectedZones.has(id)) wizSelectedZones.delete(id); else wizSelectedZones.add(id);
+      renderWizZones();
+    };
+    grid.appendChild(card);
+  });
+}
+
+function renderWizDuration() {
+  const group = document.getElementById('wiz-dur-group');
+  group.innerHTML = '';
+  [3, 7, 14, 30].forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'dur-btn' + (d === wizDuration ? ' sel' : '');
+    btn.textContent = d + ' días';
+    btn.onclick = () => { wizDuration = d; renderWizDuration(); };
+    group.appendChild(btn);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const slider = document.getElementById('wiz-budget-slider');
+  if (slider) {
+    slider.addEventListener('input', e => {
+      const v = parseInt(e.target.value);
+      document.getElementById('wiz-budget-out').textContent = '$' + v + ' USD';
+      document.getElementById('wiz-budget-cop').textContent = '≈ $' + (v * COP_TO_USD).toLocaleString('es-CO') + ' COP';
+    });
+  }
+  const fileInput = document.getElementById('wiz-file-input');
+  if (fileInput) {
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        wizImageBase64 = ev.target.result.split(',')[1];
+        document.getElementById('wiz-img-preview').src = ev.target.result;
+        document.getElementById('wiz-img-preview').style.display = 'block';
+        document.getElementById('wiz-upload-placeholder').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+});
+
+function wizGoStep(n) {
+  if (n === 2 && wizSelectedZones.size === 0) { showToast('Elige al menos una zona', '#EF4444'); return; }
+  if (n === 4) {
+    if (!wizImageBase64) { showToast('Sube una imagen', '#EF4444'); return; }
+    if (!document.getElementById('wiz-ad-text').value.trim()) { showToast('Escribe el texto del anuncio', '#EF4444'); return; }
+  }
+  [1, 2, 3, 4].forEach(i => {
+    document.getElementById('wiz-step-' + i).classList.toggle('active', i === n);
+    const dot = document.querySelector(`[data-wiz-step="${i}"]`);
+    dot.classList.toggle('active', i === n);
+    dot.classList.toggle('done', i < n);
+  });
+  if (n === 4) {
+    const zoneNames = [...wizSelectedZones].map(id => WIZ_ZONES[id].name).join(', ');
+    const budgetVal = document.getElementById('wiz-budget-slider').value;
+    document.getElementById('wiz-rev-zone').textContent = zoneNames;
+    document.getElementById('wiz-rev-budget').textContent = '$' + budgetVal + ' USD/semana';
+    document.getElementById('wiz-rev-duration').textContent = wizDuration + ' días';
+    document.getElementById('wiz-rev-objective').textContent = document.getElementById('wiz-objective').selectedOptions[0].textContent.replace(' ✓ probado', '');
+  }
+}
+
+async function publicarCampana() {
+  const token = localStorage.getItem('ck_meta_token');
+  const account = localStorage.getItem('ck_meta_account');
+  const progress = document.getElementById('wiz-progress');
+  const btn = document.getElementById('wiz-publish-btn');
+  progress.style.display = 'block';
+  btn.disabled = true;
+
+  try {
+    const budgetUsd = parseInt(document.getElementById('wiz-budget-slider').value);
+    const dailyBudgetCop = Math.round((budgetUsd * COP_TO_USD) / 7);
+    const adText = document.getElementById('wiz-ad-text').value.trim();
+    const activarYa = document.getElementById('wiz-activar-ya').checked;
+    const status = activarYa ? 'ACTIVE' : 'PAUSED';
+    const campaignName = `Creditek - ${[...wizSelectedZones].map(id => WIZ_ZONES[id].name).join('+')} - ${new Date().toLocaleDateString('es-CO')}`;
+
+    // 1. Subir imagen
+    progress.textContent = 'Subiendo imagen...';
+    const imgRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adimages`, {
+      method: 'POST',
+      body: new URLSearchParams({ access_token: token, bytes: wizImageBase64 })
+    });
+    const imgData = await imgRes.json();
+    if (imgData.error) throw new Error('Imagen: ' + imgData.error.message);
+    const imageHash = Object.values(imgData.images)[0].hash;
+
+    // 2. Crear campaña
+    progress.textContent = 'Creando campaña...';
+    const campRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/campaigns`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        access_token: token,
+        name: campaignName,
+        objective: 'OUTCOME_ENGAGEMENT',
+        status: status,
+        special_ad_categories: JSON.stringify([])
+      })
+    });
+    const campData = await campRes.json();
+    if (campData.error) throw new Error('Campaña: ' + campData.error.message);
+
+    // 3. Crear ad set
+    progress.textContent = 'Configurando segmentación...';
+    const startTime = new Date().toISOString();
+    const endTime = new Date(Date.now() + wizDuration * 86400000).toISOString();
+    const targeting = {
+      age_min: 18, age_max: 65,
+      geo_locations: {
+        cities: [...wizSelectedZones].map(id => ({
+          key: WIZ_ZONES[id].key, radius: 40, distance_unit: 'kilometer',
+          region: WIZ_ZONES[id].region, region_id: WIZ_ZONES[id].region_id, country: 'CO'
+        })),
+        location_types: ['home', 'recent']
+      },
+      targeting_automation: { advantage_audience: 1 }
+    };
+    const adsetRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adsets`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        access_token: token,
+        name: 'Costa Caribe - ' + campaignName,
+        campaign_id: campData.id,
+        daily_budget: String(dailyBudgetCop),
+        billing_event: 'IMPRESSIONS',
+        optimization_goal: 'PROFILE_AND_PAGE_ENGAGEMENT',
+        destination_type: 'INSTAGRAM_PROFILE_AND_FACEBOOK_PAGE',
+        targeting: JSON.stringify(targeting),
+        start_time: startTime,
+        end_time: endTime,
+        status: status
+      })
+    });
+    const adsetData = await adsetRes.json();
+    if (adsetData.error) throw new Error('Ad set: ' + adsetData.error.message);
+
+    // 4. Crear creative
+    progress.textContent = 'Creando anuncio...';
+    const objectStorySpec = {
+      page_id: WIZ_PAGE_ID,
+      instagram_user_id: WIZ_IG_USER_ID,
+      link_data: {
+        link: 'http://instagram.com/creditekco',
+        message: adText,
+        image_hash: imageHash,
+        call_to_action: { type: 'VIEW_INSTAGRAM_PROFILE', value: { link: 'http://instagram.com/creditekco' } }
+      }
+    };
+    const creativeRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adcreatives`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        access_token: token,
+        name: 'Creative - ' + campaignName,
+        object_story_spec: JSON.stringify(objectStorySpec)
+      })
+    });
+    const creativeData = await creativeRes.json();
+    if (creativeData.error) throw new Error('Creative: ' + creativeData.error.message);
+
+    // 5. Crear ad
+    progress.textContent = 'Publicando...';
+    const adRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/ads`, {
+      method: 'POST',
+      body: new URLSearchParams({
+        access_token: token,
+        name: campaignName,
+        adset_id: adsetData.id,
+        creative: JSON.stringify({ creative_id: creativeData.id }),
+        status: status
+      })
+    });
+    const adData = await adRes.json();
+    if (adData.error) throw new Error('Ad: ' + adData.error.message);
+
+    progress.textContent = '✓ ¡Campaña publicada!';
+    showToast('✓ Campaña creada en Meta correctamente', '#10B981');
+    setTimeout(() => {
+      cerrarWizard();
+      wizSelectedZones = new Set();
+      wizImageBase64 = null;
+      document.getElementById('wiz-ad-text').value = '';
+      document.getElementById('wiz-img-preview').style.display = 'none';
+      document.getElementById('wiz-upload-placeholder').style.display = 'block';
+      progress.style.display = 'none';
+      cargarDatos();
+    }, 1500);
+  } catch (err) {
+    progress.textContent = '✗ Error: ' + err.message;
+    progress.style.color = '#EF4444';
+    showToast(err.message, '#EF4444');
+  }
+  btn.disabled = false;
+}
 let lastData = null;
 
 // ── Config ───────────────────────────────────────────────────────
