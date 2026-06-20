@@ -386,6 +386,18 @@ tr:hover td{background:#F8FAFC}
     <div class="wiz-step active" id="wiz-step-1">
       <div style="font-size:13px;color:var(--text2);margin-bottom:10px">Elige una o varias zonas</div>
       <div class="zone-grid" id="wiz-zone-grid"></div>
+
+      <div id="wiz-search-toggle" style="text-align:center;margin-bottom:10px">
+        <button class="btn-secondary" style="font-size:12px;padding:7px 14px" onclick="wizToggleSearch()">+ Buscar otra ciudad o municipio</button>
+      </div>
+      <div id="wiz-search-panel" style="display:none;background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" id="wiz-search-input" placeholder="Ej: Sincelejo, Magangué, Montería..." style="flex:1;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);outline:none">
+          <button class="btn-primary" style="flex:none;padding:9px 16px" onclick="wizSearchCity()">Buscar</button>
+        </div>
+        <div id="wiz-search-results"></div>
+      </div>
+
       <div class="wiz-nav">
         <span></span>
         <button class="btn-primary" style="flex:none;padding:10px 20px" onclick="wizGoStep(2)">Siguiente →</button>
@@ -488,6 +500,7 @@ const WIZ_ZONES = {
 };
 
 let wizSelectedZones = new Set();
+let wizCustomZones = {};
 let wizDuration = 7;
 let wizImageBase64 = null;
 
@@ -507,10 +520,14 @@ function cerrarWizard() {
   document.getElementById('modal-wizard').classList.remove('open');
 }
 
+function wizAllZones() {
+  return { ...WIZ_ZONES, ...wizCustomZones };
+}
+
 function renderWizZones() {
   const grid = document.getElementById('wiz-zone-grid');
   grid.innerHTML = '';
-  Object.entries(WIZ_ZONES).forEach(([id, z]) => {
+  Object.entries(wizAllZones()).forEach(([id, z]) => {
     const card = document.createElement('div');
     card.className = 'zone-card' + (wizSelectedZones.has(id) ? ' sel' : '');
     card.innerHTML = `${z.name}<div class="sub">${z.sub || z.region}</div>`;
@@ -520,6 +537,48 @@ function renderWizZones() {
     };
     grid.appendChild(card);
   });
+}
+
+function wizToggleSearch() {
+  const panel = document.getElementById('wiz-search-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'block') document.getElementById('wiz-search-input').focus();
+}
+
+async function wizSearchCity() {
+  const q = document.getElementById('wiz-search-input').value.trim();
+  const resultsDiv = document.getElementById('wiz-search-results');
+  if (!q) return;
+  resultsDiv.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:6px 0">Buscando...</div>';
+  const token = localStorage.getItem('ck_meta_token');
+  try {
+    const url = `https://graph.facebook.com/v19.0/search?type=adgeolocation&location_types=${encodeURIComponent('["city"]')}&q=${encodeURIComponent(q)}&country_code=CO&access_token=${token}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) { resultsDiv.innerHTML = `<div style="font-size:12px;color:#EF4444;padding:6px 0">${data.error.message}</div>`; return; }
+    const cities = (data.data || []).filter(c => c.type === 'city');
+    if (cities.length === 0) { resultsDiv.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:6px 0">Sin resultados</div>'; return; }
+    resultsDiv.innerHTML = '';
+    cities.slice(0, 8).forEach(c => {
+      const item = document.createElement('div');
+      item.style.cssText = 'padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between';
+      item.onmouseenter = () => item.style.background = 'rgba(0,196,204,.1)';
+      item.onmouseleave = () => item.style.background = 'transparent';
+      item.innerHTML = `<span>${c.name}</span><span style="color:var(--text3);font-size:11px">${c.region || ''}</span>`;
+      item.onclick = () => {
+        const id = 'custom_' + c.key;
+        wizCustomZones[id] = { name: c.name, key: c.key, region: c.region, region_id: String(c.region_id), sub: 'Personalizada' };
+        wizSelectedZones.add(id);
+        renderWizZones();
+        document.getElementById('wiz-search-input').value = '';
+        resultsDiv.innerHTML = '';
+        showToast('✓ ' + c.name + ' agregada', '#10B981');
+      };
+      resultsDiv.appendChild(item);
+    });
+  } catch (err) {
+    resultsDiv.innerHTML = `<div style="font-size:12px;color:#EF4444;padding:6px 0">Error de búsqueda: ${err.message}</div>`;
+  }
 }
 
 function renderWizDuration() {
@@ -573,7 +632,7 @@ function wizGoStep(n) {
     dot.classList.toggle('done', i < n);
   });
   if (n === 4) {
-    const zoneNames = [...wizSelectedZones].map(id => WIZ_ZONES[id].name).join(', ');
+    const zoneNames = [...wizSelectedZones].map(id => wizAllZones()[id].name).join(', ');
     const budgetVal = document.getElementById('wiz-budget-slider').value;
     document.getElementById('wiz-rev-zone').textContent = zoneNames;
     document.getElementById('wiz-rev-budget').textContent = '$' + budgetVal + ' USD/semana';
@@ -596,7 +655,7 @@ async function publicarCampana() {
     const adText = document.getElementById('wiz-ad-text').value.trim();
     const activarYa = document.getElementById('wiz-activar-ya').checked;
     const status = activarYa ? 'ACTIVE' : 'PAUSED';
-    const campaignName = `Creditek - ${[...wizSelectedZones].map(id => WIZ_ZONES[id].name).join('+')} - ${new Date().toLocaleDateString('es-CO')}`;
+    const campaignName = `Creditek - ${[...wizSelectedZones].map(id => wizAllZones()[id].name).join('+')} - ${new Date().toLocaleDateString('es-CO')}`;
 
     // 1. Subir imagen
     progress.textContent = 'Subiendo imagen...';
@@ -632,8 +691,8 @@ async function publicarCampana() {
       age_min: 18, age_max: 65,
       geo_locations: {
         cities: [...wizSelectedZones].map(id => ({
-          key: WIZ_ZONES[id].key, radius: 40, distance_unit: 'kilometer',
-          region: WIZ_ZONES[id].region, region_id: WIZ_ZONES[id].region_id, country: 'CO'
+          key: wizAllZones()[id].key, radius: 40, distance_unit: 'kilometer',
+          region: wizAllZones()[id].region, region_id: wizAllZones()[id].region_id, country: 'CO'
         })),
         location_types: ['home', 'recent']
       },
@@ -701,6 +760,7 @@ async function publicarCampana() {
     setTimeout(() => {
       cerrarWizard();
       wizSelectedZones = new Set();
+      wizCustomZones = {};
       wizImageBase64 = null;
       document.getElementById('wiz-ad-text').value = '';
       document.getElementById('wiz-img-preview').style.display = 'none';
