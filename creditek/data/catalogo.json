@@ -86,7 +86,7 @@
     "bateria": "5000 Ah",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_CHOICE_EARBUDS_X7E": {
@@ -106,7 +106,7 @@
     "bateria": "Batería de iones de litio recargable integrada (hasta 20 horas de reproducción de vídeo)",
     "red": "5G (sub-6 GHz y mmWave), Gigabit LTE, Wi-Fi 6E",
     "sistema": "iOS 17",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "SAMSUNG_A17_4128GB_DUAL_SIM": {
@@ -676,7 +676,7 @@
     "bateria": "5000 Ah",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A17_4128GB": {
@@ -986,7 +986,7 @@
     "bateria": "5000 Ah",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "JBL_CLIP_5": {
@@ -1036,7 +1036,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": Android 15",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G17_POWER_4256GB_NFC": {
@@ -1096,7 +1096,7 @@
     "bateria": "5000 mAh",
     "red": "5G",
     "sistema": "Android",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": ""
   },
   "OPPO_A5_5G_8256GB": {
@@ -1406,7 +1406,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "IPHONE_16_128GB_USADO": {
@@ -1426,7 +1426,7 @@
     "bateria": "5000 mAh",
     "red": "4G",
     "sistema": "16",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "FLY_100": {
@@ -1536,7 +1536,7 @@
     "bateria": "5000 mAh",
     "red": "4G",
     "sistema": "Android 16",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": ""
   },
   "IMPRESORA_EPSON_L3210": {
@@ -1746,7 +1746,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "FLY_500": {
@@ -2086,7 +2086,7 @@
     "bateria": "5000 mAh, carga rápida de 33W.",
     "red": "Compatible con redes 5G.",
     "sistema": "Android 14 con HIOS 14.",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "OPPO_A5_4G_4256GB": {
