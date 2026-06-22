@@ -376,7 +376,7 @@
     "bateria": "",
     "red": "Wi-Fi 802.11a/b/g/n/ac, Bluetooth 4.2",
     "sistema": "Android TV",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "MOTO_EDGE_50_FUSION_5G_8256GB": {
@@ -606,7 +606,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_G86_DS_5G_8256GB": {
@@ -766,7 +766,7 @@
     "bateria": "180 mAh, hasta 10 días de uso típico",
     "red": "Bluetooth 5.0, BLE",
     "sistema": "LiteOS (propietario de Honor)",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "INFINIX_GT_30_8256GB": {
@@ -836,7 +836,7 @@
     "bateria": "6000 mAh",
     "red": "Wi-Fi",
     "sistema": "Android 12",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "media"
   },
   "INFINIX_NOTE_60_PRO_5G_8256GB": {
@@ -1076,7 +1076,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": iPadOS",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "OPPO_C71_364GB": {
@@ -1806,7 +1806,7 @@
     "bateria": "470 mAh",
     "red": "",
     "sistema": ": Sin os",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A37_5G_8256GB": {
@@ -1916,7 +1916,7 @@
     "bateria": "",
     "red": "",
     "sistema": ": Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "POCO_C85_8256GB": {
@@ -1936,7 +1936,7 @@
     "bateria": "20.000mAh, carga rápida 18W",
     "red": "",
     "sistema": "",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "XIAOMI_REDMI_15_6128GB": {
@@ -2026,7 +2026,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": ""
   },
   "INFINIX_NOTE_EDGE_5G": {
