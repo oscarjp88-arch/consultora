@@ -1,12 +1,12 @@
 {
   "referencia": "XIAOMI NOTE 15 4G 8/256GB",
   "marca": "XIAOMI",
-  "pantalla": "",
+  "pantalla": "6.77 pulgadas",
   "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-  "camara": "",
+  "camara": "108 MP posterior",
   "bateria": "",
   "red": "4G",
-  "sistema": "",
+  "sistema": "Android 13",
   "fuente": "Gemini API",
   "confianza": "baja",
   "fecha_extraccion": "2026-06-21"

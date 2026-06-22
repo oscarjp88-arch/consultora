@@ -4,9 +4,9 @@
   "pantalla": "",
   "ram_almacenamiento": "",
   "camara": "",
-  "bateria": "",
+  "bateria": "470 mAh",
   "red": "",
-  "sistema": "",
+  "sistema": ": Sin os",
   "fuente": "Gemini API",
   "confianza": "baja",
   "fecha_extraccion": "2026-06-21"

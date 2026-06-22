@@ -3,10 +3,10 @@
   "marca": "XIAOMI",
   "pantalla": "",
   "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-  "camara": "",
-  "bateria": "",
+  "camara": "108 MP posterior",
+  "bateria": "5500 mAh",
   "red": "4G",
-  "sistema": "",
+  "sistema": "Android 14",
   "fuente": "Gemini API",
   "confianza": "baja",
   "fecha_extraccion": "2026-06-21"

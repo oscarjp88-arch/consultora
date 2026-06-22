@@ -1,12 +1,12 @@
 {
   "referencia": "ZTE NUBIA V80 PRO 8/256GB",
   "marca": "ZTE",
-  "pantalla": "",
+  "pantalla": "6.75  Pulgadas IPS",
   "ram_almacenamiento": "8/256GB",
-  "camara": "",
+  "camara": "108  Megapixeles posterior, 16  Megapixeles frontal",
   "bateria": "",
   "red": "",
-  "sistema": "",
+  "sistema": "15",
   "fuente": "Gemini API",
   "confianza": "baja",
   "fecha_extraccion": "2026-06-21"

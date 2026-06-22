@@ -1,12 +1,12 @@
 {
   "referencia": "XIAOMI REDMI A7 3/64GB",
   "marca": "XIAOMI",
-  "pantalla": "",
-  "ram_almacenamiento": "",
-  "camara": "",
+  "pantalla": "6,9 IPS",
+  "ram_almacenamiento": "4 GB / 128 GB",
+  "camara": "13 MP posterior",
   "bateria": "",
-  "red": "",
-  "sistema": "",
+  "red": "4G",
+  "sistema": "Android 15",
   "fuente": "Gemini API",
   "confianza": "baja",
   "fecha_extraccion": "2026-06-21"

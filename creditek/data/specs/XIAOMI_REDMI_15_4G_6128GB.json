@@ -3,10 +3,10 @@
   "marca": "XIAOMI",
   "pantalla": "",
   "ram_almacenamiento": "6GB RAM, 128GB almacenamiento",
-  "camara": "",
+  "camara": "50 MP posterior",
   "bateria": "",
   "red": "4G",
-  "sistema": "",
+  "sistema": ": Xiaomi HyperOS 2",
   "fuente": "Gemini API",
   "confianza": "baja",
   "fecha_extraccion": "2026-06-21"

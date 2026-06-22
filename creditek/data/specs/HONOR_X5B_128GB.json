@@ -1,12 +1,12 @@
 {
   "referencia": "HONOR X5B 128GB",
   "marca": "HONOR",
-  "pantalla": "",
-  "ram_almacenamiento": "",
-  "camara": "",
+  "pantalla": "6.77  Pulgadas Amoled",
+  "ram_almacenamiento": "8 GB / 512 GB",
+  "camara": "108  Megapixeles posterior, 16  Megapixeles frontal",
   "bateria": "",
   "red": "",
-  "sistema": "",
+  "sistema": "Snapdragon 6s 4G Gen 2",
   "fuente": "Gemini API",
   "confianza": "baja",
   "fecha_extraccion": "2026-06-21"

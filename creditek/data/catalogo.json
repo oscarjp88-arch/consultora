@@ -2,61 +2,61 @@
   "MOTO_G06_4128GB": {
     "pantalla": "",
     "ram_almacenamiento": "4GB RAM, 128GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_S26_ULTRA_12512GB": {
     "pantalla": "",
     "ram_almacenamiento": "12GB RAM, 512GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "200 MP posterior",
+    "bateria": "5000 mAh",
+    "red": "5G",
+    "sistema": "Android 16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_NOTE_15_PRO_4G_12512GB": {
     "pantalla": "",
     "ram_almacenamiento": "12GB RAM, 512GB almacenamiento",
-    "camara": "",
+    "camara": "200 MP posterior",
     "bateria": "",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_400_SMART_5G_256GB_66_RAM": {
-    "pantalla": "",
+    "pantalla": "6.77  Pulgadas LCD",
     "ram_almacenamiento": "6GB RAM (con 6GB RAM Turbo), 256GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 5  Megapixeles frontal",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ZTE_NUBIA_V8_MAX_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "5000mAh",
+    "red": "5G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_NOTE_14_4G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
+    "camara": "108 MP posterior",
+    "bateria": "5500 mAh",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 14",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_X6C_6128GB": {
@@ -66,27 +66,27 @@
     "bateria": "5200 mAh con carga rápida de 22.5W",
     "red": "4G LTE, Wi-Fi, Bluetooth 5.1",
     "sistema": "MagicOS 7.1 (basado en Android 13)",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "MOTO_G56_5G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A07_464GB": {
     "pantalla": "",
     "ram_almacenamiento": "4GB RAM, 64GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "10 MP posterior",
+    "bateria": "5000 Ah",
+    "red": "4G",
+    "sistema": "Android",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_CHOICE_EARBUDS_X7E": {
@@ -106,17 +106,17 @@
     "bateria": "Batería de iones de litio recargable integrada (hasta 20 horas de reproducción de vídeo)",
     "red": "5G (sub-6 GHz y mmWave), Gigabit LTE, Wi-Fi 6E",
     "sistema": "iOS 17",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "SAMSUNG_A17_4128GB_DUAL_SIM": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "8GB / 256 GB",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TECNO_SPARK_50_4256GB": {
@@ -126,27 +126,27 @@
     "bateria": "5000 mAh, carga rápida de 18W",
     "red": "4G LTE, Wi-Fi, Bluetooth, GPS",
     "sistema": "Android 14, HIOS 14",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "XIAOMI_NOTE_15_PRO_5G_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.83  Pulgadas POLED",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "200  Megapixeles posterior, 20  Megapixeles frontal",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ITEL_N100_128GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
+    "pantalla": "23.8  Pulgadas",
+    "ram_almacenamiento": "8 GB",
     "camara": "",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Windows 11 Home",
+    "tiene_imagen": true,
     "confianza": ""
   },
   "NOKIA_110_2024": {
@@ -156,7 +156,7 @@
     "bateria": "1450 mAh (extraíble)",
     "red": "2G (GSM)",
     "sistema": "S30+",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "HONOR_OPEN_EAR_OWS": {
@@ -165,28 +165,28 @@
     "camara": "",
     "bateria": "Hasta 10 horas de reproducción de música con una sola carga (auriculares), hasta 40 horas con el estuche de carga.",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Compatible",
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "SAMSUNG_A17_8256GB_DUAL_SIM": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_EARBUDS_CLIP": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.57  Pulgadas Amoled",
+    "ram_almacenamiento": "8 GB / 512 GB",
+    "camara": "200  Megapixeles posterior, 50  Megapixeles frontal",
     "bateria": "Hasta 10 horas de reproducción (auriculares), hasta 40 horas con estuche de carga",
     "red": "Bluetooth 5.3",
     "sistema": "Compatible con Android e iOS",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "NOKIA_6300_4G": {
@@ -196,27 +196,27 @@
     "bateria": "1500 mAh (extraíble)",
     "red": "4G LTE, Wi-Fi, Bluetooth 4.0, GPS",
     "sistema": "KaiOS",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "SAMSUNG_A17_5G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "5000 mAh",
+    "red": "5G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_NOTE_60_PRO_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas Amoled",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 13  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "FLY_200": {
@@ -230,23 +230,23 @@
     "confianza": "baja"
   },
   "HONOR_PLAY_10_364GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.74  Pulgadas LCD",
+    "ram_almacenamiento": "3 GB / 64 GB",
+    "camara": "16  Megapixeles posterior, 5  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TECNO_SPARK_GO3_4128GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.74  Pulgadas LCD",
+    "ram_almacenamiento": "4 GB / 128 GB",
+    "camara": "13  Megapixeles posterior, 8  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "15",
+    "tiene_imagen": true,
     "confianza": ""
   },
   "TAB_SAMSUNG_A11_8.7_WIFI_8128GB": {
@@ -261,42 +261,42 @@
   },
   "MOTO_G06_4256GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "4GB / 128 GB",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A17_8256GB_4G": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_EDGE_60_FUSION_5G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_A5_4128GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "4GB / 64 GB",
+    "camara": "32 MP posterior",
+    "bateria": "5200 mAh",
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_X7D_8256GB": {
@@ -306,37 +306,37 @@
     "bateria": "5330 mAh, carga rápida de 22.5W",
     "red": "4G LTE, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.1",
     "sistema": "Android 13 con MagicOS 7.1",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "XIAOMI_REDMI_15C_8256GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "4GB / 128 GB",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_NOTE_15_PRO_4G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "200 MP posterior",
     "bateria": "",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_A5_64GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "4GB / 64 GB",
+    "camara": "32 MP posterior",
+    "bateria": "5200 mAh",
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "PORTATIL_ASUS_VIVOBOOK_8512GB": {
@@ -352,11 +352,11 @@
   "XIAOMI_REDMI_15_4G_6128GB": {
     "pantalla": "",
     "ram_almacenamiento": "6GB RAM, 128GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Xiaomi HyperOS 2",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "PORTATIL_HP_CORE_I3_8256_15.6": {
@@ -376,7 +376,7 @@
     "bateria": "",
     "red": "Wi-Fi 802.11a/b/g/n/ac, Bluetooth 4.2",
     "sistema": "Android TV",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "MOTO_EDGE_50_FUSION_5G_8256GB": {
@@ -386,17 +386,17 @@
     "bateria": "5000 mAh, carga rápida TurboPower de 68W",
     "red": "5G, Wi-Fi 6E, Bluetooth 5.2, NFC, Dual SIM",
     "sistema": "Android 14 con My UX",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "XIAOMI_REDMI_15_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "4G",
+    "sistema": "Android",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "POCO_C85_6128GB": {
@@ -406,17 +406,17 @@
     "bateria": "5000 mAh",
     "red": "4G",
     "sistema": "MIUI 14 for POCO (basado en Android 13)",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_SMART_20_128GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.78  Pulgadas LCD",
+    "ram_almacenamiento": "4 GB / 128 GB",
+    "camara": "8  Megapixeles posterior, 8  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "PORTATIL_HP_TACTIL_8256GB_15.6": {
@@ -430,13 +430,13 @@
     "confianza": "baja"
   },
   "INFINIX_SMART_20_464GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas LCD",
     "ram_almacenamiento": "4GB RAM, 64GB almacenamiento",
-    "camara": "",
+    "camara": "8  Megapixeles posterior, 8  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "IPHONE_12_128GB_NUEVO": {
@@ -446,17 +446,17 @@
     "bateria": "Hasta 17 horas de reproducción de video",
     "red": "5G, LTE, Wi-Fi 6, Bluetooth 5.0",
     "sistema": "iOS",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "HONOR_MAGIC_8_LITE_5G_256GB_88_RAM": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.79  Pulgadas Amoled",
+    "ram_almacenamiento": "8 GB / 512 GB",
+    "camara": "108  Megapixeles posterior, 16  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Qualcomm Snapdragon 6 Gen 4",
+    "tiene_imagen": true,
     "confianza": ""
   },
   "PATINETA_XIAOMI_4_LITE": {
@@ -476,7 +476,7 @@
     "bateria": "10.000mAh",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TV_IFFALCON_UHD_43U65": {
@@ -500,13 +500,13 @@
     "confianza": "media"
   },
   "SAMSUNG_A17_4G_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.7 pulgadas Amoled",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
+    "camara": "50 MP posterior",
+    "bateria": "5000 mAh",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ZTE_A56_PRO_4128GB": {
@@ -516,27 +516,27 @@
     "bateria": "5000 mAh",
     "red": "4G LTE, Wi-Fi 802.11 b/g/n, Bluetooth 4.2, GPS",
     "sistema": "Android 11 Go Edition",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "POCO_M8_5G_8512GB": {
-    "pantalla": "",
+    "pantalla": "6.77  Pulgadas Amoled",
     "ram_almacenamiento": "8/512GB",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 20  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A17_5G_8256GB_DUAL_SIM": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
+    "camara": "50 MP posterior",
+    "bateria": "5000 mAh",
     "red": "5G, Dual SIM",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TV_IFFALCON_FHD_50S55": {
@@ -550,13 +550,13 @@
     "confianza": "alta"
   },
   "XIAOMI_NOTE_15_4G_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.77 pulgadas",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "108 MP posterior",
     "bateria": "",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 13",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TABLET_INFINIX_XPAD_30_4128GB": {
@@ -576,27 +576,27 @@
     "bateria": "5200 mAh",
     "red": "4G LTE, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.1",
     "sistema": "MagicOS 7.1 (basado en Android 13)",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "media"
   },
   "XIAOMI_REDMI_15C_4256GB_1SIM": {
     "pantalla": "",
     "ram_almacenamiento": "4GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G17_POWER_4256GB": {
-    "pantalla": "",
+    "pantalla": "6.7 IPS",
     "ram_almacenamiento": "4GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_WATCH_5_ACTIVE": {
@@ -605,8 +605,8 @@
     "camara": "",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G86_DS_5G_8256GB": {
@@ -616,27 +616,27 @@
     "bateria": "5000 mAh",
     "red": "5G, 4G LTE, 3G, 2G. Dual SIM",
     "sistema": "Android 13",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "HONOR_X5B_128GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.77  Pulgadas Amoled",
+    "ram_almacenamiento": "8 GB / 512 GB",
+    "camara": "108  Megapixeles posterior, 16  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Snapdragon 6s 4G Gen 2",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_PLAY_10_64GB_43_RAM": {
-    "pantalla": "",
+    "pantalla": "6.74  Pulgadas LCD",
     "ram_almacenamiento": "4GB RAM + 3GB RAM Turbo, 64GB almacenamiento interno",
-    "camara": "",
+    "camara": "16  Megapixeles posterior, 5  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TABLET_TECNO_MEGAPAD_10_PULG_4256GB": {
@@ -650,43 +650,43 @@
     "confianza": "alta"
   },
   "INFINIX_NOTE_60_5G_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas Amoled",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 13  Megapixeles frontal",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_NOTE_15_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "108 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "4G",
+    "sistema": "Android 14",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A07_6128GB_DUAL_SIM": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "4GB / 4 GB",
+    "camara": "10 MP posterior",
+    "bateria": "5000 Ah",
+    "red": "4G",
+    "sistema": "Android",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A17_4128GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "8GB / 256 GB",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "JBL_FLIP_7": {
@@ -696,7 +696,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "AIRE_ROWA_INVERTER_32_18000_BTU_R32": {
@@ -716,7 +716,7 @@
     "bateria": "5200 mAh, carga rápida 10W",
     "red": "4G LTE, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.1",
     "sistema": "Android 13, MagicOS 7.1, Procesador MediaTek Helio G36",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "media"
   },
   "AIRE_ROWA_INVERTER_410_12000_BTU_220V_R410": {
@@ -732,11 +732,11 @@
   "SAMSUNG_A36_5G_8256GB_DUAL_SIM": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "5G, Dual SIM",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ZTE_A35E_264GB": {
@@ -746,17 +746,17 @@
     "bateria": "4000 mAh",
     "red": "4G LTE, Wi-Fi 802.11 b/g/n, Bluetooth 4.2",
     "sistema": "Android 13 Go Edition",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "INFINIX_NOTE_EDGE_5G_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas Amoled",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 13  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_WATCH_2I": {
@@ -766,7 +766,7 @@
     "bateria": "180 mAh, hasta 10 días de uso típico",
     "red": "Bluetooth 5.0, BLE",
     "sistema": "LiteOS (propietario de Honor)",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "INFINIX_GT_30_8256GB": {
@@ -776,7 +776,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ZTE_NUBIA_FOCUS_PRO_8256GB": {
@@ -786,7 +786,7 @@
     "bateria": "5000 mAh con carga rápida de 33W",
     "red": "5G, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.2, NFC",
     "sistema": "Android 14 con MyOS",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "XIAOMI_SPEAKER_30W": {
@@ -796,27 +796,27 @@
     "bateria": "",
     "red": "Bluetooth",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_SMART_20_4128GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.78  Pulgadas LCD",
+    "ram_almacenamiento": "4 GB / 128 GB",
+    "camara": "8  Megapixeles posterior, 8  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": ""
   },
   "INFINIX_NOTE_60_ULTRA_5G_12512GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas Amoled",
     "ram_almacenamiento": "12GB RAM, 512GB almacenamiento",
-    "camara": "",
+    "camara": "200  Megapixeles posterior, 32  Megapixeles frontal",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_HOT_70_5G_4256GB": {
@@ -826,7 +826,7 @@
     "bateria": "5000 mAh, carga rápida de 33W",
     "red": "5G, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.0, GPS, NFC, USB-C 2.0",
     "sistema": "Android 13, XOS 13; Procesador MediaTek Dimensity 6080 (6 nm)",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "TECNO_MEGAPAD_10.1_WIFI_WITH_CASE_4256GB": {
@@ -836,27 +836,27 @@
     "bateria": "6000 mAh",
     "red": "Wi-Fi",
     "sistema": "Android 12",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "media"
   },
   "INFINIX_NOTE_60_PRO_5G_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas Amoled",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 13  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G06_464GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "4GB / 128 GB",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TABLET_XIAOMI_PAD_2_CON_SIM_4128GB": {
@@ -882,11 +882,11 @@
   "XIAOMI_REDMI_15C_4128GB": {
     "pantalla": "",
     "ram_almacenamiento": "4GB RAM, 128GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TV_IFFALCON_HD_32S55": {
@@ -906,7 +906,7 @@
     "bateria": "2600 mAh",
     "red": "Wi-Fi (2.4GHz)",
     "sistema": "Sistema operativo propietario, compatible con Honor AI Life App",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "AIRE_ROWA_ONOFF_12000_BTU_220V": {
@@ -920,33 +920,33 @@
     "confianza": ""
   },
   "INFINIX_NOTE_50_PRO_12256GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas Amoled",
     "ram_almacenamiento": "12/256GB",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 13  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_15C_4256GB": {
     "pantalla": "",
     "ram_almacenamiento": "4GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A17_4G_4128GB": {
-    "pantalla": "",
+    "pantalla": "6.7 pulgadas Amoled",
     "ram_almacenamiento": "4GB RAM, 128GB almacenamiento",
-    "camara": "",
-    "bateria": "",
+    "camara": "50 MP posterior",
+    "bateria": "5000 mAh",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "AIRE_ROWA_INVERTER_32_12000_BTU_110V_R32": {
@@ -966,27 +966,27 @@
     "bateria": "5000 mAh, carga de 10W",
     "red": "4G LTE",
     "sistema": "Android 12 (Go edition), HIOS 12",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "INFINIX_NOTE_50_PRO_5G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento interno",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "5200mAh",
+    "red": "5G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A07_4128GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "4GB / 4 GB",
+    "camara": "10 MP posterior",
+    "bateria": "5000 Ah",
+    "red": "4G",
+    "sistema": "Android",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "JBL_CLIP_5": {
@@ -996,7 +996,7 @@
     "bateria": "Hasta 12 horas de reproducción; 3 horas de carga",
     "red": "Bluetooth 5.3",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "HONOR_AIRFYER_7LT": {
@@ -1010,13 +1010,13 @@
     "confianza": "alta"
   },
   "NOKIA_105": {
-    "pantalla": "",
+    "pantalla": "2.0",
     "ram_almacenamiento": "",
     "camara": "",
     "bateria": "",
-    "red": "",
+    "red": "4G",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": ""
   },
   "TECNO_SPARK_GO_3_4128GB": {
@@ -1026,27 +1026,27 @@
     "bateria": "5000 mAh, carga 10W",
     "red": "4G LTE, Wi-Fi 802.11 b/g/n, Bluetooth 5.0, GPS, USB-C",
     "sistema": "Android 13 Go Edition, HIOS 12",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "SAMSUNG_A26_5G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G17_POWER_4256GB_NFC": {
-    "pantalla": "",
+    "pantalla": "6.7 IPS",
     "ram_almacenamiento": "4GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "FLY_300": {
@@ -1062,41 +1062,41 @@
   "SAMSUNG_A17_4128GB_2SIM": {
     "pantalla": "",
     "ram_almacenamiento": "4GB RAM, 128GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "IPAD_A16_128GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "128GB / 128 GB",
+    "camara": "12 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": ": iPadOS",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "OPPO_C71_364GB": {
-    "pantalla": "",
+    "pantalla": "6.57  Pulgadas Amoled",
     "ram_almacenamiento": "3GB RAM, 64GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 32  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A57_5G_8256GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "12GB / 256 GB",
+    "camara": "50 MP posterior",
+    "bateria": "5000 mAh",
+    "red": "5G",
+    "sistema": "Android",
+    "tiene_imagen": true,
     "confianza": ""
   },
   "OPPO_A5_5G_8256GB": {
@@ -1106,7 +1106,7 @@
     "bateria": "5000 mAh, carga rápida de 18W",
     "red": "5G, 4G LTE, 3G, 2G",
     "sistema": "Android 11, ColorOS 11.1",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "JBL_CHARGE_6": {
@@ -1116,7 +1116,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_X8D_512GB_88_RAM": {
@@ -1126,57 +1126,57 @@
     "bateria": "4500 mAh con carga rápida 35W",
     "red": "4G LTE, Wi-Fi 802.11ac, Bluetooth 5.1",
     "sistema": "MagicOS 7.1 basado en Android 13",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "XIAOMI_NOTE_15_6128GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "8GB / 512 GB",
+    "camara": "108 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "5G",
+    "sistema": "Android 14",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A17_2568_5G_1SIM": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "y 6 años de soporte de seguridad. La protección contra salpicaduras IP54 y la protección contra rayones de Corning Gorilla Glass Victus te permiten concentrarte en lo importante. Saca la ventaja del 5G. El Galaxy A17 5G ofrece, conectividad ultrarrápida para streaming, juegos y compartir contenido en cualquier lugar.",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TECNO_POVA_CURVE_2_5G_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas Amoled",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 13  Megapixeles frontal",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G15_4512GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "4GB / 512 GB",
+    "camara": "5 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": "Android, el G15 ofrece una interfaz intuitiva y acceso a una amplia gama de aplicaciones en Google Play. La conectividad 4G garantiza que puedas navegar, transmitir y descargar contenido de manera rápida y eficiente, manteniéndote siempre conectado.",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_NOTE_15_8512GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 512GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "108 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "5G",
+    "sistema": "Android 14",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TV_XKIM_32": {
@@ -1196,47 +1196,47 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G05_4256GB_1SIM": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "4GB / 128 GB",
+    "camara": "50 MP posterior",
+    "bateria": "5200 mAh",
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G06_4128GB_1SIM": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "4GB / 128 GB",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_A5_128GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "4GB / 64 GB",
+    "camara": "32 MP posterior",
+    "bateria": "5200 mAh",
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G67_5G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8/256GB",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Android 16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_EDGE_50_FUSION_DS_5G_8256GB": {
@@ -1246,87 +1246,87 @@
     "bateria": "5000 mAh con carga rápida TurboPower de 68W",
     "red": "5G (Dual SIM), Wi-Fi 6E, Bluetooth 5.2, NFC",
     "sistema": "Android 14 (My UX)",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "HONOR_400_SMART_6256GB": {
-    "pantalla": "",
+    "pantalla": "6.77  Pulgadas LCD",
     "ram_almacenamiento": "6GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 5  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ZTE_A55_4128GB": {
-    "pantalla": "",
+    "pantalla": "6.75  Pulgadas IPS",
     "ram_almacenamiento": "4GB RAM, 128GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 8  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A06_464GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "4GB / 64 GB",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": "Android 14",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_HOT_60I_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas LCD",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 8  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_NOTE_50S_8256GB_5G": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas Amoled",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 13  Megapixeles frontal",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_A7_364GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6,9 IPS",
+    "ram_almacenamiento": "4 GB / 128 GB",
+    "camara": "13 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_A7_PRO_464GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "4GB / 128 GB",
+    "camara": "13 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "4G",
+    "sistema": "Android 11",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A17_4G_8256GB_DUAL_SIM": {
-    "pantalla": "",
+    "pantalla": "6.7 pulgadas Amoled",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
+    "camara": "50 MP posterior",
+    "bateria": "5000 mAh",
     "red": "4G, Dual SIM",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SCOOTER_XIAOMI_6_LITE": {
@@ -1346,17 +1346,17 @@
     "bateria": "Hasta 20 horas de reproducción de vídeo, hasta 80 horas de reproducción de audio. Batería de iones de litio recargable integrada.",
     "red": "5G (sub-6 GHz y mmWave), Gigabit LTE con 4x4 MIMO, Wi-Fi 6 (802.11ax) con 2x2 MIMO, Bluetooth 5.3, NFC con modo de lectura.",
     "sistema": "iOS 16 (actualizable)",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "MOTO_G56_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "JBL_GO_4": {
@@ -1366,17 +1366,17 @@
     "bateria": "Hasta 7 horas",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "OPPO_A5_4G_8256GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.67  Pulgadas LCD",
+    "ram_almacenamiento": "4 GB / 256 GB",
+    "camara": "50  Megapixeles posterior, 5  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": ""
   },
   "JBL_GRIP": {
@@ -1386,7 +1386,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "ADAPTADOR_ORIGINAL_SAMSUNG_25W": {
@@ -1402,21 +1402,21 @@
   "IPHONE_16_128GB_USADO": {
     "pantalla": "",
     "ram_almacenamiento": "128GB de almacenamiento",
-    "camara": "",
+    "camara": "50MP posterior",
     "bateria": "",
     "red": "Compatible con 5G",
     "sistema": "iOS",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_SMART_10_4256GB": {
-    "pantalla": "",
+    "pantalla": "6.78  Pulgadas LCD",
     "ram_almacenamiento": "4GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "8  Megapixeles posterior, 8  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "FLY_100": {
@@ -1431,22 +1431,22 @@
   },
   "MOTO_G56_DS_5G_12256GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "8GB / 256 GB",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "POCO_C71_4128GB": {
-    "pantalla": "",
+    "pantalla": "6.74  Pulgadas LCD",
     "ram_almacenamiento": "4GB RAM, 128GB almacenamiento",
-    "camara": "",
+    "camara": "50  Megapixeles posterior, 5  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "AIRE_ROWA_ONOFF_18000_BTU": {
@@ -1461,12 +1461,12 @@
   },
   "XIAOMI_REDMI_A7_PRO_4128GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "4GB / 128 GB",
+    "camara": "13 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "4G",
+    "sistema": "Android 11",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TECNO_SPARK_GO3_364GB": {
@@ -1476,7 +1476,7 @@
     "bateria": "5000 mAh",
     "red": "4G LTE, Wi-Fi, Bluetooth, GPS",
     "sistema": "Android 12 Go Edition, HiOS 12",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "CARGADOR_SAMSUNG_25W": {
@@ -1496,7 +1496,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_M55_8256GB": {
@@ -1506,7 +1506,7 @@
     "bateria": "5000 mAh, carga rápida de 45W",
     "red": "5G, Wi-Fi 6 (802.11 a/b/g/n/ac/ax), Bluetooth 5.2",
     "sistema": "Android 14 con One UI 6.1",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "PATINETA_XIAOMI_6_LITE": {
@@ -1520,13 +1520,13 @@
     "confianza": "baja"
   },
   "TECNO_SPARK_GO2_4256GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.78  Pulgadas LCD",
+    "ram_almacenamiento": "8 GB / 256 GB",
+    "camara": "50  Megapixeles posterior, 8  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 16",
+    "tiene_imagen": true,
     "confianza": ""
   },
   "IMPRESORA_EPSON_L3210": {
@@ -1546,7 +1546,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TECNO_SPARK_GO_3_464GB": {
@@ -1556,7 +1556,7 @@
     "bateria": "5000 mAh",
     "red": "4G LTE, Wi-Fi, Bluetooth",
     "sistema": "Android 13 Go Edition",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "IPHONE_13_128GB_USADO": {
@@ -1566,17 +1566,17 @@
     "bateria": "Hasta 19 horas de reproducción de video",
     "red": "5G, LTE, Wi-Fi 6 (802.11ax), Bluetooth 5.0",
     "sistema": "iOS",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "INFINIX_SMART_20_64GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.78  Pulgadas LCD",
+    "ram_almacenamiento": "4 GB / 128 GB",
+    "camara": "8  Megapixeles posterior, 8  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_CHOICE_HEADPHONE": {
@@ -1586,17 +1586,17 @@
     "bateria": "Hasta 28 horas de reproducción total (con estuche de carga)",
     "red": "Bluetooth 5.2",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "media"
   },
   "XIAOMI_NOTE_14_4G_6128GB": {
     "pantalla": "",
     "ram_almacenamiento": "6GB RAM, 128GB almacenamiento",
-    "camara": "",
-    "bateria": "",
+    "camara": "108 MP posterior",
+    "bateria": "5500 mAh",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 14",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_X6C_8256GB": {
@@ -1606,17 +1606,17 @@
     "bateria": "5200 mAh, carga rápida 22.5W",
     "red": "4G LTE, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.1, Dual SIM",
     "sistema": "Android 13 con MagicOS 7.1",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "SAMSUNG_S26_ULTRA_12256GB": {
     "pantalla": "",
     "ram_almacenamiento": "12GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "200 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": ": Android 16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TECNO_POVA_SLIM_8256GB": {
@@ -1626,47 +1626,47 @@
     "bateria": "5000 mAh, carga rápida de 33W.",
     "red": "4G LTE (GSM / HSPA / LTE).",
     "sistema": "Android 14 con HIOS 14.",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "OPPO_A5M_8256GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.67  Pulgadas LCD",
+    "ram_almacenamiento": "8 GB / 256 GB",
+    "camara": "50  Megapixeles posterior, 5  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_NOTE_15_PRO_5G_8512GB": {
-    "pantalla": "",
+    "pantalla": "6.83  Pulgadas POLED",
     "ram_almacenamiento": "8GB RAM / 512GB Almacenamiento",
-    "camara": "",
+    "camara": "200  Megapixeles posterior, 20  Megapixeles frontal",
     "bateria": "",
     "red": "5G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G15_4512GB_1SIM": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "4GB / 512 GB",
+    "camara": "5 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": "Android, el G15 ofrece una interfaz intuitiva y acceso a una amplia gama de aplicaciones en Google Play. La conectividad 4G garantiza que puedas navegar, transmitir y descargar contenido de manera rápida y eficiente, manteniéndote siempre conectado.",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "IPHONE_16_256GB_NUEVO": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "8GB / 128 GB",
+    "camara": "50MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": ": iOS 18",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TABLET_SAMSUNG_A11_8128GB": {
@@ -1686,17 +1686,17 @@
     "bateria": "Hasta 12 horas de reproducción, batería de iones de litio de 34 Wh (7.2V / 4720 mAh), tiempo de carga 3.5 horas",
     "red": "Bluetooth 5.3, Wi-Fi 6 (802.11 a/b/g/n/ac/ax)",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "MOTO_G55_8256GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "pantalla": "6.5 pulgadas",
+    "ram_almacenamiento": "8GB / 256 GB",
+    "camara": "16 MP posterior",
+    "bateria": "5000 mAh",
+    "red": "5G",
+    "sistema": "Android 14",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "JBL_BOOMBOX_3": {
@@ -1706,17 +1706,17 @@
     "bateria": "Hasta 24 horas de reproducción, batería de 96.24 Wh (7.2V/13400mAh)",
     "red": "Bluetooth 5.3",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "SAMSUNG_A17_4128GB_1SIM": {
     "pantalla": "",
     "ram_almacenamiento": "4GB RAM, 128GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "Single SIM",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_BUDS_6_ACTIVE": {
@@ -1726,7 +1726,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ADAPTADOR_SAMSUNG_25W": {
@@ -1756,7 +1756,7 @@
     "bateria": "5000 mAh, carga rápida de 25W",
     "red": "5G, Wi-Fi 6, Bluetooth 5.3, NFC",
     "sistema": "Android 13 (actualizable), One UI 5.1, Procesador Exynos 1380",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "media"
   },
   "TECNO_SPARK_GO3_464GB": {
@@ -1766,7 +1766,7 @@
     "bateria": "5000 mAh, carga de 10W",
     "red": "4G LTE, Dual SIM, Wi-Fi, Bluetooth",
     "sistema": "Android 12 (Go Edition), HiOS 12",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "MOTO_G67_8256GB": {
@@ -1776,7 +1776,7 @@
     "bateria": "5000 mAh, carga rápida 30W",
     "red": "5G, 4G LTE",
     "sistema": "Android 13 (actualizable)",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "PORTATIL_ACER_AL1432P390X_5128_RAM": {
@@ -1790,43 +1790,43 @@
     "confianza": "alta"
   },
   "ZTE_NUBIA_V80_PRO_8256GB": {
-    "pantalla": "",
+    "pantalla": "6.75  Pulgadas IPS",
     "ram_almacenamiento": "8/256GB",
-    "camara": "",
+    "camara": "108  Megapixeles posterior, 16  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_WATCH_5_LITE": {
     "pantalla": "",
     "ram_almacenamiento": "",
     "camara": "",
-    "bateria": "",
+    "bateria": "470 mAh",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Sin os",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A37_5G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": "Android one",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "VIVO_Y19S_PRO_8256GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "6GB / 256 GB",
+    "camara": "50 MP posterior",
+    "bateria": "5150 mAh",
+    "red": "4G",
+    "sistema": "Android 14",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ZTE_A56_4128GB": {
@@ -1836,37 +1836,37 @@
     "bateria": "4000 mAh",
     "red": "4G LTE",
     "sistema": "Android 10",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "SAMSUNG_A36_5G_8256GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "ram_almacenamiento": "8GB / 256 GB",
+    "camara": "50 MP posterior",
     "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "red": "5G",
+    "sistema": "Android",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "OPPO_A5X_4128GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.67  Pulgadas LCD",
+    "ram_almacenamiento": "4 GB / 128 GB",
+    "camara": "32  Megapixeles posterior, 5  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": ""
   },
   "IPHONE_16_128GB": {
     "pantalla": "",
     "ram_almacenamiento": "128GB",
-    "camara": "",
+    "camara": "50MP posterior",
     "bateria": "",
-    "red": "",
+    "red": "5G",
     "sistema": "iOS 18",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "AIRE_ROWA_INVERTER_32_12000_BTU_220V_R32": {
@@ -1882,31 +1882,31 @@
   "XIAOMI_NOTE_14_PRO_5G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "200 MP posterior",
+    "bateria": "5500 mAh",
+    "red": "4G",
+    "sistema": "Android 14",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_15_4G_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
+    "camara": "50 MP posterior",
     "bateria": "",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Xiaomi HyperOS 2",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A16_4128GB": {
     "pantalla": "",
     "ram_almacenamiento": "4GB RAM, 128GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "5000 mAh",
+    "red": "4G",
+    "sistema": "Android 13",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_SMART_BAND_9_ACTIVE": {
@@ -1915,18 +1915,18 @@
     "camara": "",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": ": Android",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "POCO_C85_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "5G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_POWER_BANK_20.000MAH_18W_FAST": {
@@ -1936,17 +1936,17 @@
     "bateria": "20.000mAh, carga rápida 18W",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "XIAOMI_REDMI_15_6128GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "8GB / 256 GB",
+    "camara": "50 MP posterior",
+    "bateria": "6000 mAh",
+    "red": "4G",
+    "sistema": "Android",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "PORTATIL_HP_RYZEN_5_16512GB": {
@@ -1971,22 +1971,22 @@
   },
   "XIAOMI_REDMI_A5_364GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "ram_almacenamiento": "4GB / 64 GB",
+    "camara": "32 MP posterior",
+    "bateria": "5200 mAh",
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SAMSUNG_A07_6128GB": {
-    "pantalla": "",
+    "pantalla": "6.7 pulgadas PLS",
     "ram_almacenamiento": "6GB RAM, 128GB almacenamiento",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "5000 mAh",
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TABLET_XIAOMI_REDMI_PAD_2_8256GB": {
@@ -2002,21 +2002,21 @@
   "MOTO_EDGE_60_FUSION_8256GB": {
     "pantalla": "",
     "ram_almacenamiento": "8/256GB",
-    "camara": "",
-    "bateria": "",
-    "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "camara": "50 MP posterior",
+    "bateria": "5200 mAh",
+    "red": "4G",
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ITEL_N100_64GB": {
     "pantalla": "",
-    "ram_almacenamiento": "",
+    "ram_almacenamiento": "8GB / 512 GB",
     "camara": "",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Windows 11 Home",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "XIAOMI_POWER_BANK_10.000MAH": {
@@ -2026,17 +2026,17 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": ""
   },
   "INFINIX_NOTE_EDGE_5G": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.78  Pulgadas Amoled",
+    "ram_almacenamiento": "8 GB / 256 GB",
+    "camara": "50  Megapixeles posterior, 13  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "16",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SMART_WATCH_GENERICO": {
@@ -2056,17 +2056,17 @@
     "bateria": "5000 mAh",
     "red": "4G LTE, Dual SIM",
     "sistema": "Android 10, Magic UI 3.1",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "XIAOMI_NOTE_15_4G_8512GB": {
-    "pantalla": "",
+    "pantalla": "6.77 pulgadas",
     "ram_almacenamiento": "8GB RAM, 512GB almacenamiento",
-    "camara": "",
+    "camara": "108 MP posterior",
     "bateria": "",
     "red": "4G",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 13",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TECNO_SPARK_50_5G_8256GB": {
@@ -2076,17 +2076,17 @@
     "bateria": "5000 mAh, carga rápida de 33W.",
     "red": "Compatible con redes 5G.",
     "sistema": "Android 14 con HIOS 14.",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "OPPO_A5_4G_4256GB": {
-    "pantalla": "",
-    "ram_almacenamiento": "",
-    "camara": "",
+    "pantalla": "6.67  Pulgadas LCD",
+    "ram_almacenamiento": "4 GB / 256 GB",
+    "camara": "50  Megapixeles posterior, 5  Megapixeles frontal",
     "bateria": "",
     "red": "",
-    "sistema": "",
-    "tiene_imagen": false,
+    "sistema": "Android 15",
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "BOSE_S1_PRO_PLUS": {
@@ -2096,17 +2096,17 @@
     "bateria": "Hasta 11 horas",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "XIAOMI_NOTE_15_4G_6128GB": {
-    "pantalla": "",
+    "pantalla": "6.77 pulgadas",
     "ram_almacenamiento": "6GB RAM, 128GB almacenamiento",
-    "camara": "",
+    "camara": "108 MP posterior",
     "bateria": "",
     "red": "4G",
     "sistema": "Android con MIUI",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   }
 }

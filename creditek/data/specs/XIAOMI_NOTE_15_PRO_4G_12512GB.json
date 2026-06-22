@@ -3,10 +3,10 @@
   "marca": "XIAOMI",
   "pantalla": "",
   "ram_almacenamiento": "12GB RAM, 512GB almacenamiento",
-  "camara": "",
+  "camara": "200 MP posterior",
   "bateria": "",
   "red": "4G",
-  "sistema": "",
+  "sistema": ": Android 15",
   "fuente": "Gemini API",
   "confianza": "baja",
   "fecha_extraccion": "2026-06-21"

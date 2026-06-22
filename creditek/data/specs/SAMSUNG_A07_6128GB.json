@@ -1,12 +1,12 @@
 {
   "referencia": "SAMSUNG A07 6/128GB",
   "marca": "SAMSUNG",
-  "pantalla": "",
+  "pantalla": "6.7 pulgadas PLS",
   "ram_almacenamiento": "6GB RAM, 128GB almacenamiento",
-  "camara": "",
-  "bateria": "",
-  "red": "",
-  "sistema": "",
+  "camara": "50 MP posterior",
+  "bateria": "5000 mAh",
+  "red": "4G",
+  "sistema": "Android 15",
   "fuente": "Gemini API",
   "confianza": "baja",
   "fecha_extraccion": "2026-06-21"
