@@ -6,7 +6,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_S26_ULTRA_12512GB": {
@@ -26,7 +26,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_400_SMART_5G_256GB_66_RAM": {
@@ -36,7 +36,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "Android 16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "ZTE_NUBIA_V8_MAX_8256GB": {
@@ -56,7 +56,7 @@
     "bateria": "5500 mAh",
     "red": "4G",
     "sistema": "Android 14",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_X6C_6128GB": {
@@ -66,7 +66,7 @@
     "bateria": "5200 mAh con carga rápida de 22.5W",
     "red": "4G LTE, Wi-Fi, Bluetooth 5.1",
     "sistema": "MagicOS 7.1 (basado en Android 13)",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "MOTO_G56_5G_8256GB": {
@@ -76,7 +76,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A07_464GB": {
@@ -86,7 +86,7 @@
     "bateria": "5000 Ah",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_CHOICE_EARBUDS_X7E": {
@@ -106,7 +106,7 @@
     "bateria": "Batería de iones de litio recargable integrada (hasta 20 horas de reproducción de vídeo)",
     "red": "5G (sub-6 GHz y mmWave), Gigabit LTE, Wi-Fi 6E",
     "sistema": "iOS 17",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "SAMSUNG_A17_4128GB_DUAL_SIM": {
@@ -116,7 +116,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TECNO_SPARK_50_4256GB": {
@@ -126,7 +126,7 @@
     "bateria": "5000 mAh, carga rápida de 18W",
     "red": "4G LTE, Wi-Fi, Bluetooth, GPS",
     "sistema": "Android 14, HIOS 14",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "XIAOMI_NOTE_15_PRO_5G_8256GB": {
@@ -136,7 +136,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "ITEL_N100_128GB": {
@@ -176,7 +176,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_EARBUDS_CLIP": {
@@ -206,7 +206,7 @@
     "bateria": "5000 mAh",
     "red": "5G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "INFINIX_NOTE_60_PRO_8256GB": {
@@ -216,7 +216,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "FLY_200": {
@@ -236,7 +236,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TECNO_SPARK_GO3_4128GB": {
@@ -246,7 +246,7 @@
     "bateria": "",
     "red": "",
     "sistema": "15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": ""
   },
   "TAB_SAMSUNG_A11_8.7_WIFI_8128GB": {
@@ -266,7 +266,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A17_8256GB_4G": {
@@ -276,7 +276,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_EDGE_60_FUSION_5G_8256GB": {
@@ -296,7 +296,7 @@
     "bateria": "5200 mAh",
     "red": "4G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_X7D_8256GB": {
@@ -316,7 +316,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "XIAOMI_NOTE_15_PRO_4G_8256GB": {
@@ -326,7 +326,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_A5_64GB": {
@@ -336,7 +336,7 @@
     "bateria": "5200 mAh",
     "red": "4G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "PORTATIL_ASUS_VIVOBOOK_8512GB": {
@@ -356,7 +356,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Xiaomi HyperOS 2",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "PORTATIL_HP_CORE_I3_8256_15.6": {
@@ -376,7 +376,7 @@
     "bateria": "",
     "red": "Wi-Fi 802.11a/b/g/n/ac, Bluetooth 4.2",
     "sistema": "Android TV",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "MOTO_EDGE_50_FUSION_5G_8256GB": {
@@ -386,7 +386,7 @@
     "bateria": "5000 mAh, carga rápida TurboPower de 68W",
     "red": "5G, Wi-Fi 6E, Bluetooth 5.2, NFC, Dual SIM",
     "sistema": "Android 14 con My UX",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "XIAOMI_REDMI_15_8256GB": {
@@ -396,7 +396,7 @@
     "bateria": "6000 mAh",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "POCO_C85_6128GB": {
@@ -406,7 +406,7 @@
     "bateria": "5000 mAh",
     "red": "4G",
     "sistema": "MIUI 14 for POCO (basado en Android 13)",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "INFINIX_SMART_20_128GB": {
@@ -416,7 +416,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "PORTATIL_HP_TACTIL_8256GB_15.6": {
@@ -436,7 +436,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "IPHONE_12_128GB_NUEVO": {
@@ -446,7 +446,7 @@
     "bateria": "Hasta 17 horas de reproducción de video",
     "red": "5G, LTE, Wi-Fi 6, Bluetooth 5.0",
     "sistema": "iOS",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "HONOR_MAGIC_8_LITE_5G_256GB_88_RAM": {
@@ -476,7 +476,7 @@
     "bateria": "10.000mAh",
     "red": "",
     "sistema": "",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TV_IFFALCON_UHD_43U65": {
@@ -506,7 +506,7 @@
     "bateria": "5000 mAh",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "ZTE_A56_PRO_4128GB": {
@@ -516,7 +516,7 @@
     "bateria": "5000 mAh",
     "red": "4G LTE, Wi-Fi 802.11 b/g/n, Bluetooth 4.2, GPS",
     "sistema": "Android 11 Go Edition",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "POCO_M8_5G_8512GB": {
@@ -536,7 +536,7 @@
     "bateria": "5000 mAh",
     "red": "5G, Dual SIM",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TV_IFFALCON_FHD_50S55": {
@@ -556,7 +556,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": "Android 13",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TABLET_INFINIX_XPAD_30_4128GB": {
@@ -576,7 +576,7 @@
     "bateria": "5200 mAh",
     "red": "4G LTE, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.1",
     "sistema": "MagicOS 7.1 (basado en Android 13)",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "media"
   },
   "XIAOMI_REDMI_15C_4256GB_1SIM": {
@@ -586,7 +586,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_G17_POWER_4256GB": {
@@ -596,7 +596,7 @@
     "bateria": "6000 mAh",
     "red": "4G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "XIAOMI_WATCH_5_ACTIVE": {
@@ -626,7 +626,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Snapdragon 6s 4G Gen 2",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_PLAY_10_64GB_43_RAM": {
@@ -636,7 +636,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TABLET_TECNO_MEGAPAD_10_PULG_4256GB": {
@@ -666,7 +666,7 @@
     "bateria": "6000 mAh",
     "red": "4G",
     "sistema": "Android 14",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A07_6128GB_DUAL_SIM": {
@@ -676,7 +676,7 @@
     "bateria": "5000 Ah",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A17_4128GB": {
@@ -686,7 +686,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "JBL_FLIP_7": {
@@ -716,7 +716,7 @@
     "bateria": "5200 mAh, carga rápida 10W",
     "red": "4G LTE, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.1",
     "sistema": "Android 13, MagicOS 7.1, Procesador MediaTek Helio G36",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "media"
   },
   "AIRE_ROWA_INVERTER_410_12000_BTU_220V_R410": {
@@ -736,7 +736,7 @@
     "bateria": "",
     "red": "5G, Dual SIM",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "ZTE_A35E_264GB": {
@@ -746,7 +746,7 @@
     "bateria": "4000 mAh",
     "red": "4G LTE, Wi-Fi 802.11 b/g/n, Bluetooth 4.2",
     "sistema": "Android 13 Go Edition",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "INFINIX_NOTE_EDGE_5G_8256GB": {
@@ -756,7 +756,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_WATCH_2I": {
@@ -806,7 +806,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": ""
   },
   "INFINIX_NOTE_60_ULTRA_5G_12512GB": {
@@ -826,7 +826,7 @@
     "bateria": "5000 mAh, carga rápida de 33W",
     "red": "5G, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.0, GPS, NFC, USB-C 2.0",
     "sistema": "Android 13, XOS 13; Procesador MediaTek Dimensity 6080 (6 nm)",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "TECNO_MEGAPAD_10.1_WIFI_WITH_CASE_4256GB": {
@@ -836,7 +836,7 @@
     "bateria": "6000 mAh",
     "red": "Wi-Fi",
     "sistema": "Android 12",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "media"
   },
   "INFINIX_NOTE_60_PRO_5G_8256GB": {
@@ -846,7 +846,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_G06_464GB": {
@@ -856,7 +856,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TABLET_XIAOMI_PAD_2_CON_SIM_4128GB": {
@@ -886,7 +886,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TV_IFFALCON_HD_32S55": {
@@ -906,7 +906,7 @@
     "bateria": "2600 mAh",
     "red": "Wi-Fi (2.4GHz)",
     "sistema": "Sistema operativo propietario, compatible con Honor AI Life App",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "AIRE_ROWA_ONOFF_12000_BTU_220V": {
@@ -926,7 +926,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_15C_4256GB": {
@@ -936,7 +936,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A17_4G_4128GB": {
@@ -946,7 +946,7 @@
     "bateria": "5000 mAh",
     "red": "4G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "AIRE_ROWA_INVERTER_32_12000_BTU_110V_R32": {
@@ -966,7 +966,7 @@
     "bateria": "5000 mAh, carga de 10W",
     "red": "4G LTE",
     "sistema": "Android 12 (Go edition), HIOS 12",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "INFINIX_NOTE_50_PRO_5G_8256GB": {
@@ -986,7 +986,7 @@
     "bateria": "5000 Ah",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "JBL_CLIP_5": {
@@ -1026,7 +1026,7 @@
     "bateria": "5000 mAh, carga 10W",
     "red": "4G LTE, Wi-Fi 802.11 b/g/n, Bluetooth 5.0, GPS, USB-C",
     "sistema": "Android 13 Go Edition, HIOS 12",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "SAMSUNG_A26_5G_8256GB": {
@@ -1036,7 +1036,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_G17_POWER_4256GB_NFC": {
@@ -1046,7 +1046,7 @@
     "bateria": "6000 mAh",
     "red": "4G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "FLY_300": {
@@ -1066,7 +1066,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "IPAD_A16_128GB": {
@@ -1096,7 +1096,7 @@
     "bateria": "5000 mAh",
     "red": "5G",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": ""
   },
   "OPPO_A5_5G_8256GB": {
@@ -1126,7 +1126,7 @@
     "bateria": "4500 mAh con carga rápida 35W",
     "red": "4G LTE, Wi-Fi 802.11ac, Bluetooth 5.1",
     "sistema": "MagicOS 7.1 basado en Android 13",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "XIAOMI_NOTE_15_6128GB": {
@@ -1136,7 +1136,7 @@
     "bateria": "6000 mAh",
     "red": "5G",
     "sistema": "Android 14",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A17_2568_5G_1SIM": {
@@ -1156,7 +1156,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_G15_4512GB": {
@@ -1166,7 +1166,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "Android, el G15 ofrece una interfaz intuitiva y acceso a una amplia gama de aplicaciones en Google Play. La conectividad 4G garantiza que puedas navegar, transmitir y descargar contenido de manera rápida y eficiente, manteniéndote siempre conectado.",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "XIAOMI_NOTE_15_8512GB": {
@@ -1176,7 +1176,7 @@
     "bateria": "6000 mAh",
     "red": "5G",
     "sistema": "Android 14",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TV_XKIM_32": {
@@ -1216,7 +1216,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_A5_128GB": {
@@ -1226,7 +1226,7 @@
     "bateria": "5200 mAh",
     "red": "4G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_G67_5G_8256GB": {
@@ -1236,7 +1236,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": Android 16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_EDGE_50_FUSION_DS_5G_8256GB": {
@@ -1246,7 +1246,7 @@
     "bateria": "5000 mAh con carga rápida TurboPower de 68W",
     "red": "5G (Dual SIM), Wi-Fi 6E, Bluetooth 5.2, NFC",
     "sistema": "Android 14 (My UX)",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "HONOR_400_SMART_6256GB": {
@@ -1256,7 +1256,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Android 16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "ZTE_A55_4128GB": {
@@ -1266,7 +1266,7 @@
     "bateria": "",
     "red": "",
     "sistema": "15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A06_464GB": {
@@ -1276,7 +1276,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": "Android 14",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "INFINIX_HOT_60I_8256GB": {
@@ -1286,7 +1286,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Android 16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "INFINIX_NOTE_50S_8256GB_5G": {
@@ -1296,7 +1296,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "XIAOMI_REDMI_A7_364GB": {
@@ -1316,7 +1316,7 @@
     "bateria": "6000 mAh",
     "red": "4G",
     "sistema": "Android 11",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A17_4G_8256GB_DUAL_SIM": {
@@ -1326,7 +1326,7 @@
     "bateria": "5000 mAh",
     "red": "4G, Dual SIM",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SCOOTER_XIAOMI_6_LITE": {
@@ -1376,7 +1376,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": ""
   },
   "JBL_GRIP": {
@@ -1406,7 +1406,7 @@
     "bateria": "",
     "red": "Compatible con 5G",
     "sistema": "iOS",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "INFINIX_SMART_10_4256GB": {
@@ -1416,7 +1416,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "FLY_100": {
@@ -1436,7 +1436,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "POCO_C71_4128GB": {
@@ -1466,7 +1466,7 @@
     "bateria": "6000 mAh",
     "red": "4G",
     "sistema": "Android 11",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TECNO_SPARK_GO3_364GB": {
@@ -1476,7 +1476,7 @@
     "bateria": "5000 mAh",
     "red": "4G LTE, Wi-Fi, Bluetooth, GPS",
     "sistema": "Android 12 Go Edition, HiOS 12",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "CARGADOR_SAMSUNG_25W": {
@@ -1526,7 +1526,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Android 16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": ""
   },
   "IMPRESORA_EPSON_L3210": {
@@ -1546,7 +1546,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TECNO_SPARK_GO_3_464GB": {
@@ -1556,7 +1556,7 @@
     "bateria": "5000 mAh",
     "red": "4G LTE, Wi-Fi, Bluetooth",
     "sistema": "Android 13 Go Edition",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "IPHONE_13_128GB_USADO": {
@@ -1566,7 +1566,7 @@
     "bateria": "Hasta 19 horas de reproducción de video",
     "red": "5G, LTE, Wi-Fi 6 (802.11ax), Bluetooth 5.0",
     "sistema": "iOS",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "INFINIX_SMART_20_64GB": {
@@ -1576,7 +1576,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_CHOICE_HEADPHONE": {
@@ -1586,7 +1586,7 @@
     "bateria": "Hasta 28 horas de reproducción total (con estuche de carga)",
     "red": "Bluetooth 5.2",
     "sistema": "",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "media"
   },
   "XIAOMI_NOTE_14_4G_6128GB": {
@@ -1596,7 +1596,7 @@
     "bateria": "5500 mAh",
     "red": "4G",
     "sistema": "Android 14",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_X6C_8256GB": {
@@ -1606,7 +1606,7 @@
     "bateria": "5200 mAh, carga rápida 22.5W",
     "red": "4G LTE, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.1, Dual SIM",
     "sistema": "Android 13 con MagicOS 7.1",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "SAMSUNG_S26_ULTRA_12256GB": {
@@ -1626,7 +1626,7 @@
     "bateria": "5000 mAh, carga rápida de 33W.",
     "red": "4G LTE (GSM / HSPA / LTE).",
     "sistema": "Android 14 con HIOS 14.",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "OPPO_A5M_8256GB": {
@@ -1646,7 +1646,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_G15_4512GB_1SIM": {
@@ -1656,7 +1656,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "Android, el G15 ofrece una interfaz intuitiva y acceso a una amplia gama de aplicaciones en Google Play. La conectividad 4G garantiza que puedas navegar, transmitir y descargar contenido de manera rápida y eficiente, manteniéndote siempre conectado.",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "IPHONE_16_256GB_NUEVO": {
@@ -1666,7 +1666,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": iOS 18",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TABLET_SAMSUNG_A11_8128GB": {
@@ -1716,7 +1716,7 @@
     "bateria": "",
     "red": "Single SIM",
     "sistema": ": Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "XIAOMI_BUDS_6_ACTIVE": {
@@ -1766,7 +1766,7 @@
     "bateria": "5000 mAh, carga de 10W",
     "red": "4G LTE, Dual SIM, Wi-Fi, Bluetooth",
     "sistema": "Android 12 (Go Edition), HiOS 12",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "MOTO_G67_8256GB": {
@@ -1776,7 +1776,7 @@
     "bateria": "5000 mAh, carga rápida 30W",
     "red": "5G, 4G LTE",
     "sistema": "Android 13 (actualizable)",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "PORTATIL_ACER_AL1432P390X_5128_RAM": {
@@ -1816,7 +1816,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "Android one",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "VIVO_Y19S_PRO_8256GB": {
@@ -1836,7 +1836,7 @@
     "bateria": "4000 mAh",
     "red": "4G LTE",
     "sistema": "Android 10",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "SAMSUNG_A36_5G_8256GB": {
@@ -1846,7 +1846,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "OPPO_A5X_4128GB": {
@@ -1866,7 +1866,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "iOS 18",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "AIRE_ROWA_INVERTER_32_12000_BTU_220V_R32": {
@@ -1896,7 +1896,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": ": Xiaomi HyperOS 2",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A16_4128GB": {
@@ -1926,7 +1926,7 @@
     "bateria": "6000 mAh",
     "red": "5G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "XIAOMI_POWER_BANK_20.000MAH_18W_FAST": {
@@ -1936,7 +1936,7 @@
     "bateria": "20.000mAh, carga rápida 18W",
     "red": "",
     "sistema": "",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "XIAOMI_REDMI_15_6128GB": {
@@ -1946,7 +1946,7 @@
     "bateria": "6000 mAh",
     "red": "4G",
     "sistema": "Android",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "PORTATIL_HP_RYZEN_5_16512GB": {
@@ -1976,7 +1976,7 @@
     "bateria": "5200 mAh",
     "red": "4G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A07_6128GB": {
@@ -1986,7 +1986,7 @@
     "bateria": "5000 mAh",
     "red": "4G",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TABLET_XIAOMI_REDMI_PAD_2_8256GB": {
@@ -2036,7 +2036,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SMART_WATCH_GENERICO": {
@@ -2056,7 +2056,7 @@
     "bateria": "5000 mAh",
     "red": "4G LTE, Dual SIM",
     "sistema": "Android 10, Magic UI 3.1",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "XIAOMI_NOTE_15_4G_8512GB": {
@@ -2066,7 +2066,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": "Android 13",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "TECNO_SPARK_50_5G_8256GB": {
@@ -2076,7 +2076,7 @@
     "bateria": "5000 mAh, carga rápida de 33W.",
     "red": "Compatible con redes 5G.",
     "sistema": "Android 14 con HIOS 14.",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "alta"
   },
   "OPPO_A5_4G_4256GB": {
@@ -2086,7 +2086,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Android 15",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "BOSE_S1_PRO_PLUS": {
@@ -2106,7 +2106,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": "Android con MIUI",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   }
 }
