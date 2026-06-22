@@ -136,7 +136,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "15",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "ITEL_N100_128GB": {
@@ -446,7 +446,7 @@
     "bateria": "Hasta 17 horas de reproducción de video",
     "red": "5G, LTE, Wi-Fi 6, Bluetooth 5.0",
     "sistema": "iOS",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "HONOR_MAGIC_8_LITE_5G_256GB_88_RAM": {
@@ -756,7 +756,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "HONOR_WATCH_2I": {
@@ -1276,7 +1276,7 @@
     "bateria": "",
     "red": "4G",
     "sistema": "Android 14",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_HOT_60I_8256GB": {
@@ -1286,7 +1286,7 @@
     "bateria": "",
     "red": "",
     "sistema": "Android 16",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_NOTE_50S_8256GB_5G": {
@@ -1406,7 +1406,7 @@
     "bateria": "",
     "red": "Compatible con 5G",
     "sistema": "iOS",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "INFINIX_SMART_10_4256GB": {
@@ -1546,7 +1546,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TECNO_SPARK_GO_3_464GB": {
@@ -1566,7 +1566,7 @@
     "bateria": "Hasta 19 horas de reproducción de video",
     "red": "5G, LTE, Wi-Fi 6 (802.11ax), Bluetooth 5.0",
     "sistema": "iOS",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "alta"
   },
   "INFINIX_SMART_20_64GB": {
@@ -1646,7 +1646,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "15",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "MOTO_G15_4512GB_1SIM": {
@@ -1666,7 +1666,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": ": iOS 18",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TABLET_SAMSUNG_A11_8128GB": {
@@ -1816,7 +1816,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "Android one",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "VIVO_Y19S_PRO_8256GB": {
@@ -1866,7 +1866,7 @@
     "bateria": "",
     "red": "5G",
     "sistema": "iOS 18",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "AIRE_ROWA_INVERTER_32_12000_BTU_220V_R32": {
@@ -1986,7 +1986,7 @@
     "bateria": "5000 mAh",
     "red": "4G",
     "sistema": "Android 15",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "TABLET_XIAOMI_REDMI_PAD_2_8256GB": {
@@ -2036,7 +2036,7 @@
     "bateria": "",
     "red": "",
     "sistema": "16",
-    "tiene_imagen": false,
+    "tiene_imagen": true,
     "confianza": "baja"
   },
   "SMART_WATCH_GENERICO": {
