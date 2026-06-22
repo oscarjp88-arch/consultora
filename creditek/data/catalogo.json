@@ -226,7 +226,7 @@
     "bateria": "Batería extraíble",
     "red": "GSM (2G)",
     "sistema": "Sistema operativo propietario (feature phone)",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "HONOR_PLAY_10_364GB": {
@@ -1056,7 +1056,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "SAMSUNG_A17_4128GB_2SIM": {
@@ -1436,7 +1436,7 @@
     "bateria": "",
     "red": "",
     "sistema": "",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "baja"
   },
   "MOTO_G56_DS_5G_12256GB": {
@@ -1756,7 +1756,7 @@
     "bateria": "Li-Ion 1000 mAh",
     "red": "GSM (2G)",
     "sistema": "Sistema operativo propietario",
-    "tiene_imagen": true,
+    "tiene_imagen": false,
     "confianza": "media"
   },
   "SAMSUNG_A57_8256GB_5G": {
