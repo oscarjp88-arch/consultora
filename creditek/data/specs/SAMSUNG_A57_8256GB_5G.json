@@ -1,0 +1,13 @@
+{
+  "referencia": "SAMSUNG A57 8/256GB 5G",
+  "marca": "SAMSUNG",
+  "pantalla": "Super AMOLED de 6.4 pulgadas, resolución FHD+ (1080 x 2340), 120Hz",
+  "ram_almacenamiento": "8GB RAM, 256GB almacenamiento interno",
+  "camara": "Trasera triple: Principal 50MP (OIS), Ultra Gran Angular 12MP, Macro 5MP. Frontal: 32MP",
+  "bateria": "5000 mAh, carga rápida de 25W",
+  "red": "5G, Wi-Fi 6, Bluetooth 5.3, NFC",
+  "sistema": "Android 13 (actualizable), One UI 5.1, Procesador Exynos 1380",
+  "fuente": "Gemini API",
+  "confianza": "media",
+  "fecha_extraccion": "2026-06-21"
+}

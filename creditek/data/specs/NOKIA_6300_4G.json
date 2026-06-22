@@ -1,0 +1,13 @@
+{
+  "referencia": "NOKIA 6300 4G",
+  "marca": "NOKIA",
+  "pantalla": "2.4 pulgadas, TFT LCD, QVGA (240 x 320 píxeles)",
+  "ram_almacenamiento": "512 MB RAM, 4 GB almacenamiento interno (ampliable con microSD)",
+  "camara": "Trasera: 0.3 MP (VGA)",
+  "bateria": "1500 mAh (extraíble)",
+  "red": "4G LTE, Wi-Fi, Bluetooth 4.0, GPS",
+  "sistema": "KaiOS",
+  "fuente": "Gemini API",
+  "confianza": "alta",
+  "fecha_extraccion": "2026-06-21"
+}

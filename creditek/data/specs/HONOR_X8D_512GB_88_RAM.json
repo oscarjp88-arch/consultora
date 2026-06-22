@@ -1,0 +1,13 @@
+{
+  "referencia": "HONOR X8D 512GB 8+8 RAM",
+  "marca": "HONOR",
+  "pantalla": "6.7 pulgadas LCD FHD+ (2388 x 1080) 90Hz",
+  "ram_almacenamiento": "8GB RAM (8GB RAM Turbo) + 512GB almacenamiento",
+  "camara": "Trasera triple: 100MP principal (f/1.9), 2MP profundidad (f/2.4), 2MP macro (f/2.4). Frontal: 8MP (f/2.0).",
+  "bateria": "4500 mAh con carga rápida 35W",
+  "red": "4G LTE, Wi-Fi 802.11ac, Bluetooth 5.1",
+  "sistema": "MagicOS 7.1 basado en Android 13",
+  "fuente": "Gemini API",
+  "confianza": "alta",
+  "fecha_extraccion": "2026-06-21"
+}

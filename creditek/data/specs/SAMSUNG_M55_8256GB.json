@@ -1,0 +1,13 @@
+{
+  "referencia": "SAMSUNG M55 8/256GB",
+  "marca": "SAMSUNG",
+  "pantalla": "Super AMOLED Plus de 6.7 pulgadas, resolución Full HD+ (1080 x 2400 píxeles), tasa de refresco de 120Hz, brillo máximo de 1000 nits",
+  "ram_almacenamiento": "8GB RAM, 256GB almacenamiento interno",
+  "camara": "Trasera triple: Principal de 50 MP (f/1.8, OIS), Ultra gran angular de 8 MP (f/2.2), Macro de 2 MP (f/2.4). Frontal: 50 MP (f/2.4)",
+  "bateria": "5000 mAh, carga rápida de 45W",
+  "red": "5G, Wi-Fi 6 (802.11 a/b/g/n/ac/ax), Bluetooth 5.2",
+  "sistema": "Android 14 con One UI 6.1",
+  "fuente": "Gemini API",
+  "confianza": "alta",
+  "fecha_extraccion": "2026-06-21"
+}
