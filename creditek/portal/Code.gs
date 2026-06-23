@@ -424,13 +424,13 @@ function inicializarTiendas() {
   var tiendas = [
     ['CRD-TOL-01', 'Cellfiao Tolú',       'Tolú',           '573112889758', 'luisa.medrano@crediteksas.com',   'SI'],
     ['CRD-COR-01', 'Móvil Shoping',       'Corozal',        '573014991556', 'andrea.velez@crediteksas.com',    'SI'],
-    ['CRD-COR-02', 'Celfiao Tecnología',  'Corozal',        '573113052878', 'katty.puello@crediteksas.com',    'SI'],
+    ['CRD-COR-02', 'Celfiao Tecnología',  'Corozal',        '573002865747', 'katty.puello@crediteksas.com',    'SI'],
     ['CRD-COR-03', 'Creditel Store',      'Corozal',        '573144220401', 'wendy.perez@crediteksas.com',     'SI'],
-    ['CRD-CHI-01', 'Chinú Cell',          'Chinú',          '573234052533', 'luis.marin@crediteksas.com',      'SI'],
-    ['CRD-CHI-02', 'Creditel Chinú',      'Chinú',          '573052044046', 'yajaira.salas@crediteksas.com',   'SI'],
+    ['CRD-CHI-01', 'Chinú Cell',          'Chinú',          '573163134737', 'luis.marin@crediteksas.com',      'SI'],
+    ['CRD-CHI-02', 'Creditel Chinú',      'Chinú',          '573017158802', 'yajaira.salas@crediteksas.com',   'SI'],
     ['CRD-CHI-03', 'Sonivox Chinú',       'Chinú',          '573052044046', 'vanessa.salas@crediteksas.com',   'SI'],
-    ['CRD-CIE-01', 'OroCell',             'Ciénaga de Oro', '573006177114', 'carmen.viggiani@crediteksas.com', 'SI'],
-    ['CRD-CIE-02', 'KrediSinu',           'Ciénaga de Oro', '573021297349', 'digna.pantoja@crediteksas.com',   'SI'],
+    ['CRD-CIE-01', 'OroCell',             'Ciénaga de Oro', '573215039764', 'carmen.viggiani@crediteksas.com', 'SI'],
+    ['CRD-CIE-02', 'KrediSinu',           'Ciénaga de Oro', '578001608332', 'digna.pantoja@crediteksas.com',   'SI'],
     ['CRD-COV-01', 'Creditel Coveñas',    'Coveñas',        '573008529877', 'yulimar.briceno@crediteksas.com', 'SI']
   ];
 
@@ -624,4 +624,55 @@ function testWhatsApp() {
   var result = enviarConfirmacionWA_(testItems, 'CRD-TEST-001', 'KrediSinu Technology', 'Ciénaga de Oro');
   Logger.log('Test WhatsApp: ' + JSON.stringify(result));
   Browser.msgBox('Resultado test WA:\n' + JSON.stringify(result, null, 2));
+}
+
+// ============================================================
+// ACTUALIZAR TELÉFONOS — Ejecutar una vez para corregir 5 números
+// ============================================================
+
+/**
+ * Corrige los 5 teléfonos incorrectos en la hoja TIENDAS sin recrearla.
+ * Menú: Ejecutar → actualizarTelefonos
+ */
+function actualizarTelefonos() {
+  var CORRECCIONES = {
+    'CRD-COR-02': '573002865747',
+    'CRD-CHI-01': '573163134737',
+    'CRD-CHI-02': '573017158802',
+    'CRD-CIE-01': '573215039764',
+    'CRD-CIE-02': '578001608332'
+  };
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(CONFIG.SHEET_TIENDAS);
+  if (!sheet) {
+    Browser.msgBox('❌ No se encontró la hoja TIENDAS. Ejecuta inicializarTiendas() primero.');
+    return;
+  }
+
+  var data = sheet.getDataRange().getValues();
+  var actualizados = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var tiendaId = String(data[i][0]).trim();
+    if (CORRECCIONES[tiendaId]) {
+      var anterior = String(data[i][3]).trim();
+      sheet.getRange(i + 1, 4).setValue(CORRECCIONES[tiendaId]);
+      actualizados.push(tiendaId + ': ' + anterior + ' → ' + CORRECCIONES[tiendaId]);
+    }
+  }
+
+  // Mostrar resultado final
+  var data2 = sheet.getDataRange().getValues();
+  Logger.log('=== TIENDAS actualizada ===');
+  data2.slice(1).forEach(function(row) {
+    Logger.log(row[0] + ' | ' + row[1] + ' | ' + row[3]);
+  });
+
+  var msg = actualizados.length > 0
+    ? '✅ ' + actualizados.length + ' teléfonos actualizados:\n\n' + actualizados.join('\n') +
+      '\n\nRevisa el Log para ver todos los registros.'
+    : '⚠️ No se encontraron las tiendas con esos IDs. Verifica que la hoja TIENDAS existe y tiene los IDs correctos.';
+
+  Browser.msgBox(msg);
 }
