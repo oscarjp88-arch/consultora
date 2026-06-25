@@ -207,9 +207,13 @@ async function loadStats(){
   }catch(e){console.error(e)}
 }
 
+const SUPA='https://ditiwpndvmyuqcagupea.supabase.co/rest/v1';
+const SUPA_KEY='sb_publishable_oVNantrnKzXdtXu5B7YQIg_9fxHp7aW';
+const supaFetch=url=>fetch(SUPA+url,{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}});
+
 async function loadConvs(){
   try{
-    allConvs=await(await fetch(API+'/api/conversations')).json();
+    allConvs=await(await supaFetch('/conversaciones?select=*&order=created_at.desc&limit=1000')).json();
     grouped={};
     allConvs.forEach(c=>{if(!grouped[c.telefono])grouped[c.telefono]=[];grouped[c.telefono].push(c)});
     document.getElementById('b-chats').textContent=Object.keys(grouped).length;
@@ -219,7 +223,7 @@ async function loadConvs(){
 
 async function loadClients(){
   try{
-    allClients=await(await fetch(API+'/api/clients')).json();
+    allClients=await(await supaFetch('/clientes?select=*&order=created_at.desc&limit=500')).json();
     document.getElementById('b-clients').textContent=allClients.length;
     document.getElementById('b-optins').textContent=allClients.filter(c=>c.optin_datos).length;
     renderClients();
@@ -312,7 +316,7 @@ function openChat(tel){
 function renderClients(){
   const el=document.getElementById('clients-tbody');
   const dot=v=>'<span class="dot '+(v?'dot-g':'dot-r')+'"></span>';
-  el.innerHTML=allClients.map(c=>'<tr><td style="font-weight:500">'+(c.nombre||'Sin nombre')+'</td><td>'+c.telefono+'</td><td>'+(c.segmento||'-')+'</td><td>'+(c.estado_funnel||'-')+'</td><td>'+dot(c.optin_datos)+'</td><td>'+dot(c.optin_operativo)+'</td><td>'+dot(c.optin_comercial)+'</td><td>'+(c.fuente||'-')+'</td><td>'+(c.created_at?new Date(c.created_at).toLocaleDateString('es-CO'):'-')+'</td></tr>').join('');
+  el.innerHTML=allClients.map(c=>'<tr style="cursor:pointer" onclick="switchView(\'chats\',document.querySelector(\'.sidebar-tab\'));openChat(\''+c.telefono+'\')"><td style="font-weight:500">'+(c.nombre||'Sin nombre')+'</td><td>'+c.telefono+'</td><td>'+(c.segmento||'-')+'</td><td>'+(c.estado_funnel||'-')+'</td><td>'+dot(c.optin_datos)+'</td><td>'+dot(c.optin_operativo)+'</td><td>'+dot(c.optin_comercial)+'</td><td>'+(c.fuente||'-')+'</td><td>'+(c.created_at?new Date(c.created_at).toLocaleDateString('es-CO'):'-')+'</td></tr>').join('');
 }
 
 function renderOptins(){
