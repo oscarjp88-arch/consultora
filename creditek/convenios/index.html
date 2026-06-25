@@ -77,6 +77,8 @@
   .field input[type="text"],
   .field input[type="tel"],
   .field input[type="email"],
+  .field input[type="date"],
+  .field select,
   .field textarea{
     width:100%;
     padding:10px 12px;
@@ -86,8 +88,10 @@
     color:var(--text);
     background:#FAFBFC;
     font-family:inherit;
+    appearance:none;
   }
   .field input:focus,
+  .field select:focus,
   .field textarea:focus{
     outline:none;
     border-color:var(--turq);
@@ -95,6 +99,9 @@
   }
   .field textarea{resize:vertical;min-height:60px;}
 
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* Upload items */
   .upload-item{
     display:flex;
     align-items:center;
@@ -150,6 +157,51 @@
     margin-top:8px;
   }
 
+  /* Vendedores */
+  .vendedor-card{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:12px;
+    background:#FAFBFC;
+    position:relative;
+  }
+  .vendedor-card .vendedor-title{
+    font-size:13px;
+    font-weight:600;
+    color:var(--navy);
+    margin-bottom:12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .btn-remove-vendedor{
+    background:none;
+    border:none;
+    color:var(--danger);
+    font-size:12px;
+    cursor:pointer;
+    padding:2px 6px;
+    font-weight:600;
+  }
+  .btn-add-vendedor{
+    width:100%;
+    border:1.5px dashed var(--turq);
+    background:none;
+    color:var(--turq);
+    border-radius:8px;
+    padding:10px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .btn-add-vendedor:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+  }
+
+  /* Preview */
   .preview-doc{
     border:1px solid var(--border);
     border-radius:8px;
@@ -157,11 +209,23 @@
     padding:12px 14px;
     font-size:11px;
     color:var(--text-secondary);
-    line-height:1.6;
+    line-height:1.7;
   }
   .preview-doc b{color:var(--text);}
   .preview-doc .hl{color:var(--navy);font-weight:600;}
+  .radicado-badge{
+    display:inline-block;
+    background:var(--navy);
+    color:var(--turq);
+    font-size:11px;
+    font-weight:700;
+    padding:3px 8px;
+    border-radius:5px;
+    letter-spacing:.5px;
+    margin-bottom:10px;
+  }
 
+  /* Signature */
   .sig-wrap{
     border:1.5px solid var(--border);
     border-radius:10px;
@@ -194,6 +258,19 @@
     padding:4px 8px;
   }
 
+  /* Nota eSignature */
+  .esign-note{
+    background:#EEF9FF;
+    border:1px solid #BAE6FD;
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:12px;
+    color:#0369A1;
+    margin-top:12px;
+    line-height:1.5;
+  }
+  .esign-note strong{display:block;margin-bottom:3px;}
+
   .submit-btn{
     width:100%;
     background:var(--turq);
@@ -225,6 +302,7 @@
     display:none;
   }
 
+  /* Overlay */
   .overlay{
     position:fixed;inset:0;
     background:rgba(11,30,61,.92);
@@ -245,16 +323,19 @@
     animation:spin 0.8s linear infinite;
   }
   @keyframes spin{to{transform:rotate(360deg);}}
-  .overlay p{color:#FFFFFF;font-size:14px;}
+  .overlay p{color:#FFFFFF;font-size:14px;max-width:320px;}
+  .overlay .sub{font-size:12px;color:#9FE1CB;margin-top:-6px;}
   .overlay.success .spinner{display:none;}
-  .overlay.success .check{
+  .overlay .check{
     width:56px;height:56px;
     border-radius:50%;
     background:var(--turq);
-    display:flex;align-items:center;justify-content:center;
+    display:none;
+    align-items:center;justify-content:center;
     font-size:28px;
     color:#04342C;
   }
+  .overlay.success .check{display:flex;}
 </style>
 </head>
 <body>
@@ -263,14 +344,14 @@
   <img src="https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek">
   <div class="header-text">
     <h1>Convenio de alianza comercial</h1>
-    <p>Completa tus datos, adjunta tus documentos y firma</p>
+    <p>Completa tus datos, adjunta documentos y firma digitalmente</p>
   </div>
 </div>
 
 <div class="container">
-
   <form id="formAliado" autocomplete="off">
 
+    <!-- SECCIÓN 1: Datos representante legal -->
     <div class="card">
       <h2><span class="num">1</span>Datos del representante legal</h2>
       <div class="field">
@@ -282,75 +363,142 @@
         <input type="text" id="cedula" required inputmode="numeric" placeholder="Ej: 1067880655">
       </div>
       <div class="field">
-        <label for="comercial">Nombre comercial del negocio</label>
-        <input type="text" id="comercial" required placeholder="Ej: Celuflash">
-      </div>
-      <div class="field">
-        <label for="direccion">Dirección del negocio</label>
-        <textarea id="direccion" required placeholder="Ej: Calle 15 # 8-22, Barrio Centro, Tolú, Sucre"></textarea>
-      </div>
-      <div class="field">
-        <label for="ciudad">Ciudad donde firmas el convenio</label>
-        <input type="text" id="ciudad" required placeholder="Ej: Tolú, Sucre">
-      </div>
-      <div class="field">
         <label for="telefono">Teléfono de contacto</label>
         <input type="tel" id="telefono" required inputmode="tel" placeholder="Ej: 3001234567">
       </div>
       <div class="field">
-        <label for="correo">Correo electrónico</label>
+        <label for="correo">Correo electrónico <span style="color:var(--turq);font-weight:700;">← aquí recibirás tu documento para firmar</span></label>
         <input type="email" id="correo" required inputmode="email" placeholder="Ej: tunegocio@correo.com">
       </div>
     </div>
 
+    <!-- SECCIÓN 2: Datos de la tienda -->
     <div class="card">
-      <h2><span class="num">2</span>Documentos requeridos</h2>
+      <h2><span class="num">2</span>Datos de la tienda</h2>
+      <div class="field">
+        <label for="comercial">Nombre comercial del negocio</label>
+        <input type="text" id="comercial" required placeholder="Ej: Celuflash">
+      </div>
+      <div class="field">
+        <label for="nit">NIT del negocio (si aplica)</label>
+        <input type="text" id="nit" inputmode="numeric" placeholder="Ej: 900123456-1">
+      </div>
+      <div class="field">
+        <label for="direccion">Dirección del negocio</label>
+        <textarea id="direccion" required placeholder="Ej: Calle 15 # 8-22, Barrio Centro"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field" style="margin-bottom:0;">
+          <label for="municipio">Municipio</label>
+          <input type="text" id="municipio" required placeholder="Ej: Chinú">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="departamento">Departamento</label>
+          <input type="text" id="departamento" required placeholder="Ej: Córdoba">
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px;">
+        <label for="numVendedores">Número total de vendedores en tienda</label>
+        <input type="text" id="numVendedores" required inputmode="numeric" placeholder="Ej: 2">
+      </div>
+    </div>
+
+    <!-- SECCIÓN 3: Documentos -->
+    <div class="card">
+      <h2><span class="num">3</span>Documentos requeridos</h2>
 
       <div class="upload-item" id="up_camara">
         <span class="icon">&#128196;</span>
-        <span class="label-text">Cámara de comercio<small>Foto o archivo PDF del documento vigente</small></span>
-        <span class="status" style="display:none;">Listo</span>
+        <span class="label-text">Cámara de comercio
+          <small>PDF o foto — vigente (menos de 45 días de expedido)</small>
+        </span>
+        <span class="status" style="display:none;">✓ Listo</span>
         <input type="file" accept="image/*,.pdf" data-key="camaraComercio">
+      </div>
+
+      <div class="field" style="margin:10px 0;">
+        <label for="fechaCamara">Fecha de expedición de la cámara de comercio</label>
+        <input type="date" id="fechaCamara" required>
       </div>
 
       <div class="upload-item" id="up_cedfrontal">
         <span class="icon">&#128100;</span>
-        <span class="label-text">Cédula — lado frontal<small>Foto clara y legible</small></span>
-        <span class="status" style="display:none;">Listo</span>
+        <span class="label-text">Cédula rep. legal — lado frontal<small>Foto clara y legible</small></span>
+        <span class="status" style="display:none;">✓ Listo</span>
         <input type="file" accept="image/*" capture="environment" data-key="cedulaFrontal">
       </div>
 
       <div class="upload-item" id="up_cedtrasera">
         <span class="icon">&#128100;</span>
-        <span class="label-text">Cédula — lado trasero<small>Foto clara y legible</small></span>
-        <span class="status" style="display:none;">Listo</span>
+        <span class="label-text">Cédula rep. legal — lado trasero<small>Foto clara y legible</small></span>
+        <span class="status" style="display:none;">✓ Listo</span>
         <input type="file" accept="image/*" capture="environment" data-key="cedulaTrasera">
       </div>
 
-      <div class="upload-item" id="up_local">
-        <span class="icon">&#127970;</span>
-        <span class="label-text">Foto del local<small>Fachada o interior del negocio</small></span>
-        <span class="status" style="display:none;">Listo</span>
-        <input type="file" accept="image/*" capture="environment" data-key="fotoLocal">
+      <div class="upload-item" id="up_fachada">
+        <span class="icon">&#127968;</span>
+        <span class="label-text">Foto fachada de la tienda<small>Vista exterior del negocio</small></span>
+        <span class="status" style="display:none;">✓ Listo</span>
+        <input type="file" accept="image/*" capture="environment" data-key="fotoFachada">
       </div>
 
-      <p class="upload-hint">Toca cualquier casilla para adjuntar el documento o tomar una foto</p>
+      <div class="upload-item" id="up_interior">
+        <span class="icon">&#128247;</span>
+        <span class="label-text">Foto interior de la tienda<small>Vista general del espacio interior</small></span>
+        <span class="status" style="display:none;">✓ Listo</span>
+        <input type="file" accept="image/*" capture="environment" data-key="fotoInterior">
+      </div>
+
+      <div class="upload-item" id="up_vitrinas">
+        <span class="icon">&#128250;</span>
+        <span class="label-text">Foto vitrinas<small>Exhibición de productos</small></span>
+        <span class="status" style="display:none;">✓ Listo</span>
+        <input type="file" accept="image/*" capture="environment" data-key="fotoVitrinas">
+      </div>
+
+      <div class="upload-item" id="up_video">
+        <span class="icon">&#127909;</span>
+        <span class="label-text">Video 360° de la tienda<small>Grabado desde la fachada recorriendo el local</small></span>
+        <span class="status" style="display:none;">✓ Listo</span>
+        <input type="file" accept="video/*" data-key="video360">
+      </div>
+
+      <p class="upload-hint">Toca cualquier casilla para adjuntar el documento o tomar una foto/video</p>
     </div>
 
+    <!-- SECCIÓN 4: Vendedores formato M3 -->
     <div class="card">
-      <h2><span class="num">3</span>Vista previa del convenio</h2>
+      <h2><span class="num">4</span>Vendedores — Formato M3 PayJoy</h2>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Registra los datos de cada vendedor que operará en la plataforma PayJoy. Adjunta la cédula en PDF de cada uno.</p>
+
+      <div id="vendedoresContainer"></div>
+      <button type="button" class="btn-add-vendedor" id="btnAddVendedor">+ Agregar vendedor</button>
+      <p style="font-size:11px;color:var(--text-secondary);margin-top:6px;text-align:center;">Máximo 5 vendedores</p>
+    </div>
+
+    <!-- SECCIÓN 5: Vista previa convenio -->
+    <div class="card">
+      <h2><span class="num">5</span>Vista previa del convenio</h2>
       <div class="preview-doc">
+        <div class="radicado-badge" id="prevRadicado">CK-2026-####</div><br>
         <b>CONVENIO DE ALIANZA COMERCIAL</b><br>
-        Empresa: <b>CREDITEK SAS</b> — NIT 901.259.859<br>
+        Fecha: <span class="hl" id="prevFecha">—</span><br>
+        Empresa: <b>CREDITEK SAS</b> — NIT 901.259.859-0<br>
         Aliado: <span class="hl" id="prevNombre">[tu nombre]</span><br>
         C.C.: <span class="hl" id="prevCedula">[tu cédula]</span><br>
         Nombre comercial: <span class="hl" id="prevComercial">[tu negocio]</span><br>
-        Ciudad de firma: <span class="hl" id="prevCiudad">[tu ciudad]</span>
+        Municipio: <span class="hl" id="prevMunicipio">[municipio]</span> — <span class="hl" id="prevDepartamento">[departamento]</span>
+      </div>
+      <div class="esign-note">
+        <strong>&#9989; Firma digital via Google eSignature</strong>
+        Una vez envíes este formulario, recibirás un email en tu correo con el documento oficial para firmarlo digitalmente. El PDF firmado quedará registrado con tu identidad verificada.
       </div>
     </div>
 
+    <!-- SECCIÓN 6: Firma inicial (canvas) -->
     <div class="card">
-      <h2><span class="num">4</span>Firma sobre el convenio</h2>
+      <h2><span class="num">6</span>Firma de autorización de datos</h2>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Esta firma autoriza el envío de tus datos. Recibirás el convenio completo por email para la firma oficial.</p>
       <div class="sig-wrap">
         <canvas id="sigCanvas"></canvas>
         <div class="sig-actions">
@@ -361,19 +509,49 @@
       <p class="error-msg" id="errFirma">Por favor firma antes de continuar.</p>
     </div>
 
-    <button type="submit" class="submit-btn" id="btnEnviar">Firmar y enviar convenio</button>
-    <p class="legal-note">Al firmar aceptas los términos del convenio de alianza comercial con Creditek SAS, documento protegido bajo la Ley 527 de 1999.</p>
+    <button type="submit" class="submit-btn" id="btnEnviar">Enviar y recibir convenio por email</button>
+    <p class="legal-note">Al enviar, recibirás el convenio de alianza comercial con Creditek SAS por email para firmarlo digitalmente. Protegido bajo la Ley 527 de 1999.</p>
   </form>
 </div>
 
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
-  <div class="check" style="display:none;">&#10003;</div>
-  <p id="overlayText">Enviando tu convenio...</p>
+  <div class="check">&#10003;</div>
+  <p id="overlayText">Enviando tu información...</p>
+  <p class="sub" id="overlaySubText"></p>
 </div>
 
 <script>
-// ---------- Firma (signature pad sobre canvas) ----------
+// ─── RADICADO ───
+function generarRadicado(){
+  const anio = new Date().getFullYear();
+  const ts = Date.now().toString().slice(-4);
+  return 'CK-' + anio + '-' + ts;
+}
+const radicado = generarRadicado();
+document.getElementById('prevRadicado').textContent = radicado;
+
+// ─── FECHA HOY ───
+const hoy = new Date();
+const fechaStr = hoy.toLocaleDateString('es-CO', {year:'numeric', month:'long', day:'numeric'});
+document.getElementById('prevFecha').textContent = fechaStr;
+
+// ─── VISTA PREVIA EN VIVO ───
+const campos = [
+  ['nombre','prevNombre','[tu nombre]'],
+  ['cedula','prevCedula','[tu cédula]'],
+  ['comercial','prevComercial','[tu negocio]'],
+  ['municipio','prevMunicipio','[municipio]'],
+  ['departamento','prevDepartamento','[departamento]'],
+];
+campos.forEach(([id, prevId, placeholder]) => {
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', () => {
+    document.getElementById(prevId).textContent = el.value.trim() || placeholder;
+  });
+});
+
+// ─── FIRMA CANVAS ───
 const canvas = document.getElementById('sigCanvas');
 const ctx = canvas.getContext('2d');
 let drawing = false;
@@ -390,7 +568,7 @@ function resizeCanvas(){
   ctx.lineJoin = 'round';
   ctx.strokeStyle = '#0B1E3D';
 }
-window.addEventListener('resize', () => { const data = hasSignature ? canvas.toDataURL() : null; resizeCanvas(); if(data){ const img = new Image(); img.onload=()=>ctx.drawImage(img,0,0,canvas.width/(window.devicePixelRatio||1),canvas.height/(window.devicePixelRatio||1)); img.src = data; } });
+window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 function getPos(e){
@@ -398,39 +576,21 @@ function getPos(e){
   const t = e.touches ? e.touches[0] : e;
   return { x: t.clientX - rect.left, y: t.clientY - rect.top };
 }
-function startDraw(e){ e.preventDefault(); drawing = true; hasSignature = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
-function moveDraw(e){ if(!drawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
-function endDraw(){ drawing = false; }
+canvas.addEventListener('mousedown', e => { e.preventDefault(); drawing=true; hasSignature=true; const p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); });
+canvas.addEventListener('mousemove', e => { if(!drawing) return; e.preventDefault(); const p=getPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); });
+canvas.addEventListener('mouseup', () => drawing=false);
+canvas.addEventListener('mouseleave', () => drawing=false);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing=true; hasSignature=true; const p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }, {passive:false});
+canvas.addEventListener('touchmove', e => { if(!drawing) return; e.preventDefault(); const p=getPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); }, {passive:false});
+canvas.addEventListener('touchend', () => drawing=false);
+document.getElementById('btnLimpiarFirma').addEventListener('click', () => { ctx.clearRect(0,0,canvas.width,canvas.height); hasSignature=false; });
 
-canvas.addEventListener('mousedown', startDraw);
-canvas.addEventListener('mousemove', moveDraw);
-canvas.addEventListener('mouseup', endDraw);
-canvas.addEventListener('mouseleave', endDraw);
-canvas.addEventListener('touchstart', startDraw, {passive:false});
-canvas.addEventListener('touchmove', moveDraw, {passive:false});
-canvas.addEventListener('touchend', endDraw);
-
-document.getElementById('btnLimpiarFirma').addEventListener('click', () => {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  hasSignature = false;
-});
-
-// ---------- Vista previa en vivo ----------
-const nombreInput = document.getElementById('nombre');
-const cedulaInput = document.getElementById('cedula');
-const comercialInput = document.getElementById('comercial');
-const ciudadInput = document.getElementById('ciudad');
-nombreInput.addEventListener('input', () => document.getElementById('prevNombre').textContent = nombreInput.value || '[tu nombre]');
-cedulaInput.addEventListener('input', () => document.getElementById('prevCedula').textContent = cedulaInput.value || '[tu cédula]');
-comercialInput.addEventListener('input', () => document.getElementById('prevComercial').textContent = comercialInput.value || '[tu negocio]');
-ciudadInput.addEventListener('input', () => document.getElementById('prevCiudad').textContent = ciudadInput.value || '[tu ciudad]');
-
-// ---------- Carga de documentos ----------
+// ─── ARCHIVOS ───
 const archivos = {};
 
 function comprimirImagen(file, maxAncho){
   return new Promise((resolve) => {
-    if(file.type === 'application/pdf'){
+    if(file.type === 'application/pdf' || file.type.startsWith('video/')){
       const reader = new FileReader();
       reader.onload = () => resolve({ base64: reader.result.split(',')[1], tipo: file.type, nombre: file.name });
       reader.readAsDataURL(file);
@@ -441,15 +601,12 @@ function comprimirImagen(file, maxAncho){
     reader.onload = (e) => { img.src = e.target.result; };
     img.onload = () => {
       let w = img.width, h = img.height;
-      if(w > maxAncho){
-        h = Math.round(h * (maxAncho / w));
-        w = maxAncho;
-      }
+      if(w > maxAncho){ h = Math.round(h*(maxAncho/w)); w = maxAncho; }
       const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
-      const dataUrl = c.toDataURL('image/jpeg', 0.7);
-      resolve({ base64: dataUrl.split(',')[1], tipo: 'image/jpeg', nombre: file.name });
+      c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl = c.toDataURL('image/jpeg', 0.75);
+      resolve({ base64: dataUrl.split(',')[1], tipo:'image/jpeg', nombre: file.name });
     };
     reader.readAsDataURL(file);
   });
@@ -459,7 +616,7 @@ document.querySelectorAll('.upload-item input[type="file"]').forEach(input => {
   input.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     const item = input.closest('.upload-item');
-    if(!file){ return; }
+    if(!file) return;
     const resultado = await comprimirImagen(file, 1280);
     archivos[input.dataset.key] = resultado;
     item.classList.add('filled');
@@ -467,55 +624,191 @@ document.querySelectorAll('.upload-item input[type="file"]').forEach(input => {
   });
 });
 
-// ---------- Envío ----------
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYrPbQ4hdb5KVaLry8h19re0yM-M6fwLHLit8Ai7Q8Lj8x4wbR91yzudBpQp5AmWUM/exec';
+// ─── VENDEDORES DINÁMICOS ───
+let vendedorCount = 0;
+const MAX_VENDEDORES = 5;
+const container = document.getElementById('vendedoresContainer');
+const btnAdd = document.getElementById('btnAddVendedor');
+
+function agregarVendedor(){
+  if(vendedorCount >= MAX_VENDEDORES) return;
+  vendedorCount++;
+  const idx = vendedorCount;
+  const div = document.createElement('div');
+  div.className = 'vendedor-card';
+  div.id = 'vendedor_' + idx;
+  div.innerHTML = `
+    <div class="vendedor-title">
+      <span>Vendedor ${idx}</span>
+      <button type="button" class="btn-remove-vendedor" onclick="eliminarVendedor(${idx})">✕ Quitar</button>
+    </div>
+    <div class="field">
+      <label>Nombres del vendedor</label>
+      <input type="text" name="v${idx}_nombres" placeholder="Ej: Andrea Karolina">
+    </div>
+    <div class="field">
+      <label>Apellidos del vendedor</label>
+      <input type="text" name="v${idx}_apellidos" placeholder="Ej: Vélez Avilez">
+    </div>
+    <div class="field-row">
+      <div class="field" style="margin-bottom:0;">
+        <label>N° Cédula</label>
+        <input type="text" name="v${idx}_cedula" inputmode="numeric" placeholder="Ej: 1069499444">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Celular</label>
+        <input type="tel" name="v${idx}_celular" inputmode="tel" placeholder="Ej: 3014991556">
+      </div>
+    </div>
+    <div class="field" style="margin-top:14px;">
+      <label>Correo electrónico</label>
+      <input type="email" name="v${idx}_correo" placeholder="Ej: vendedor@correo.com">
+    </div>
+    <div class="field-row">
+      <div class="field" style="margin-bottom:0;">
+        <label>Instagram</label>
+        <input type="text" name="v${idx}_instagram" placeholder="@usuario">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Facebook</label>
+        <input type="text" name="v${idx}_facebook" placeholder="@usuario">
+      </div>
+    </div>
+    <div class="upload-item" id="up_ced_v${idx}" style="margin-top:12px;">
+      <span class="icon">&#128196;</span>
+      <span class="label-text">Cédula en PDF — Vendedor ${idx}<small>Documento requerido por PayJoy</small></span>
+      <span class="status" style="display:none;">✓ Listo</span>
+      <input type="file" accept="image/*,.pdf" data-key="cedulaVendedor${idx}" onchange="handleVendedorFile(this, ${idx})">
+    </div>
+  `;
+  container.appendChild(div);
+  btnAdd.disabled = vendedorCount >= MAX_VENDEDORES;
+}
+
+function eliminarVendedor(idx){
+  const el = document.getElementById('vendedor_' + idx);
+  if(el) el.remove();
+  delete archivos['cedulaVendedor' + idx];
+  vendedorCount = container.querySelectorAll('.vendedor-card').length;
+  btnAdd.disabled = vendedorCount >= MAX_VENDEDORES;
+  // Renumerar títulos visualmente
+  container.querySelectorAll('.vendedor-card').forEach((card, i) => {
+    card.querySelector('.vendedor-title span').textContent = 'Vendedor ' + (i+1);
+  });
+}
+
+function handleVendedorFile(input, idx){
+  const file = input.files[0];
+  if(!file) return;
+  comprimirImagen(file, 1280).then(resultado => {
+    archivos['cedulaVendedor' + idx] = resultado;
+    const item = input.closest('.upload-item');
+    item.classList.add('filled');
+    item.querySelector('.status').style.display = 'inline';
+  });
+}
+
+btnAdd.addEventListener('click', agregarVendedor);
+// Agregar primer vendedor por defecto
+agregarVendedor();
+
+// ─── ENVÍO ───
+const WORKER_URL = 'https://creditek-bot.comercial-853.workers.dev/convenio';
 
 document.getElementById('formAliado').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   if(!hasSignature){
-    document.getElementById('errFirma').style.display = 'block';
-    document.getElementById('errFirma').scrollIntoView({behavior:'smooth', block:'center'});
+    const err = document.getElementById('errFirma');
+    err.style.display = 'block';
+    err.scrollIntoView({behavior:'smooth', block:'center'});
     return;
   }
   document.getElementById('errFirma').style.display = 'none';
 
-  const requeridos = ['camaraComercio','cedulaFrontal','cedulaTrasera','fotoLocal'];
-  const faltantes = requeridos.filter(k => !archivos[k]);
+  // Validar documentos obligatorios
+  const requeridos = [
+    {key:'camaraComercio', label:'Cámara de comercio'},
+    {key:'cedulaFrontal', label:'Cédula frontal'},
+    {key:'cedulaTrasera', label:'Cédula trasera'},
+    {key:'fotoFachada', label:'Foto fachada'},
+    {key:'fotoInterior', label:'Foto interior'},
+    {key:'fotoVitrinas', label:'Foto vitrinas'},
+  ];
+  const faltantes = requeridos.filter(r => !archivos[r.key]).map(r => r.label);
   if(faltantes.length){
-    alert('Falta adjuntar: ' + faltantes.join(', '));
+    alert('Faltan los siguientes documentos:\n• ' + faltantes.join('\n• '));
     return;
   }
 
+  // Recopilar vendedores
+  const vendedores = [];
+  container.querySelectorAll('.vendedor-card').forEach((card, i) => {
+    const get = name => (card.querySelector(`[name="${name}"]`) || {}).value || '';
+    const num = i + 1;
+    vendedores.push({
+      nombres: get('v'+num+'_nombres'),
+      apellidos: get('v'+num+'_apellidos'),
+      cedula: get('v'+num+'_cedula'),
+      celular: get('v'+num+'_celular'),
+      correo: get('v'+num+'_correo'),
+      instagram: get('v'+num+'_instagram'),
+      facebook: get('v'+num+'_facebook'),
+      cedulaArchivo: archivos['cedulaVendedor'+num] || null,
+    });
+  });
+
   const overlay = document.getElementById('overlay');
+  const overlayText = document.getElementById('overlayText');
+  const overlaySub = document.getElementById('overlaySubText');
   overlay.classList.add('show');
+  overlayText.textContent = 'Subiendo documentos a Drive...';
+  overlaySub.textContent = 'Esto puede tardar unos segundos';
 
   const payload = {
-    nombre: nombreInput.value.trim(),
-    cedula: cedulaInput.value.trim(),
-    nombreComercial: comercialInput.value.trim(),
-    direccion: document.getElementById('direccion').value.trim(),
-    ciudad: ciudadInput.value.trim(),
+    radicado,
+    fecha: fechaStr,
+    // Representante
+    nombre: document.getElementById('nombre').value.trim(),
+    cedula: document.getElementById('cedula').value.trim(),
     telefono: document.getElementById('telefono').value.trim(),
     correo: document.getElementById('correo').value.trim(),
+    // Tienda
+    nombreComercial: document.getElementById('comercial').value.trim(),
+    nit: document.getElementById('nit').value.trim(),
+    direccion: document.getElementById('direccion').value.trim(),
+    municipio: document.getElementById('municipio').value.trim(),
+    departamento: document.getElementById('departamento').value.trim(),
+    numVendedores: document.getElementById('numVendedores').value.trim(),
+    fechaCamara: document.getElementById('fechaCamara').value,
+    // Firma canvas
     firmaBase64: canvas.toDataURL('image/png').split(',')[1],
+    // Documentos
     documentos: archivos,
-    fecha: new Date().toLocaleDateString('es-CO')
+    // Vendedores M3
+    vendedores,
   };
 
-  try{
-    await fetch(APPS_SCRIPT_URL, {
+  try {
+    overlayText.textContent = 'Creando carpeta en Google Drive...';
+    const resp = await fetch(WORKER_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: {'Content-Type':'text/plain'},
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(payload)
     });
-    overlay.classList.add('success');
-    overlay.querySelector('.check').style.display = 'flex';
-    document.getElementById('overlayText').textContent = 'Convenio enviado. Gracias.';
-  }catch(err){
+    const data = await resp.json();
+
+    if(data.ok){
+      overlay.classList.add('success');
+      overlayText.textContent = '¡Listo! Revisa tu correo';
+      overlaySub.textContent = 'Te enviamos el convenio ' + radicado + ' para que lo firmes digitalmente.';
+    } else {
+      overlay.classList.remove('show');
+      alert('Error: ' + (data.error || 'Intenta de nuevo'));
+    }
+  } catch(err) {
     overlay.classList.remove('show');
-    alert('Hubo un error al enviar: ' + err.message);
+    alert('Error de conexión: ' + err.message);
   }
 });
 </script>
