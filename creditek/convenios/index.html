@@ -52,11 +52,6 @@
   .radicado-badge{display:inline-block;background:var(--navy);color:var(--turq);font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.5px;margin-bottom:10px;}
   .esign-note{background:#EEF9FF;border:1px solid #BAE6FD;border-radius:8px;padding:10px 12px;font-size:12px;color:#0369A1;margin-top:12px;line-height:1.5;}
   .esign-note strong{display:block;margin-bottom:3px;}
-  .sig-wrap{border:1.5px solid var(--border);border-radius:10px;background:#FAFBFC;overflow:hidden;}
-  #sigCanvas{width:100%;height:160px;display:block;touch-action:none;cursor:crosshair;}
-  .sig-actions{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-top:1px solid var(--border);background:#fff;}
-  .sig-actions span{font-size:11px;color:var(--text-secondary);}
-  .sig-actions button{background:none;border:none;color:var(--navy);font-size:12.5px;font-weight:600;cursor:pointer;padding:4px 8px;}
   .submit-btn{width:100%;background:var(--turq);color:#04342C;border:none;font-weight:600;font-size:15px;padding:14px;border-radius:10px;cursor:pointer;margin-top:4px;transition:opacity .15s;}
   .submit-btn:disabled{opacity:.5;cursor:not-allowed;}
   .legal-note{font-size:11px;color:var(--text-secondary);text-align:center;margin-top:12px;padding:0 10px;}
@@ -218,27 +213,13 @@
       Municipio: <span class="hl" id="prevMunicipio">[municipio]</span>, <span class="hl" id="prevDepartamento">[departamento]</span>
     </div>
     <div class="esign-note">
-      <strong>✅ Firma digital via Google eSignature</strong>
-      Una vez envíes este formulario, recibirás un email con el convenio para firmarlo digitalmente. El PDF firmado quedará registrado con tu identidad verificada.
+      <strong>✅ Proceso 100% digital</strong>
+      Una vez envíes este formulario, Creditek SAS revisará tu información y te enviará el convenio para firma digital. El PDF firmado quedará registrado con tu identidad verificada.
     </div>
   </div>
 
-  <!-- 6. FIRMA CANVAS -->
-  <div class="card">
-    <h2><span class="num">6</span>Firma de autorización de datos</h2>
-    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Esta firma autoriza el envío de tus datos. Recibirás el convenio completo por email para la firma oficial.</p>
-    <div class="sig-wrap">
-      <canvas id="sigCanvas"></canvas>
-      <div class="sig-actions">
-        <span>Dibuja tu firma con el dedo</span>
-        <button type="button" id="btnLimpiarFirma">Borrar</button>
-      </div>
-    </div>
-    <p class="error-msg" id="errFirma">Por favor firma antes de continuar.</p>
-  </div>
-
-  <button type="submit" class="submit-btn" id="btnEnviar">Enviar y recibir convenio por email ✉️</button>
-  <p class="legal-note">Al enviar, recibirás el convenio por email para firmarlo digitalmente. Protegido bajo la Ley 527 de 1999.</p>
+  <button type="submit" class="submit-btn" id="btnEnviar">Enviar información ✓</button>
+  <p class="legal-note">Al enviar, Creditek SAS procesará tu información y te contactará para la firma del convenio. Protegido bajo la Ley 527 de 1999.</p>
 </form>
 </div>
 
@@ -278,25 +259,6 @@ document.getElementById('prevFecha').textContent = fechaStr;
   if(el) el.addEventListener('input',()=>{ document.getElementById(pid).textContent = el.value.trim()||ph; });
 });
 
-// ── CANVAS FIRMA ─────────────────────────────────────────────
-const canvas = document.getElementById('sigCanvas');
-const ctx = canvas.getContext('2d');
-let drawing = false, hasSignature = false;
-function resizeCanvas(){
-  const r = window.devicePixelRatio||1, rect = canvas.getBoundingClientRect();
-  canvas.width=rect.width*r; canvas.height=rect.height*r;
-  ctx.scale(r,r); ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0B1E3D';
-}
-window.addEventListener('resize',resizeCanvas); resizeCanvas();
-function getPos(e){ const rect=canvas.getBoundingClientRect(),t=e.touches?e.touches[0]:e; return{x:t.clientX-rect.left,y:t.clientY-rect.top}; }
-canvas.addEventListener('mousedown',e=>{e.preventDefault();drawing=true;hasSignature=true;const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
-canvas.addEventListener('mousemove',e=>{if(!drawing)return;e.preventDefault();const p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
-canvas.addEventListener('mouseup',()=>drawing=false);
-canvas.addEventListener('mouseleave',()=>drawing=false);
-canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;hasSignature=true;const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});
-canvas.addEventListener('touchmove',e=>{if(!drawing)return;e.preventDefault();const p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});
-canvas.addEventListener('touchend',()=>drawing=false);
-document.getElementById('btnLimpiarFirma').addEventListener('click',()=>{ctx.clearRect(0,0,canvas.width,canvas.height);hasSignature=false;});
 
 // ── ARCHIVOS ─────────────────────────────────────────────────
 const archivos = {};
@@ -419,14 +381,6 @@ agregarVendedor(); // primer vendedor por defecto
 document.getElementById('formAliado').addEventListener('submit',async e=>{
   e.preventDefault();
 
-  if(!hasSignature){
-    const err=document.getElementById('errFirma');
-    err.style.display='block';
-    err.scrollIntoView({behavior:'smooth',block:'center'});
-    return;
-  }
-  document.getElementById('errFirma').style.display='none';
-
   // Validar docs obligatorios
   const requeridos=[
     {key:'camaraComercio',label:'Cámara de comercio'},
@@ -478,7 +432,6 @@ document.getElementById('formAliado').addEventListener('submit',async e=>{
     departamento:document.getElementById('departamento').value.trim(),
     numVendedores:document.getElementById('numVendedores').value.trim(),
     fechaCamara:document.getElementById('fechaCamara').value,
-    firmaBase64:canvas.toDataURL('image/png').split(',')[1],
     documentos:docsPayload,
     vendedores
   };
