@@ -213,7 +213,8 @@ const supaFetch=url=>fetch(SUPA+url,{headers:{apikey:SUPA_KEY,Authorization:'Bea
 
 async function loadConvs(){
   try{
-    allConvs=await(await supaFetch('/conversaciones?select=*&order=created_at.desc&limit=1000')).json();
+    const convResp=await(await supaFetch('/conversaciones?select=*&order=timestamp.desc&limit=1000')).json();
+    allConvs=Array.isArray(convResp)?convResp:[];
     grouped={};
     allConvs.forEach(c=>{if(!grouped[c.telefono])grouped[c.telefono]=[];grouped[c.telefono].push(c)});
     document.getElementById('b-chats').textContent=Object.keys(grouped).length;
