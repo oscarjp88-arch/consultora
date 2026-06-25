@@ -136,11 +136,23 @@
   <div class="card">
     <h2><span class="num">3</span>Documentos requeridos</h2>
 
-    <div class="upload-item" id="up_camara">
+    <div class="upload-item" id="up_camara1">
       <span class="icon">📄</span>
-      <span class="label-text">Cámara de comercio<small>PDF o foto — menos de 45 días de expedido</small></span>
+      <span class="label-text">Cámara de comercio — Pág. 1<small>PDF o foto — menos de 45 días de expedido</small></span>
       <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*,.pdf" data-key="camaraComercio">
+      <input type="file" accept="image/*,.pdf" data-key="camaraComercio1">
+    </div>
+    <div class="upload-item" id="up_camara2">
+      <span class="icon">📄</span>
+      <span class="label-text">Cámara de comercio — Pág. 2<small>PDF o foto</small></span>
+      <span class="status" style="display:none;">✓ Listo</span>
+      <input type="file" accept="image/*,.pdf" data-key="camaraComercio2">
+    </div>
+    <div class="upload-item" id="up_camara3">
+      <span class="icon">📄</span>
+      <span class="label-text">Cámara de comercio — Pág. 3 <span style="color:var(--turq);font-size:11px;">(opcional)</span><small>Solo si tiene más páginas</small></span>
+      <span class="status" style="display:none;">✓ Listo</span>
+      <input type="file" accept="image/*,.pdf" data-key="camaraComercio3">
     </div>
     <div class="field" style="margin:10px 0 14px;">
       <label>Fecha de expedición de la cámara de comercio</label>
@@ -347,11 +359,26 @@ function agregarVendedor(){
       <div class="field" style="margin-bottom:0;"><label>Instagram</label><input type="text" name="v${idx}_ig" placeholder="@usuario"></div>
       <div class="field" style="margin-bottom:0;"><label>Facebook</label><input type="text" name="v${idx}_fb" placeholder="@usuario"></div>
     </div>
-    <div class="upload-item" id="up_cv${idx}" style="margin-top:12px;">
-      <span class="icon">📄</span>
-      <span class="label-text">Cédula PDF — Vendedor ${idx}<small>Requerido por PayJoy</small></span>
-      <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*,.pdf" onchange="handleCedVendedor(this,${idx})">
+    <div style="margin-top:12px;">
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Cédula del vendedor — sube PDF <strong>o</strong> fotos:</p>
+      <div class="upload-item" id="up_cv${idx}_pdf">
+        <span class="icon">📄</span>
+        <span class="label-text">Cédula en PDF <span style="color:var(--turq);font-size:11px;">(si la tiene)</span><small>Sube el PDF directamente</small></span>
+        <span class="status" style="display:none;">✓ Listo</span>
+        <input type="file" accept=".pdf" onchange="handleCedVendedor(this,${idx},'pdf')">
+      </div>
+      <div class="upload-item" id="up_cv${idx}_frontal">
+        <span class="icon">👤</span>
+        <span class="label-text">Foto cédula — cara frontal <span style="color:var(--turq);font-size:11px;">(si no tiene PDF)</span><small>Foto clara y legible</small></span>
+        <span class="status" style="display:none;">✓ Listo</span>
+        <input type="file" accept="image/*" capture="environment" onchange="handleCedVendedor(this,${idx},'frontal')">
+      </div>
+      <div class="upload-item" id="up_cv${idx}_trasera">
+        <span class="icon">👤</span>
+        <span class="label-text">Foto cédula — cara trasera <span style="color:var(--turq);font-size:11px;">(si no tiene PDF)</span><small>Foto clara y legible</small></span>
+        <span class="status" style="display:none;">✓ Listo</span>
+        <input type="file" accept="image/*" capture="environment" onchange="handleCedVendedor(this,${idx},'trasera')">
+      </div>
     </div>`;
   vContainer.appendChild(div);
   btnAdd.disabled=vCount>=MAX_V;
@@ -359,15 +386,23 @@ function agregarVendedor(){
 
 function quitarVendedor(idx){
   const el=document.getElementById('v_'+idx); if(el)el.remove();
-  delete archivos['cedulaVendedor'+idx];
+  delete archivos['cedulaVendedor'+idx+'_pdf'];
+  delete archivos['cedulaVendedor'+idx+'_frontal'];
+  delete archivos['cedulaVendedor'+idx+'_trasera'];
   vCount=vContainer.querySelectorAll('.vendedor-card').length;
   btnAdd.disabled=vCount>=MAX_V;
 }
 
-function handleCedVendedor(input,idx){
+function handleCedVendedor(input,idx,tipo){
   const file=input.files[0]; if(!file)return;
   comprimirImagen(file,1280).then(r=>{
-    archivos['cedulaVendedor'+idx]=r;
+    if(tipo==='pdf'){
+      archivos['cedulaVendedor'+idx+'_pdf']=r;
+    } else if(tipo==='frontal'){
+      archivos['cedulaVendedor'+idx+'_frontal']=r;
+    } else if(tipo==='trasera'){
+      archivos['cedulaVendedor'+idx+'_trasera']=r;
+    }
     const item=input.closest('.upload-item');
     item.classList.add('filled');
     item.querySelector('.status').style.display='inline';
@@ -383,7 +418,7 @@ document.getElementById('formAliado').addEventListener('submit',async e=>{
 
   // Validar docs obligatorios
   const requeridos=[
-    {key:'camaraComercio',label:'Cámara de comercio'},
+    {key:'camaraComercio1',label:'Cámara de comercio (pág. 1)'},
     {key:'cedulaFrontal',label:'Cédula frontal'},
     {key:'cedulaTrasera',label:'Cédula trasera'},
     {key:'fotoFachada',label:'Foto fachada'},
@@ -402,7 +437,9 @@ document.getElementById('formAliado').addEventListener('submit',async e=>{
       nombres:g('v'+num+'_nombres'),apellidos:g('v'+num+'_apellidos'),
       cedula:g('v'+num+'_cedula'),celular:g('v'+num+'_celular'),
       correo:g('v'+num+'_correo'),instagram:g('v'+num+'_ig'),facebook:g('v'+num+'_fb'),
-      cedulaArchivo:archivos['cedulaVendedor'+num]||null
+      cedulaPdf:archivos['cedulaVendedor'+num+'_pdf']||null,
+      cedulaFrontal:archivos['cedulaVendedor'+num+'_frontal']||null,
+      cedulaTrasera:archivos['cedulaVendedor'+num+'_trasera']||null
     });
   });
 
