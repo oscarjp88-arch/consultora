@@ -118,8 +118,8 @@
     </div>
     <div class="field-row">
       <div class="field" style="margin-bottom:0;">
-        <label>Municipio</label>
-        <input type="text" id="municipio" required placeholder="Ej: Chinú">
+        <label>Ciudad / Municipio / Corregimiento</label>
+        <input type="text" id="municipio" required placeholder="Ej: Chinú, Barranquilla, El Carmen...">
       </div>
       <div class="field" style="margin-bottom:0;">
         <label>Departamento</label>
@@ -210,7 +210,7 @@
       Aliado: <span class="hl" id="prevNombre">[tu nombre]</span><br>
       C.C.: <span class="hl" id="prevCedula">[tu cédula]</span><br>
       Negocio: <span class="hl" id="prevComercial">[tu negocio]</span><br>
-      Municipio: <span class="hl" id="prevMunicipio">[municipio]</span>, <span class="hl" id="prevDepartamento">[departamento]</span>
+      Municipio: <span class="hl" id="prevMunicipio">[ciudad/municipio]</span>, <span class="hl" id="prevDepartamento">[departamento]</span>
     </div>
     <div class="esign-note">
       <strong>✅ Proceso 100% digital</strong>
@@ -252,7 +252,7 @@ document.getElementById('prevFecha').textContent = fechaStr;
 [['nombre','prevNombre','[tu nombre]'],
  ['cedula','prevCedula','[tu cédula]'],
  ['comercial','prevComercial','[tu negocio]'],
- ['municipio','prevMunicipio','[municipio]'],
+ ['municipio','prevMunicipio','[ciudad/municipio]'],
  ['departamento','prevDepartamento','[departamento]']
 ].forEach(([id,pid,ph]) => {
   const el = document.getElementById(id);
