@@ -434,7 +434,9 @@ function switchView(view,el){
   document.getElementById('center-chats').style.display=view==='chats'?'flex':'none';
   document.getElementById('center-clients').className=view==='clients'?'table-view active':'table-view';
   document.getElementById('center-optins').className=view==='optins'?'table-view active':'table-view';
+  document.getElementById('view-correcciones').className=view==='correcciones'?'table-view active':'table-view';
   document.getElementById('right-panel').className=view==='chats'&&currentTel?'right-panel show':'right-panel';
+  if(view==='correcciones') cargarCorrecciones();
 }
 
 function exportCSV(){
