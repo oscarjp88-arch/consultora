@@ -1,0 +1,7 @@
+[mcp_servers.agent-browser]
+command = "agent-browser"
+args = ["mcp"]
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["@playwright/mcp@latest"]

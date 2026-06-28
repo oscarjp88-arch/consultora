@@ -45,10 +45,21 @@ MARCAS_RECONOCIDAS = {
 }
 
 DOMINIOS_MALOS = {
-    'logodix.com', 'dailymail.co.uk', 'shutterstock', 'getty', 'alamy.com',
-    'depositphotos', 'dreamstime', 'istockphoto', 'clipart', 'wallpaper',
-    'background', 'recipe', 'food', 'easy', 'chicken', 'cooking',
-    'pinterest', 'ebay', 'amazon', 'mercadolibre',
+    # Stock photos / bancos de imágenes
+    'shutterstock', 'getty', 'alamy.com', 'depositphotos', 'dreamstime',
+    'istockphoto', 'logodix.com', 'clipart', 'vectorstock',
+    # Redes sociales / marketplaces
+    'pinterest', 'ebay', 'amazon', 'mercadolibre', 'facebook', 'instagram',
+    # Noticias / entretenimiento
+    'dailymail.co.uk', 'teletubbies', 'wikimedia', 'wikipedia',
+    # Categorías de contenido incorrecto
+    'wallpaper', 'background', 'recipe', 'food', 'chicken', 'cooking',
+    'landscape', 'nature', 'travel', 'flower', 'baby', 'toy', 'cartoon',
+    # E-commerce genérico (no fabricante)
+    'linio', 'falabella', 'exito', 'alkosto', 'ktronix', 'olx',
+    'carulla', 'jumbo', 'homecenter', 'shopify', 'woocommerce',
+    # Pagos / fintech (falsos positivos)
+    'payment', 'checkout', 'paypal', 'stripe',
 }
 
 DELAY = 9  # segundos entre productos

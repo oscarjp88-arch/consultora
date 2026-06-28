@@ -1,0 +1,263 @@
+/Users/oscarpacheco/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+/Users/oscarpacheco/Library/Python/3.9/lib/python/site-packages/google/oauth2/__init__.py:40: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/oscarpacheco/Library/Python/3.9/lib/python/site-packages/google/auth/__init__.py:54: FutureWarning: You are using a Python version 3.9 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.9"), FutureWarning)
+/Users/oscarpacheco/Library/Python/3.9/lib/python/site-packages/google/api_core/_python_version_support.py:242: FutureWarning: You are using a non-supported Python version (3.9.6). Google will not post any further updates to google.api_core supporting this Python version. Please upgrade to the latest Python version, or at least Python 3.10, and then update google.api_core.
+  warnings.warn(message, FutureWarning)
+
+======================================================================
+  CREDITEK · CATÁLOGO ENRIQUECIDO v2 (Gemini + Incremental)
+======================================================================
+
+→ Autenticando con Google Drive...
+✓ Conectado a Drive
+
+→ Preparando subcarpetas en EQUIPOS APP DE VENTAS...
+✓ _SPECS: 1YS-C1XJorm68VzpHcGlEoBAuAyea6KBS
+✓ _IMAGENES: 1wGkhCJJAyIug9ZBjdQiQKtc0y-dT9Ol8
+
+→ Verificando índice existente en Drive...
+✓ Modo: INCREMENTAL (211 referencias ya procesadas)
+
+→ Descargando Excel maestro de Drive...
+✓ 211 referencias únicas en Excel
+  → A procesar: 211 (211 nuevas, 0 reintentos de imagen)
+  → A saltar:   0
+======================================================================
+
+[  1/211] ADAPTADOR ORIGINAL SAMSUNG 25W                          | SAMSUNG    | nuevo → ✓ specs [alta]
+[  2/211] ADAPTADOR SAMSUNG 25W                                   | SAMSUNG    | nuevo → ✓ specs [alta]
+[  3/211] AIRE ROWA INVERTER 32 12000 BTU 110V R32                | AIRE       | nuevo → ○ specs básicas [baja]
+[  4/211] AIRE ROWA INVERTER 32 12000 BTU 220V R32                | AIRE       | nuevo → ○ specs básicas [alta]
+[  5/211] AIRE ROWA INVERTER 32 18000 BTU R32                     | AIRE       | nuevo → ○ specs básicas [alta]
+[  6/211] AIRE ROWA INVERTER 410 12000 BTU 220V R410              | AIRE       | nuevo → ○ specs básicas [alta]
+[  7/211] AIRE ROWA ON/OFF 12000 BTU 220V                         | AIRE       | nuevo → ✗ error Gemini
+[  8/211] AIRE ROWA ON/OFF 18000 BTU                              | AIRE       | nuevo → ○ specs básicas [alta]
+[  9/211] BOSE S1 PRO PLUS                                        | BOSE       | nuevo → ✓ specs [alta]
+[ 10/211] CARGADOR SAMSUNG 25W                                    | SAMSUNG    | nuevo → ✓ specs [alta]
+[ 11/211] CORN FLIP K 4G                                          | CORN       | nuevo → ○ specs básicas [alta]
+[ 12/211] FLY 100                                                 | FLY        | nuevo → ○ specs básicas [baja]
+[ 13/211] FLY 200                                                 | FLY        | nuevo → ○ specs básicas [baja]
+[ 14/211] FLY 300                                                 | FLY        | nuevo → ○ specs básicas [baja]
+[ 15/211] FLY 500                                                 | FLY        | nuevo → ○ specs básicas [media]
+[ 16/211] HONOR 400 SMART 5G 256GB 6+6 RAM                        | HONOR      | nuevo → ✓ specs [baja]
+[ 17/211] HONOR 400 SMART 6/256GB                                 | HONOR      | nuevo → ✓ specs [baja]
+[ 18/211] HONOR AIRFYER 7LT                                       | HONOR      | nuevo → ✓ specs [alta]
+[ 19/211] HONOR CHOICE EARBUDS X7E                                | HONOR      | nuevo → ✓ specs [alta]
+[ 20/211] HONOR CHOICE HEADPHONE                                  | HONOR      | nuevo → ✓ specs [media]
+[ 21/211] HONOR CLEANER ROBOT VACUUM R3                           | HONOR      | nuevo → ✓ specs [alta]
+[ 22/211] HONOR EARBUDS CLIP                                      | HONOR      | nuevo → ✓ specs [alta]
+[ 23/211] HONOR MAGIC 8 LITE 5G 256GB 8+8 RAM                     | HONOR      | nuevo → ✗ error Gemini
+[ 24/211] HONOR OPEN EAR OWS                                      | HONOR      | nuevo → ✓ specs [alta]
+[ 25/211] HONOR PLAY 10 3/64GB                                    | HONOR      | nuevo → ✓ specs [baja]
+[ 26/211] HONOR PLAY 10 64GB 4+3 RAM                              | HONOR      | nuevo → ✓ specs [baja]
+[ 27/211] HONOR PLAY 9A 8/256GB                                   | HONOR      | nuevo → ✓ specs [alta]
+[ 28/211] HONOR WATCH 2I                                          | HONOR      | nuevo → ✓ specs [alta]
+[ 29/211] HONOR X5B 128GB                                         | HONOR      | nuevo → ✓ specs [baja]
+[ 30/211] HONOR X5C 4/128GB                                       | HONOR      | nuevo → ✓ specs [media]
+[ 31/211] HONOR X5C PLUS 4/256GB                                  | HONOR      | nuevo → ✓ specs [media]
+[ 32/211] HONOR X6C 6/128GB                                       | HONOR      | nuevo → ✓ specs [alta]
+[ 33/211] HONOR X6C 8/256GB                                       | HONOR      | nuevo → ✓ specs [alta]
+[ 34/211] HONOR X7D 8/256GB                                       | HONOR      | nuevo → ✓ specs [alta]
+[ 35/211] HONOR X8D 512GB 8+8 RAM                                 | HONOR      | nuevo → ✓ specs [alta]
+[ 36/211] IMPRESORA EPSON L3210                                   | IMPRESORA  | nuevo → ○ specs básicas [alta]
+[ 37/211] INFINIX GT 30 8/256GB                                   | INFINIX    | nuevo → ✓ specs [baja]
+[ 38/211] INFINIX HOT 60I 8/256GB                                 | INFINIX    | nuevo → ✓ specs [baja]
+[ 39/211] INFINIX HOT 70 5G 4/256GB                               | INFINIX    | nuevo → ✓ specs [alta]
+[ 40/211] INFINIX NOTE 50 PRO 12/256GB                            | INFINIX    | nuevo → ✓ specs [baja]
+[ 41/211] INFINIX NOTE 50 PRO 5G 8/256GB                          | INFINIX    | nuevo → ✓ specs [baja]
+[ 42/211] INFINIX NOTE 50S 8/256GB 5G                             | INFINIX    | nuevo → ✓ specs [baja]
+[ 43/211] INFINIX NOTE 60 5G 8/256GB                              | INFINIX    | nuevo → ✓ specs [baja]
+[ 44/211] INFINIX NOTE 60 PRO 5G 8/256GB                          | INFINIX    | nuevo → ✓ specs [baja]
+[ 45/211] INFINIX NOTE 60 PRO 8/256GB                             | INFINIX    | nuevo → ✓ specs [baja]
+[ 46/211] INFINIX NOTE 60 ULTRA 5G 12/512GB                       | INFINIX    | nuevo → ✓ specs [baja]
+[ 47/211] INFINIX NOTE EDGE 5G                                    | INFINIX    | nuevo → ✓ specs [baja]
+[ 48/211] INFINIX NOTE EDGE 5G 8/256GB                            | INFINIX    | nuevo → ✓ specs [baja]
+[ 49/211] INFINIX SMART 10 4/256GB                                | INFINIX    | nuevo → ✓ specs [baja]
+[ 50/211] INFINIX SMART 20 128GB                                  | INFINIX    | nuevo → ✓ specs [baja]
+[ 51/211] INFINIX SMART 20 4/128GB                                | INFINIX    | nuevo → ✗ error Gemini
+[ 52/211] INFINIX SMART 20 4/64GB                                 | INFINIX    | nuevo → ✓ specs [baja]
+[ 53/211] INFINIX SMART 20 64GB                                   | INFINIX    | nuevo → ✓ specs [baja]
+[ 54/211] IPAD A16 128GB                                          | APPLE      | nuevo → ✓ specs [baja]
+[ 55/211] IPHONE 12 128GB NUEVO                                   | APPLE      | nuevo → ✓ specs [alta]
+[ 56/211] IPHONE 13 128GB USADO                                   | APPLE      | nuevo → ✓ specs [alta]
+[ 57/211] IPHONE 14 128GB                                         | APPLE      | nuevo → ✓ specs [alta]
+[ 58/211] IPHONE 15 128GB                                         | APPLE      | nuevo → ✓ specs+img [alta]
+[ 59/211] IPHONE 16 128GB                                         | APPLE      | nuevo → ✓ specs [baja]
+[ 60/211] IPHONE 16 128GB USADO                                   | APPLE      | nuevo → ✓ specs [baja]
+[ 61/211] IPHONE 16 256GB NUEVO                                   | APPLE      | nuevo → ✓ specs [baja]
+[ 62/211] ITEL N100 128GB                                         | ITEL       | nuevo → ✗ error Gemini
+[ 63/211] ITEL N100 64GB                                          | ITEL       | nuevo → ✓ specs [baja]
+[ 64/211] JBL BOOMBOX 3                                           | JBL        | nuevo → ✓ specs [alta]
+[ 65/211] JBL BOOMBOX 4                                           | JBL        | nuevo → ✓ specs [baja]
+[ 66/211] JBL CHARGE 6                                            | JBL        | nuevo → ✓ specs [baja]
+[ 67/211] JBL CLIP 5                                              | JBL        | nuevo → ✓ specs [alta]
+[ 68/211] JBL FLIP 7                                              | JBL        | nuevo → ✓ specs [baja]
+[ 69/211] JBL GO 4                                                | JBL        | nuevo → ✓ specs [alta]
+[ 70/211] JBL GO 5                                                | JBL        | nuevo → ✓ specs [baja]
+[ 71/211] JBL GRIP                                                | JBL        | nuevo → ✓ specs [alta]
+[ 72/211] JBL PARTY BOX CLUB 120                                  | JBL        | nuevo → ✓ specs [alta]
+[ 73/211] MOTO EDGE 50 FUSION 5G 8/256GB                          | MOTOROLA   | nuevo → ✓ specs [alta]
+[ 74/211] MOTO EDGE 50 FUSION DS 5G 8/256GB                       | MOTOROLA   | nuevo → ✓ specs [alta]
+[ 75/211] MOTO EDGE 60 FUSION 5G 8/256GB                          | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 76/211] MOTO EDGE 60 FUSION 8/256GB                             | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 77/211] MOTO G05 4/256GB 1SIM                                   | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 78/211] MOTO G06 4/128GB                                        | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 79/211] MOTO G06 4/128GB 1SIM                                   | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 80/211] MOTO G06 4/256GB                                        | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 81/211] MOTO G06 4/64GB                                         | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 82/211] MOTO G15 4/512GB                                        | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 83/211] MOTO G15 4/512GB 1SIM                                   | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 84/211] MOTO G17 POWER 4/256GB                                  | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 85/211] MOTO G17 POWER 4/256GB NFC                              | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 86/211] MOTO G55 8/256GB                                        | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 87/211] MOTO G56 5G 8/256GB                                     | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 88/211] MOTO G56 8/256GB                                        | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 89/211] MOTO G56 DS 5G 12/256GB                                 | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 90/211] MOTO G67 5G 8/256GB                                     | MOTOROLA   | nuevo → ✓ specs [baja]
+[ 91/211] MOTO G67 8/256GB                                        | MOTOROLA   | nuevo → ✓ specs [alta]
+[ 92/211] MOTO G86 DS 5G 8/256GB                                  | MOTOROLA   | nuevo → ✓ specs [alta]
+[ 93/211] NOKIA 105                                               | NOKIA      | nuevo → ✗ error Gemini
+[ 94/211] NOKIA 110 2024                                          | NOKIA      | nuevo → ✓ specs [alta]
+[ 95/211] NOKIA 6300 4G                                           | NOKIA      | nuevo → ✓ specs [alta]
+[ 96/211] OPPO A5 4G 4/256GB                                      | OPPO       | nuevo → ✓ specs [baja]
+[ 97/211] OPPO A5 4G 8/256GB                                      | OPPO       | nuevo → ✗ error Gemini
+[ 98/211] OPPO A5 5G 8/256GB                                      | OPPO       | nuevo → ✓ specs [alta]
+[ 99/211] OPPO A5M 8/256GB                                        | OPPO       | nuevo → ✓ specs [baja]
+[100/211] OPPO A5X 4/128GB                                        | OPPO       | nuevo → ✗ error Gemini
+[101/211] OPPO C71 3/64GB                                         | OPPO       | nuevo → ✓ specs [baja]
+[102/211] PATINETA XIAOMI 4 LITE                                  | XIAOMI     | nuevo → ✓ specs [alta]
+[103/211] PATINETA XIAOMI 6 LITE                                  | XIAOMI     | nuevo → ✓ specs [baja]
+[104/211] POCO C71 4/128GB                                        | POCO       | nuevo → ✓ specs [baja]
+[105/211] POCO C85 6/128GB                                        | POCO       | nuevo → ✓ specs [baja]
+[106/211] POCO C85 8/256GB                                        | POCO       | nuevo → ✓ specs [baja]
+[107/211] POCO M8 5G 8/512GB                                      | POCO       | nuevo → ✓ specs [baja]
+[108/211] PORTATIL ACER AL1432P390X 512/8 RAM                     | ACER       | nuevo → ✓ specs [alta]
+[109/211] PORTATIL ASUS VIVOBOOK 8/512GB                          | ASUS       | nuevo → ✓ specs [baja]
+[110/211] PORTATIL HP CORE I3 8/256 15.6                          | HP         | nuevo → ✓ specs [baja]
+[111/211] PORTATIL HP RYZEN 5 16/512GB                            | HP         | nuevo → ✓ specs [baja]
+[112/211] PORTATIL HP TACTIL 8/256GB 15.6                         | HP         | nuevo → ✓ specs [baja]
+[113/211] SAMSUNG A06 4/64GB                                      | SAMSUNG    | nuevo → ✓ specs [baja]
+[114/211] SAMSUNG A07 4/128GB                                     | SAMSUNG    | nuevo → ✓ specs [baja]
+[115/211] SAMSUNG A07 4/64GB                                      | SAMSUNG    | nuevo → ✓ specs [baja]
+[116/211] SAMSUNG A07 6/128GB                                     | SAMSUNG    | nuevo → ✓ specs [baja]
+[117/211] SAMSUNG A07 6/128GB DUAL SIM                            | SAMSUNG    | nuevo → ✓ specs [baja]
+[118/211] SAMSUNG A16 4/128GB                                     | SAMSUNG    | nuevo → ✓ specs [baja]
+[119/211] SAMSUNG A17 256/8 5G 1SIM                               | SAMSUNG    | nuevo → ✓ specs [baja]
+[120/211] SAMSUNG A17 4/128GB                                     | SAMSUNG    | nuevo → ✓ specs [baja]
+[121/211] SAMSUNG A17 4/128GB 1SIM                                | SAMSUNG    | nuevo → ✓ specs [baja]
+[122/211] SAMSUNG A17 4/128GB 2SIM                                | SAMSUNG    | nuevo → ✓ specs [baja]
+[123/211] SAMSUNG A17 4/128GB DUAL SIM                            | SAMSUNG    | nuevo → ✓ specs [baja]
+[124/211] SAMSUNG A17 4G 4/128GB                                  | SAMSUNG    | nuevo → ✓ specs [baja]
+[125/211] SAMSUNG A17 4G 8/256GB                                  | SAMSUNG    | nuevo → ✓ specs [baja]
+[126/211] SAMSUNG A17 4G 8/256GB DUAL SIM                         | SAMSUNG    | nuevo → ✓ specs [baja]
+[127/211] SAMSUNG A17 5G 8/256GB                                  | SAMSUNG    | nuevo → ✓ specs [baja]
+[128/211] SAMSUNG A17 5G 8/256GB DUAL SIM                         | SAMSUNG    | nuevo → ✓ specs [baja]
+[129/211] SAMSUNG A17 8/256GB 4G                                  | SAMSUNG    | nuevo → ✓ specs [baja]
+[130/211] SAMSUNG A17 8/256GB DUAL SIM                            | SAMSUNG    | nuevo → ✓ specs [baja]
+[131/211] SAMSUNG A26 5G 8/256GB                                  | SAMSUNG    | nuevo → ✓ specs [baja]
+[132/211] SAMSUNG A36 5G 8/256GB                                  | SAMSUNG    | nuevo → ✓ specs [baja]
+[133/211] SAMSUNG A36 5G 8/256GB DUAL SIM                         | SAMSUNG    | nuevo → ✓ specs [baja]
+[134/211] SAMSUNG A37 5G 8/256GB                                  | SAMSUNG    | nuevo → ✓ specs [baja]
+[135/211] SAMSUNG A57 5G 8/256GB                                  | SAMSUNG    | nuevo → ✗ error Gemini
+[136/211] SAMSUNG A57 8/256GB 5G                                  | SAMSUNG    | nuevo → ✓ specs [media]
+[137/211] SAMSUNG M55 8/256GB                                     | SAMSUNG    | nuevo → ✓ specs [alta]
+[138/211] SAMSUNG S26 ULTRA 12/256GB                              | SAMSUNG    | nuevo → ✓ specs [baja]
+[139/211] SAMSUNG S26 ULTRA 12/512GB                              | SAMSUNG    | nuevo → ✓ specs [baja]
+[140/211] SCOOTER XIAOMI 6 LITE                                   | XIAOMI     | nuevo → ✓ specs [baja]
+[141/211] SMART WATCH GENERICO                                    | SMART      | nuevo → ○ specs básicas [baja]
+[142/211] TAB SAMSUNG A11 8.7 WIFI 8/128GB                        | SAMSUNG    | nuevo → ✓ specs [media]
+[143/211] TABLET INFINIX XPAD 30 4/128GB                          | INFINIX    | nuevo → ✓ specs [baja]
+[144/211] TABLET SAMSUNG A11 8/128GB                              | SAMSUNG    | nuevo → ✓ specs [baja]
+[145/211] TABLET TECNO MEGAPAD 10 PULG 4/256GB                    | TECNO      | nuevo → ✓ specs [alta]
+[146/211] TABLET XIAOMI PAD 2 CON SIM 4/128GB                     | XIAOMI     | nuevo → ✓ specs [media (la especificación de RAM/almacenamiento '4/128GB' en el nombre del producto no corresponde con las versiones oficiales del Xiaomi Mi Pad 2, que tenía 2GB RAM y 16GB/64GB de almacenamiento; las especificaciones proporcionadas son para el Xiaomi Mi Pad 2 LTE)]
+[147/211] TABLET XIAOMI REDMI PAD 2 8/256GB                       | XIAOMI     | nuevo → ✗ error Gemini
+[148/211] TECNO MEGAPAD 10.1 WIFI WITH CASE 4/256GB               | TECNO      | nuevo → ✓ specs [media]
+[149/211] TECNO POVA CURVE 2 5G 8/256GB                           | TECNO      | nuevo → ✓ specs [baja]
+[150/211] TECNO POVA SLIM 8/256GB                                 | TECNO      | nuevo → ✓ specs [alta]
+[151/211] TECNO SPARK 50 4/256GB                                  | TECNO      | nuevo → ✓ specs [alta]
+[152/211] TECNO SPARK 50 5G 8/256GB                               | TECNO      | nuevo → ✓ specs [alta]
+[153/211] TECNO SPARK GO 3 4/128GB                                | TECNO      | nuevo → ✓ specs [alta]
+[154/211] TECNO SPARK GO 3 4/64GB                                 | TECNO      | nuevo → ✓ specs [alta]
+[155/211] TECNO SPARK GO2 4/256GB                                 | TECNO      | nuevo → ✗ error Gemini
+[156/211] TECNO SPARK GO3 3/128GB                                 | TECNO      | nuevo → ✓ specs [alta]
+[157/211] TECNO SPARK GO3 3/64GB                                  | TECNO      | nuevo → ✓ specs [alta]
+[158/211] TECNO SPARK GO3 4/128GB                                 | TECNO      | nuevo → ✗ error Gemini
+[159/211] TECNO SPARK GO3 4/64GB                                  | TECNO      | nuevo → ✓ specs [alta]
+[160/211] TV HYUNDAI 50                                           | HYUNDAI    | nuevo → ○ specs básicas [media]
+[161/211] TV IFFALCON FHD 43S55                                   | IFFALCON   | nuevo → ✓ specs [alta]
+[162/211] TV IFFALCON FHD 50S55                                   | IFFALCON   | nuevo → ✓ specs [alta]
+[163/211] TV IFFALCON HD 32S55                                    | IFFALCON   | nuevo → ✓ specs [alta]
+[164/211] TV IFFALCON UHD 43U65                                   | IFFALCON   | nuevo → ✓ specs [alta]
+[165/211] TV XKIM 32                                              | XKIM       | nuevo → ○ specs básicas [baja]
+[166/211] VIVO Y19S PRO 8/256GB                                   | VIVO       | nuevo → ✓ specs [baja]
+[167/211] XIAOMI BUDS 6 ACTIVE                                    | XIAOMI     | nuevo → ✓ specs [baja]
+[168/211] XIAOMI BUDS 6 PLAY                                      | XIAOMI     | nuevo → ✓ specs [baja]
+[169/211] XIAOMI MI TV STICK US                                   | XIAOMI     | nuevo → ✓ specs [alta]
+[170/211] XIAOMI NOTE 14 4G 6/128GB                               | XIAOMI     | nuevo → ✓ specs [baja]
+[171/211] XIAOMI NOTE 14 4G 8/256GB                               | XIAOMI     | nuevo → ✓ specs [baja]
+[172/211] XIAOMI NOTE 14 PRO 5G 8/256GB                           | XIAOMI     | nuevo → ✓ specs [baja]
+[173/211] XIAOMI NOTE 15 4G 6/128GB                               | XIAOMI     | nuevo → ✓ specs [baja]
+[174/211] XIAOMI NOTE 15 4G 8/256GB                               | XIAOMI     | nuevo → ✓ specs [baja]
+[175/211] XIAOMI NOTE 15 4G 8/512GB                               | XIAOMI     | nuevo → ✓ specs [baja]
+[176/211] XIAOMI NOTE 15 6/128GB                                  | XIAOMI     | nuevo → ✓ specs [baja]
+[177/211] XIAOMI NOTE 15 8/256GB                                  | XIAOMI     | nuevo → ✓ specs [baja]
+[178/211] XIAOMI NOTE 15 8/512GB                                  | XIAOMI     | nuevo → ✓ specs [baja]
+[179/211] XIAOMI NOTE 15 PRO 4G 12/512GB                          | XIAOMI     | nuevo → ✓ specs [baja]
+[180/211] XIAOMI NOTE 15 PRO 4G 8/256GB                           | XIAOMI     | nuevo → ✓ specs [baja]
+[181/211] XIAOMI NOTE 15 PRO 5G 8/256GB                           | XIAOMI     | nuevo → ✓ specs [baja]
+[182/211] XIAOMI NOTE 15 PRO 5G 8/512GB                           | XIAOMI     | nuevo → ✓ specs [baja]
+[183/211] XIAOMI POWER BANK 10.000MAH                             | XIAOMI     | nuevo → ✗ error Gemini
+[184/211] XIAOMI POWER BANK 10.000MAH 165W                        | XIAOMI     | nuevo → ✓ specs [baja]
+[185/211] XIAOMI POWER BANK 20.000MAH 18W FAST                    | XIAOMI     | nuevo → ✓ specs [alta]
+[186/211] XIAOMI REDMI 15 4G 6/128GB                              | XIAOMI     | nuevo → ✓ specs [baja]
+[187/211] XIAOMI REDMI 15 4G 8/256GB                              | XIAOMI     | nuevo → ✓ specs [baja]
+[188/211] XIAOMI REDMI 15 6/128GB                                 | XIAOMI     | nuevo → ✓ specs [baja]
+[189/211] XIAOMI REDMI 15 8/256GB                                 | XIAOMI     | nuevo → ✓ specs [baja]
+[190/211] XIAOMI REDMI 15C 4/128GB                                | XIAOMI     | nuevo → ✓ specs [baja]
+[191/211] XIAOMI REDMI 15C 4/256GB                                | XIAOMI     | nuevo → ✓ specs [baja]
+[192/211] XIAOMI REDMI 15C 4/256GB 1SIM                           | XIAOMI     | nuevo → ✓ specs [baja]
+[193/211] XIAOMI REDMI 15C 8/256GB                                | XIAOMI     | nuevo → ✓ specs [baja]
+[194/211] XIAOMI REDMI A5 128GB                                   | XIAOMI     | nuevo → ✓ specs [baja]
+[195/211] XIAOMI REDMI A5 3/64GB                                  | XIAOMI     | nuevo → ✓ specs [baja]
+[196/211] XIAOMI REDMI A5 4/128GB                                 | XIAOMI     | nuevo → ✓ specs [baja]
+[197/211] XIAOMI REDMI A5 64GB                                    | XIAOMI     | nuevo → ✓ specs [baja]
+[198/211] XIAOMI REDMI A7 3/64GB                                  | XIAOMI     | nuevo → ✓ specs [baja]
+[199/211] XIAOMI REDMI A7 PRO 4/128GB                             | XIAOMI     | nuevo → ✓ specs [baja]
+[200/211] XIAOMI REDMI A7 PRO 4/64GB                              | XIAOMI     | nuevo → ✓ specs [baja]
+[201/211] XIAOMI SMART BAND 9 ACTIVE                              | XIAOMI     | nuevo → ✓ specs [baja]
+[202/211] XIAOMI SPEAKER 30W                                      | XIAOMI     | nuevo → ✓ specs [baja]
+[203/211] XIAOMI WATCH 5 ACTIVE                                   | XIAOMI     | nuevo → ✓ specs [baja]
+[204/211] XIAOMI WATCH 5 LITE                                     | XIAOMI     | nuevo → ✓ specs [baja]
+[205/211] ZTE A35E 2/64GB                                         | ZTE        | nuevo → ✓ specs [alta]
+[206/211] ZTE A55 4/128GB                                         | ZTE        | nuevo → ✓ specs [baja]
+[207/211] ZTE A56 4/128GB                                         | ZTE        | nuevo → ✓ specs [alta]
+[208/211] ZTE A56 PRO 4/128GB                                     | ZTE        | nuevo → ✓ specs [alta]
+[209/211] ZTE NUBIA FOCUS PRO 8/256GB                             | ZTE        | nuevo → ✓ specs [alta]
+[210/211] ZTE NUBIA V8 MAX 8/256GB                                | ZTE        | nuevo → ✓ specs [baja]
+[211/211] ZTE NUBIA V80 PRO 8/256GB                               | ZTE        | nuevo → ✓ specs [baja]
+
+→ Actualizando INDICE.xlsx en Drive...
+
+======================================================================
+  RESUMEN
+======================================================================
+  Total en índice:            211
+  Con imagen + specs:         1
+  Solo specs (sin imagen):    50
+  Solo info básica:           160
+  Procesadas en este run:     211
+======================================================================
+
+======================================================================
+  SYNC → GITHUB PAGES
+======================================================================
+→ Descargando specs de Drive...
+  ✓ 211 specs descargadas
+→ Descargando imágenes de Drive...
+  ✓ 1 imágenes en Drive, 1 nuevas descargadas
+→ Generando catalogo.json...
+  ✓ catalogo.json con 211 referencias
+  ✓ Git push exitoso: "catálogo: sync 2026-06-21 (211 refs, 1 con imagen)"

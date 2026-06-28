@@ -1,0 +1,2681 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]: ✓
+      - generic [ref=e5]:
+        - generic [ref=e6]: CREDITEK
+        - generic [ref=e7]: Portal de Pedidos B2B
+    - generic [ref=e8]:
+      - button "🏪 Catálogo" [ref=e9] [cursor=pointer]
+      - button "🔒 Admin" [ref=e10] [cursor=pointer]
+      - generic [ref=e11] [cursor=pointer]: 🛒 Pedido (0)
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]: "262"
+        - generic [ref=e16]: Referencias disponibles
+      - generic [ref=e17]:
+        - generic [ref=e18]: "0"
+        - generic [ref=e19]: Unidades en pedido
+      - generic [ref=e20]:
+        - generic [ref=e21]: "10"
+        - generic [ref=e22]: Proveedores activos
+    - generic [ref=e23]:
+      - textbox "🔍 Buscar producto..." [ref=e24] [cursor=pointer]
+      - combobox [ref=e25] [cursor=pointer]:
+        - option "Todas las marcas" [selected]
+        - option "ACCESORIO"
+        - option "AIRE ACONDICIONADO"
+        - option "ALCATEL"
+        - option "BOSE"
+        - option "CORN"
+        - option "FLY"
+        - option "HONOR"
+        - option "HUAWEI"
+        - option "INFINIX"
+        - option "IPAD"
+        - option "IPHONE"
+        - option "ITEL"
+        - option "JBL"
+        - option "MOTOROLA"
+        - option "NOKIA"
+        - option "OPPO"
+        - option "PORTÁTIL"
+        - option "REALME"
+        - option "SAMSUNG"
+        - option "TABLET"
+        - option "TECNO"
+        - option "TV"
+        - option "VIVO"
+        - option "XIAOMI"
+        - option "ZTE"
+      - combobox [ref=e26] [cursor=pointer]:
+        - option "Todas las categorías" [selected]
+        - option "Accesorio"
+        - option "Aire acondicionado"
+        - option "Celular"
+        - option "Portátil"
+        - option "Scooter"
+        - option "Tablet"
+        - option "Televisor"
+    - generic [ref=e27]:
+      - generic [ref=e28]:
+        - generic [ref=e29]: Accesorio
+        - generic [ref=e30]: 📱 SAMSUNG
+        - generic [ref=e31]: ADAPTADOR ORIGINAL SAMSUNG 25W
+        - generic [ref=e32]: $60.000
+        - generic [ref=e33]:
+          - button "−" [ref=e34] [cursor=pointer]
+          - generic [ref=e35]: "0"
+          - button "+" [ref=e36] [cursor=pointer]
+          - button "+ Agregar" [ref=e37] [cursor=pointer]
+      - generic [ref=e38]:
+        - generic [ref=e39]: Accesorio
+        - generic [ref=e40]: 📱 SAMSUNG
+        - generic [ref=e41]: ADAPTADOR SAMSUNG 25W
+        - generic [ref=e42]: $59.900
+        - generic [ref=e43]:
+          - button "−" [ref=e44] [cursor=pointer]
+          - generic [ref=e45]: "0"
+          - button "+" [ref=e46] [cursor=pointer]
+          - button "+ Agregar" [ref=e47] [cursor=pointer]
+      - generic [ref=e48]:
+        - generic [ref=e49]: Aire acondicionado
+        - generic [ref=e50]: 📱 AIRE ACONDICIONADO
+        - generic [ref=e51]: AIRE ROWA INVERTER 32 12000 BTU 110V R32
+        - generic [ref=e52]: $1.070.000
+        - generic [ref=e53]:
+          - button "−" [ref=e54] [cursor=pointer]
+          - generic [ref=e55]: "0"
+          - button "+" [ref=e56] [cursor=pointer]
+          - button "+ Agregar" [ref=e57] [cursor=pointer]
+      - generic [ref=e58]:
+        - generic [ref=e59]: Aire acondicionado
+        - generic [ref=e60]: 📱 AIRE ACONDICIONADO
+        - generic [ref=e61]: AIRE ROWA INVERTER 32 12000 BTU 220V R32
+        - generic [ref=e62]: $1.070.000
+        - generic [ref=e63]:
+          - button "−" [ref=e64] [cursor=pointer]
+          - generic [ref=e65]: "0"
+          - button "+" [ref=e66] [cursor=pointer]
+          - button "+ Agregar" [ref=e67] [cursor=pointer]
+      - generic [ref=e68]:
+        - generic [ref=e69]: Aire acondicionado
+        - generic [ref=e70]: 📱 AIRE ACONDICIONADO
+        - generic [ref=e71]: AIRE ROWA INVERTER 32 18000 BTU R32
+        - generic [ref=e72]: $1.770.000
+        - generic [ref=e73]:
+          - button "−" [ref=e74] [cursor=pointer]
+          - generic [ref=e75]: "0"
+          - button "+" [ref=e76] [cursor=pointer]
+          - button "+ Agregar" [ref=e77] [cursor=pointer]
+      - generic [ref=e78]:
+        - generic [ref=e79]: Aire acondicionado
+        - generic [ref=e80]: 📱 AIRE ACONDICIONADO
+        - generic [ref=e81]: AIRE ROWA INVERTER 410 12000 BTU 220V R410
+        - generic [ref=e82]: $1.010.000
+        - generic [ref=e83]:
+          - button "−" [ref=e84] [cursor=pointer]
+          - generic [ref=e85]: "0"
+          - button "+" [ref=e86] [cursor=pointer]
+          - button "+ Agregar" [ref=e87] [cursor=pointer]
+      - generic [ref=e88]:
+        - generic [ref=e89]: Aire acondicionado
+        - generic [ref=e90]: 📱 AIRE ACONDICIONADO
+        - generic [ref=e91]: AIRE ROWA ON/OFF 12000 BTU 220V
+        - generic [ref=e92]: $1.010.000
+        - generic [ref=e93]:
+          - button "−" [ref=e94] [cursor=pointer]
+          - generic [ref=e95]: "0"
+          - button "+" [ref=e96] [cursor=pointer]
+          - button "+ Agregar" [ref=e97] [cursor=pointer]
+      - generic [ref=e98]:
+        - generic [ref=e99]: Aire acondicionado
+        - generic [ref=e100]: 📱 AIRE ACONDICIONADO
+        - generic [ref=e101]: AIRE ROWA ON/OFF 18000 BTU
+        - generic [ref=e102]: $1.619.000
+        - generic [ref=e103]:
+          - button "−" [ref=e104] [cursor=pointer]
+          - generic [ref=e105]: "0"
+          - button "+" [ref=e106] [cursor=pointer]
+          - button "+ Agregar" [ref=e107] [cursor=pointer]
+      - generic [ref=e108]:
+        - generic [ref=e109]: Celular
+        - generic [ref=e110]: 📱 ALCATEL
+        - generic [ref=e111]: ALCATEL 104 4G
+        - generic [ref=e112]: $95.000
+        - generic [ref=e113]:
+          - button "−" [ref=e114] [cursor=pointer]
+          - generic [ref=e115]: "0"
+          - button "+" [ref=e116] [cursor=pointer]
+          - button "+ Agregar" [ref=e117] [cursor=pointer]
+      - generic [ref=e118]:
+        - generic [ref=e119]: Celular
+        - generic [ref=e120]: 📱 ALCATEL
+        - generic [ref=e121]: ALCATEL 1V
+        - generic [ref=e122]: $150.000
+        - generic [ref=e123]:
+          - button "−" [ref=e124] [cursor=pointer]
+          - generic [ref=e125]: "0"
+          - button "+" [ref=e126] [cursor=pointer]
+          - button "+ Agregar" [ref=e127] [cursor=pointer]
+      - generic [ref=e128]:
+        - generic [ref=e129]: Accesorio
+        - generic [ref=e130]: 📱 BOSE
+        - generic [ref=e131]: BOSE S1 PRO PLUS
+        - generic [ref=e132]: $2.839.900
+        - generic [ref=e133]:
+          - button "−" [ref=e134] [cursor=pointer]
+          - generic [ref=e135]: "0"
+          - button "+" [ref=e136] [cursor=pointer]
+          - button "+ Agregar" [ref=e137] [cursor=pointer]
+      - generic [ref=e138]:
+        - generic [ref=e139]: Accesorio
+        - generic [ref=e140]: 📱 SAMSUNG
+        - generic [ref=e141]: CARGADOR SAMSUNG 25W
+        - generic [ref=e142]: $49.000
+        - generic [ref=e143]:
+          - button "−" [ref=e144] [cursor=pointer]
+          - generic [ref=e145]: "0"
+          - button "+" [ref=e146] [cursor=pointer]
+          - button "+ Agregar" [ref=e147] [cursor=pointer]
+      - generic [ref=e148]:
+        - generic [ref=e149]: Celular
+        - generic [ref=e150]: 📱 CORN
+        - generic [ref=e151]: CORN 4G
+        - generic [ref=e152]: $75.000
+        - generic [ref=e153]:
+          - button "−" [ref=e154] [cursor=pointer]
+          - generic [ref=e155]: "0"
+          - button "+" [ref=e156] [cursor=pointer]
+          - button "+ Agregar" [ref=e157] [cursor=pointer]
+      - generic [ref=e158]:
+        - generic [ref=e159]: Celular
+        - generic [ref=e160]: 📱 CORN
+        - generic [ref=e161]: CORN 4G T50 2.8
+        - generic [ref=e162]: $90.000
+        - generic [ref=e163]:
+          - button "−" [ref=e164] [cursor=pointer]
+          - generic [ref=e165]: "0"
+          - button "+" [ref=e166] [cursor=pointer]
+          - button "+ Agregar" [ref=e167] [cursor=pointer]
+      - generic [ref=e168]:
+        - generic [ref=e169]: Celular
+        - generic [ref=e170]: 📱 CORN
+        - generic [ref=e171]: CORN FLIP K 4G
+        - generic [ref=e172]: $90.000
+        - generic [ref=e173]:
+          - button "−" [ref=e174] [cursor=pointer]
+          - generic [ref=e175]: "0"
+          - button "+" [ref=e176] [cursor=pointer]
+          - button "+ Agregar" [ref=e177] [cursor=pointer]
+      - generic [ref=e178]:
+        - generic [ref=e179]: Celular
+        - generic [ref=e180]: 📱 CORN
+        - generic [ref=e181]: CORN POWER K PRO
+        - generic [ref=e182]: $105.000
+        - generic [ref=e183]:
+          - button "−" [ref=e184] [cursor=pointer]
+          - generic [ref=e185]: "0"
+          - button "+" [ref=e186] [cursor=pointer]
+          - button "+ Agregar" [ref=e187] [cursor=pointer]
+      - generic [ref=e188]:
+        - generic [ref=e189]: Celular
+        - generic [ref=e190]: 📱 FLY
+        - generic [ref=e191]: FLY 100
+        - generic [ref=e192]: $95.000
+        - generic [ref=e193]:
+          - button "−" [ref=e194] [cursor=pointer]
+          - generic [ref=e195]: "0"
+          - button "+" [ref=e196] [cursor=pointer]
+          - button "+ Agregar" [ref=e197] [cursor=pointer]
+      - generic [ref=e198]:
+        - generic [ref=e199]: Celular
+        - generic [ref=e200]: 📱 FLY
+        - generic [ref=e201]: FLY 200
+        - generic [ref=e202]: $82.000
+        - generic [ref=e203]:
+          - button "−" [ref=e204] [cursor=pointer]
+          - generic [ref=e205]: "0"
+          - button "+" [ref=e206] [cursor=pointer]
+          - button "+ Agregar" [ref=e207] [cursor=pointer]
+      - generic [ref=e208]:
+        - generic [ref=e209]: Celular
+        - generic [ref=e210]: 📱 FLY
+        - generic [ref=e211]: FLY 300
+        - generic [ref=e212]: $130.000
+        - generic [ref=e213]:
+          - button "−" [ref=e214] [cursor=pointer]
+          - generic [ref=e215]: "0"
+          - button "+" [ref=e216] [cursor=pointer]
+          - button "+ Agregar" [ref=e217] [cursor=pointer]
+      - generic [ref=e218]:
+        - generic [ref=e219]: Celular
+        - generic [ref=e220]: 📱 FLY
+        - generic [ref=e221]: FLY 500
+        - generic [ref=e222]: $135.000
+        - generic [ref=e223]:
+          - button "−" [ref=e224] [cursor=pointer]
+          - generic [ref=e225]: "0"
+          - button "+" [ref=e226] [cursor=pointer]
+          - button "+ Agregar" [ref=e227] [cursor=pointer]
+      - generic [ref=e228]:
+        - generic [ref=e229]: Celular
+        - generic [ref=e230]: 📱 HONOR
+        - generic [ref=e231]: HONOR 400 SMART 12/256GB
+        - generic [ref=e232]: $655.000
+        - generic [ref=e233]:
+          - button "−" [ref=e234] [cursor=pointer]
+          - generic [ref=e235]: "0"
+          - button "+" [ref=e236] [cursor=pointer]
+          - button "+ Agregar" [ref=e237] [cursor=pointer]
+      - generic [ref=e238]:
+        - generic [ref=e239]: Celular
+        - generic [ref=e240]: 📱 HONOR
+        - generic [ref=e241]: HONOR 400 SMART 5G 256GB 6+6 RAM
+        - generic [ref=e242]: $651.000
+        - generic [ref=e243]:
+          - button "−" [ref=e244] [cursor=pointer]
+          - generic [ref=e245]: "0"
+          - button "+" [ref=e246] [cursor=pointer]
+          - button "+ Agregar" [ref=e247] [cursor=pointer]
+      - generic [ref=e248]:
+        - generic [ref=e249]: Celular
+        - generic [ref=e250]: 📱 HONOR
+        - generic [ref=e251]: HONOR 400 SMART 6/256GB
+        - generic [ref=e252]: $670.000
+        - generic [ref=e253]:
+          - button "−" [ref=e254] [cursor=pointer]
+          - generic [ref=e255]: "0"
+          - button "+" [ref=e256] [cursor=pointer]
+          - button "+ Agregar" [ref=e257] [cursor=pointer]
+      - generic [ref=e258]:
+        - generic [ref=e259]: Accesorio
+        - generic [ref=e260]: 📱 HONOR
+        - generic [ref=e261]: HONOR AIRFYER 7LT
+        - generic [ref=e262]: $403.000
+        - generic [ref=e263]:
+          - button "−" [ref=e264] [cursor=pointer]
+          - generic [ref=e265]: "0"
+          - button "+" [ref=e266] [cursor=pointer]
+          - button "+ Agregar" [ref=e267] [cursor=pointer]
+      - generic [ref=e268]:
+        - generic [ref=e269]: Accesorio
+        - generic [ref=e270]: 📱 HONOR
+        - generic [ref=e271]: HONOR CHOICE EARBUDS X7E
+        - generic [ref=e272]: $90.000
+        - generic [ref=e273]:
+          - button "−" [ref=e274] [cursor=pointer]
+          - generic [ref=e275]: "0"
+          - button "+" [ref=e276] [cursor=pointer]
+          - button "+ Agregar" [ref=e277] [cursor=pointer]
+      - generic [ref=e278]:
+        - generic [ref=e279]: Accesorio
+        - generic [ref=e280]: 📱 HONOR
+        - generic [ref=e281]: HONOR CHOICE HEADPHONE
+        - generic [ref=e282]: $187.000
+        - generic [ref=e283]:
+          - button "−" [ref=e284] [cursor=pointer]
+          - generic [ref=e285]: "0"
+          - button "+" [ref=e286] [cursor=pointer]
+          - button "+ Agregar" [ref=e287] [cursor=pointer]
+      - generic [ref=e288]:
+        - generic [ref=e289]: Accesorio
+        - generic [ref=e290]: 📱 HONOR
+        - generic [ref=e291]: HONOR CLEANER ROBOT VACUUM R3
+        - generic [ref=e292]: $593.000
+        - generic [ref=e293]:
+          - button "−" [ref=e294] [cursor=pointer]
+          - generic [ref=e295]: "0"
+          - button "+" [ref=e296] [cursor=pointer]
+          - button "+ Agregar" [ref=e297] [cursor=pointer]
+      - generic [ref=e298]:
+        - generic [ref=e299]: Accesorio
+        - generic [ref=e300]: 📱 HONOR
+        - generic [ref=e301]: HONOR EARBUDS CLIP
+        - generic [ref=e302]: $200.000
+        - generic [ref=e303]:
+          - button "−" [ref=e304] [cursor=pointer]
+          - generic [ref=e305]: "0"
+          - button "+" [ref=e306] [cursor=pointer]
+          - button "+ Agregar" [ref=e307] [cursor=pointer]
+      - generic [ref=e308]:
+        - generic [ref=e309]: Celular
+        - generic [ref=e310]: 📱 HONOR
+        - generic [ref=e311]: HONOR MAGIC 7 LITE 256GB 5G
+        - generic [ref=e312]: $870.000
+        - generic [ref=e313]:
+          - button "−" [ref=e314] [cursor=pointer]
+          - generic [ref=e315]: "0"
+          - button "+" [ref=e316] [cursor=pointer]
+          - button "+ Agregar" [ref=e317] [cursor=pointer]
+      - generic [ref=e318]:
+        - generic [ref=e319]: Celular
+        - generic [ref=e320]: 📱 HONOR
+        - generic [ref=e321]: HONOR MAGIC 8 LITE 5G
+        - generic [ref=e322]: $1.170.000
+        - generic [ref=e323]:
+          - button "−" [ref=e324] [cursor=pointer]
+          - generic [ref=e325]: "0"
+          - button "+" [ref=e326] [cursor=pointer]
+          - button "+ Agregar" [ref=e327] [cursor=pointer]
+      - generic [ref=e328]:
+        - generic [ref=e329]: Celular
+        - generic [ref=e330]: 📱 HONOR
+        - generic [ref=e331]: HONOR MAGIC 8 LITE 5G 256GB 8+8 RAM
+        - generic [ref=e332]: $1.161.000
+        - generic [ref=e333]:
+          - button "−" [ref=e334] [cursor=pointer]
+          - generic [ref=e335]: "0"
+          - button "+" [ref=e336] [cursor=pointer]
+          - button "+ Agregar" [ref=e337] [cursor=pointer]
+      - generic [ref=e338]:
+        - generic [ref=e339]: Celular
+        - generic [ref=e340]: 📱 HONOR
+        - generic [ref=e341]: HONOR OPEN EAR OWS
+        - generic [ref=e342]: $228.000
+        - generic [ref=e343]:
+          - button "−" [ref=e344] [cursor=pointer]
+          - generic [ref=e345]: "0"
+          - button "+" [ref=e346] [cursor=pointer]
+          - button "+ Agregar" [ref=e347] [cursor=pointer]
+      - generic [ref=e348]:
+        - generic [ref=e349]: Celular
+        - generic [ref=e350]: 📱 HONOR
+        - generic [ref=e351]: HONOR PLAY 10 3/64GB
+        - generic [ref=e352]: $365.000
+        - generic [ref=e353]:
+          - button "−" [ref=e354] [cursor=pointer]
+          - generic [ref=e355]: "0"
+          - button "+" [ref=e356] [cursor=pointer]
+          - button "+ Agregar" [ref=e357] [cursor=pointer]
+      - generic [ref=e358]:
+        - generic [ref=e359]: Celular
+        - generic [ref=e360]: 📱 HONOR
+        - generic [ref=e361]: HONOR PLAY 10 64GB 4+3 RAM
+        - generic [ref=e362]: $360.000
+        - generic [ref=e363]:
+          - button "−" [ref=e364] [cursor=pointer]
+          - generic [ref=e365]: "0"
+          - button "+" [ref=e366] [cursor=pointer]
+          - button "+ Agregar" [ref=e367] [cursor=pointer]
+      - generic [ref=e368]:
+        - generic [ref=e369]: Celular
+        - generic [ref=e370]: 📱 HONOR
+        - generic [ref=e371]: HONOR PLAY 9A 8/256GB
+        - generic [ref=e372]: $410.000
+        - generic [ref=e373]:
+          - button "−" [ref=e374] [cursor=pointer]
+          - generic [ref=e375]: "0"
+          - button "+" [ref=e376] [cursor=pointer]
+          - button "+ Agregar" [ref=e377] [cursor=pointer]
+      - generic [ref=e378]:
+        - generic [ref=e379]: Accesorio
+        - generic [ref=e380]: 📱 HONOR
+        - generic [ref=e381]: HONOR WATCH 2I
+        - generic [ref=e382]: $134.000
+        - generic [ref=e383]:
+          - button "−" [ref=e384] [cursor=pointer]
+          - generic [ref=e385]: "0"
+          - button "+" [ref=e386] [cursor=pointer]
+          - button "+ Agregar" [ref=e387] [cursor=pointer]
+      - generic [ref=e388]:
+        - generic [ref=e389]: Celular
+        - generic [ref=e390]: 📱 HONOR
+        - generic [ref=e391]: HONOR X5B 128GB
+        - generic [ref=e392]: $330.000
+        - generic [ref=e393]:
+          - button "−" [ref=e394] [cursor=pointer]
+          - generic [ref=e395]: "0"
+          - button "+" [ref=e396] [cursor=pointer]
+          - button "+ Agregar" [ref=e397] [cursor=pointer]
+      - generic [ref=e398]:
+        - generic [ref=e399]: Celular
+        - generic [ref=e400]: 📱 HONOR
+        - generic [ref=e401]: HONOR X5C 4/128GB
+        - generic [ref=e402]: $360.000
+        - generic [ref=e403]:
+          - button "−" [ref=e404] [cursor=pointer]
+          - generic [ref=e405]: "0"
+          - button "+" [ref=e406] [cursor=pointer]
+          - button "+ Agregar" [ref=e407] [cursor=pointer]
+      - generic [ref=e408]:
+        - generic [ref=e409]: Celular
+        - generic [ref=e410]: 📱 HONOR
+        - generic [ref=e411]: HONOR X5C PLUS 4/256GB
+        - generic [ref=e412]: $420.000
+        - generic [ref=e413]:
+          - button "−" [ref=e414] [cursor=pointer]
+          - generic [ref=e415]: "0"
+          - button "+" [ref=e416] [cursor=pointer]
+          - button "+ Agregar" [ref=e417] [cursor=pointer]
+      - generic [ref=e418]:
+        - generic [ref=e419]: Celular
+        - generic [ref=e420]: 📱 HONOR
+        - generic [ref=e421]: HONOR X5C PLUS 6/256GB
+        - generic [ref=e422]: $445.000
+        - generic [ref=e423]:
+          - button "−" [ref=e424] [cursor=pointer]
+          - generic [ref=e425]: "0"
+          - button "+" [ref=e426] [cursor=pointer]
+          - button "+ Agregar" [ref=e427] [cursor=pointer]
+      - generic [ref=e428]:
+        - generic [ref=e429]: Celular
+        - generic [ref=e430]: 📱 HONOR
+        - generic [ref=e431]: HONOR X6C 6/128GB
+        - generic [ref=e432]: $415.000
+        - generic [ref=e433]:
+          - button "−" [ref=e434] [cursor=pointer]
+          - generic [ref=e435]: "0"
+          - button "+" [ref=e436] [cursor=pointer]
+          - button "+ Agregar" [ref=e437] [cursor=pointer]
+      - generic [ref=e438]:
+        - generic [ref=e439]: Celular
+        - generic [ref=e440]: 📱 HONOR
+        - generic [ref=e441]: HONOR X6C 8/256GB
+        - generic [ref=e442]: $530.000
+        - generic [ref=e443]:
+          - button "−" [ref=e444] [cursor=pointer]
+          - generic [ref=e445]: "0"
+          - button "+" [ref=e446] [cursor=pointer]
+          - button "+ Agregar" [ref=e447] [cursor=pointer]
+      - generic [ref=e448]:
+        - generic [ref=e449]: Celular
+        - generic [ref=e450]: 📱 HONOR
+        - generic [ref=e451]: HONOR X7D 8/256GB
+        - generic [ref=e452]: $750.000
+        - generic [ref=e453]:
+          - button "−" [ref=e454] [cursor=pointer]
+          - generic [ref=e455]: "0"
+          - button "+" [ref=e456] [cursor=pointer]
+          - button "+ Agregar" [ref=e457] [cursor=pointer]
+      - generic [ref=e458]:
+        - generic [ref=e459]: Celular
+        - generic [ref=e460]: 📱 HONOR
+        - generic [ref=e461]: HONOR X8D 512GB 8+8 RAM
+        - generic [ref=e462]: $981.000
+        - generic [ref=e463]:
+          - button "−" [ref=e464] [cursor=pointer]
+          - generic [ref=e465]: "0"
+          - button "+" [ref=e466] [cursor=pointer]
+          - button "+ Agregar" [ref=e467] [cursor=pointer]
+      - generic [ref=e468]:
+        - generic [ref=e469]: Celular
+        - generic [ref=e470]: 📱 HONOR
+        - generic [ref=e471]: HONOR X8D 8/512GB
+        - generic [ref=e472]: $990.000
+        - generic [ref=e473]:
+          - button "−" [ref=e474] [cursor=pointer]
+          - generic [ref=e475]: "0"
+          - button "+" [ref=e476] [cursor=pointer]
+          - button "+ Agregar" [ref=e477] [cursor=pointer]
+      - generic [ref=e478]:
+        - generic [ref=e479]: Tablet
+        - generic [ref=e480]: 📱 HUAWEI
+        - generic [ref=e481]: HUAWEI MATEPAD SE 11 8/128GB
+        - generic [ref=e482]: $670.000
+        - generic [ref=e483]:
+          - button "−" [ref=e484] [cursor=pointer]
+          - generic [ref=e485]: "0"
+          - button "+" [ref=e486] [cursor=pointer]
+          - button "+ Agregar" [ref=e487] [cursor=pointer]
+      - generic [ref=e488]:
+        - generic [ref=e489]: Celular
+        - generic [ref=e490]: 📱 INFINIX
+        - generic [ref=e491]: INFINIX GT 30 16/256GB
+        - generic [ref=e492]: $880.000
+        - generic [ref=e493]:
+          - button "−" [ref=e494] [cursor=pointer]
+          - generic [ref=e495]: "0"
+          - button "+" [ref=e496] [cursor=pointer]
+          - button "+ Agregar" [ref=e497] [cursor=pointer]
+      - generic [ref=e498]:
+        - generic [ref=e499]: Celular
+        - generic [ref=e500]: 📱 INFINIX
+        - generic [ref=e501]: INFINIX GT 30 8/256GB
+        - generic [ref=e502]: $875.000
+        - generic [ref=e503]:
+          - button "−" [ref=e504] [cursor=pointer]
+          - generic [ref=e505]: "0"
+          - button "+" [ref=e506] [cursor=pointer]
+          - button "+ Agregar" [ref=e507] [cursor=pointer]
+      - generic [ref=e508]:
+        - generic [ref=e509]: Celular
+        - generic [ref=e510]: 📱 INFINIX
+        - generic [ref=e511]: INFINIX HOT 60 PRO 16/256GB
+        - generic [ref=e512]: $715.000
+        - generic [ref=e513]:
+          - button "−" [ref=e514] [cursor=pointer]
+          - generic [ref=e515]: "0"
+          - button "+" [ref=e516] [cursor=pointer]
+          - button "+ Agregar" [ref=e517] [cursor=pointer]
+      - generic [ref=e518]:
+        - generic [ref=e519]: Celular
+        - generic [ref=e520]: 📱 INFINIX
+        - generic [ref=e521]: INFINIX HOT 60I 256/8GB
+        - generic [ref=e522]: $610.000
+        - generic [ref=e523]:
+          - button "−" [ref=e524] [cursor=pointer]
+          - generic [ref=e525]: "0"
+          - button "+" [ref=e526] [cursor=pointer]
+          - button "+ Agregar" [ref=e527] [cursor=pointer]
+      - generic [ref=e528]:
+        - generic [ref=e529]: Celular
+        - generic [ref=e530]: 📱 INFINIX
+        - generic [ref=e531]: INFINIX HOT 60I 8/256GB
+        - generic [ref=e532]: $579.900
+        - generic [ref=e533]:
+          - button "−" [ref=e534] [cursor=pointer]
+          - generic [ref=e535]: "0"
+          - button "+" [ref=e536] [cursor=pointer]
+          - button "+ Agregar" [ref=e537] [cursor=pointer]
+      - generic [ref=e538]:
+        - generic [ref=e539]: Celular
+        - generic [ref=e540]: 📱 INFINIX
+        - generic [ref=e541]: INFINIX HOT 70 5G 4/256GB
+        - generic [ref=e542]: $609.900
+        - generic [ref=e543]:
+          - button "−" [ref=e544] [cursor=pointer]
+          - generic [ref=e545]: "0"
+          - button "+" [ref=e546] [cursor=pointer]
+          - button "+ Agregar" [ref=e547] [cursor=pointer]
+      - generic [ref=e548]:
+        - generic [ref=e549]: Celular
+        - generic [ref=e550]: 📱 INFINIX
+        - generic [ref=e551]: INFINIX NOTE 50 PRO 12/256GB
+        - generic [ref=e552]: $975.000
+        - generic [ref=e553]:
+          - button "−" [ref=e554] [cursor=pointer]
+          - generic [ref=e555]: "0"
+          - button "+" [ref=e556] [cursor=pointer]
+          - button "+ Agregar" [ref=e557] [cursor=pointer]
+      - generic [ref=e558]:
+        - generic [ref=e559]: Celular
+        - generic [ref=e560]: 📱 INFINIX
+        - generic [ref=e561]: INFINIX NOTE 50 PRO 256GB
+        - generic [ref=e562]: $910.000
+        - generic [ref=e563]:
+          - button "−" [ref=e564] [cursor=pointer]
+          - generic [ref=e565]: "0"
+          - button "+" [ref=e566] [cursor=pointer]
+          - button "+ Agregar" [ref=e567] [cursor=pointer]
+      - generic [ref=e568]:
+        - generic [ref=e569]: Celular
+        - generic [ref=e570]: 📱 INFINIX
+        - generic [ref=e571]: INFINIX NOTE 50 PRO 5G 8/256GB
+        - generic [ref=e572]: $875.000
+        - generic [ref=e573]:
+          - button "−" [ref=e574] [cursor=pointer]
+          - generic [ref=e575]: "0"
+          - button "+" [ref=e576] [cursor=pointer]
+          - button "+ Agregar" [ref=e577] [cursor=pointer]
+      - generic [ref=e578]:
+        - generic [ref=e579]: Celular
+        - generic [ref=e580]: 📱 INFINIX
+        - generic [ref=e581]: INFINIX NOTE 50S 16/256GB
+        - generic [ref=e582]: $845.000
+        - generic [ref=e583]:
+          - button "−" [ref=e584] [cursor=pointer]
+          - generic [ref=e585]: "0"
+          - button "+" [ref=e586] [cursor=pointer]
+          - button "+ Agregar" [ref=e587] [cursor=pointer]
+      - generic [ref=e588]:
+        - generic [ref=e589]: Celular
+        - generic [ref=e590]: 📱 INFINIX
+        - generic [ref=e591]: INFINIX NOTE 50S 8/256GB 5G
+        - generic [ref=e592]: $840.000
+        - generic [ref=e593]:
+          - button "−" [ref=e594] [cursor=pointer]
+          - generic [ref=e595]: "0"
+          - button "+" [ref=e596] [cursor=pointer]
+          - button "+ Agregar" [ref=e597] [cursor=pointer]
+      - generic [ref=e598]:
+        - generic [ref=e599]: Celular
+        - generic [ref=e600]: 📱 INFINIX
+        - generic [ref=e601]: INFINIX NOTE 60 5G 8/256GB
+        - generic [ref=e602]: $1.169.000
+        - generic [ref=e603]:
+          - button "−" [ref=e604] [cursor=pointer]
+          - generic [ref=e605]: "0"
+          - button "+" [ref=e606] [cursor=pointer]
+          - button "+ Agregar" [ref=e607] [cursor=pointer]
+      - generic [ref=e608]:
+        - generic [ref=e609]: Celular
+        - generic [ref=e610]: 📱 INFINIX
+        - generic [ref=e611]: INFINIX NOTE 60 PRO 5G 8/256GB
+        - generic [ref=e612]: $1.479.220
+        - generic [ref=e613]:
+          - button "−" [ref=e614] [cursor=pointer]
+          - generic [ref=e615]: "0"
+          - button "+" [ref=e616] [cursor=pointer]
+          - button "+ Agregar" [ref=e617] [cursor=pointer]
+      - generic [ref=e618]:
+        - generic [ref=e619]: Celular
+        - generic [ref=e620]: 📱 INFINIX
+        - generic [ref=e621]: INFINIX NOTE 60 PRO 8/256GB
+        - generic [ref=e622]: $1.210.000
+        - generic [ref=e623]:
+          - button "−" [ref=e624] [cursor=pointer]
+          - generic [ref=e625]: "0"
+          - button "+" [ref=e626] [cursor=pointer]
+          - button "+ Agregar" [ref=e627] [cursor=pointer]
+      - generic [ref=e628]:
+        - generic [ref=e629]: Celular
+        - generic [ref=e630]: 📱 INFINIX
+        - generic [ref=e631]: INFINIX NOTE 60 ULTRA 5G 12/512GB
+        - generic [ref=e632]: $3.015.322
+        - generic [ref=e633]:
+          - button "−" [ref=e634] [cursor=pointer]
+          - generic [ref=e635]: "0"
+          - button "+" [ref=e636] [cursor=pointer]
+          - button "+ Agregar" [ref=e637] [cursor=pointer]
+      - generic [ref=e638]:
+        - generic [ref=e639]: Celular
+        - generic [ref=e640]: 📱 INFINIX
+        - generic [ref=e641]: INFINIX NOTE EDGE 5G
+        - generic [ref=e642]: $970.000
+        - generic [ref=e643]:
+          - button "−" [ref=e644] [cursor=pointer]
+          - generic [ref=e645]: "0"
+          - button "+" [ref=e646] [cursor=pointer]
+          - button "+ Agregar" [ref=e647] [cursor=pointer]
+      - generic [ref=e648]:
+        - generic [ref=e649]: Celular
+        - generic [ref=e650]: 📱 INFINIX
+        - generic [ref=e651]: INFINIX NOTE EDGE 5G 8/256GB
+        - generic [ref=e652]: $990.000
+        - generic [ref=e653]:
+          - button "−" [ref=e654] [cursor=pointer]
+          - generic [ref=e655]: "0"
+          - button "+" [ref=e656] [cursor=pointer]
+          - button "+ Agregar" [ref=e657] [cursor=pointer]
+      - generic [ref=e658]:
+        - generic [ref=e659]: Celular
+        - generic [ref=e660]: 📱 INFINIX
+        - generic [ref=e661]: INFINIX SMART 10 4/128GB
+        - generic [ref=e662]: $345.000
+        - generic [ref=e663]:
+          - button "−" [ref=e664] [cursor=pointer]
+          - generic [ref=e665]: "0"
+          - button "+" [ref=e666] [cursor=pointer]
+          - button "+ Agregar" [ref=e667] [cursor=pointer]
+      - generic [ref=e668]:
+        - generic [ref=e669]: Celular
+        - generic [ref=e670]: 📱 INFINIX
+        - generic [ref=e671]: INFINIX SMART 10 4/256GB
+        - generic [ref=e672]: $430.000
+        - generic [ref=e673]:
+          - button "−" [ref=e674] [cursor=pointer]
+          - generic [ref=e675]: "0"
+          - button "+" [ref=e676] [cursor=pointer]
+          - button "+ Agregar" [ref=e677] [cursor=pointer]
+      - generic [ref=e678]:
+        - generic [ref=e679]: Celular
+        - generic [ref=e680]: 📱 INFINIX
+        - generic [ref=e681]: INFINIX SMART 20 128GB
+        - generic [ref=e682]: $430.000
+        - generic [ref=e683]:
+          - button "−" [ref=e684] [cursor=pointer]
+          - generic [ref=e685]: "0"
+          - button "+" [ref=e686] [cursor=pointer]
+          - button "+ Agregar" [ref=e687] [cursor=pointer]
+      - generic [ref=e688]:
+        - generic [ref=e689]: Celular
+        - generic [ref=e690]: 📱 INFINIX
+        - generic [ref=e691]: INFINIX SMART 20 4/128GB
+        - generic [ref=e692]: $405.000
+        - generic [ref=e693]:
+          - button "−" [ref=e694] [cursor=pointer]
+          - generic [ref=e695]: "0"
+          - button "+" [ref=e696] [cursor=pointer]
+          - button "+ Agregar" [ref=e697] [cursor=pointer]
+      - generic [ref=e698]:
+        - generic [ref=e699]: Celular
+        - generic [ref=e700]: 📱 INFINIX
+        - generic [ref=e701]: INFINIX SMART 20 4/64GB
+        - generic [ref=e702]: $370.000
+        - generic [ref=e703]:
+          - button "−" [ref=e704] [cursor=pointer]
+          - generic [ref=e705]: "0"
+          - button "+" [ref=e706] [cursor=pointer]
+          - button "+ Agregar" [ref=e707] [cursor=pointer]
+      - generic [ref=e708]:
+        - generic [ref=e709]: Celular
+        - generic [ref=e710]: 📱 INFINIX
+        - generic [ref=e711]: INFINIX SMART 20 64GB
+        - generic [ref=e712]: $375.000
+        - generic [ref=e713]:
+          - button "−" [ref=e714] [cursor=pointer]
+          - generic [ref=e715]: "0"
+          - button "+" [ref=e716] [cursor=pointer]
+          - button "+ Agregar" [ref=e717] [cursor=pointer]
+      - generic [ref=e718]:
+        - generic [ref=e719]: Tablet
+        - generic [ref=e720]: 📱 IPAD
+        - generic [ref=e721]: IPAD A16 128GB
+        - generic [ref=e722]: $1.370.000
+        - generic [ref=e723]:
+          - button "−" [ref=e724] [cursor=pointer]
+          - generic [ref=e725]: "0"
+          - button "+" [ref=e726] [cursor=pointer]
+          - button "+ Agregar" [ref=e727] [cursor=pointer]
+      - generic [ref=e728]:
+        - generic [ref=e729]: Celular
+        - generic [ref=e730]: 📱 IPHONE
+        - generic [ref=e731]: IPHONE 12 128GB NUEVO
+        - generic [ref=e732]: $1.270.000
+        - generic [ref=e733]:
+          - button "−" [ref=e734] [cursor=pointer]
+          - generic [ref=e735]: "0"
+          - button "+" [ref=e736] [cursor=pointer]
+          - button "+ Agregar" [ref=e737] [cursor=pointer]
+      - generic [ref=e738]:
+        - generic [ref=e739]: Celular
+        - generic [ref=e740]: 📱 IPHONE
+        - generic [ref=e741]: IPHONE 13 128GB USADO
+        - generic [ref=e742]: $1.770.000
+        - generic [ref=e743]:
+          - button "−" [ref=e744] [cursor=pointer]
+          - generic [ref=e745]: "0"
+          - button "+" [ref=e746] [cursor=pointer]
+          - button "+ Agregar" [ref=e747] [cursor=pointer]
+      - generic [ref=e748]:
+        - generic [ref=e749]: Celular
+        - generic [ref=e750]: 📱 IPHONE
+        - generic [ref=e751]: IPHONE 14 128GB
+        - generic [ref=e752]: $1.870.000
+        - generic [ref=e753]:
+          - button "−" [ref=e754] [cursor=pointer]
+          - generic [ref=e755]: "0"
+          - button "+" [ref=e756] [cursor=pointer]
+          - button "+ Agregar" [ref=e757] [cursor=pointer]
+      - generic [ref=e758]:
+        - generic [ref=e759]: Celular
+        - generic [ref=e760]: 📱 IPHONE
+        - generic [ref=e761]: IPHONE 15 128GB
+        - generic [ref=e762]: $2.270.000
+        - generic [ref=e763]:
+          - button "−" [ref=e764] [cursor=pointer]
+          - generic [ref=e765]: "0"
+          - button "+" [ref=e766] [cursor=pointer]
+          - button "+ Agregar" [ref=e767] [cursor=pointer]
+      - generic [ref=e768]:
+        - generic [ref=e769]: Celular
+        - generic [ref=e770]: 📱 IPHONE
+        - generic [ref=e771]: IPHONE 16 128GB
+        - generic [ref=e772]: $2.620.000
+        - generic [ref=e773]:
+          - button "−" [ref=e774] [cursor=pointer]
+          - generic [ref=e775]: "0"
+          - button "+" [ref=e776] [cursor=pointer]
+          - button "+ Agregar" [ref=e777] [cursor=pointer]
+      - generic [ref=e778]:
+        - generic [ref=e779]: Celular
+        - generic [ref=e780]: 📱 IPHONE
+        - generic [ref=e781]: IPHONE 16 128GB USADO
+        - generic [ref=e782]: $2.320.000
+        - generic [ref=e783]:
+          - button "−" [ref=e784] [cursor=pointer]
+          - generic [ref=e785]: "0"
+          - button "+" [ref=e786] [cursor=pointer]
+          - button "+ Agregar" [ref=e787] [cursor=pointer]
+      - generic [ref=e788]:
+        - generic [ref=e789]: Celular
+        - generic [ref=e790]: 📱 IPHONE
+        - generic [ref=e791]: IPHONE 16 256GB NUEVO
+        - generic [ref=e792]: $2.870.000
+        - generic [ref=e793]:
+          - button "−" [ref=e794] [cursor=pointer]
+          - generic [ref=e795]: "0"
+          - button "+" [ref=e796] [cursor=pointer]
+          - button "+ Agregar" [ref=e797] [cursor=pointer]
+      - generic [ref=e798]:
+        - generic [ref=e799]: Celular
+        - generic [ref=e800]: 📱 ITEL
+        - generic [ref=e801]: ITEL 6/64GB
+        - generic [ref=e802]: $295.000
+        - generic [ref=e803]:
+          - button "−" [ref=e804] [cursor=pointer]
+          - generic [ref=e805]: "0"
+          - button "+" [ref=e806] [cursor=pointer]
+          - button "+ Agregar" [ref=e807] [cursor=pointer]
+      - generic [ref=e808]:
+        - generic [ref=e809]: Celular
+        - generic [ref=e810]: 📱 ITEL
+        - generic [ref=e811]: ITEL 8/128GB
+        - generic [ref=e812]: $335.000
+        - generic [ref=e813]:
+          - button "−" [ref=e814] [cursor=pointer]
+          - generic [ref=e815]: "0"
+          - button "+" [ref=e816] [cursor=pointer]
+          - button "+ Agregar" [ref=e817] [cursor=pointer]
+      - generic [ref=e818]:
+        - generic [ref=e819]: Celular
+        - generic [ref=e820]: 📱 ITEL
+        - generic [ref=e821]: ITEL N100 128GB
+        - generic [ref=e822]: $319.000
+        - generic [ref=e823]:
+          - button "−" [ref=e824] [cursor=pointer]
+          - generic [ref=e825]: "0"
+          - button "+" [ref=e826] [cursor=pointer]
+          - button "+ Agregar" [ref=e827] [cursor=pointer]
+      - generic [ref=e828]:
+        - generic [ref=e829]: Celular
+        - generic [ref=e830]: 📱 ITEL
+        - generic [ref=e831]: ITEL N100 64GB
+        - generic [ref=e832]: $278.000
+        - generic [ref=e833]:
+          - button "−" [ref=e834] [cursor=pointer]
+          - generic [ref=e835]: "0"
+          - button "+" [ref=e836] [cursor=pointer]
+          - button "+ Agregar" [ref=e837] [cursor=pointer]
+      - generic [ref=e838]:
+        - generic [ref=e839]: Accesorio
+        - generic [ref=e840]: 📱 JBL
+        - generic [ref=e841]: JBL BOOMBOX 3
+        - generic [ref=e842]: $1.419.900
+        - generic [ref=e843]:
+          - button "−" [ref=e844] [cursor=pointer]
+          - generic [ref=e845]: "0"
+          - button "+" [ref=e846] [cursor=pointer]
+          - button "+ Agregar" [ref=e847] [cursor=pointer]
+      - generic [ref=e848]:
+        - generic [ref=e849]: Accesorio
+        - generic [ref=e850]: 📱 JBL
+        - generic [ref=e851]: JBL BOOMBOX 4
+        - generic [ref=e852]: $1.619.000
+        - generic [ref=e853]:
+          - button "−" [ref=e854] [cursor=pointer]
+          - generic [ref=e855]: "0"
+          - button "+" [ref=e856] [cursor=pointer]
+          - button "+ Agregar" [ref=e857] [cursor=pointer]
+      - generic [ref=e858]:
+        - generic [ref=e859]: Accesorio
+        - generic [ref=e860]: 📱 JBL
+        - generic [ref=e861]: JBL CHARGE 6
+        - generic [ref=e862]: $579.900
+        - generic [ref=e863]:
+          - button "−" [ref=e864] [cursor=pointer]
+          - generic [ref=e865]: "0"
+          - button "+" [ref=e866] [cursor=pointer]
+          - button "+ Agregar" [ref=e867] [cursor=pointer]
+      - generic [ref=e868]:
+        - generic [ref=e869]: Accesorio
+        - generic [ref=e870]: 📱 JBL
+        - generic [ref=e871]: JBL CLIP 5
+        - generic [ref=e872]: $209.900
+        - generic [ref=e873]:
+          - button "−" [ref=e874] [cursor=pointer]
+          - generic [ref=e875]: "0"
+          - button "+" [ref=e876] [cursor=pointer]
+          - button "+ Agregar" [ref=e877] [cursor=pointer]
+      - generic [ref=e878]:
+        - generic [ref=e879]: Accesorio
+        - generic [ref=e880]: 📱 JBL
+        - generic [ref=e881]: JBL FLIP 7
+        - generic [ref=e882]: $429.900
+        - generic [ref=e883]:
+          - button "−" [ref=e884] [cursor=pointer]
+          - generic [ref=e885]: "0"
+          - button "+" [ref=e886] [cursor=pointer]
+          - button "+ Agregar" [ref=e887] [cursor=pointer]
+      - generic [ref=e888]:
+        - generic [ref=e889]: Accesorio
+        - generic [ref=e890]: 📱 JBL
+        - generic [ref=e891]: JBL GO 4
+        - generic [ref=e892]: $199.900
+        - generic [ref=e893]:
+          - button "−" [ref=e894] [cursor=pointer]
+          - generic [ref=e895]: "0"
+          - button "+" [ref=e896] [cursor=pointer]
+          - button "+ Agregar" [ref=e897] [cursor=pointer]
+      - generic [ref=e898]:
+        - generic [ref=e899]: Accesorio
+        - generic [ref=e900]: 📱 JBL
+        - generic [ref=e901]: JBL GO 5
+        - generic [ref=e902]: $215.000
+        - generic [ref=e903]:
+          - button "−" [ref=e904] [cursor=pointer]
+          - generic [ref=e905]: "0"
+          - button "+" [ref=e906] [cursor=pointer]
+          - button "+ Agregar" [ref=e907] [cursor=pointer]
+      - generic [ref=e908]:
+        - generic [ref=e909]: Accesorio
+        - generic [ref=e910]: 📱 JBL
+        - generic [ref=e911]: JBL GRIP
+        - generic [ref=e912]: $295.000
+        - generic [ref=e913]:
+          - button "−" [ref=e914] [cursor=pointer]
+          - generic [ref=e915]: "0"
+          - button "+" [ref=e916] [cursor=pointer]
+          - button "+ Agregar" [ref=e917] [cursor=pointer]
+      - generic [ref=e918]:
+        - generic [ref=e919]: Accesorio
+        - generic [ref=e920]: 📱 JBL
+        - generic [ref=e921]: JBL PARTY BOX CLUB 120
+        - generic [ref=e922]: $1.239.900
+        - generic [ref=e923]:
+          - button "−" [ref=e924] [cursor=pointer]
+          - generic [ref=e925]: "0"
+          - button "+" [ref=e926] [cursor=pointer]
+          - button "+ Agregar" [ref=e927] [cursor=pointer]
+      - generic [ref=e928]:
+        - generic [ref=e929]: Portátil
+        - generic [ref=e930]: 📱 PORTÁTIL
+        - generic [ref=e931]: LAPTOP NEO 8/256GB
+        - generic [ref=e932]: $2.620.000
+        - generic [ref=e933]:
+          - button "−" [ref=e934] [cursor=pointer]
+          - generic [ref=e935]: "0"
+          - button "+" [ref=e936] [cursor=pointer]
+          - button "+ Agregar" [ref=e937] [cursor=pointer]
+      - generic [ref=e938]:
+        - generic [ref=e939]: Celular
+        - generic [ref=e940]: 📱 MOTOROLA
+        - generic [ref=e941]: MOTO E15 3/64GB
+        - generic [ref=e942]: $320.000
+        - generic [ref=e943]:
+          - button "−" [ref=e944] [cursor=pointer]
+          - generic [ref=e945]: "0"
+          - button "+" [ref=e946] [cursor=pointer]
+          - button "+ Agregar" [ref=e947] [cursor=pointer]
+      - generic [ref=e948]:
+        - generic [ref=e949]: Celular
+        - generic [ref=e950]: 📱 MOTOROLA
+        - generic [ref=e951]: MOTO EDGE 50 FUSION 5G 8/256GB
+        - generic [ref=e952]: $780.000
+        - generic [ref=e953]:
+          - button "−" [ref=e954] [cursor=pointer]
+          - generic [ref=e955]: "0"
+          - button "+" [ref=e956] [cursor=pointer]
+          - button "+ Agregar" [ref=e957] [cursor=pointer]
+      - generic [ref=e958]:
+        - generic [ref=e959]: Celular
+        - generic [ref=e960]: 📱 MOTOROLA
+        - generic [ref=e961]: MOTO EDGE 50 FUSION DS 5G 8/256GB
+        - generic [ref=e962]: $819.900
+        - generic [ref=e963]:
+          - button "−" [ref=e964] [cursor=pointer]
+          - generic [ref=e965]: "0"
+          - button "+" [ref=e966] [cursor=pointer]
+          - button "+ Agregar" [ref=e967] [cursor=pointer]
+      - generic [ref=e968]:
+        - generic [ref=e969]: Celular
+        - generic [ref=e970]: 📱 MOTOROLA
+        - generic [ref=e971]: MOTO EDGE 60 FUSION 5G 8/256GB
+        - generic [ref=e972]: $916.000
+        - generic [ref=e973]:
+          - button "−" [ref=e974] [cursor=pointer]
+          - generic [ref=e975]: "0"
+          - button "+" [ref=e976] [cursor=pointer]
+          - button "+ Agregar" [ref=e977] [cursor=pointer]
+      - generic [ref=e978]:
+        - generic [ref=e979]: Celular
+        - generic [ref=e980]: 📱 MOTOROLA
+        - generic [ref=e981]: MOTO EDGE 60 FUSION 8/256GB
+        - generic [ref=e982]: $860.000
+        - generic [ref=e983]:
+          - button "−" [ref=e984] [cursor=pointer]
+          - generic [ref=e985]: "0"
+          - button "+" [ref=e986] [cursor=pointer]
+          - button "+ Agregar" [ref=e987] [cursor=pointer]
+      - generic [ref=e988]:
+        - generic [ref=e989]: Celular
+        - generic [ref=e990]: 📱 MOTOROLA
+        - generic [ref=e991]: MOTO G05 4/256GB 1SIM
+        - generic [ref=e992]: $379.000
+        - generic [ref=e993]:
+          - button "−" [ref=e994] [cursor=pointer]
+          - generic [ref=e995]: "0"
+          - button "+" [ref=e996] [cursor=pointer]
+          - button "+ Agregar" [ref=e997] [cursor=pointer]
+      - generic [ref=e998]:
+        - generic [ref=e999]: Celular
+        - generic [ref=e1000]: 📱 MOTOROLA
+        - generic [ref=e1001]: MOTO G06 4/128GB
+        - generic [ref=e1002]: $359.000
+        - generic [ref=e1003]:
+          - button "−" [ref=e1004] [cursor=pointer]
+          - generic [ref=e1005]: "0"
+          - button "+" [ref=e1006] [cursor=pointer]
+          - button "+ Agregar" [ref=e1007] [cursor=pointer]
+      - generic [ref=e1008]:
+        - generic [ref=e1009]: Celular
+        - generic [ref=e1010]: 📱 MOTOROLA
+        - generic [ref=e1011]: MOTO G06 4/128GB 1SIM
+        - generic [ref=e1012]: $368.000
+        - generic [ref=e1013]:
+          - button "−" [ref=e1014] [cursor=pointer]
+          - generic [ref=e1015]: "0"
+          - button "+" [ref=e1016] [cursor=pointer]
+          - button "+ Agregar" [ref=e1017] [cursor=pointer]
+      - generic [ref=e1018]:
+        - generic [ref=e1019]: Celular
+        - generic [ref=e1020]: 📱 MOTOROLA
+        - generic [ref=e1021]: MOTO G06 4/256GB
+        - generic [ref=e1022]: $405.000
+        - generic [ref=e1023]:
+          - button "−" [ref=e1024] [cursor=pointer]
+          - generic [ref=e1025]: "0"
+          - button "+" [ref=e1026] [cursor=pointer]
+          - button "+ Agregar" [ref=e1027] [cursor=pointer]
+      - generic [ref=e1028]:
+        - generic [ref=e1029]: Celular
+        - generic [ref=e1030]: 📱 MOTOROLA
+        - generic [ref=e1031]: MOTO G06 4/64GB
+        - generic [ref=e1032]: $320.000
+        - generic [ref=e1033]:
+          - button "−" [ref=e1034] [cursor=pointer]
+          - generic [ref=e1035]: "0"
+          - button "+" [ref=e1036] [cursor=pointer]
+          - button "+ Agregar" [ref=e1037] [cursor=pointer]
+      - generic [ref=e1038]:
+        - generic [ref=e1039]: Celular
+        - generic [ref=e1040]: 📱 MOTOROLA
+        - generic [ref=e1041]: MOTO G15 4/512GB
+        - generic [ref=e1042]: $475.000
+        - generic [ref=e1043]:
+          - button "−" [ref=e1044] [cursor=pointer]
+          - generic [ref=e1045]: "0"
+          - button "+" [ref=e1046] [cursor=pointer]
+          - button "+ Agregar" [ref=e1047] [cursor=pointer]
+      - generic [ref=e1048]:
+        - generic [ref=e1049]: Celular
+        - generic [ref=e1050]: 📱 MOTOROLA
+        - generic [ref=e1051]: MOTO G15 4/512GB 1SIM
+        - generic [ref=e1052]: $490.000
+        - generic [ref=e1053]:
+          - button "−" [ref=e1054] [cursor=pointer]
+          - generic [ref=e1055]: "0"
+          - button "+" [ref=e1056] [cursor=pointer]
+          - button "+ Agregar" [ref=e1057] [cursor=pointer]
+      - generic [ref=e1058]:
+        - generic [ref=e1059]: Celular
+        - generic [ref=e1060]: 📱 MOTOROLA
+        - generic [ref=e1061]: MOTO G17 POWER 4/256GB
+        - generic [ref=e1062]: $610.000
+        - generic [ref=e1063]:
+          - button "−" [ref=e1064] [cursor=pointer]
+          - generic [ref=e1065]: "0"
+          - button "+" [ref=e1066] [cursor=pointer]
+          - button "+ Agregar" [ref=e1067] [cursor=pointer]
+      - generic [ref=e1068]:
+        - generic [ref=e1069]: Celular
+        - generic [ref=e1070]: 📱 MOTOROLA
+        - generic [ref=e1071]: MOTO G17 POWER 4/256GB NFC
+        - generic [ref=e1072]: $639.000
+        - generic [ref=e1073]:
+          - button "−" [ref=e1074] [cursor=pointer]
+          - generic [ref=e1075]: "0"
+          - button "+" [ref=e1076] [cursor=pointer]
+          - button "+ Agregar" [ref=e1077] [cursor=pointer]
+      - generic [ref=e1078]:
+        - generic [ref=e1079]: Celular
+        - generic [ref=e1080]: 📱 MOTOROLA
+        - generic [ref=e1081]: MOTO G35 4/256GB 5G
+        - generic [ref=e1082]: $540.000
+        - generic [ref=e1083]:
+          - button "−" [ref=e1084] [cursor=pointer]
+          - generic [ref=e1085]: "0"
+          - button "+" [ref=e1086] [cursor=pointer]
+          - button "+ Agregar" [ref=e1087] [cursor=pointer]
+      - generic [ref=e1088]:
+        - generic [ref=e1089]: Celular
+        - generic [ref=e1090]: 📱 MOTOROLA
+        - generic [ref=e1091]: MOTO G55 8/256GB
+        - generic [ref=e1092]: $609.900
+        - generic [ref=e1093]:
+          - button "−" [ref=e1094] [cursor=pointer]
+          - generic [ref=e1095]: "0"
+          - button "+" [ref=e1096] [cursor=pointer]
+          - button "+ Agregar" [ref=e1097] [cursor=pointer]
+      - generic [ref=e1098]:
+        - generic [ref=e1099]: Celular
+        - generic [ref=e1100]: 📱 MOTOROLA
+        - generic [ref=e1101]: MOTO G56 5G 8/256GB
+        - generic [ref=e1102]: $789.900
+        - generic [ref=e1103]:
+          - button "−" [ref=e1104] [cursor=pointer]
+          - generic [ref=e1105]: "0"
+          - button "+" [ref=e1106] [cursor=pointer]
+          - button "+ Agregar" [ref=e1107] [cursor=pointer]
+      - generic [ref=e1108]:
+        - generic [ref=e1109]: Celular
+        - generic [ref=e1110]: 📱 MOTOROLA
+        - generic [ref=e1111]: MOTO G56 8/256GB
+        - generic [ref=e1112]: $650.000
+        - generic [ref=e1113]:
+          - button "−" [ref=e1114] [cursor=pointer]
+          - generic [ref=e1115]: "0"
+          - button "+" [ref=e1116] [cursor=pointer]
+          - button "+ Agregar" [ref=e1117] [cursor=pointer]
+      - generic [ref=e1118]:
+        - generic [ref=e1119]: Celular
+        - generic [ref=e1120]: 📱 MOTOROLA
+        - generic [ref=e1121]: MOTO G56 DS 5G 12/256GB
+        - generic [ref=e1122]: $719.900
+        - generic [ref=e1123]:
+          - button "−" [ref=e1124] [cursor=pointer]
+          - generic [ref=e1125]: "0"
+          - button "+" [ref=e1126] [cursor=pointer]
+          - button "+ Agregar" [ref=e1127] [cursor=pointer]
+      - generic [ref=e1128]:
+        - generic [ref=e1129]: Celular
+        - generic [ref=e1130]: 📱 MOTOROLA
+        - generic [ref=e1131]: MOTO G67 5G 8/256GB
+        - generic [ref=e1132]: $939.900
+        - generic [ref=e1133]:
+          - button "−" [ref=e1134] [cursor=pointer]
+          - generic [ref=e1135]: "0"
+          - button "+" [ref=e1136] [cursor=pointer]
+          - button "+ Agregar" [ref=e1137] [cursor=pointer]
+      - generic [ref=e1138]:
+        - generic [ref=e1139]: Celular
+        - generic [ref=e1140]: 📱 MOTOROLA
+        - generic [ref=e1141]: MOTO G67 8/256GB
+        - generic [ref=e1142]: $840.000
+        - generic [ref=e1143]:
+          - button "−" [ref=e1144] [cursor=pointer]
+          - generic [ref=e1145]: "0"
+          - button "+" [ref=e1146] [cursor=pointer]
+          - button "+ Agregar" [ref=e1147] [cursor=pointer]
+      - generic [ref=e1148]:
+        - generic [ref=e1149]: Celular
+        - generic [ref=e1150]: 📱 MOTOROLA
+        - generic [ref=e1151]: MOTO G86 DS 5G 8/256GB
+        - generic [ref=e1152]: $819.900
+        - generic [ref=e1153]:
+          - button "−" [ref=e1154] [cursor=pointer]
+          - generic [ref=e1155]: "0"
+          - button "+" [ref=e1156] [cursor=pointer]
+          - button "+ Agregar" [ref=e1157] [cursor=pointer]
+      - generic [ref=e1158]:
+        - generic [ref=e1159]: Celular
+        - generic [ref=e1160]: 📱 NOKIA
+        - generic [ref=e1161]: NOKIA 105
+        - generic [ref=e1162]: $145.000
+        - generic [ref=e1163]:
+          - button "−" [ref=e1164] [cursor=pointer]
+          - generic [ref=e1165]: "0"
+          - button "+" [ref=e1166] [cursor=pointer]
+          - button "+ Agregar" [ref=e1167] [cursor=pointer]
+      - generic [ref=e1168]:
+        - generic [ref=e1169]: Celular
+        - generic [ref=e1170]: 📱 NOKIA
+        - generic [ref=e1171]: NOKIA 105 4G
+        - generic [ref=e1172]: $130.000
+        - generic [ref=e1173]:
+          - button "−" [ref=e1174] [cursor=pointer]
+          - generic [ref=e1175]: "0"
+          - button "+" [ref=e1176] [cursor=pointer]
+          - button "+ Agregar" [ref=e1177] [cursor=pointer]
+      - generic [ref=e1178]:
+        - generic [ref=e1179]: Celular
+        - generic [ref=e1180]: 📱 NOKIA
+        - generic [ref=e1181]: NOKIA 110 2024
+        - generic [ref=e1182]: $155.000
+        - generic [ref=e1183]:
+          - button "−" [ref=e1184] [cursor=pointer]
+          - generic [ref=e1185]: "0"
+          - button "+" [ref=e1186] [cursor=pointer]
+          - button "+ Agregar" [ref=e1187] [cursor=pointer]
+      - generic [ref=e1188]:
+        - generic [ref=e1189]: Celular
+        - generic [ref=e1190]: 📱 NOKIA
+        - generic [ref=e1191]: NOKIA 6300 4G
+        - generic [ref=e1192]: $175.000
+        - generic [ref=e1193]:
+          - button "−" [ref=e1194] [cursor=pointer]
+          - generic [ref=e1195]: "0"
+          - button "+" [ref=e1196] [cursor=pointer]
+          - button "+ Agregar" [ref=e1197] [cursor=pointer]
+      - generic [ref=e1198]:
+        - generic [ref=e1199]: Celular
+        - generic [ref=e1200]: 📱 NOKIA
+        - generic [ref=e1201]: NOKIA 6300 GB
+        - generic [ref=e1202]: $175.000
+        - generic [ref=e1203]:
+          - button "−" [ref=e1204] [cursor=pointer]
+          - generic [ref=e1205]: "0"
+          - button "+" [ref=e1206] [cursor=pointer]
+          - button "+ Agregar" [ref=e1207] [cursor=pointer]
+      - generic [ref=e1208]:
+        - generic [ref=e1209]: Celular
+        - generic [ref=e1210]: 📱 OPPO
+        - generic [ref=e1211]: OPPO A5 4G 4/256GB
+        - generic [ref=e1212]: $558.902
+        - generic [ref=e1213]:
+          - button "−" [ref=e1214] [cursor=pointer]
+          - generic [ref=e1215]: "0"
+          - button "+" [ref=e1216] [cursor=pointer]
+          - button "+ Agregar" [ref=e1217] [cursor=pointer]
+      - generic [ref=e1218]:
+        - generic [ref=e1219]: Celular
+        - generic [ref=e1220]: 📱 OPPO
+        - generic [ref=e1221]: OPPO A5 4G 8/256GB
+        - generic [ref=e1222]: $580.500
+        - generic [ref=e1223]:
+          - button "−" [ref=e1224] [cursor=pointer]
+          - generic [ref=e1225]: "0"
+          - button "+" [ref=e1226] [cursor=pointer]
+          - button "+ Agregar" [ref=e1227] [cursor=pointer]
+      - generic [ref=e1228]:
+        - generic [ref=e1229]: Celular
+        - generic [ref=e1230]: 📱 OPPO
+        - generic [ref=e1231]: OPPO A5 5G 8/256GB
+        - generic [ref=e1232]: $852.902
+        - generic [ref=e1233]:
+          - button "−" [ref=e1234] [cursor=pointer]
+          - generic [ref=e1235]: "0"
+          - button "+" [ref=e1236] [cursor=pointer]
+          - button "+ Agregar" [ref=e1237] [cursor=pointer]
+      - generic [ref=e1238]:
+        - generic [ref=e1239]: Celular
+        - generic [ref=e1240]: 📱 OPPO
+        - generic [ref=e1241]: OPPO A5 8/256GB 5G
+        - generic [ref=e1242]: $860.000
+        - generic [ref=e1243]:
+          - button "−" [ref=e1244] [cursor=pointer]
+          - generic [ref=e1245]: "0"
+          - button "+" [ref=e1246] [cursor=pointer]
+          - button "+ Agregar" [ref=e1247] [cursor=pointer]
+      - generic [ref=e1248]:
+        - generic [ref=e1249]: Celular
+        - generic [ref=e1250]: 📱 OPPO
+        - generic [ref=e1251]: OPPO A5M 8/256GB
+        - generic [ref=e1252]: $749.000
+        - generic [ref=e1253]:
+          - button "−" [ref=e1254] [cursor=pointer]
+          - generic [ref=e1255]: "0"
+          - button "+" [ref=e1256] [cursor=pointer]
+          - button "+ Agregar" [ref=e1257] [cursor=pointer]
+      - generic [ref=e1258]:
+        - generic [ref=e1259]: Celular
+        - generic [ref=e1260]: 📱 OPPO
+        - generic [ref=e1261]: OPPO A5X 4/128GB
+        - generic [ref=e1262]: $446.000
+        - generic [ref=e1263]:
+          - button "−" [ref=e1264] [cursor=pointer]
+          - generic [ref=e1265]: "0"
+          - button "+" [ref=e1266] [cursor=pointer]
+          - button "+ Agregar" [ref=e1267] [cursor=pointer]
+      - generic [ref=e1268]:
+        - generic [ref=e1269]: Celular
+        - generic [ref=e1270]: 📱 OPPO
+        - generic [ref=e1271]: OPPO C71 3/64GB
+        - generic [ref=e1272]: $320.000
+        - generic [ref=e1273]:
+          - button "−" [ref=e1274] [cursor=pointer]
+          - generic [ref=e1275]: "0"
+          - button "+" [ref=e1276] [cursor=pointer]
+          - button "+ Agregar" [ref=e1277] [cursor=pointer]
+      - generic [ref=e1278]:
+        - generic [ref=e1279]: Scooter
+        - generic [ref=e1280]: 📱 XIAOMI
+        - generic [ref=e1281]: PATINETA XIAOMI 4 LITE
+        - generic [ref=e1282]: $1.100.000
+        - generic [ref=e1283]:
+          - button "−" [ref=e1284] [cursor=pointer]
+          - generic [ref=e1285]: "0"
+          - button "+" [ref=e1286] [cursor=pointer]
+          - button "+ Agregar" [ref=e1287] [cursor=pointer]
+      - generic [ref=e1288]:
+        - generic [ref=e1289]: Scooter
+        - generic [ref=e1290]: 📱 XIAOMI
+        - generic [ref=e1291]: PATINETA XIAOMI 6 LITE
+        - generic [ref=e1292]: $1.320.000
+        - generic [ref=e1293]:
+          - button "−" [ref=e1294] [cursor=pointer]
+          - generic [ref=e1295]: "0"
+          - button "+" [ref=e1296] [cursor=pointer]
+          - button "+ Agregar" [ref=e1297] [cursor=pointer]
+      - generic [ref=e1298]:
+        - generic [ref=e1299]: Celular
+        - generic [ref=e1300]: 📱 XIAOMI
+        - generic [ref=e1301]: POCO C71 4/128GB
+        - generic [ref=e1302]: $362.000
+        - generic [ref=e1303]:
+          - button "−" [ref=e1304] [cursor=pointer]
+          - generic [ref=e1305]: "0"
+          - button "+" [ref=e1306] [cursor=pointer]
+          - button "+ Agregar" [ref=e1307] [cursor=pointer]
+      - generic [ref=e1308]:
+        - generic [ref=e1309]: Celular
+        - generic [ref=e1310]: 📱 XIAOMI
+        - generic [ref=e1311]: POCO C85 6/128GB
+        - generic [ref=e1312]: $395.000
+        - generic [ref=e1313]:
+          - button "−" [ref=e1314] [cursor=pointer]
+          - generic [ref=e1315]: "0"
+          - button "+" [ref=e1316] [cursor=pointer]
+          - button "+ Agregar" [ref=e1317] [cursor=pointer]
+      - generic [ref=e1318]:
+        - generic [ref=e1319]: Celular
+        - generic [ref=e1320]: 📱 XIAOMI
+        - generic [ref=e1321]: POCO C85 8/256GB
+        - generic [ref=e1322]: $450.000
+        - generic [ref=e1323]:
+          - button "−" [ref=e1324] [cursor=pointer]
+          - generic [ref=e1325]: "0"
+          - button "+" [ref=e1326] [cursor=pointer]
+          - button "+ Agregar" [ref=e1327] [cursor=pointer]
+      - generic [ref=e1328]:
+        - generic [ref=e1329]: Celular
+        - generic [ref=e1330]: 📱 XIAOMI
+        - generic [ref=e1331]: POCO M8 5G 8/256GB
+        - generic [ref=e1332]: $780.000
+        - generic [ref=e1333]:
+          - button "−" [ref=e1334] [cursor=pointer]
+          - generic [ref=e1335]: "0"
+          - button "+" [ref=e1336] [cursor=pointer]
+          - button "+ Agregar" [ref=e1337] [cursor=pointer]
+      - generic [ref=e1338]:
+        - generic [ref=e1339]: Celular
+        - generic [ref=e1340]: 📱 XIAOMI
+        - generic [ref=e1341]: POCO M8 5G 8/512GB
+        - generic [ref=e1342]: $910.000
+        - generic [ref=e1343]:
+          - button "−" [ref=e1344] [cursor=pointer]
+          - generic [ref=e1345]: "0"
+          - button "+" [ref=e1346] [cursor=pointer]
+          - button "+ Agregar" [ref=e1347] [cursor=pointer]
+      - generic [ref=e1348]:
+        - generic [ref=e1349]: Celular
+        - generic [ref=e1350]: 📱 XIAOMI
+        - generic [ref=e1351]: POCO M8 PRO 5G 12/512GB
+        - generic [ref=e1352]: $1.205.000
+        - generic [ref=e1353]:
+          - button "−" [ref=e1354] [cursor=pointer]
+          - generic [ref=e1355]: "0"
+          - button "+" [ref=e1356] [cursor=pointer]
+          - button "+ Agregar" [ref=e1357] [cursor=pointer]
+      - generic [ref=e1358]:
+        - generic [ref=e1359]: Celular
+        - generic [ref=e1360]: 📱 XIAOMI
+        - generic [ref=e1361]: POCO M8 PRO 5G 8/256GB
+        - generic [ref=e1362]: $1.015.000
+        - generic [ref=e1363]:
+          - button "−" [ref=e1364] [cursor=pointer]
+          - generic [ref=e1365]: "0"
+          - button "+" [ref=e1366] [cursor=pointer]
+          - button "+ Agregar" [ref=e1367] [cursor=pointer]
+      - generic [ref=e1368]:
+        - generic [ref=e1369]: Portátil
+        - generic [ref=e1370]: 📱 PORTÁTIL
+        - generic [ref=e1371]: PORTATIL ACER AL1432P390X 512/8 RAM
+        - generic [ref=e1372]: $1.520.000
+        - generic [ref=e1373]:
+          - button "−" [ref=e1374] [cursor=pointer]
+          - generic [ref=e1375]: "0"
+          - button "+" [ref=e1376] [cursor=pointer]
+          - button "+ Agregar" [ref=e1377] [cursor=pointer]
+      - generic [ref=e1378]:
+        - generic [ref=e1379]: Portátil
+        - generic [ref=e1380]: 📱 PORTÁTIL
+        - generic [ref=e1381]: PORTATIL ASUS VIVOBOOK 8/512GB
+        - generic [ref=e1382]: $1.410.000
+        - generic [ref=e1383]:
+          - button "−" [ref=e1384] [cursor=pointer]
+          - generic [ref=e1385]: "0"
+          - button "+" [ref=e1386] [cursor=pointer]
+          - button "+ Agregar" [ref=e1387] [cursor=pointer]
+      - generic [ref=e1388]:
+        - generic [ref=e1389]: Portátil
+        - generic [ref=e1390]: 📱 PORTÁTIL
+        - generic [ref=e1391]: PORTATIL HP CORE I3 8/256 15.6
+        - generic [ref=e1392]: $1.270.000
+        - generic [ref=e1393]:
+          - button "−" [ref=e1394] [cursor=pointer]
+          - generic [ref=e1395]: "0"
+          - button "+" [ref=e1396] [cursor=pointer]
+          - button "+ Agregar" [ref=e1397] [cursor=pointer]
+      - generic [ref=e1398]:
+        - generic [ref=e1399]: Portátil
+        - generic [ref=e1400]: 📱 PORTÁTIL
+        - generic [ref=e1401]: PORTATIL HP RYZEN 5 16/512GB
+        - generic [ref=e1402]: $1.750.000
+        - generic [ref=e1403]:
+          - button "−" [ref=e1404] [cursor=pointer]
+          - generic [ref=e1405]: "0"
+          - button "+" [ref=e1406] [cursor=pointer]
+          - button "+ Agregar" [ref=e1407] [cursor=pointer]
+      - generic [ref=e1408]:
+        - generic [ref=e1409]: Portátil
+        - generic [ref=e1410]: 📱 PORTÁTIL
+        - generic [ref=e1411]: PORTATIL HP TACTIL 8/256GB 15.6
+        - generic [ref=e1412]: $1.370.000
+        - generic [ref=e1413]:
+          - button "−" [ref=e1414] [cursor=pointer]
+          - generic [ref=e1415]: "0"
+          - button "+" [ref=e1416] [cursor=pointer]
+          - button "+ Agregar" [ref=e1417] [cursor=pointer]
+      - generic [ref=e1418]:
+        - generic [ref=e1419]: Celular
+        - generic [ref=e1420]: 📱 REALME
+        - generic [ref=e1421]: REALME C67 8/256GB
+        - generic [ref=e1422]: $570.000
+        - generic [ref=e1423]:
+          - button "−" [ref=e1424] [cursor=pointer]
+          - generic [ref=e1425]: "0"
+          - button "+" [ref=e1426] [cursor=pointer]
+          - button "+ Agregar" [ref=e1427] [cursor=pointer]
+      - generic [ref=e1428]:
+        - generic [ref=e1429]: Celular
+        - generic [ref=e1430]: 📱 SAMSUNG
+        - generic [ref=e1431]: SAMSUNG A06 4/64GB
+        - generic [ref=e1432]: $345.000
+        - generic [ref=e1433]:
+          - button "−" [ref=e1434] [cursor=pointer]
+          - generic [ref=e1435]: "0"
+          - button "+" [ref=e1436] [cursor=pointer]
+          - button "+ Agregar" [ref=e1437] [cursor=pointer]
+      - generic [ref=e1438]:
+        - generic [ref=e1439]: Celular
+        - generic [ref=e1440]: 📱 SAMSUNG
+        - generic [ref=e1441]: SAMSUNG A07 4/128GB
+        - generic [ref=e1442]: $390.000
+        - generic [ref=e1443]:
+          - button "−" [ref=e1444] [cursor=pointer]
+          - generic [ref=e1445]: "0"
+          - button "+" [ref=e1446] [cursor=pointer]
+          - button "+ Agregar" [ref=e1447] [cursor=pointer]
+      - generic [ref=e1448]:
+        - generic [ref=e1449]: Celular
+        - generic [ref=e1450]: 📱 SAMSUNG
+        - generic [ref=e1451]: SAMSUNG A07 4/64GB
+        - generic [ref=e1452]: $345.000
+        - generic [ref=e1453]:
+          - button "−" [ref=e1454] [cursor=pointer]
+          - generic [ref=e1455]: "0"
+          - button "+" [ref=e1456] [cursor=pointer]
+          - button "+ Agregar" [ref=e1457] [cursor=pointer]
+      - generic [ref=e1458]:
+        - generic [ref=e1459]: Celular
+        - generic [ref=e1460]: 📱 SAMSUNG
+        - generic [ref=e1461]: SAMSUNG A07 6/128GB
+        - generic [ref=e1462]: $380.000
+        - generic [ref=e1463]:
+          - button "−" [ref=e1464] [cursor=pointer]
+          - generic [ref=e1465]: "0"
+          - button "+" [ref=e1466] [cursor=pointer]
+          - button "+ Agregar" [ref=e1467] [cursor=pointer]
+      - generic [ref=e1468]:
+        - generic [ref=e1469]: Celular
+        - generic [ref=e1470]: 📱 SAMSUNG
+        - generic [ref=e1471]: SAMSUNG A07 6/128GB DUAL SIM
+        - generic [ref=e1472]: $435.000
+        - generic [ref=e1473]:
+          - button "−" [ref=e1474] [cursor=pointer]
+          - generic [ref=e1475]: "0"
+          - button "+" [ref=e1476] [cursor=pointer]
+          - button "+ Agregar" [ref=e1477] [cursor=pointer]
+      - generic [ref=e1478]:
+        - generic [ref=e1479]: Celular
+        - generic [ref=e1480]: 📱 SAMSUNG
+        - generic [ref=e1481]: SAMSUNG A16 4/128GB
+        - generic [ref=e1482]: $470.000
+        - generic [ref=e1483]:
+          - button "−" [ref=e1484] [cursor=pointer]
+          - generic [ref=e1485]: "0"
+          - button "+" [ref=e1486] [cursor=pointer]
+          - button "+ Agregar" [ref=e1487] [cursor=pointer]
+      - generic [ref=e1488]:
+        - generic [ref=e1489]: Celular
+        - generic [ref=e1490]: 📱 SAMSUNG
+        - generic [ref=e1491]: SAMSUNG A16 8/256GB
+        - generic [ref=e1492]: $615.000
+        - generic [ref=e1493]:
+          - button "−" [ref=e1494] [cursor=pointer]
+          - generic [ref=e1495]: "0"
+          - button "+" [ref=e1496] [cursor=pointer]
+          - button "+ Agregar" [ref=e1497] [cursor=pointer]
+      - generic [ref=e1498]:
+        - generic [ref=e1499]: Celular
+        - generic [ref=e1500]: 📱 SAMSUNG
+        - generic [ref=e1501]: SAMSUNG A17 256/8 5G 1SIM
+        - generic [ref=e1502]: $670.000
+        - generic [ref=e1503]:
+          - button "−" [ref=e1504] [cursor=pointer]
+          - generic [ref=e1505]: "0"
+          - button "+" [ref=e1506] [cursor=pointer]
+          - button "+ Agregar" [ref=e1507] [cursor=pointer]
+      - generic [ref=e1508]:
+        - generic [ref=e1509]: Celular
+        - generic [ref=e1510]: 📱 SAMSUNG
+        - generic [ref=e1511]: SAMSUNG A17 4/128GB
+        - generic [ref=e1512]: $490.000
+        - generic [ref=e1513]:
+          - button "−" [ref=e1514] [cursor=pointer]
+          - generic [ref=e1515]: "0"
+          - button "+" [ref=e1516] [cursor=pointer]
+          - button "+ Agregar" [ref=e1517] [cursor=pointer]
+      - generic [ref=e1518]:
+        - generic [ref=e1519]: Celular
+        - generic [ref=e1520]: 📱 SAMSUNG
+        - generic [ref=e1521]: SAMSUNG A17 4/128GB 1SIM
+        - generic [ref=e1522]: $445.000
+        - generic [ref=e1523]:
+          - button "−" [ref=e1524] [cursor=pointer]
+          - generic [ref=e1525]: "0"
+          - button "+" [ref=e1526] [cursor=pointer]
+          - button "+ Agregar" [ref=e1527] [cursor=pointer]
+      - generic [ref=e1528]:
+        - generic [ref=e1529]: Celular
+        - generic [ref=e1530]: 📱 SAMSUNG
+        - generic [ref=e1531]: SAMSUNG A17 4/128GB 2SIM
+        - generic [ref=e1532]: $505.000
+        - generic [ref=e1533]:
+          - button "−" [ref=e1534] [cursor=pointer]
+          - generic [ref=e1535]: "0"
+          - button "+" [ref=e1536] [cursor=pointer]
+          - button "+ Agregar" [ref=e1537] [cursor=pointer]
+      - generic [ref=e1538]:
+        - generic [ref=e1539]: Celular
+        - generic [ref=e1540]: 📱 SAMSUNG
+        - generic [ref=e1541]: SAMSUNG A17 4/128GB DUAL SIM
+        - generic [ref=e1542]: $530.000
+        - generic [ref=e1543]:
+          - button "−" [ref=e1544] [cursor=pointer]
+          - generic [ref=e1545]: "0"
+          - button "+" [ref=e1546] [cursor=pointer]
+          - button "+ Agregar" [ref=e1547] [cursor=pointer]
+      - generic [ref=e1548]:
+        - generic [ref=e1549]: Celular
+        - generic [ref=e1550]: 📱 SAMSUNG
+        - generic [ref=e1551]: SAMSUNG A17 4G 4/128GB
+        - generic [ref=e1552]: $517.000
+        - generic [ref=e1553]:
+          - button "−" [ref=e1554] [cursor=pointer]
+          - generic [ref=e1555]: "0"
+          - button "+" [ref=e1556] [cursor=pointer]
+          - button "+ Agregar" [ref=e1557] [cursor=pointer]
+      - generic [ref=e1558]:
+        - generic [ref=e1559]: Celular
+        - generic [ref=e1560]: 📱 SAMSUNG
+        - generic [ref=e1561]: SAMSUNG A17 4G 8/256GB
+        - generic [ref=e1562]: $649.000
+        - generic [ref=e1563]:
+          - button "−" [ref=e1564] [cursor=pointer]
+          - generic [ref=e1565]: "0"
+          - button "+" [ref=e1566] [cursor=pointer]
+          - button "+ Agregar" [ref=e1567] [cursor=pointer]
+      - generic [ref=e1568]:
+        - generic [ref=e1569]: Celular
+        - generic [ref=e1570]: 📱 SAMSUNG
+        - generic [ref=e1571]: SAMSUNG A17 4G 8/256GB DUAL SIM
+        - generic [ref=e1572]: $640.000
+        - generic [ref=e1573]:
+          - button "−" [ref=e1574] [cursor=pointer]
+          - generic [ref=e1575]: "0"
+          - button "+" [ref=e1576] [cursor=pointer]
+          - button "+ Agregar" [ref=e1577] [cursor=pointer]
+      - generic [ref=e1578]:
+        - generic [ref=e1579]: Celular
+        - generic [ref=e1580]: 📱 SAMSUNG
+        - generic [ref=e1581]: SAMSUNG A17 5G 8/256GB
+        - generic [ref=e1582]: $894.181
+        - generic [ref=e1583]:
+          - button "−" [ref=e1584] [cursor=pointer]
+          - generic [ref=e1585]: "0"
+          - button "+" [ref=e1586] [cursor=pointer]
+          - button "+ Agregar" [ref=e1587] [cursor=pointer]
+      - generic [ref=e1588]:
+        - generic [ref=e1589]: Celular
+        - generic [ref=e1590]: 📱 SAMSUNG
+        - generic [ref=e1591]: SAMSUNG A17 5G 8/256GB DUAL SIM
+        - generic [ref=e1592]: $695.000
+        - generic [ref=e1593]:
+          - button "−" [ref=e1594] [cursor=pointer]
+          - generic [ref=e1595]: "0"
+          - button "+" [ref=e1596] [cursor=pointer]
+          - button "+ Agregar" [ref=e1597] [cursor=pointer]
+      - generic [ref=e1598]:
+        - generic [ref=e1599]: Celular
+        - generic [ref=e1600]: 📱 SAMSUNG
+        - generic [ref=e1601]: SAMSUNG A17 8/256GB 4G
+        - generic [ref=e1602]: $630.000
+        - generic [ref=e1603]:
+          - button "−" [ref=e1604] [cursor=pointer]
+          - generic [ref=e1605]: "0"
+          - button "+" [ref=e1606] [cursor=pointer]
+          - button "+ Agregar" [ref=e1607] [cursor=pointer]
+      - generic [ref=e1608]:
+        - generic [ref=e1609]: Celular
+        - generic [ref=e1610]: 📱 SAMSUNG
+        - generic [ref=e1611]: SAMSUNG A17 8/256GB 5G
+        - generic [ref=e1612]: $646.000
+        - generic [ref=e1613]:
+          - button "−" [ref=e1614] [cursor=pointer]
+          - generic [ref=e1615]: "0"
+          - button "+" [ref=e1616] [cursor=pointer]
+          - button "+ Agregar" [ref=e1617] [cursor=pointer]
+      - generic [ref=e1618]:
+        - generic [ref=e1619]: Celular
+        - generic [ref=e1620]: 📱 SAMSUNG
+        - generic [ref=e1621]: SAMSUNG A17 8/256GB DUAL SIM
+        - generic [ref=e1622]: $670.000
+        - generic [ref=e1623]:
+          - button "−" [ref=e1624] [cursor=pointer]
+          - generic [ref=e1625]: "0"
+          - button "+" [ref=e1626] [cursor=pointer]
+          - button "+ Agregar" [ref=e1627] [cursor=pointer]
+      - generic [ref=e1628]:
+        - generic [ref=e1629]: Celular
+        - generic [ref=e1630]: 📱 SAMSUNG
+        - generic [ref=e1631]: SAMSUNG A26 5G 8/256GB
+        - generic [ref=e1632]: $969.900
+        - generic [ref=e1633]:
+          - button "−" [ref=e1634] [cursor=pointer]
+          - generic [ref=e1635]: "0"
+          - button "+" [ref=e1636] [cursor=pointer]
+          - button "+ Agregar" [ref=e1637] [cursor=pointer]
+      - generic [ref=e1638]:
+        - generic [ref=e1639]: Celular
+        - generic [ref=e1640]: 📱 SAMSUNG
+        - generic [ref=e1641]: SAMSUNG A26 8/256GB 5G
+        - generic [ref=e1642]: $790.000
+        - generic [ref=e1643]:
+          - button "−" [ref=e1644] [cursor=pointer]
+          - generic [ref=e1645]: "0"
+          - button "+" [ref=e1646] [cursor=pointer]
+          - button "+ Agregar" [ref=e1647] [cursor=pointer]
+      - generic [ref=e1648]:
+        - generic [ref=e1649]: Celular
+        - generic [ref=e1650]: 📱 SAMSUNG
+        - generic [ref=e1651]: SAMSUNG A35 5G 6/128GB CPO
+        - generic [ref=e1652]: $725.000
+        - generic [ref=e1653]:
+          - button "−" [ref=e1654] [cursor=pointer]
+          - generic [ref=e1655]: "0"
+          - button "+" [ref=e1656] [cursor=pointer]
+          - button "+ Agregar" [ref=e1657] [cursor=pointer]
+      - generic [ref=e1658]:
+        - generic [ref=e1659]: Celular
+        - generic [ref=e1660]: 📱 SAMSUNG
+        - generic [ref=e1661]: SAMSUNG A36 5G 8/256GB
+        - generic [ref=e1662]: $1.119.900
+        - generic [ref=e1663]:
+          - button "−" [ref=e1664] [cursor=pointer]
+          - generic [ref=e1665]: "0"
+          - button "+" [ref=e1666] [cursor=pointer]
+          - button "+ Agregar" [ref=e1667] [cursor=pointer]
+      - generic [ref=e1668]:
+        - generic [ref=e1669]: Celular
+        - generic [ref=e1670]: 📱 SAMSUNG
+        - generic [ref=e1671]: SAMSUNG A36 5G 8/256GB DUAL SIM
+        - generic [ref=e1672]: $1.079.000
+        - generic [ref=e1673]:
+          - button "−" [ref=e1674] [cursor=pointer]
+          - generic [ref=e1675]: "0"
+          - button "+" [ref=e1676] [cursor=pointer]
+          - button "+ Agregar" [ref=e1677] [cursor=pointer]
+      - generic [ref=e1678]:
+        - generic [ref=e1679]: Celular
+        - generic [ref=e1680]: 📱 SAMSUNG
+        - generic [ref=e1681]: SAMSUNG A37 5G 8/256GB
+        - generic [ref=e1682]: $1.290.000
+        - generic [ref=e1683]:
+          - button "−" [ref=e1684] [cursor=pointer]
+          - generic [ref=e1685]: "0"
+          - button "+" [ref=e1686] [cursor=pointer]
+          - button "+ Agregar" [ref=e1687] [cursor=pointer]
+      - generic [ref=e1688]:
+        - generic [ref=e1689]: Celular
+        - generic [ref=e1690]: 📱 SAMSUNG
+        - generic [ref=e1691]: SAMSUNG A56 8/256GB 5G
+        - generic [ref=e1692]: $1.500.000
+        - generic [ref=e1693]:
+          - button "−" [ref=e1694] [cursor=pointer]
+          - generic [ref=e1695]: "0"
+          - button "+" [ref=e1696] [cursor=pointer]
+          - button "+ Agregar" [ref=e1697] [cursor=pointer]
+      - generic [ref=e1698]:
+        - generic [ref=e1699]: Celular
+        - generic [ref=e1700]: 📱 SAMSUNG
+        - generic [ref=e1701]: SAMSUNG A57 5G 8/256GB
+        - generic [ref=e1702]: $1.650.000
+        - generic [ref=e1703]:
+          - button "−" [ref=e1704] [cursor=pointer]
+          - generic [ref=e1705]: "0"
+          - button "+" [ref=e1706] [cursor=pointer]
+          - button "+ Agregar" [ref=e1707] [cursor=pointer]
+      - generic [ref=e1708]:
+        - generic [ref=e1709]: Celular
+        - generic [ref=e1710]: 📱 SAMSUNG
+        - generic [ref=e1711]: SAMSUNG A57 8/256GB 5G
+        - generic [ref=e1712]: $1.700.000
+        - generic [ref=e1713]:
+          - button "−" [ref=e1714] [cursor=pointer]
+          - generic [ref=e1715]: "0"
+          - button "+" [ref=e1716] [cursor=pointer]
+          - button "+ Agregar" [ref=e1717] [cursor=pointer]
+      - generic [ref=e1718]:
+        - generic [ref=e1719]: Celular
+        - generic [ref=e1720]: 📱 SAMSUNG
+        - generic [ref=e1721]: SAMSUNG M55 8/256GB
+        - generic [ref=e1722]: $680.000
+        - generic [ref=e1723]:
+          - button "−" [ref=e1724] [cursor=pointer]
+          - generic [ref=e1725]: "0"
+          - button "+" [ref=e1726] [cursor=pointer]
+          - button "+ Agregar" [ref=e1727] [cursor=pointer]
+      - generic [ref=e1728]:
+        - generic [ref=e1729]: Celular
+        - generic [ref=e1730]: 📱 SAMSUNG
+        - generic [ref=e1731]: SAMSUNG S23 ULTRA 256GB
+        - generic [ref=e1732]: $4.020.000
+        - generic [ref=e1733]:
+          - button "−" [ref=e1734] [cursor=pointer]
+          - generic [ref=e1735]: "0"
+          - button "+" [ref=e1736] [cursor=pointer]
+          - button "+ Agregar" [ref=e1737] [cursor=pointer]
+      - generic [ref=e1738]:
+        - generic [ref=e1739]: Celular
+        - generic [ref=e1740]: 📱 SAMSUNG
+        - generic [ref=e1741]: SAMSUNG S26 ULTRA 12/256GB
+        - generic [ref=e1742]: $4.470.000
+        - generic [ref=e1743]:
+          - button "−" [ref=e1744] [cursor=pointer]
+          - generic [ref=e1745]: "0"
+          - button "+" [ref=e1746] [cursor=pointer]
+          - button "+ Agregar" [ref=e1747] [cursor=pointer]
+      - generic [ref=e1748]:
+        - generic [ref=e1749]: Celular
+        - generic [ref=e1750]: 📱 SAMSUNG
+        - generic [ref=e1751]: SAMSUNG S26 ULTRA 12/512GB
+        - generic [ref=e1752]: $4.930.000
+        - generic [ref=e1753]:
+          - button "−" [ref=e1754] [cursor=pointer]
+          - generic [ref=e1755]: "0"
+          - button "+" [ref=e1756] [cursor=pointer]
+          - button "+ Agregar" [ref=e1757] [cursor=pointer]
+      - generic [ref=e1758]:
+        - generic [ref=e1759]: Scooter
+        - generic [ref=e1760]: 📱 XIAOMI
+        - generic [ref=e1761]: SCOOTER XIAOMI 6 LITE
+        - generic [ref=e1762]: $1.195.000
+        - generic [ref=e1763]:
+          - button "−" [ref=e1764] [cursor=pointer]
+          - generic [ref=e1765]: "0"
+          - button "+" [ref=e1766] [cursor=pointer]
+          - button "+ Agregar" [ref=e1767] [cursor=pointer]
+      - generic [ref=e1768]:
+        - generic [ref=e1769]: Accesorio
+        - generic [ref=e1770]: 📱 ACCESORIO
+        - generic [ref=e1771]: SMART WATCH GENERICO
+        - generic [ref=e1772]: $49.900
+        - generic [ref=e1773]:
+          - button "−" [ref=e1774] [cursor=pointer]
+          - generic [ref=e1775]: "0"
+          - button "+" [ref=e1776] [cursor=pointer]
+          - button "+ Agregar" [ref=e1777] [cursor=pointer]
+      - generic [ref=e1778]:
+        - generic [ref=e1779]: Tablet
+        - generic [ref=e1780]: 📱 SAMSUNG
+        - generic [ref=e1781]: TAB SAMSUNG A11 8.7 WIFI 8/128GB
+        - generic [ref=e1782]: $539.900
+        - generic [ref=e1783]:
+          - button "−" [ref=e1784] [cursor=pointer]
+          - generic [ref=e1785]: "0"
+          - button "+" [ref=e1786] [cursor=pointer]
+          - button "+ Agregar" [ref=e1787] [cursor=pointer]
+      - generic [ref=e1788]:
+        - generic [ref=e1789]: Tablet
+        - generic [ref=e1790]: 📱 INFINIX
+        - generic [ref=e1791]: TABLET INFINIX XPAD 30 4/128GB
+        - generic [ref=e1792]: $590.000
+        - generic [ref=e1793]:
+          - button "−" [ref=e1794] [cursor=pointer]
+          - generic [ref=e1795]: "0"
+          - button "+" [ref=e1796] [cursor=pointer]
+          - button "+ Agregar" [ref=e1797] [cursor=pointer]
+      - generic [ref=e1798]:
+        - generic [ref=e1799]: Tablet
+        - generic [ref=e1800]: 📱 TABLET
+        - generic [ref=e1801]: TABLET KRONO 4+4/64GB FOLDER
+        - generic [ref=e1802]: $360.000
+        - generic [ref=e1803]:
+          - button "−" [ref=e1804] [cursor=pointer]
+          - generic [ref=e1805]: "0"
+          - button "+" [ref=e1806] [cursor=pointer]
+          - button "+ Agregar" [ref=e1807] [cursor=pointer]
+      - generic [ref=e1808]:
+        - generic [ref=e1809]: Tablet
+        - generic [ref=e1810]: 📱 TABLET
+        - generic [ref=e1811]: TABLET NET Z3 8/7 PULGADA
+        - generic [ref=e1812]: $300.000
+        - generic [ref=e1813]:
+          - button "−" [ref=e1814] [cursor=pointer]
+          - generic [ref=e1815]: "0"
+          - button "+" [ref=e1816] [cursor=pointer]
+          - button "+ Agregar" [ref=e1817] [cursor=pointer]
+      - generic [ref=e1818]:
+        - generic [ref=e1819]: Tablet
+        - generic [ref=e1820]: 📱 SAMSUNG
+        - generic [ref=e1821]: TABLET SAMSUNG A11 8/128GB
+        - generic [ref=e1822]: $500.000
+        - generic [ref=e1823]:
+          - button "−" [ref=e1824] [cursor=pointer]
+          - generic [ref=e1825]: "0"
+          - button "+" [ref=e1826] [cursor=pointer]
+          - button "+ Agregar" [ref=e1827] [cursor=pointer]
+      - generic [ref=e1828]:
+        - generic [ref=e1829]: Tablet
+        - generic [ref=e1830]: 📱 TECNO
+        - generic [ref=e1831]: TABLET TECNO MEGAPAD 10 PULG 4/256GB
+        - generic [ref=e1832]: $530.000
+        - generic [ref=e1833]:
+          - button "−" [ref=e1834] [cursor=pointer]
+          - generic [ref=e1835]: "0"
+          - button "+" [ref=e1836] [cursor=pointer]
+          - button "+ Agregar" [ref=e1837] [cursor=pointer]
+      - generic [ref=e1838]:
+        - generic [ref=e1839]: Tablet
+        - generic [ref=e1840]: 📱 XIAOMI
+        - generic [ref=e1841]: TABLET XIAOMI PAD 2 CON SIM 4/128GB
+        - generic [ref=e1842]: $660.000
+        - generic [ref=e1843]:
+          - button "−" [ref=e1844] [cursor=pointer]
+          - generic [ref=e1845]: "0"
+          - button "+" [ref=e1846] [cursor=pointer]
+          - button "+ Agregar" [ref=e1847] [cursor=pointer]
+      - generic [ref=e1848]:
+        - generic [ref=e1849]: Tablet
+        - generic [ref=e1850]: 📱 XIAOMI
+        - generic [ref=e1851]: TABLET XIAOMI REDMI PAD 2 8/256GB
+        - generic [ref=e1852]: $700.000
+        - generic [ref=e1853]:
+          - button "−" [ref=e1854] [cursor=pointer]
+          - generic [ref=e1855]: "0"
+          - button "+" [ref=e1856] [cursor=pointer]
+          - button "+ Agregar" [ref=e1857] [cursor=pointer]
+      - generic [ref=e1858]:
+        - generic [ref=e1859]: Celular
+        - generic [ref=e1860]: 📱 TECNO
+        - generic [ref=e1861]: TECNO MEGAPAD 10.1 WIFI WITH CASE 4/256GB
+        - generic [ref=e1862]: $535.000
+        - generic [ref=e1863]:
+          - button "−" [ref=e1864] [cursor=pointer]
+          - generic [ref=e1865]: "0"
+          - button "+" [ref=e1866] [cursor=pointer]
+          - button "+ Agregar" [ref=e1867] [cursor=pointer]
+      - generic [ref=e1868]:
+        - generic [ref=e1869]: Celular
+        - generic [ref=e1870]: 📱 TECNO
+        - generic [ref=e1871]: TECNO POVA 7 8/256GB 4G
+        - generic [ref=e1872]: $700.000
+        - generic [ref=e1873]:
+          - button "−" [ref=e1874] [cursor=pointer]
+          - generic [ref=e1875]: "0"
+          - button "+" [ref=e1876] [cursor=pointer]
+          - button "+ Agregar" [ref=e1877] [cursor=pointer]
+      - generic [ref=e1878]:
+        - generic [ref=e1879]: Celular
+        - generic [ref=e1880]: 📱 TECNO
+        - generic [ref=e1881]: TECNO POVA CURVE 2 5G 8/256GB
+        - generic [ref=e1882]: $965.000
+        - generic [ref=e1883]:
+          - button "−" [ref=e1884] [cursor=pointer]
+          - generic [ref=e1885]: "0"
+          - button "+" [ref=e1886] [cursor=pointer]
+          - button "+ Agregar" [ref=e1887] [cursor=pointer]
+      - generic [ref=e1888]:
+        - generic [ref=e1889]: Celular
+        - generic [ref=e1890]: 📱 TECNO
+        - generic [ref=e1891]: TECNO POVA CURVE 2 8/256GB 5G
+        - generic [ref=e1892]: $930.000
+        - generic [ref=e1893]:
+          - button "−" [ref=e1894] [cursor=pointer]
+          - generic [ref=e1895]: "0"
+          - button "+" [ref=e1896] [cursor=pointer]
+          - button "+ Agregar" [ref=e1897] [cursor=pointer]
+      - generic [ref=e1898]:
+        - generic [ref=e1899]: Celular
+        - generic [ref=e1900]: 📱 TECNO
+        - generic [ref=e1901]: TECNO POVA SLIM 8/256GB
+        - generic [ref=e1902]: $900.000
+        - generic [ref=e1903]:
+          - button "−" [ref=e1904] [cursor=pointer]
+          - generic [ref=e1905]: "0"
+          - button "+" [ref=e1906] [cursor=pointer]
+          - button "+ Agregar" [ref=e1907] [cursor=pointer]
+      - generic [ref=e1908]:
+        - generic [ref=e1909]: Celular
+        - generic [ref=e1910]: 📱 TECNO
+        - generic [ref=e1911]: TECNO SPARK 50 4/256GB
+        - generic [ref=e1912]: $518.000
+        - generic [ref=e1913]:
+          - button "−" [ref=e1914] [cursor=pointer]
+          - generic [ref=e1915]: "0"
+          - button "+" [ref=e1916] [cursor=pointer]
+          - button "+ Agregar" [ref=e1917] [cursor=pointer]
+      - generic [ref=e1918]:
+        - generic [ref=e1919]: Celular
+        - generic [ref=e1920]: 📱 TECNO
+        - generic [ref=e1921]: TECNO SPARK 50 4/256GB 4G
+        - generic [ref=e1922]: $515.000
+        - generic [ref=e1923]:
+          - button "−" [ref=e1924] [cursor=pointer]
+          - generic [ref=e1925]: "0"
+          - button "+" [ref=e1926] [cursor=pointer]
+          - button "+ Agregar" [ref=e1927] [cursor=pointer]
+      - generic [ref=e1928]:
+        - generic [ref=e1929]: Celular
+        - generic [ref=e1930]: 📱 TECNO
+        - generic [ref=e1931]: TECNO SPARK 50 5G 8/256GB
+        - generic [ref=e1932]: $849.900
+        - generic [ref=e1933]:
+          - button "−" [ref=e1934] [cursor=pointer]
+          - generic [ref=e1935]: "0"
+          - button "+" [ref=e1936] [cursor=pointer]
+          - button "+ Agregar" [ref=e1937] [cursor=pointer]
+      - generic [ref=e1938]:
+        - generic [ref=e1939]: Celular
+        - generic [ref=e1940]: 📱 TECNO
+        - generic [ref=e1941]: TECNO SPARK 50 8/256GB 5G
+        - generic [ref=e1942]: $830.000
+        - generic [ref=e1943]:
+          - button "−" [ref=e1944] [cursor=pointer]
+          - generic [ref=e1945]: "0"
+          - button "+" [ref=e1946] [cursor=pointer]
+          - button "+ Agregar" [ref=e1947] [cursor=pointer]
+      - generic [ref=e1948]:
+        - generic [ref=e1949]: Celular
+        - generic [ref=e1950]: 📱 TECNO
+        - generic [ref=e1951]: TECNO SPARK GO 3 4/128GB
+        - generic [ref=e1952]: $405.000
+        - generic [ref=e1953]:
+          - button "−" [ref=e1954] [cursor=pointer]
+          - generic [ref=e1955]: "0"
+          - button "+" [ref=e1956] [cursor=pointer]
+          - button "+ Agregar" [ref=e1957] [cursor=pointer]
+      - generic [ref=e1958]:
+        - generic [ref=e1959]: Celular
+        - generic [ref=e1960]: 📱 TECNO
+        - generic [ref=e1961]: TECNO SPARK GO 3 4/64GB
+        - generic [ref=e1962]: $359.900
+        - generic [ref=e1963]:
+          - button "−" [ref=e1964] [cursor=pointer]
+          - generic [ref=e1965]: "0"
+          - button "+" [ref=e1966] [cursor=pointer]
+          - button "+ Agregar" [ref=e1967] [cursor=pointer]
+      - generic [ref=e1968]:
+        - generic [ref=e1969]: Celular
+        - generic [ref=e1970]: 📱 TECNO
+        - generic [ref=e1971]: TECNO SPARK GO2 4/256GB
+        - generic [ref=e1972]: $409.900
+        - generic [ref=e1973]:
+          - button "−" [ref=e1974] [cursor=pointer]
+          - generic [ref=e1975]: "0"
+          - button "+" [ref=e1976] [cursor=pointer]
+          - button "+ Agregar" [ref=e1977] [cursor=pointer]
+      - generic [ref=e1978]:
+        - generic [ref=e1979]: Celular
+        - generic [ref=e1980]: 📱 TECNO
+        - generic [ref=e1981]: TECNO SPARK GO3 3/128GB
+        - generic [ref=e1982]: $420.000
+        - generic [ref=e1983]:
+          - button "−" [ref=e1984] [cursor=pointer]
+          - generic [ref=e1985]: "0"
+          - button "+" [ref=e1986] [cursor=pointer]
+          - button "+ Agregar" [ref=e1987] [cursor=pointer]
+      - generic [ref=e1988]:
+        - generic [ref=e1989]: Celular
+        - generic [ref=e1990]: 📱 TECNO
+        - generic [ref=e1991]: TECNO SPARK GO3 3/64GB
+        - generic [ref=e1992]: $374.000
+        - generic [ref=e1993]:
+          - button "−" [ref=e1994] [cursor=pointer]
+          - generic [ref=e1995]: "0"
+          - button "+" [ref=e1996] [cursor=pointer]
+          - button "+ Agregar" [ref=e1997] [cursor=pointer]
+      - generic [ref=e1998]:
+        - generic [ref=e1999]: Celular
+        - generic [ref=e2000]: 📱 TECNO
+        - generic [ref=e2001]: TECNO SPARK GO3 4/128GB
+        - generic [ref=e2002]: $410.000
+        - generic [ref=e2003]:
+          - button "−" [ref=e2004] [cursor=pointer]
+          - generic [ref=e2005]: "0"
+          - button "+" [ref=e2006] [cursor=pointer]
+          - button "+ Agregar" [ref=e2007] [cursor=pointer]
+      - generic [ref=e2008]:
+        - generic [ref=e2009]: Celular
+        - generic [ref=e2010]: 📱 TECNO
+        - generic [ref=e2011]: TECNO SPARK GO3 4/64GB
+        - generic [ref=e2012]: $350.000
+        - generic [ref=e2013]:
+          - button "−" [ref=e2014] [cursor=pointer]
+          - generic [ref=e2015]: "0"
+          - button "+" [ref=e2016] [cursor=pointer]
+          - button "+ Agregar" [ref=e2017] [cursor=pointer]
+      - generic [ref=e2018]:
+        - generic [ref=e2019]: Televisor
+        - generic [ref=e2020]: 📱 TV
+        - generic [ref=e2021]: TV HYUNDAI 50
+        - generic [ref=e2022]: $1.190.000
+        - generic [ref=e2023]:
+          - button "−" [ref=e2024] [cursor=pointer]
+          - generic [ref=e2025]: "0"
+          - button "+" [ref=e2026] [cursor=pointer]
+          - button "+ Agregar" [ref=e2027] [cursor=pointer]
+      - generic [ref=e2028]:
+        - generic [ref=e2029]: Televisor
+        - generic [ref=e2030]: 📱 TV
+        - generic [ref=e2031]: TV IFFALCON FHD 43S55
+        - generic [ref=e2032]: $939.900
+        - generic [ref=e2033]:
+          - button "−" [ref=e2034] [cursor=pointer]
+          - generic [ref=e2035]: "0"
+          - button "+" [ref=e2036] [cursor=pointer]
+          - button "+ Agregar" [ref=e2037] [cursor=pointer]
+      - generic [ref=e2038]:
+        - generic [ref=e2039]: Televisor
+        - generic [ref=e2040]: 📱 TV
+        - generic [ref=e2041]: TV IFFALCON FHD 50S55
+        - generic [ref=e2042]: $1.119.900
+        - generic [ref=e2043]:
+          - button "−" [ref=e2044] [cursor=pointer]
+          - generic [ref=e2045]: "0"
+          - button "+" [ref=e2046] [cursor=pointer]
+          - button "+ Agregar" [ref=e2047] [cursor=pointer]
+      - generic [ref=e2048]:
+        - generic [ref=e2049]: Televisor
+        - generic [ref=e2050]: 📱 TV
+        - generic [ref=e2051]: TV IFFALCON HD 32S55
+        - generic [ref=e2052]: $609.900
+        - generic [ref=e2053]:
+          - button "−" [ref=e2054] [cursor=pointer]
+          - generic [ref=e2055]: "0"
+          - button "+" [ref=e2056] [cursor=pointer]
+          - button "+ Agregar" [ref=e2057] [cursor=pointer]
+      - generic [ref=e2058]:
+        - generic [ref=e2059]: Televisor
+        - generic [ref=e2060]: 📱 TV
+        - generic [ref=e2061]: TV IFFALCON UHD 43U65
+        - generic [ref=e2062]: $1.039.900
+        - generic [ref=e2063]:
+          - button "−" [ref=e2064] [cursor=pointer]
+          - generic [ref=e2065]: "0"
+          - button "+" [ref=e2066] [cursor=pointer]
+          - button "+ Agregar" [ref=e2067] [cursor=pointer]
+      - generic [ref=e2068]:
+        - generic [ref=e2069]: Televisor
+        - generic [ref=e2070]: 📱 TV
+        - generic [ref=e2071]: TV XKIM 32
+        - generic [ref=e2072]: $495.000
+        - generic [ref=e2073]:
+          - button "−" [ref=e2074] [cursor=pointer]
+          - generic [ref=e2075]: "0"
+          - button "+" [ref=e2076] [cursor=pointer]
+          - button "+ Agregar" [ref=e2077] [cursor=pointer]
+      - generic [ref=e2078]:
+        - generic [ref=e2079]: Celular
+        - generic [ref=e2080]: 📱 VIVO
+        - generic [ref=e2081]: VIVO Y19S PRO 8/256GB
+        - generic [ref=e2082]: $780.000
+        - generic [ref=e2083]:
+          - button "−" [ref=e2084] [cursor=pointer]
+          - generic [ref=e2085]: "0"
+          - button "+" [ref=e2086] [cursor=pointer]
+          - button "+ Agregar" [ref=e2087] [cursor=pointer]
+      - generic [ref=e2088]:
+        - generic [ref=e2089]: Accesorio
+        - generic [ref=e2090]: 📱 XIAOMI
+        - generic [ref=e2091]: XIAOMI BUDS 6 ACTIVE
+        - generic [ref=e2092]: $82.000
+        - generic [ref=e2093]:
+          - button "−" [ref=e2094] [cursor=pointer]
+          - generic [ref=e2095]: "0"
+          - button "+" [ref=e2096] [cursor=pointer]
+          - button "+ Agregar" [ref=e2097] [cursor=pointer]
+      - generic [ref=e2098]:
+        - generic [ref=e2099]: Accesorio
+        - generic [ref=e2100]: 📱 XIAOMI
+        - generic [ref=e2101]: XIAOMI BUDS 6 PLAY
+        - generic [ref=e2102]: $65.000
+        - generic [ref=e2103]:
+          - button "−" [ref=e2104] [cursor=pointer]
+          - generic [ref=e2105]: "0"
+          - button "+" [ref=e2106] [cursor=pointer]
+          - button "+ Agregar" [ref=e2107] [cursor=pointer]
+      - generic [ref=e2108]:
+        - generic [ref=e2109]: Televisor
+        - generic [ref=e2110]: 📱 XIAOMI
+        - generic [ref=e2111]: XIAOMI MI TV STICK US
+        - generic [ref=e2112]: $182.000
+        - generic [ref=e2113]:
+          - button "−" [ref=e2114] [cursor=pointer]
+          - generic [ref=e2115]: "0"
+          - button "+" [ref=e2116] [cursor=pointer]
+          - button "+ Agregar" [ref=e2117] [cursor=pointer]
+      - generic [ref=e2118]:
+        - generic [ref=e2119]: Celular
+        - generic [ref=e2120]: 📱 XIAOMI
+        - generic [ref=e2121]: XIAOMI NOTE 14 4G 6/128GB
+        - generic [ref=e2122]: $539.900
+        - generic [ref=e2123]:
+          - button "−" [ref=e2124] [cursor=pointer]
+          - generic [ref=e2125]: "0"
+          - button "+" [ref=e2126] [cursor=pointer]
+          - button "+ Agregar" [ref=e2127] [cursor=pointer]
+      - generic [ref=e2128]:
+        - generic [ref=e2129]: Celular
+        - generic [ref=e2130]: 📱 XIAOMI
+        - generic [ref=e2131]: XIAOMI NOTE 14 4G 8/256GB
+        - generic [ref=e2132]: $629.900
+        - generic [ref=e2133]:
+          - button "−" [ref=e2134] [cursor=pointer]
+          - generic [ref=e2135]: "0"
+          - button "+" [ref=e2136] [cursor=pointer]
+          - button "+ Agregar" [ref=e2137] [cursor=pointer]
+      - generic [ref=e2138]:
+        - generic [ref=e2139]: Celular
+        - generic [ref=e2140]: 📱 XIAOMI
+        - generic [ref=e2141]: XIAOMI NOTE 14 6/128GB
+        - generic [ref=e2142]: $530.000
+        - generic [ref=e2143]:
+          - button "−" [ref=e2144] [cursor=pointer]
+          - generic [ref=e2145]: "0"
+          - button "+" [ref=e2146] [cursor=pointer]
+          - button "+ Agregar" [ref=e2147] [cursor=pointer]
+      - generic [ref=e2148]:
+        - generic [ref=e2149]: Celular
+        - generic [ref=e2150]: 📱 XIAOMI
+        - generic [ref=e2151]: XIAOMI NOTE 14 PRO 5G 8/256GB
+        - generic [ref=e2152]: $1.019.900
+        - generic [ref=e2153]:
+          - button "−" [ref=e2154] [cursor=pointer]
+          - generic [ref=e2155]: "0"
+          - button "+" [ref=e2156] [cursor=pointer]
+          - button "+ Agregar" [ref=e2157] [cursor=pointer]
+      - generic [ref=e2158]:
+        - generic [ref=e2159]: Celular
+        - generic [ref=e2160]: 📱 XIAOMI
+        - generic [ref=e2161]: XIAOMI NOTE 14 PRO+ 5G 8/256GB
+        - generic [ref=e2162]: $1.199.900
+        - generic [ref=e2163]:
+          - button "−" [ref=e2164] [cursor=pointer]
+          - generic [ref=e2165]: "0"
+          - button "+" [ref=e2166] [cursor=pointer]
+          - button "+ Agregar" [ref=e2167] [cursor=pointer]
+      - generic [ref=e2168]:
+        - generic [ref=e2169]: Celular
+        - generic [ref=e2170]: 📱 XIAOMI
+        - generic [ref=e2171]: XIAOMI NOTE 15 4G 6/128GB
+        - generic [ref=e2172]: $605.000
+        - generic [ref=e2173]:
+          - button "−" [ref=e2174] [cursor=pointer]
+          - generic [ref=e2175]: "0"
+          - button "+" [ref=e2176] [cursor=pointer]
+          - button "+ Agregar" [ref=e2177] [cursor=pointer]
+      - generic [ref=e2178]:
+        - generic [ref=e2179]: Celular
+        - generic [ref=e2180]: 📱 XIAOMI
+        - generic [ref=e2181]: XIAOMI NOTE 15 4G 8/256GB
+        - generic [ref=e2182]: $699.900
+        - generic [ref=e2183]:
+          - button "−" [ref=e2184] [cursor=pointer]
+          - generic [ref=e2185]: "0"
+          - button "+" [ref=e2186] [cursor=pointer]
+          - button "+ Agregar" [ref=e2187] [cursor=pointer]
+      - generic [ref=e2188]:
+        - generic [ref=e2189]: Celular
+        - generic [ref=e2190]: 📱 XIAOMI
+        - generic [ref=e2191]: XIAOMI NOTE 15 4G 8/512GB
+        - generic [ref=e2192]: $809.900
+        - generic [ref=e2193]:
+          - button "−" [ref=e2194] [cursor=pointer]
+          - generic [ref=e2195]: "0"
+          - button "+" [ref=e2196] [cursor=pointer]
+          - button "+ Agregar" [ref=e2197] [cursor=pointer]
+      - generic [ref=e2198]:
+        - generic [ref=e2199]: Celular
+        - generic [ref=e2200]: 📱 XIAOMI
+        - generic [ref=e2201]: XIAOMI NOTE 15 6/128GB
+        - generic [ref=e2202]: $595.000
+        - generic [ref=e2203]:
+          - button "−" [ref=e2204] [cursor=pointer]
+          - generic [ref=e2205]: "0"
+          - button "+" [ref=e2206] [cursor=pointer]
+          - button "+ Agregar" [ref=e2207] [cursor=pointer]
+      - generic [ref=e2208]:
+        - generic [ref=e2209]: Celular
+        - generic [ref=e2210]: 📱 XIAOMI
+        - generic [ref=e2211]: XIAOMI NOTE 15 8/256GB
+        - generic [ref=e2212]: $690.000
+        - generic [ref=e2213]:
+          - button "−" [ref=e2214] [cursor=pointer]
+          - generic [ref=e2215]: "0"
+          - button "+" [ref=e2216] [cursor=pointer]
+          - button "+ Agregar" [ref=e2217] [cursor=pointer]
+      - generic [ref=e2218]:
+        - generic [ref=e2219]: Celular
+        - generic [ref=e2220]: 📱 XIAOMI
+        - generic [ref=e2221]: XIAOMI NOTE 15 8/512GB
+        - generic [ref=e2222]: $790.000
+        - generic [ref=e2223]:
+          - button "−" [ref=e2224] [cursor=pointer]
+          - generic [ref=e2225]: "0"
+          - button "+" [ref=e2226] [cursor=pointer]
+          - button "+ Agregar" [ref=e2227] [cursor=pointer]
+      - generic [ref=e2228]:
+        - generic [ref=e2229]: Celular
+        - generic [ref=e2230]: 📱 XIAOMI
+        - generic [ref=e2231]: XIAOMI NOTE 15 PRO 12/512GB
+        - generic [ref=e2232]: $1.055.000
+        - generic [ref=e2233]:
+          - button "−" [ref=e2234] [cursor=pointer]
+          - generic [ref=e2235]: "0"
+          - button "+" [ref=e2236] [cursor=pointer]
+          - button "+ Agregar" [ref=e2237] [cursor=pointer]
+      - generic [ref=e2238]:
+        - generic [ref=e2239]: Celular
+        - generic [ref=e2240]: 📱 XIAOMI
+        - generic [ref=e2241]: XIAOMI NOTE 15 PRO 4G 12/512GB
+        - generic [ref=e2242]: $1.079.000
+        - generic [ref=e2243]:
+          - button "−" [ref=e2244] [cursor=pointer]
+          - generic [ref=e2245]: "0"
+          - button "+" [ref=e2246] [cursor=pointer]
+          - button "+ Agregar" [ref=e2247] [cursor=pointer]
+      - generic [ref=e2248]:
+        - generic [ref=e2249]: Celular
+        - generic [ref=e2250]: 📱 XIAOMI
+        - generic [ref=e2251]: XIAOMI NOTE 15 PRO 4G 8/256GB
+        - generic [ref=e2252]: $869.900
+        - generic [ref=e2253]:
+          - button "−" [ref=e2254] [cursor=pointer]
+          - generic [ref=e2255]: "0"
+          - button "+" [ref=e2256] [cursor=pointer]
+          - button "+ Agregar" [ref=e2257] [cursor=pointer]
+      - generic [ref=e2258]:
+        - generic [ref=e2259]: Celular
+        - generic [ref=e2260]: 📱 XIAOMI
+        - generic [ref=e2261]: XIAOMI NOTE 15 PRO 5G 8/256GB
+        - generic [ref=e2262]: $1.060.000
+        - generic [ref=e2263]:
+          - button "−" [ref=e2264] [cursor=pointer]
+          - generic [ref=e2265]: "0"
+          - button "+" [ref=e2266] [cursor=pointer]
+          - button "+ Agregar" [ref=e2267] [cursor=pointer]
+      - generic [ref=e2268]:
+        - generic [ref=e2269]: Celular
+        - generic [ref=e2270]: 📱 XIAOMI
+        - generic [ref=e2271]: XIAOMI NOTE 15 PRO 5G 8/512GB
+        - generic [ref=e2272]: $1.134.000
+        - generic [ref=e2273]:
+          - button "−" [ref=e2274] [cursor=pointer]
+          - generic [ref=e2275]: "0"
+          - button "+" [ref=e2276] [cursor=pointer]
+          - button "+ Agregar" [ref=e2277] [cursor=pointer]
+      - generic [ref=e2278]:
+        - generic [ref=e2279]: Celular
+        - generic [ref=e2280]: 📱 XIAOMI
+        - generic [ref=e2281]: XIAOMI NOTE 15 PRO 8/256GB
+        - generic [ref=e2282]: $880.000
+        - generic [ref=e2283]:
+          - button "−" [ref=e2284] [cursor=pointer]
+          - generic [ref=e2285]: "0"
+          - button "+" [ref=e2286] [cursor=pointer]
+          - button "+ Agregar" [ref=e2287] [cursor=pointer]
+      - generic [ref=e2288]:
+        - generic [ref=e2289]: Celular
+        - generic [ref=e2290]: 📱 XIAOMI
+        - generic [ref=e2291]: XIAOMI NOTE 15 PRO 8/256GB 5G
+        - generic [ref=e2292]: $1.120.000
+        - generic [ref=e2293]:
+          - button "−" [ref=e2294] [cursor=pointer]
+          - generic [ref=e2295]: "0"
+          - button "+" [ref=e2296] [cursor=pointer]
+          - button "+ Agregar" [ref=e2297] [cursor=pointer]
+      - generic [ref=e2298]:
+        - generic [ref=e2299]: Accesorio
+        - generic [ref=e2300]: 📱 XIAOMI
+        - generic [ref=e2301]: XIAOMI POWER BANK 10.000MAH
+        - generic [ref=e2302]: $115.900
+        - generic [ref=e2303]:
+          - button "−" [ref=e2304] [cursor=pointer]
+          - generic [ref=e2305]: "0"
+          - button "+" [ref=e2306] [cursor=pointer]
+          - button "+ Agregar" [ref=e2307] [cursor=pointer]
+      - generic [ref=e2308]:
+        - generic [ref=e2309]: Accesorio
+        - generic [ref=e2310]: 📱 XIAOMI
+        - generic [ref=e2311]: XIAOMI POWER BANK 10.000MAH 165W
+        - generic [ref=e2312]: $215.900
+        - generic [ref=e2313]:
+          - button "−" [ref=e2314] [cursor=pointer]
+          - generic [ref=e2315]: "0"
+          - button "+" [ref=e2316] [cursor=pointer]
+          - button "+ Agregar" [ref=e2317] [cursor=pointer]
+      - generic [ref=e2318]:
+        - generic [ref=e2319]: Accesorio
+        - generic [ref=e2320]: 📱 XIAOMI
+        - generic [ref=e2321]: XIAOMI POWER BANK 20.000MAH 18W FAST
+        - generic [ref=e2322]: $146.000
+        - generic [ref=e2323]:
+          - button "−" [ref=e2324] [cursor=pointer]
+          - generic [ref=e2325]: "0"
+          - button "+" [ref=e2326] [cursor=pointer]
+          - button "+ Agregar" [ref=e2327] [cursor=pointer]
+      - generic [ref=e2328]:
+        - generic [ref=e2329]: Celular
+        - generic [ref=e2330]: 📱 XIAOMI
+        - generic [ref=e2331]: XIAOMI REDMI 15 4G 6/128GB
+        - generic [ref=e2332]: $545.000
+        - generic [ref=e2333]:
+          - button "−" [ref=e2334] [cursor=pointer]
+          - generic [ref=e2335]: "0"
+          - button "+" [ref=e2336] [cursor=pointer]
+          - button "+ Agregar" [ref=e2337] [cursor=pointer]
+      - generic [ref=e2338]:
+        - generic [ref=e2339]: Celular
+        - generic [ref=e2340]: 📱 XIAOMI
+        - generic [ref=e2341]: XIAOMI REDMI 15 4G 8/256GB
+        - generic [ref=e2342]: $645.000
+        - generic [ref=e2343]:
+          - button "−" [ref=e2344] [cursor=pointer]
+          - generic [ref=e2345]: "0"
+          - button "+" [ref=e2346] [cursor=pointer]
+          - button "+ Agregar" [ref=e2347] [cursor=pointer]
+      - generic [ref=e2348]:
+        - generic [ref=e2349]: Celular
+        - generic [ref=e2350]: 📱 XIAOMI
+        - generic [ref=e2351]: XIAOMI REDMI 15 6/128GB
+        - generic [ref=e2352]: $510.000
+        - generic [ref=e2353]:
+          - button "−" [ref=e2354] [cursor=pointer]
+          - generic [ref=e2355]: "0"
+          - button "+" [ref=e2356] [cursor=pointer]
+          - button "+ Agregar" [ref=e2357] [cursor=pointer]
+      - generic [ref=e2358]:
+        - generic [ref=e2359]: Celular
+        - generic [ref=e2360]: 📱 XIAOMI
+        - generic [ref=e2361]: XIAOMI REDMI 15 8/256GB
+        - generic [ref=e2362]: $590.000
+        - generic [ref=e2363]:
+          - button "−" [ref=e2364] [cursor=pointer]
+          - generic [ref=e2365]: "0"
+          - button "+" [ref=e2366] [cursor=pointer]
+          - button "+ Agregar" [ref=e2367] [cursor=pointer]
+      - generic [ref=e2368]:
+        - generic [ref=e2369]: Celular
+        - generic [ref=e2370]: 📱 XIAOMI
+        - generic [ref=e2371]: XIAOMI REDMI 15C 4/128GB
+        - generic [ref=e2372]: $410.000
+        - generic [ref=e2373]:
+          - button "−" [ref=e2374] [cursor=pointer]
+          - generic [ref=e2375]: "0"
+          - button "+" [ref=e2376] [cursor=pointer]
+          - button "+ Agregar" [ref=e2377] [cursor=pointer]
+      - generic [ref=e2378]:
+        - generic [ref=e2379]: Celular
+        - generic [ref=e2380]: 📱 XIAOMI
+        - generic [ref=e2381]: XIAOMI REDMI 15C 4/256GB
+        - generic [ref=e2382]: $440.000
+        - generic [ref=e2383]:
+          - button "−" [ref=e2384] [cursor=pointer]
+          - generic [ref=e2385]: "0"
+          - button "+" [ref=e2386] [cursor=pointer]
+          - button "+ Agregar" [ref=e2387] [cursor=pointer]
+      - generic [ref=e2388]:
+        - generic [ref=e2389]: Celular
+        - generic [ref=e2390]: 📱 XIAOMI
+        - generic [ref=e2391]: XIAOMI REDMI 15C 4/256GB 1SIM
+        - generic [ref=e2392]: $440.000
+        - generic [ref=e2393]:
+          - button "−" [ref=e2394] [cursor=pointer]
+          - generic [ref=e2395]: "0"
+          - button "+" [ref=e2396] [cursor=pointer]
+          - button "+ Agregar" [ref=e2397] [cursor=pointer]
+      - generic [ref=e2398]:
+        - generic [ref=e2399]: Celular
+        - generic [ref=e2400]: 📱 XIAOMI
+        - generic [ref=e2401]: XIAOMI REDMI 15C 8/256GB
+        - generic [ref=e2402]: $490.000
+        - generic [ref=e2403]:
+          - button "−" [ref=e2404] [cursor=pointer]
+          - generic [ref=e2405]: "0"
+          - button "+" [ref=e2406] [cursor=pointer]
+          - button "+ Agregar" [ref=e2407] [cursor=pointer]
+      - generic [ref=e2408]:
+        - generic [ref=e2409]: Celular
+        - generic [ref=e2410]: 📱 XIAOMI
+        - generic [ref=e2411]: XIAOMI REDMI A5 128GB
+        - generic [ref=e2412]: $380.000
+        - generic [ref=e2413]:
+          - button "−" [ref=e2414] [cursor=pointer]
+          - generic [ref=e2415]: "0"
+          - button "+" [ref=e2416] [cursor=pointer]
+          - button "+ Agregar" [ref=e2417] [cursor=pointer]
+      - generic [ref=e2418]:
+        - generic [ref=e2419]: Celular
+        - generic [ref=e2420]: 📱 XIAOMI
+        - generic [ref=e2421]: XIAOMI REDMI A5 3/64GB
+        - generic [ref=e2422]: $335.000
+        - generic [ref=e2423]:
+          - button "−" [ref=e2424] [cursor=pointer]
+          - generic [ref=e2425]: "0"
+          - button "+" [ref=e2426] [cursor=pointer]
+          - button "+ Agregar" [ref=e2427] [cursor=pointer]
+      - generic [ref=e2428]:
+        - generic [ref=e2429]: Celular
+        - generic [ref=e2430]: 📱 XIAOMI
+        - generic [ref=e2431]: XIAOMI REDMI A5 4/128GB
+        - generic [ref=e2432]: $385.000
+        - generic [ref=e2433]:
+          - button "−" [ref=e2434] [cursor=pointer]
+          - generic [ref=e2435]: "0"
+          - button "+" [ref=e2436] [cursor=pointer]
+          - button "+ Agregar" [ref=e2437] [cursor=pointer]
+      - generic [ref=e2438]:
+        - generic [ref=e2439]: Celular
+        - generic [ref=e2440]: 📱 XIAOMI
+        - generic [ref=e2441]: XIAOMI REDMI A5 64GB
+        - generic [ref=e2442]: $330.000
+        - generic [ref=e2443]:
+          - button "−" [ref=e2444] [cursor=pointer]
+          - generic [ref=e2445]: "0"
+          - button "+" [ref=e2446] [cursor=pointer]
+          - button "+ Agregar" [ref=e2447] [cursor=pointer]
+      - generic [ref=e2448]:
+        - generic [ref=e2449]: Celular
+        - generic [ref=e2450]: 📱 XIAOMI
+        - generic [ref=e2451]: XIAOMI REDMI A7 3/64GB
+        - generic [ref=e2452]: $335.000
+        - generic [ref=e2453]:
+          - button "−" [ref=e2454] [cursor=pointer]
+          - generic [ref=e2455]: "0"
+          - button "+" [ref=e2456] [cursor=pointer]
+          - button "+ Agregar" [ref=e2457] [cursor=pointer]
+      - generic [ref=e2458]:
+        - generic [ref=e2459]: Celular
+        - generic [ref=e2460]: 📱 XIAOMI
+        - generic [ref=e2461]: XIAOMI REDMI A7 PRO 4/128GB
+        - generic [ref=e2462]: $392.000
+        - generic [ref=e2463]:
+          - button "−" [ref=e2464] [cursor=pointer]
+          - generic [ref=e2465]: "0"
+          - button "+" [ref=e2466] [cursor=pointer]
+          - button "+ Agregar" [ref=e2467] [cursor=pointer]
+      - generic [ref=e2468]:
+        - generic [ref=e2469]: Celular
+        - generic [ref=e2470]: 📱 XIAOMI
+        - generic [ref=e2471]: XIAOMI REDMI A7 PRO 4/64GB
+        - generic [ref=e2472]: $355.000
+        - generic [ref=e2473]:
+          - button "−" [ref=e2474] [cursor=pointer]
+          - generic [ref=e2475]: "0"
+          - button "+" [ref=e2476] [cursor=pointer]
+          - button "+ Agregar" [ref=e2477] [cursor=pointer]
+      - generic [ref=e2478]:
+        - generic [ref=e2479]: Accesorio
+        - generic [ref=e2480]: 📱 XIAOMI
+        - generic [ref=e2481]: XIAOMI SMART BAND 9 ACTIVE
+        - generic [ref=e2482]: $109.900
+        - generic [ref=e2483]:
+          - button "−" [ref=e2484] [cursor=pointer]
+          - generic [ref=e2485]: "0"
+          - button "+" [ref=e2486] [cursor=pointer]
+          - button "+ Agregar" [ref=e2487] [cursor=pointer]
+      - generic [ref=e2488]:
+        - generic [ref=e2489]: Accesorio
+        - generic [ref=e2490]: 📱 XIAOMI
+        - generic [ref=e2491]: XIAOMI SPEAKER 30W
+        - generic [ref=e2492]: $185.000
+        - generic [ref=e2493]:
+          - button "−" [ref=e2494] [cursor=pointer]
+          - generic [ref=e2495]: "0"
+          - button "+" [ref=e2496] [cursor=pointer]
+          - button "+ Agregar" [ref=e2497] [cursor=pointer]
+      - generic [ref=e2498]:
+        - generic [ref=e2499]: Accesorio
+        - generic [ref=e2500]: 📱 XIAOMI
+        - generic [ref=e2501]: XIAOMI WATCH 5 ACTIVE
+        - generic [ref=e2502]: $142.000
+        - generic [ref=e2503]:
+          - button "−" [ref=e2504] [cursor=pointer]
+          - generic [ref=e2505]: "0"
+          - button "+" [ref=e2506] [cursor=pointer]
+          - button "+ Agregar" [ref=e2507] [cursor=pointer]
+      - generic [ref=e2508]:
+        - generic [ref=e2509]: Accesorio
+        - generic [ref=e2510]: 📱 XIAOMI
+        - generic [ref=e2511]: XIAOMI WATCH 5 LITE
+        - generic [ref=e2512]: $199.900
+        - generic [ref=e2513]:
+          - button "−" [ref=e2514] [cursor=pointer]
+          - generic [ref=e2515]: "0"
+          - button "+" [ref=e2516] [cursor=pointer]
+          - button "+ Agregar" [ref=e2517] [cursor=pointer]
+      - generic [ref=e2518]:
+        - generic [ref=e2519]: Celular
+        - generic [ref=e2520]: 📱 ZTE
+        - generic [ref=e2521]: ZTE A35E
+        - generic [ref=e2522]: $250.000
+        - generic [ref=e2523]:
+          - button "−" [ref=e2524] [cursor=pointer]
+          - generic [ref=e2525]: "0"
+          - button "+" [ref=e2526] [cursor=pointer]
+          - button "+ Agregar" [ref=e2527] [cursor=pointer]
+      - generic [ref=e2528]:
+        - generic [ref=e2529]: Celular
+        - generic [ref=e2530]: 📱 ZTE
+        - generic [ref=e2531]: ZTE A35E 2/64GB
+        - generic [ref=e2532]: $255.000
+        - generic [ref=e2533]:
+          - button "−" [ref=e2534] [cursor=pointer]
+          - generic [ref=e2535]: "0"
+          - button "+" [ref=e2536] [cursor=pointer]
+          - button "+ Agregar" [ref=e2537] [cursor=pointer]
+      - generic [ref=e2538]:
+        - generic [ref=e2539]: Celular
+        - generic [ref=e2540]: 📱 ZTE
+        - generic [ref=e2541]: ZTE A55 4/128GB
+        - generic [ref=e2542]: $285.000
+        - generic [ref=e2543]:
+          - button "−" [ref=e2544] [cursor=pointer]
+          - generic [ref=e2545]: "0"
+          - button "+" [ref=e2546] [cursor=pointer]
+          - button "+ Agregar" [ref=e2547] [cursor=pointer]
+      - generic [ref=e2548]:
+        - generic [ref=e2549]: Celular
+        - generic [ref=e2550]: 📱 ZTE
+        - generic [ref=e2551]: ZTE A56 4/128GB
+        - generic [ref=e2552]: $306.000
+        - generic [ref=e2553]:
+          - button "−" [ref=e2554] [cursor=pointer]
+          - generic [ref=e2555]: "0"
+          - button "+" [ref=e2556] [cursor=pointer]
+          - button "+ Agregar" [ref=e2557] [cursor=pointer]
+      - generic [ref=e2558]:
+        - generic [ref=e2559]: Celular
+        - generic [ref=e2560]: 📱 ZTE
+        - generic [ref=e2561]: ZTE A56 PRO 4/128GB
+        - generic [ref=e2562]: $340.000
+        - generic [ref=e2563]:
+          - button "−" [ref=e2564] [cursor=pointer]
+          - generic [ref=e2565]: "0"
+          - button "+" [ref=e2566] [cursor=pointer]
+          - button "+ Agregar" [ref=e2567] [cursor=pointer]
+      - generic [ref=e2568]:
+        - generic [ref=e2569]: Celular
+        - generic [ref=e2570]: 📱 ZTE
+        - generic [ref=e2571]: ZTE NUBIA AIR 8/256GB
+        - generic [ref=e2572]: $770.000
+        - generic [ref=e2573]:
+          - button "−" [ref=e2574] [cursor=pointer]
+          - generic [ref=e2575]: "0"
+          - button "+" [ref=e2576] [cursor=pointer]
+          - button "+ Agregar" [ref=e2577] [cursor=pointer]
+      - generic [ref=e2578]:
+        - generic [ref=e2579]: Celular
+        - generic [ref=e2580]: 📱 ZTE
+        - generic [ref=e2581]: ZTE NUBIA FOCUS PRO 8/256GB
+        - generic [ref=e2582]: $730.000
+        - generic [ref=e2583]:
+          - button "−" [ref=e2584] [cursor=pointer]
+          - generic [ref=e2585]: "0"
+          - button "+" [ref=e2586] [cursor=pointer]
+          - button "+ Agregar" [ref=e2587] [cursor=pointer]
+      - generic [ref=e2588]:
+        - generic [ref=e2589]: Celular
+        - generic [ref=e2590]: 📱 ZTE
+        - generic [ref=e2591]: ZTE NUBIA NEO 3 GT 256GB
+        - generic [ref=e2592]: $775.000
+        - generic [ref=e2593]:
+          - button "−" [ref=e2594] [cursor=pointer]
+          - generic [ref=e2595]: "0"
+          - button "+" [ref=e2596] [cursor=pointer]
+          - button "+ Agregar" [ref=e2597] [cursor=pointer]
+      - generic [ref=e2598]:
+        - generic [ref=e2599]: Celular
+        - generic [ref=e2600]: 📱 ZTE
+        - generic [ref=e2601]: ZTE NUBIA V8 MAX 8/256GB
+        - generic [ref=e2602]: $450.000
+        - generic [ref=e2603]:
+          - button "−" [ref=e2604] [cursor=pointer]
+          - generic [ref=e2605]: "0"
+          - button "+" [ref=e2606] [cursor=pointer]
+          - button "+ Agregar" [ref=e2607] [cursor=pointer]
+      - generic [ref=e2608]:
+        - generic [ref=e2609]: Celular
+        - generic [ref=e2610]: 📱 ZTE
+        - generic [ref=e2611]: ZTE NUBIA V80 PRO 8/256GB
+        - generic [ref=e2612]: $585.000
+        - generic [ref=e2613]:
+          - button "−" [ref=e2614] [cursor=pointer]
+          - generic [ref=e2615]: "0"
+          - button "+" [ref=e2616] [cursor=pointer]
+          - button "+ Agregar" [ref=e2617] [cursor=pointer]
+      - generic [ref=e2618]:
+        - generic [ref=e2619]: Celular
+        - generic [ref=e2620]: 📱 ZTE
+        - generic [ref=e2621]: ZTE V70 DESIGN 20/256GB
+        - generic [ref=e2622]: $360.000
+        - generic [ref=e2623]:
+          - button "−" [ref=e2624] [cursor=pointer]
+          - generic [ref=e2625]: "0"
+          - button "+" [ref=e2626] [cursor=pointer]
+          - button "+ Agregar" [ref=e2627] [cursor=pointer]
+      - generic [ref=e2628]:
+        - generic [ref=e2629]: Celular
+        - generic [ref=e2630]: 📱 ZTE
+        - generic [ref=e2631]: ZTE V80 MAX 8/256GB
+        - generic [ref=e2632]: $455.000
+        - generic [ref=e2633]:
+          - button "−" [ref=e2634] [cursor=pointer]
+          - generic [ref=e2635]: "0"
+          - button "+" [ref=e2636] [cursor=pointer]
+          - button "+ Agregar" [ref=e2637] [cursor=pointer]
+      - generic [ref=e2638]:
+        - generic [ref=e2639]: Celular
+        - generic [ref=e2640]: 📱 ZTE
+        - generic [ref=e2641]: ZTE V80 PRO 8/256GB
+        - generic [ref=e2642]: $585.000
+        - generic [ref=e2643]:
+          - button "−" [ref=e2644] [cursor=pointer]
+          - generic [ref=e2645]: "0"
+          - button "+" [ref=e2646] [cursor=pointer]
+          - button "+ Agregar" [ref=e2647] [cursor=pointer]
