@@ -200,7 +200,7 @@ body{font-family:var(--font);background:var(--navy);min-height:100vh;overflow:hi
 .config-dot.ok{background:var(--green)}
 
 /* ── IFRAME VIEW ────────────────────────────────────────────── */
-.iframe-view{display:none;flex-direction:column;height:100%}
+.iframe-view{display:none;flex-direction:column;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1000;background:var(--bg)}
 .iframe-view.visible{display:flex}
 .iframe-topbar{
   height:44px;flex-shrink:0;background:var(--navy);
