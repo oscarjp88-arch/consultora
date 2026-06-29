@@ -953,6 +953,38 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('apiModal').classList.add('hidden');
   }
   updateImgKeyStatus();
+
+  // ── Precarga desde Calendario (parámetros URL) ──────────────────
+  const p = new URLSearchParams(location.search);
+  if (p.get('copy') || p.get('producto') || p.get('tipo')) {
+    setTimeout(() => {
+      // Ciudad
+      if (p.get('ciudad')) {
+        const sel = document.getElementById('ciudad');
+        const opts = [...sel.options];
+        const match = opts.find(o => o.value === p.get('ciudad') || o.value.includes(p.get('ciudad')));
+        if (match) { sel.value = match.value; sel.dispatchEvent(new Event('change')); }
+      }
+      // Modo según tipo de post
+      const tipoPost = p.get('tipo') || '';
+      const modoSel = document.getElementById('modo');
+      if (tipoPost.includes('Producto') || tipoPost.includes('CTA')) {
+        modoSel.value = 'credito'; modoSel.dispatchEvent(new Event('change'));
+      } else if (tipoPost.includes('Testimonio') || tipoPost.includes('Story')) {
+        modoSel.value = 'tienda'; modoSel.dispatchEvent(new Event('change'));
+      } else {
+        modoSel.value = 'servicio'; modoSel.dispatchEvent(new Event('change'));
+      }
+      // Producto
+      if (p.get('producto')) document.getElementById('producto').value = p.get('producto');
+      // Copy como nota especial
+      if (p.get('copy')) {
+        const nota = document.getElementById('nota');
+        nota.value = p.get('copy');
+        nota.dispatchEvent(new Event('input'));
+      }
+    }, 300);
+  }
 });
 
 const PLATFORMS_META = {

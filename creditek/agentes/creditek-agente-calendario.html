@@ -520,6 +520,7 @@ hdr.innerHTML = `<span class="cal-title">📅 ${tituloCalendario} — ${mes} ${a
         <div class="dcard-actions">
           <button class="cpbtn" onclick="copiar(this,${i})">Copiar</button>
           <button class="expbtn" onclick="expandir(this,${i})">Ver más ▼</button>
+          <button class="cpbtn" onclick="abrirDiseno(${i})" style="border-color:rgba(0,196,204,.4);color:#00C4CC">🎨 Crear imagen</button>
         </div>
       </div>
     `;
@@ -691,6 +692,7 @@ Varía los productos mencionados entre Samsung, Xiaomi, Infinix, Tecno y Motorol
     setTimeout(() => { pw.style.display = 'none'; pFill.style.width = '0%'; }, 1200);
 
     renderCalendario(dias, ciudad, mes, anio);
+    guardarCalendario(dias, ciudad, mes, anio);
 
     document.getElementById('topTitle').textContent = `${ciudad} — ${mes} ${anio}`;
     document.getElementById('topSub').textContent = `${dias.length} publicaciones · ${plats.join(', ')}`;
@@ -714,6 +716,78 @@ Varía los productos mencionados entre Samsung, Xiaomi, Infinix, Tecno y Motorol
     sp.style.display = 'none';
   }
 }
+
+// ── Abrir Agente 1 con datos precargados ────────────────────────
+function abrirDiseno(idx) {
+  const card = document.querySelectorAll('.dcard')[idx];
+  if (!card) return;
+  const copy = document.getElementById('copy-' + idx)?.textContent?.trim() || '';
+  const titulo = card.querySelector('.dcard-title')?.textContent?.trim() || '';
+  const tipo = card.querySelector('.dtype')?.textContent?.trim() || '';
+  const ciudadSel = document.getElementById('ciudad').value;
+  
+  // Detectar producto en el copy
+  const marcas = ['Samsung','Xiaomi','Oppo','Honor','Infinix','Motorola','TCL'];
+  const productoDetectado = marcas.find(m => copy.includes(m) || titulo.includes(m)) || '';
+  
+  // Mapear ciudad del calendario al valor del Agente 1
+  let ciudadParam = 'General Creditek';
+  if (ciudadSel.startsWith('Toda la red')) ciudadParam = 'General Creditek';
+  else {
+    const partes = ciudadSel.split(' — ');
+    if (partes.length > 1) ciudadParam = partes[0]; // ciudad
+  }
+  
+  const params = new URLSearchParams({
+    copy: copy.substring(0, 500),
+    tipo: tipo,
+    producto: productoDetectado,
+    ciudad: ciudadParam,
+    titulo: titulo.substring(0, 100),
+  });
+  
+  window.open('../agentes/creditek-agente-redes.html?' + params.toString(), '_blank');
+}
+
+// ── Persistencia del calendario ──────────────────────────────────
+function guardarCalendario(dias, ciudad, mes, anio) {
+  try {
+    localStorage.setItem('ck_calendario', JSON.stringify({ dias, ciudad, mes, anio, ts: Date.now() }));
+  } catch(e) {}
+}
+
+function cargarCalendarioGuardado() {
+  try {
+    const raw = localStorage.getItem('ck_calendario');
+    if (!raw) return;
+    const { dias, ciudad, mes, anio, ts } = JSON.parse(raw);
+    // Solo cargar si tiene menos de 7 días
+    if (Date.now() - ts > 7 * 24 * 60 * 60 * 1000) return;
+    
+    // Restaurar selector de ciudad y mes
+    const selCiudad = document.getElementById('ciudad');
+    const selMes = document.getElementById('mes');
+    const selAnio = document.getElementById('anio');
+    [...selCiudad.options].forEach(o => { if (o.value === ciudad) o.selected = true; });
+    [...selMes.options].forEach(o => { if (o.value === mes) o.selected = true; });
+    [...selAnio.options].forEach(o => { if (o.value == anio) o.selected = true; });
+    
+    renderCalendario(dias, ciudad, mes, anio);
+    guardarCalendario(dias, ciudad, mes, anio);
+    document.getElementById('topTitle').textContent = ciudad.startsWith('Toda la red') ? 'Toda la red Creditek' : ciudad.split(' (')[0].split(' — ')[0].trim() + ' — ' + mes + ' ' + anio;
+    document.getElementById('topSub').textContent = dias.length + ' publicaciones guardadas';
+    document.getElementById('filtersBar').style.display = 'flex';
+    document.getElementById('statsBar').style.display = 'flex';
+    document.getElementById('copyAllBtn').style.display = '';
+    document.getElementById('printBtn').style.display = '';
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('calGrid').style.display = 'grid';
+  } catch(e) {}
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  cargarCalendarioGuardado();
+});
 </script>
 </body>
 </html>
