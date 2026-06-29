@@ -182,7 +182,7 @@ select option{background:var(--bg2)}
 <div id="apiModal">
   <div class="m-card">
     <div class="m-logo">
-      <img src="logo.png" alt="Creditek">
+      <img src="https://oscarjp88-arch.github.io/consultora/logos/creditek_logo_corregido_alta.png" alt="Creditek">
       <span class="m-logo-name">CREDITEK</span>
     </div>
     <div>
@@ -207,10 +207,10 @@ select option{background:var(--bg2)}
 <!-- ══════════════════════════ SIDEBAR ══════════════════════════ -->
 <aside class="sidebar">
   <div class="logo-wrap">
-    <img class="logo-img" src="logo.png" alt="Creditek">
+    <img class="logo-img" src="https://oscarjp88-arch.github.io/consultora/logos/creditek_logo_corregido_alta.png" alt="Creditek">
     <div>
       <div class="logo-title">CREDITEK</div>
-      <div class="logo-sub">Agente 3 · Calendario</div>
+      <div class="logo-sub">Agente 4 · Calendario</div>
     </div>
   </div>
 
@@ -219,17 +219,18 @@ select option{background:var(--bg2)}
     <div class="fg">
       <label class="fl">Ciudad / Sucursal</label>
       <select id="ciudad">
-        <option value="Tolú Centro (CK-01)">Tolú Centro (CK-01)</option>
-        <option value="Tolú Norte (CK-10)">Tolú Norte (CK-10)</option>
-        <option value="Corozal Centro (CK-02)">Corozal Centro (CK-02)</option>
-        <option value="Corozal (CK-03)">Corozal (CK-03)</option>
-        <option value="Corozal Sur (CK-04)">Corozal Sur (CK-04)</option>
-        <option value="Chinú Centro (CK-05)">Chinú Centro (CK-05)</option>
-        <option value="Chinú (CK-06)">Chinú (CK-06)</option>
-        <option value="Chinú Norte (CK-07)">Chinú Norte (CK-07)</option>
-        <option value="Ciénaga de Oro (CK-08)">Ciénaga de Oro (CK-08)</option>
-        <option value="Ciénaga de Oro Sur (CK-09)">Ciénaga de Oro Sur (CK-09)</option>
-        <option value="Coveñas (CK-11)">Coveñas (CK-11)</option>
+        <option value="Toda la red Creditek" selected>🏪 Toda la red Creditek</option>
+        <option value="Tolú Centro (CK-01)">Tolú — Cellfiao (CK-01)</option>
+        <option value="Tolú — Tolú 02 (CK-10)">Tolú — Tolú 02 (CK-10)</option>
+        <option value="Corozal — Movil Shoping (CK-02)">Corozal — Movil Shoping (CK-02)</option>
+        <option value="Corozal — Celfiao Tecnologia (CK-03)">Corozal — Celfiao Tecnologia (CK-03)</option>
+        <option value="Corozal — Creditel Store (CK-04)">Corozal — Creditel Store (CK-04)</option>
+        <option value="Chinú — Chinu Cell (CK-05)">Chinú — Chinu Cell (CK-05)</option>
+        <option value="Chinú — Creditel Chinu (CK-06)">Chinú — Creditel Chinu (CK-06)</option>
+        <option value="Chinú — Sonivox (CK-07)">Chinú — Sonivox (CK-07)</option>
+        <option value="Ciénaga de Oro — Orocell (CK-08)">Ciénaga de Oro — Orocell (CK-08)</option>
+        <option value="Ciénaga de Oro — Kredisinu (CK-09)">Ciénaga de Oro — Kredisinu (CK-09)</option>
+        <option value="Coveñas — Creditel Coveñas (CK-11)">Coveñas — Creditel Coveñas (CK-11)</option>
       </select>
     </div>
     <div class="fg">
@@ -239,9 +240,9 @@ select option{background:var(--bg2)}
         <option value="Febrero">Febrero</option>
         <option value="Marzo">Marzo</option>
         <option value="Abril">Abril</option>
-        <option value="Mayo" selected>Mayo</option>
+        <option value="Mayo">Mayo</option>
         <option value="Junio">Junio</option>
-        <option value="Julio">Julio</option>
+        <option value="Julio" selected>Julio</option>
         <option value="Agosto">Agosto</option>
         <option value="Septiembre">Septiembre</option>
         <option value="Octubre">Octubre</option>
@@ -489,7 +490,8 @@ function renderCalendario(dias, ciudad, mes, anio) {
   // Header
   const hdr = document.createElement('div');
   hdr.className = 'cal-header';
-  hdr.innerHTML = `<span class="cal-title">📅 ${ciudad} — ${mes} ${anio}</span><span class="cal-count">${dias.length} publicaciones</span>`;
+  const tituloCalendario = ciudad.startsWith('Toda la red') ? 'Toda la red Creditek' : ciudad.split(' (')[0].split(' — ')[0].trim();
+hdr.innerHTML = `<span class="cal-title">📅 ${tituloCalendario} — ${mes} ${anio}</span><span class="cal-count">${dias.length} publicaciones</span>`;
   grid.appendChild(hdr);
 
   dias.forEach((d, i) => {
@@ -586,18 +588,21 @@ async function generar() {
   const productoInfo = producto ? `\n- Producto estrella: ${producto}${cuota ? ` — cuota: ${cuota}` : ''}` : '';
   const notaInfo = nota ? `\n- Contexto especial del mes: ${nota}` : '';
 
-  const systemPrompt = `Eres el estratega de contenido de Creditek, empresa colombiana de celulares a crédito con tiendas en el Caribe colombiano.
+  const systemPrompt = `Eres el estratega de contenido de Creditek, empresa colombiana de financiación de productos electrónicos y artículos de belleza con tiendas aliadas en el Caribe colombiano.
 
 CONTEXTO DE MARCA:
-- Producto: Celulares a crédito (Samsung, Xiaomi, Infinix, Tecno, Motorola)
-- Plataformas de crédito: PayJoy, Alo Credit, Krediya, Addi
-- Requisitos: Cédula + cuota inicial (~25%). Sin banco. Sin fiador.
+- Productos: Celulares (Samsung, Xiaomi, Oppo, Honor, Infinix, Motorola, TCL), parlantes, accesorios, artículos de belleza y más
+- Financiación a través de: PayJoy, Alo Credit, Krediya, Addi
+- Requisitos: Solo cédula. Sin banco. Sin fiador. Sin codeudor.
 - Aprobación: Mismo día, en minutos
-- Plazos: 4, 6 u 8 meses
-- Público: NSE 2-3, Caribe colombiano, lenguaje cercano y costeño
-- Colores marca: azul #0B1E3D, turquesa #00C4CC
-- CTA siempre lleva a visitar la tienda física o escribir al WhatsApp
-- Tono: Humano, directo, sin sonar corporativo. Costeño sin ser informal.
+- Plazos: 4, 6, 8 o 12 meses
+- Bono de $30.000 al enviar soporte de primera cuota
+- Asistente virtual Sofía atiende por WhatsApp al +57 324 2030299
+- Tiendas aliadas en: Tolú, Corozal, Chinú, Ciénaga de Oro y Coveñas (Caribe colombiano)
+- Público: NSE 2-3, Costa Caribe colombiana, lenguaje cercano y costeño
+- Tono: Humano, directo, cálido, sin sonar corporativo. Costeño sin ser informal.
+- NUNCA uses "bacano" en el contenido
+- CTA siempre lleva a escribir al WhatsApp de Sofía (+57 324 2030299) o visitar la tienda aliada más cercana
 
 ROTACIÓN SEMANAL OBLIGATORIA (del skill redes-sociales):
 - Lunes → Educativo: cómo funciona el crédito, qué es PayJoy/AloCredit/Krediya/Addi, mitos sobre el crédito
