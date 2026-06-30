@@ -737,12 +737,8 @@ async function publicarCampana() {
           link_data: {
             message: adText,
             image_hash: imageHash,
-            call_to_action: ctaWhatsApp,
-            page_welcome_message: JSON.stringify({
-              version: 2,
-              landing_screen_type: 'welcome_message',
-              message: { text: '¡Hola! Soy Sofía de Creditek 😊 Cuéntame en qué te puedo ayudar.' }
-            })
+            link: 'https://api.whatsapp.com/send',
+            call_to_action: ctaWhatsApp
           }
         }
       : {
