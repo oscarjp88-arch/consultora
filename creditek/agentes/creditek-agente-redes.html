@@ -965,16 +965,21 @@ window.addEventListener('DOMContentLoaded', () => {
         const match = opts.find(o => o.value === p.get('ciudad') || o.value.includes(p.get('ciudad')));
         if (match) { sel.value = match.value; sel.dispatchEvent(new Event('change')); }
       }
-      // Modo según tipo de post
-      const tipoPost = p.get('tipo') || '';
-      const modoSel = document.getElementById('modo');
-      if (tipoPost.includes('Producto') || tipoPost.includes('CTA')) {
-        modoSel.value = 'credito'; modoSel.dispatchEvent(new Event('change'));
-      } else if (tipoPost.includes('Testimonio') || tipoPost.includes('Story')) {
-        modoSel.value = 'tienda'; modoSel.dispatchEvent(new Event('change'));
-      } else {
-        modoSel.value = 'servicio'; modoSel.dispatchEvent(new Event('change'));
-      }
+            // Modo y Tipo de pieza según tipo de post del calendario (Agente 4)
+            const tipoPost = p.get('tipo') || '';
+            const modoSel = document.getElementById('modo');
+            const tipoSel = document.getElementById('tipo');
+            let modoDestino = 'servicio', tipoDestino = 'educativo';
+            if (tipoPost.includes('Producto')) { modoDestino = 'credito'; tipoDestino = 'showcase_producto'; }
+            else if (tipoPost.includes('CTA')) { modoDestino = 'credito'; tipoDestino = 'promo_urgencia'; }
+            else if (tipoPost.includes('Testimonio')) { modoDestino = 'tienda'; tipoDestino = 'testimonio'; }
+            else if (tipoPost.includes('Story')) { modoDestino = 'tienda'; tipoDestino = 'detras_camara'; }
+            else if (tipoPost.includes('Educ')) { modoDestino = 'servicio'; tipoDestino = 'educativo'; }
+            else if (tipoPost.includes('Tip')) { modoDestino = 'servicio'; tipoDestino = 'educativo'; }
+            else if (tipoPost.includes('Reflex')) { modoDestino = 'institucional'; tipoDestino = 'inst_valores'; }
+            modoSel.value = modoDestino;
+            modoSel.dispatchEvent(new Event('change'));
+            if ([...tipoSel.options].some(o => o.value === tipoDestino)) { tipoSel.value = tipoDestino; updateTipoUI(); }
       // Producto
       if (p.get('producto')) document.getElementById('producto').value = p.get('producto');
       // Copy como nota especial
