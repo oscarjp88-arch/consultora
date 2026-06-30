@@ -760,7 +760,7 @@ async function publicarCampana() {
       })
     });
     const creativeData = await creativeRes.json();
-    if (creativeData.error) throw new Error('Creative: ' + (creativeData.error.error_user_msg || creativeData.error.message));
+    if (creativeData.error) { console.error('CREATIVE ERROR FULL:', JSON.stringify(creativeData.error)); throw new Error('Creative: ' + (creativeData.error.error_user_msg || creativeData.error.message) + ' | Code: ' + creativeData.error.code + ' Subcode: ' + creativeData.error.error_subcode); }
 
     // 5. Crear ad
     progress.textContent = 'Publicando...';
