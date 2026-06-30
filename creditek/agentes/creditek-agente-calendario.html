@@ -624,8 +624,14 @@ ESTRUCTURA DE CADA TIPO:
 
 RESPONDE ÚNICAMENTE con un array JSON válido. Sin markdown, sin explicaciones, sin texto antes o después del JSON.`;
 
+  const esRedCompleta = ciudad.startsWith('Toda la red') || ciudad.startsWith('General');
+  const ciudadNombre = esRedCompleta ? null : ciudad.split(' (')[0].split(' — ')[0].trim();
+  const contextoTienda = esRedCompleta
+    ? 'Genera contenido genérico para toda la red Creditek en el Caribe colombiano. NO menciones una ciudad específica.'
+    : `Tienda específica: ${ciudad}. Puedes mencionar ${ciudadNombre} de forma breve y natural, sin forzarlo en cada post.`;
+
   const userPrompt = `Genera el calendario de contenido de 30 días para:
-- Tienda: ${ciudad}
+- ${contextoTienda}
 - Mes: ${mes} ${anio}
 - Plataformas: ${plats.join(', ')}${productoInfo}${notaInfo}
 
@@ -638,13 +644,14 @@ Devuelve exactamente 30 objetos JSON con esta estructura:
     "emoji": "📚",
     "titulo": "Título corto del post (max 60 chars)",
     "plataformas": ["Facebook","Instagram"],
-    "copy": "Copy COMPLETO listo para publicar. Incluye emojis naturales y hashtags al final para Instagram. El copy debe mencionar la ciudad ${ciudad.split('(')[0].trim()} cuando sea relevante. Termina siempre con CTA a visitar la tienda o escribir al WhatsApp."
+    "copy": "Copy CORTO de máximo 3-4 líneas, listo para publicar. Gancho + beneficio + CTA. Sin listas ni bullets. Máximo 1 emoji. Termina con CTA a escribir al WhatsApp +57 324 2030299. Máximo 3 hashtags cortos al final."
   }
 ]
 
 El calendario empieza el día 1 de ${mes}. Calcula el día de la semana correcto para ${mes} ${anio}.
-Incluye exactamente 30 entradas. Cada post debe tener copy completo y publicable, no un borrador.
-Varía los productos mencionados entre Samsung, Xiaomi, Infinix, Tecno y Motorola.`;
+Incluye exactamente 30 entradas. CADA COPY DEBE TENER MÁXIMO 3-4 LÍNEAS — esto es publicidad de redes sociales, no un artículo. La gente desliza rápido.
+Varía los productos: Samsung, Xiaomi, Oppo, Honor, Infinix, Motorola, TCL, parlantes, accesorios, artículos de belleza.
+NUNCA uses "bacano".`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
