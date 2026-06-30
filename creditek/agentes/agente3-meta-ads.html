@@ -422,7 +422,7 @@ tr:hover td{background:#F8FAFC}
         <label>Objetivo</label>
         <select id="wiz-objective">
           <option value="seguidores">Seguidores (interacción con perfil) ✓ probado</option>
-          <option value="mensajes" disabled>Mensajes WhatsApp — próximamente</option>
+          <option value="mensajes">Mensajes WhatsApp (con Sofía)</option>
           <option value="trafico" disabled>Tráfico al portal — próximamente</option>
         </select>
       </div>
@@ -669,12 +669,15 @@ async function publicarCampana() {
 
     // 2. Crear campaña
     progress.textContent = 'Creando campaña...';
+    const objetivoSeleccionado = document.getElementById('wiz-objective').value;
+    const esMensajesWA = objetivoSeleccionado === 'mensajes';
+    const campObjective = esMensajesWA ? 'OUTCOME_ENGAGEMENT' : 'OUTCOME_ENGAGEMENT';
     const campRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/campaigns`, {
       method: 'POST',
       body: new URLSearchParams({
         access_token: token,
         name: campaignName,
-        objective: 'OUTCOME_ENGAGEMENT',
+        objective: campObjective,
         status: status,
         special_ad_categories: JSON.stringify([]),
         is_adset_budget_sharing_enabled: 'false'
@@ -698,37 +701,60 @@ async function publicarCampana() {
       },
       targeting_automation: { advantage_audience: 1 }
     };
-    const adsetRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adsets`, {
-      method: 'POST',
-      body: new URLSearchParams({
+    const adsetBody = {
         access_token: token,
         name: 'Costa Caribe - ' + campaignName,
         campaign_id: campData.id,
         daily_budget: String(dailyBudgetCop),
         billing_event: 'IMPRESSIONS',
-        optimization_goal: 'REACH',
+        optimization_goal: esMensajesWA ? 'CONVERSATIONS' : 'REACH',
         bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
         targeting: JSON.stringify(targeting),
         start_time: startTime,
         end_time: endTime,
         status: status
-      })
+    };
+    if (esMensajesWA) {
+      adsetBody.destination_type = 'WHATSAPP';
+      adsetBody.promoted_object = JSON.stringify({ page_id: WIZ_PAGE_ID });
+    }
+    const adsetRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adsets`, {
+      method: 'POST',
+      body: new URLSearchParams(adsetBody)
     });
     const adsetData = await adsetRes.json();
     if (adsetData.error) throw new Error('Ad set: ' + (adsetData.error.error_user_msg || adsetData.error.message));
 
     // 4. Crear creative
     progress.textContent = 'Creando anuncio...';
-    const objectStorySpec = {
-      page_id: WIZ_PAGE_ID,
-      instagram_user_id: WIZ_IG_USER_ID,
-      link_data: {
-        link: 'http://instagram.com/creditekco',
-        message: adText,
-        image_hash: imageHash,
-        call_to_action: { type: 'VIEW_INSTAGRAM_PROFILE', value: { link: 'http://instagram.com/creditekco' } }
-      }
-    };
+    const WHATSAPP_NUMBER = '573242030299';
+    const ctaWhatsApp = { type: 'WHATSAPP_MESSAGE', value: { app_destination: 'WHATSAPP' } };
+    const ctaInstagram = { type: 'VIEW_INSTAGRAM_PROFILE', value: { link: 'http://instagram.com/creditekco' } };
+
+    const objectStorySpec = esMensajesWA
+      ? {
+          page_id: WIZ_PAGE_ID,
+          link_data: {
+            message: adText,
+            image_hash: imageHash,
+            call_to_action: ctaWhatsApp,
+            page_welcome_message: JSON.stringify({
+              version: 2,
+              landing_screen_type: 'welcome_message',
+              message: { text: '¡Hola! Soy Sofía de Creditek 😊 Cuéntame en qué te puedo ayudar.' }
+            })
+          }
+        }
+      : {
+          page_id: WIZ_PAGE_ID,
+          instagram_user_id: WIZ_IG_USER_ID,
+          link_data: {
+            link: 'http://instagram.com/creditekco',
+            message: adText,
+            image_hash: imageHash,
+            call_to_action: ctaInstagram
+          }
+        };
     const creativeRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adcreatives`, {
       method: 'POST',
       body: new URLSearchParams({
