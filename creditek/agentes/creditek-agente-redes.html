@@ -982,11 +982,11 @@ window.addEventListener('DOMContentLoaded', () => {
             if ([...tipoSel.options].some(o => o.value === tipoDestino)) { tipoSel.value = tipoDestino; updateTipoUI(); }
       // Producto
       if (p.get('producto')) document.getElementById('producto').value = p.get('producto');
-      // Copy como nota especial
+      // Copy del Calendario: va al campo principal (producto), no a nota
       if (p.get('copy')) {
-        const nota = document.getElementById('nota');
-        nota.value = p.get('copy');
-        nota.dispatchEvent(new Event('input'));
+        const prodEl = document.getElementById('producto');
+        if (!prodEl.value.trim()) prodEl.value = p.get('copy');
+        prodEl.dispatchEvent(new Event('input'));
       }
     }, 300);
   }
