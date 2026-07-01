@@ -498,10 +498,11 @@ iframe{flex:1;border:none;width:100%;background:var(--bg)}
 const PWD = 'creditek2026';
 
 // ── Login ────────────────────────────────────────────────────────
-function doLogin() {
+async function doLogin() {
   const v = document.getElementById('login-pwd').value;
   if (v === PWD) {
     sessionStorage.setItem('ck_auth', '1');
+    try{const r=await fetch('https://ditiwpndvmyuqcagupea.supabase.co/functions/v1/hub-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({gate:PWD})});if(r.ok){const d=await r.json();sessionStorage.setItem('ck_supa_session',JSON.stringify({access_token:d.access_token,refresh_token:d.refresh_token,expires_at:d.expires_at,email:d.email}))}}catch(e){console.error('SSO login error',e)}
     document.getElementById('login-screen').classList.add('exit');
     setTimeout(() => {
       document.getElementById('login-screen').style.display = 'none';
@@ -517,10 +518,12 @@ function doLogin() {
 
 function doLogout() {
   sessionStorage.removeItem('ck_auth');
+  sessionStorage.removeItem('ck_supa_session');
   location.reload();
 }
 
 // ── Init ─────────────────────────────────────────────────────────
+
 function initApp() {
   updateDate();
   setInterval(updateDate, 60000);
