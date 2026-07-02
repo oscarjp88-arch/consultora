@@ -1913,9 +1913,11 @@ function resetPreviewFields() {
   const sinPrecio = ['captacion','institucional','jornada'].includes(modo);
   const precioWrap = document.getElementById('img-precio')?.closest('.img-prev-field');
   if (precioWrap) precioWrap.style.display = sinPrecio ? 'none' : 'block';
+  // Nota especial — se lee antes para decidir si el titular se autocompleta
+  const notaVal = document.getElementById('nota')?.value.trim() || '';
   const titularDefaults = {
     credito:       cuota ? `¡Tu celular desde ${cuota}!` : '¡El tuyo te está esperando!',
-    promo:         '¡Oferta limitada — solo por hoy!',
+    promo:         '¡Aprovecha esta promoción!',
     tienda:        '¡Visítanos hoy!',
     servicio:      'Te atendemos con gusto',
     captacion:     '¿A quién le ha pasado esto? 👇',
@@ -1929,12 +1931,11 @@ function resetPreviewFields() {
     servicio: ''
   };
   const hayTitularSeleccionado = document.querySelector('.titular-opt.selected');
-  if (!hayTitularSeleccionado) {
+  if (!hayTitularSeleccionado && !notaVal) {
     document.getElementById('img-titular').value = titularDefaults[modo] || titularDefaults.credito;
   }
   document.getElementById('img-precio').value  = precioDefaults[modo] ?? '';
   // Llenar mensaje secundario con la nota especial
-  const notaVal = document.getElementById('nota')?.value.trim() || '';
   const mensajeEl = document.getElementById('img-mensaje');
   if (mensajeEl && notaVal && !mensajeEl.dataset.editado) mensajeEl.value = notaVal;
   const chkEl = document.getElementById('chk-direccion');
@@ -2137,6 +2138,7 @@ function buildImgPrompt() {
     ? 'Composición VERTICAL 1080×1920 px: zona superior (0–20%) → logo Creditek centrado. Zona media (20–70%) → producto protagonista grande, bien iluminado, con iluminación de estudio. Zona inferior (70–100%) → titular en Montserrat Bold + precio en turquesa + botón CTA. Aprovechar toda la altura con espaciado generoso.'
     : 'Composición CUADRADA 1080×1080 px: producto en primer plano a la derecha (55% del ancho), textos jerarquizados a la izquierda (titular → precio → CTA), logo Creditek esquina superior derecha. Equilibrio visual horizontal, punto focal central fuerte.';
 
+  const tipoPersonalizadoVal = document.getElementById('tipo-personalizado')?.value.trim() || '';
   const tipoImgMap = {
     oferta_semana:    `Oferta de la semana: ${producto} protagonista grande y bien iluminado.${precio ? ` Badge de precio "${precio}" muy prominente en turquesa #00C4CC, números grandes y en negrita, posición superior izquierda.` : ''} Titular en Montserrat Bold en la zona izquierda. Jerarquía visual clara: titular → precio → producto → CTA.`,
     showcase_producto:`Showcase del producto: ${producto} centrado como imagen héroe, flotando con sombra suave, bordes nítidos y fondo limpio. Texto mínimo. El producto ocupa el 60–65% de la composición. Etiquetas de specs flotantes si aplica.`,
@@ -2145,7 +2147,9 @@ function buildImgPrompt() {
     promo_urgencia:   `Promo con urgencia: composición de alta energía. Badge "SOLO HOY" o elemento de cuenta regresiva en turquesa #00C4CC. Producto ${producto} con cinta o elemento diagonal de destaque.${precio ? ` Precio "${precio}" en números muy grandes y en negrita.` : ''} Alto contraste, lectura visual inmediata.`,
     detras_camara:    `Detrás de cámara: atmósfera auténtica del interior de una tienda Creditek. Iluminación natural, vitrina con celulares visibles, personas en ambiente real de tienda. Estilo documental — sin overlays gráficos pesados.`,
   };
-  const tipoDesc = tipoImgMap[tipo] || tipoImgMap.oferta_semana;
+  const tipoDesc = (tipo === 'personalizado' && tipoPersonalizadoVal)
+    ? tipoPersonalizadoVal
+    : (tipoImgMap[tipo] || tipoImgMap.oferta_semana);
 
   const SPEC_FIELDS = [
     { id:'spec-ram', label:'RAM', key:'ram' }, { id:'spec-storage', label:'Almacenamiento', key:'almacenamiento' },
@@ -2253,6 +2257,7 @@ function buildImgPrompt() {
     `- Proporciones reales del dispositivo, iluminación de estudio.`,
     `- CELULAR EXACTO: debe ser ${producto}. No inventar modelos.`,
     `- PRECIOS: ${priceRule}`,
+    `- NO agregar textos, frases promocionales, urgencia ("solo hoy", "última oportunidad", cuentas regresivas, etc.) ni llamados a la acción que NO estén listados explícitamente en "TEXTOS EXACTOS EN LA IMAGEN" arriba.`,
     brandBlock     ? `- ${brandBlock}`     : null,
     storeNameBlock ? `- ${storeNameBlock}` : null,
     refBlock,
