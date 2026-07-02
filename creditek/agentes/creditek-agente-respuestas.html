@@ -196,10 +196,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </table>
   </div>
 
-  <div class="right-panel" id="right-panel"></div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
   <!-- PANEL CORRECCIONES SOFIA IA -->
   <div class="table-view" id="view-correcciones">
     <div style="max-width:660px;margin:0 auto;padding:16px 0;">
@@ -225,65 +221,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
   </div>
 
-// ── CORRECCIONES SOFIA IA ─────────────────────────────────────────
-async function cargarCorrecciones(){
-  try{
-    const res=await fetch(SB+'/rest/v1/correcciones_sofia?order=created_at.desc&limit=50',{headers:H});
-    const data=await res.json();
-    const activas=data.filter(c=>c.activa);
-    const hoy=data.filter(c=>new Date(c.created_at).toDateString()===new Date().toDateString());
-    document.getElementById('corrTotal').textContent=activas.length;
-    document.getElementById('corrHoy').textContent=hoy.length;
-    document.getElementById('b-correcciones').textContent=activas.length;
-    const list=document.getElementById('corrList');
-    if(!data.length){list.innerHTML='<div style="text-align:center;color:var(--text3);padding:30px;font-size:13px;">Aun no hay correcciones. Agrega la primera arriba 👆</div>';return;}
-    list.innerHTML=data.map(c=>`<div class="corr-card" id="cc-${c.id}">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:10px;color:var(--text3);">${new Date(c.created_at).toLocaleDateString('es-CO')}</div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <span class="${c.activa?'corr-badge-ok':'corr-badge-off'}">${c.activa?'✓ Activa':'Desactivada'}</span>
-          <button class="corr-btn-del" onclick="toggleCorr('${c.id}',${c.activa})">${c.activa?'Desactivar':'Activar'}</button>
-          <button class="corr-btn-del" onclick="eliminarCorr('${c.id}')">🗑</button>
-        </div>
-      </div>
-      <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">CLIENTE:</div>
-      <div class="corr-msg">${c.mensaje_cliente}</div>
-      ${c.respuesta_mala?`<div style="font-size:10px;color:#dc2626;margin-bottom:2px;">SOFÍA RESPONDIÓ MAL:</div><div class="corr-msg" style="background:#fee2e2;">${c.respuesta_mala}</div>`:''}
-      <div style="font-size:10px;color:#16a34a;margin-bottom:2px;">SOFÍA DEBE RESPONDER:</div>
-      <div class="corr-msg" style="background:#dcfce7;">${c.respuesta_correcta}</div>
-      ${c.contexto?`<div style="font-size:10px;color:var(--text3);margin-top:4px;">Contexto: ${c.contexto}</div>`:''}
-    </div>`).join('');
-  }catch(e){document.getElementById('corrList').innerHTML='<div style="color:#dc2626;font-size:12px;padding:16px;">Error cargando correcciones</div>';}
-}
+  <div class="right-panel" id="right-panel"></div>
+</div>
 
-async function guardarCorreccion(){
-  const mensaje=document.getElementById('corrMensaje').value.trim();
-  const mala=document.getElementById('corrMala').value.trim();
-  const buena=document.getElementById('corrBuena').value.trim();
-  const contexto=document.getElementById('corrContexto').value.trim();
-  const msg=document.getElementById('corrMsg');
-  if(!mensaje||!buena){msg.style.color='#dc2626';msg.textContent='El mensaje del cliente y la respuesta correcta son obligatorios.';return;}
-  try{
-    const res=await fetch(SB+'/rest/v1/correcciones_sofia',{method:'POST',headers:{...H,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({mensaje_cliente:mensaje,respuesta_mala:mala||null,respuesta_correcta:buena,contexto:contexto||null,activa:true})});
-    if(res.ok){
-      msg.style.color='#16a34a';msg.textContent='✓ Guardado! Sofia ya sabe esto.';
-      document.getElementById('corrMensaje').value='';document.getElementById('corrMala').value='';document.getElementById('corrBuena').value='';document.getElementById('corrContexto').value='';
-      setTimeout(()=>msg.textContent='',3000);cargarCorrecciones();
-    }else{throw new Error();}
-  }catch(e){msg.style.color='#dc2626';msg.textContent='Error al guardar. Intenta de nuevo.';}
-}
-
-async function toggleCorr(id,activa){
-  await fetch(SB+'/rest/v1/correcciones_sofia?id=eq.'+id,{method:'PATCH',headers:{...H,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({activa:!activa})});
-  cargarCorrecciones();
-}
-
-async function eliminarCorr(id){
-  if(!confirm('Eliminar esta correccion?'))return;
-  await fetch(SB+'/rest/v1/correcciones_sofia?id=eq.'+id,{method:'DELETE',headers:{...H,Prefer:'return=minimal'}});
-  cargarCorrecciones();
-}
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const API='https://creditek-bot.comercial-853.workers.dev';
 let cityMap={};let allTiendas=[];
@@ -340,6 +281,65 @@ async function loadClients(){
     renderClients();
     renderOptins();
   }catch(e){console.error(e)}
+}
+
+// ── CORRECCIONES SOFIA IA ─────────────────────────────────────────
+async function cargarCorrecciones(){
+  try{
+    const res=await supaFetch('/correcciones_sofia?order=created_at.desc&limit=50');
+    const data=await res.json();
+    const activas=data.filter(c=>c.activa);
+    const hoy=data.filter(c=>new Date(c.created_at).toDateString()===new Date().toDateString());
+    document.getElementById('corrTotal').textContent=activas.length;
+    document.getElementById('corrHoy').textContent=hoy.length;
+    document.getElementById('b-correcciones').textContent=activas.length;
+    const list=document.getElementById('corrList');
+    if(!data.length){list.innerHTML='<div style="text-align:center;color:var(--text3);padding:30px;font-size:13px;">Aun no hay correcciones. Agrega la primera arriba 👆</div>';return;}
+    list.innerHTML=data.map(c=>`<div class="corr-card" id="cc-${c.id}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:10px;color:var(--text3);">${new Date(c.created_at).toLocaleDateString('es-CO')}</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="${c.activa?'corr-badge-ok':'corr-badge-off'}">${c.activa?'✓ Activa':'Desactivada'}</span>
+          <button class="corr-btn-del" onclick="toggleCorr('${c.id}',${c.activa})">${c.activa?'Desactivar':'Activar'}</button>
+          <button class="corr-btn-del" onclick="eliminarCorr('${c.id}')">🗑</button>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">CLIENTE:</div>
+      <div class="corr-msg">${c.mensaje_cliente}</div>
+      ${c.respuesta_mala?`<div style="font-size:10px;color:#dc2626;margin-bottom:2px;">SOFÍA RESPONDIÓ MAL:</div><div class="corr-msg" style="background:#fee2e2;">${c.respuesta_mala}</div>`:''}
+      <div style="font-size:10px;color:#16a34a;margin-bottom:2px;">SOFÍA DEBE RESPONDER:</div>
+      <div class="corr-msg" style="background:#dcfce7;">${c.respuesta_correcta}</div>
+      ${c.contexto?`<div style="font-size:10px;color:var(--text3);margin-top:4px;">Contexto: ${c.contexto}</div>`:''}
+    </div>`).join('');
+  }catch(e){document.getElementById('corrList').innerHTML='<div style="color:#dc2626;font-size:12px;padding:16px;">Error cargando correcciones</div>';}
+}
+
+async function guardarCorreccion(){
+  const mensaje=document.getElementById('corrMensaje').value.trim();
+  const mala=document.getElementById('corrMala').value.trim();
+  const buena=document.getElementById('corrBuena').value.trim();
+  const contexto=document.getElementById('corrContexto').value.trim();
+  const msg=document.getElementById('corrMsg');
+  if(!mensaje||!buena){msg.style.color='#dc2626';msg.textContent='El mensaje del cliente y la respuesta correcta son obligatorios.';return;}
+  try{
+    const res=await fetch(SUPA+'/correcciones_sofia',{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({mensaje_cliente:mensaje,respuesta_mala:mala||null,respuesta_correcta:buena,contexto:contexto||null,activa:true})});
+    if(res.ok){
+      msg.style.color='#16a34a';msg.textContent='✓ Guardado! Sofia ya sabe esto.';
+      document.getElementById('corrMensaje').value='';document.getElementById('corrMala').value='';document.getElementById('corrBuena').value='';document.getElementById('corrContexto').value='';
+      setTimeout(()=>msg.textContent='',3000);cargarCorrecciones();
+    }else{throw new Error();}
+  }catch(e){msg.style.color='#dc2626';msg.textContent='Error al guardar. Intenta de nuevo.';}
+}
+
+async function toggleCorr(id,activa){
+  await fetch(SUPA+'/correcciones_sofia?id=eq.'+id,{method:'PATCH',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({activa:!activa})});
+  cargarCorrecciones();
+}
+
+async function eliminarCorr(id){
+  if(!confirm('Eliminar esta correccion?'))return;
+  await fetch(SUPA+'/correcciones_sofia?id=eq.'+id,{method:'DELETE',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,Prefer:'return=minimal'}});
+  cargarCorrecciones();
 }
 
 function applyFilters(){
