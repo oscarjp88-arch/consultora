@@ -684,6 +684,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     <div>
       <div class="top-title">Piezas generadas</div>
       <div class="top-sub" id="top-subtitle">Configura los parámetros y presiona generar</div>
+      <div id="batch-badge" style="display:none;font-size:11px;color:#00C4CC;font-weight:700;margin-top:2px"></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="copy-all-btn" onclick="generarContenido()" id="regen-btn" style="display:none;background:#E8F4F8;color:#00C4CC;border:1px solid rgba(0,196,204,0.3)">↺ Regenerar</button>
@@ -831,6 +832,76 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 <script>
 function showToast(msg, color='#22c55e'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 
+// ── Cola batch (lote) recibida desde el Calendario (Agente 4) ──────
+let batchQueue = null; // { items:[{copy,tipo,producto,ciudad,titulo}], idx }
+
+function cargarItemDeCola(item) {
+  if (!item) return;
+  if (item.ciudad) {
+    const sel = document.getElementById('ciudad');
+    const opts = [...sel.options];
+    const match = opts.find(o => o.value === item.ciudad || o.value.includes(item.ciudad));
+    if (match) { sel.value = match.value; sel.dispatchEvent(new Event('change')); }
+  }
+  const tipoPost = item.tipo || '';
+  const modoSel = document.getElementById('modo');
+  if (tipoPost.includes('Producto') || tipoPost.includes('CTA')) {
+    modoSel.value = 'credito'; modoSel.dispatchEvent(new Event('change'));
+  } else if (tipoPost.includes('Testimonio') || tipoPost.includes('Story')) {
+    modoSel.value = 'tienda'; modoSel.dispatchEvent(new Event('change'));
+  } else {
+    modoSel.value = 'servicio'; modoSel.dispatchEvent(new Event('change'));
+  }
+  document.getElementById('producto').value = item.producto || '';
+  const nota = document.getElementById('nota');
+  nota.value = item.copy || '';
+  nota.dispatchEvent(new Event('input'));
+
+  // Limpiar piezas/estado de la pieza anterior para no confundir al usuario
+  document.getElementById('piezas-grid').innerHTML = '';
+  document.getElementById('empty-state').style.display = '';
+  document.getElementById('action-btns-row').style.display = 'none';
+  document.getElementById('copy-all-btn').style.display = 'none';
+  document.getElementById('export-btn').style.display = 'none';
+  document.getElementById('regen-btn').style.display = 'none';
+  document.getElementById('img-section').classList.remove('visible');
+  window.scrollTo(0, 0);
+}
+
+function updateBatchUI() {
+  const btn = document.getElementById('cola-btn');
+  const badge = document.getElementById('batch-badge');
+  if (!btn || !badge) return;
+  if (batchQueue && Array.isArray(batchQueue.items) && batchQueue.items.length) {
+    const total = batchQueue.items.length;
+    const pos = (batchQueue.idx || 0) + 1;
+    badge.style.display = 'block';
+    badge.textContent = `📤 Cola activa — pieza ${pos} de ${total}` + (pos===1 && total>1 ? ' · Título: '+(batchQueue.items[0].titulo||'') : '');
+    btn.style.display = '';
+    btn.textContent = pos < total ? `Siguiente pieza (${pos}/${total}) →` : `✓ Última pieza (${pos}/${total})`;
+  } else {
+    badge.style.display = 'none';
+    btn.style.display = 'none';
+  }
+}
+
+function enviarACola() {
+  if (!batchQueue || !Array.isArray(batchQueue.items) || !batchQueue.items.length) return;
+  const total = batchQueue.items.length;
+  if ((batchQueue.idx || 0) >= total - 1) {
+    showToast('✓ Esa era la última pieza de la cola', '#22c55e');
+    localStorage.removeItem('ck_batch_queue');
+    batchQueue = null;
+    updateBatchUI();
+    return;
+  }
+  batchQueue.idx = (batchQueue.idx || 0) + 1;
+  localStorage.setItem('ck_batch_queue', JSON.stringify(batchQueue));
+  cargarItemDeCola(batchQueue.items[batchQueue.idx]);
+  updateBatchUI();
+  showToast(`→ Pieza ${batchQueue.idx + 1} de ${total} cargada`);
+}
+
 // ── Generar más titulares con Claude ────────────────────────────
 async function generarMasTitulares() {
   const apiKey = sessionStorage.getItem('ck_api_key') || '';
@@ -954,9 +1025,18 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   updateImgKeyStatus();
 
-  // ── Precarga desde Calendario (parámetros URL) ──────────────────
+  // ── Precarga desde Calendario: cola batch (lote) o pieza única ───
   const p = new URLSearchParams(location.search);
-  if (p.get('copy') || p.get('producto') || p.get('tipo')) {
+  if (p.get('batch') === '1') {
+    try { batchQueue = JSON.parse(localStorage.getItem('ck_batch_queue') || 'null'); } catch(e) { batchQueue = null; }
+  }
+  updateBatchUI(); // oculta "cola-btn"/badge por defecto si no hay cola activa
+  if (batchQueue && Array.isArray(batchQueue.items) && batchQueue.items.length) {
+    setTimeout(() => {
+      cargarItemDeCola(batchQueue.items[batchQueue.idx || 0]);
+      updateBatchUI();
+    }, 300);
+  } else if (p.get('copy') || p.get('producto') || p.get('tipo')) {
     setTimeout(() => {
       // Ciudad
       if (p.get('ciudad')) {

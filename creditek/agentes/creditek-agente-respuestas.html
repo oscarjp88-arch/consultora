@@ -159,6 +159,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <option value="month">30 dias</option>
       </select>
       <select class="filter-sel" id="filterCity" onchange="applyFilters()"><option value="all">Ciudad</option></select>
+      <select class="filter-sel" id="filterChannel" onchange="applyFilters()">
+        <option value="all">Todos los clientes</option>
+        <option value="whatsapp">Solo WhatsApp</option>
+        <option value="facebook">Solo Facebook</option>
+      </select>
       <select class="filter-sel" id="filterStatus" onchange="applyFilters()">
         <option value="all">Estado</option>
         <option value="nuevo">Nuevos</option>
@@ -341,8 +346,10 @@ function applyFilters(){
   const s=document.getElementById('searchInput').value.toLowerCase();
   const df=document.getElementById('filterDate').value;
   const cf=document.getElementById('filterCity').value;
+  const chf=document.getElementById('filterChannel').value;
   const sf=document.getElementById('filterStatus').value;
   let entries=Object.entries(grouped);
+  if(chf!=='all')entries=entries.filter(([t])=>chf==='facebook'?t.startsWith('fb_'):!t.startsWith('fb_'));
   if(s)entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);return t.includes(s)||(c?.nombre||'').toLowerCase().includes(s)});
   if(df!=='all'){const now=new Date();let since;
     if(df==='today')since=new Date(now.getFullYear(),now.getMonth(),now.getDate());

@@ -310,6 +310,7 @@ select option{background:var(--bg2)}
     </div>
     <div class="topbar-actions">
       <button class="abtn" id="copyAllBtn" onclick="copiarTodo()" style="display:none">Copiar todo</button>
+      <button class="abtn primary" id="batchBtn" onclick="generarTodasLasPiezas()" style="display:none">🚀 Generar todas las piezas</button>
       <button class="abtn primary" id="printBtn" onclick="window.print()" style="display:none">Imprimir / PDF</button>
     </div>
   </div>
@@ -706,6 +707,7 @@ NUNCA uses "bacano".`;
     document.getElementById('filtersBar').style.display = 'flex';
     document.getElementById('statsBar').style.display = 'flex';
     document.getElementById('copyAllBtn').style.display = '';
+    document.getElementById('batchBtn').style.display = '';
     document.getElementById('printBtn').style.display = '';
     showToast('✓ Calendario generado correctamente');
 
@@ -724,19 +726,19 @@ NUNCA uses "bacano".`;
   }
 }
 
-// ── Abrir Agente 1 con datos precargados ────────────────────────
-function abrirDiseno(idx) {
+// ── Construir los datos de una pieza (post) para el Agente 1 ─────
+function construirItemPieza(idx) {
   const card = document.querySelectorAll('.dcard')[idx];
-  if (!card) return;
+  if (!card) return null;
   const copy = document.getElementById('copy-' + idx)?.textContent?.trim() || '';
   const titulo = card.querySelector('.dcard-title')?.textContent?.trim() || '';
   const tipo = card.querySelector('.dtype')?.textContent?.trim() || '';
   const ciudadSel = document.getElementById('ciudad').value;
-  
+
   // Detectar producto en el copy
   const marcas = ['Samsung','Xiaomi','Oppo','Honor','Infinix','Motorola','TCL'];
   const productoDetectado = marcas.find(m => copy.includes(m) || titulo.includes(m)) || '';
-  
+
   // Mapear ciudad del calendario al valor del Agente 1
   let ciudadParam = 'General Creditek';
   if (ciudadSel.startsWith('Toda la red')) ciudadParam = 'General Creditek';
@@ -744,16 +746,39 @@ function abrirDiseno(idx) {
     const partes = ciudadSel.split(' — ');
     if (partes.length > 1) ciudadParam = partes[0]; // ciudad
   }
-  
-  const params = new URLSearchParams({
+
+  return {
     copy: copy.substring(0, 500),
     tipo: tipo,
     producto: productoDetectado,
     ciudad: ciudadParam,
     titulo: titulo.substring(0, 100),
-  });
-  
+  };
+}
+
+// ── Abrir Agente 1 con datos precargados (una sola pieza) ────────
+function abrirDiseno(idx) {
+  const item = construirItemPieza(idx);
+  if (!item) return;
+  const params = new URLSearchParams(item);
   window.open('../agentes/creditek-agente-redes.html?' + params.toString(), '_blank');
+}
+
+// ── Generar todas las piezas: envía el calendario completo como cola
+//    (queue) al Agente 1, para generarlas una por una sin volver aquí ──
+function generarTodasLasPiezas() {
+  const cards = document.querySelectorAll('.dcard');
+  if (!cards.length) { showToast('Genera primero el calendario', '#ef4444'); return; }
+
+  const items = [...cards].map((_, i) => construirItemPieza(i)).filter(Boolean);
+  if (!items.length) { showToast('No hay posts para enviar', '#ef4444'); return; }
+
+  localStorage.setItem('ck_batch_queue', JSON.stringify({ items, idx: 0, ts: Date.now() }));
+
+  const params = new URLSearchParams(items[0]);
+  params.set('batch', '1');
+  window.open('../agentes/creditek-agente-redes.html?' + params.toString(), '_blank');
+  showToast(`✓ Cola de ${items.length} piezas enviada al Agente 1`);
 }
 
 // ── Persistencia del calendario ──────────────────────────────────
@@ -786,6 +811,7 @@ function cargarCalendarioGuardado() {
     document.getElementById('filtersBar').style.display = 'flex';
     document.getElementById('statsBar').style.display = 'flex';
     document.getElementById('copyAllBtn').style.display = '';
+    document.getElementById('batchBtn').style.display = '';
     document.getElementById('printBtn').style.display = '';
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('calGrid').style.display = 'grid';
