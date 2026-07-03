@@ -2266,6 +2266,89 @@ function buildImgPrompt() {
   document.getElementById('img-prompt-ta').value = lineas;
 }
 
+// ── PROMPT DEDICADO PARA GEMINI (Imagen 4) — 02-jul-2026 ──────────────
+// Gemini/Imagen 4 es un modelo de DIFUSIÓN, no un motor de capas: etiquetas
+// tipo "TITULAR:", hex, pt, "Capa X" se leen como texto a dibujar y confunden
+// al modelo (diagnóstico confirmado + recomendación de la propia Gemini,
+// 02-jul-2026). Esta función es independiente de buildImgPrompt() (GPT) —
+// no la toca ni depende de ella.
+//
+// NO se le pide el logo ni logos de financieras: la API :predict de Imagen 4
+// no acepta imágenes de referencia, así que pedirlo solo produce un logo
+// inventado. En su lugar se deja limpia la esquina superior derecha.
+function buildImgPromptGemini() {
+  const producto   = document.getElementById('producto').value.trim() || 'smartphone';
+  const ciudad     = document.getElementById('ciudad').value || 'Colombia';
+  const modo       = document.getElementById('modo')?.value || 'credito';
+  const esCiudad   = isCiudadCompleta(ciudad);
+  const tiendaInfo = getTiendaInfo(ciudad);
+  const nombreCta  = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
+  const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
+
+  const colorMap = {
+    formal:      'tonos azul marino profundo con acentos turquesa, elegante y confiable',
+    costeno:     'colores cálidos caribeños, azul marino y turquesa vibrante, con un toque tropical festivo',
+    chistoso:    'colores vivos y alegres, azul marino y turquesa con energía divertida',
+    minimalista: 'azul marino profundo, mucho espacio en blanco, muy pocos elementos',
+    custom:      estiloCustomVal || 'azul marino y turquesa, estilo moderno',
+  };
+  const colorDesc = colorMap[currentEstilo] || colorMap.formal;
+  const toqueTropical = currentEstilo === 'costeno'
+    ? ', con detalles tropicales sutiles como hojas de palma o flores caribeñas de fondo'
+    : '';
+
+  // ── MODOS SIN CELULAR (captación, institucional, jornada) ──
+  if (['captacion','institucional','jornada'].includes(modo)) {
+    const tipoPersonalizado = document.getElementById('tipo-personalizado')?.value.trim() || '';
+    const titularVal = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
+    const mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
+    const escena = tipoPersonalizado || 'una publicación de marca limpia y atractiva';
+
+    return [
+      `Anuncio publicitario en redes sociales sobre ${escena}${toqueTropical}.`,
+      ` El fondo es en ${colorDesc}.`,
+      ` En el centro está escrito en letras grandes y gruesas el texto "${titularVal}".`,
+      mensajeVal ? ` Debajo, en letras más pequeñas, dice "${mensajeVal}".` : '',
+      ` Composición limpia, comercial y llamativa, estilo publicidad moderna.`,
+      ` Deja la esquina superior derecha vacía y sin texto adicional.`,
+    ].filter(Boolean).join('');
+  }
+
+  // ── MODOS CON CELULAR (crédito, promo, tienda, servicio) ──
+  const cuota      = document.getElementById('cuota').value.trim();
+  const precioEl   = document.getElementById('img-precio');
+  const titularEl  = document.getElementById('img-titular');
+  const ctaEl      = document.getElementById('img-cta');
+  const mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
+  const inclDir    = !esCiudad && document.getElementById('chk-direccion').checked;
+  const dir        = inclDir ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
+  const ctaFallback = dir ? `Visítanos en ${nombreCta} · ${dir}` : `Visítanos en ${nombreCta}`;
+  const titular    = titularEl?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCta}!`);
+  const precio     = precioEl?.value.trim() || '';
+  const cta        = ctaEl?.value.trim() || ctaFallback;
+  const ctaActivo  = document.getElementById('chk-cta-activo')?.checked !== false;
+
+  const knownBrands = ['Samsung','Xiaomi','Motorola','OPPO','Realme','Infinix','Honor','TCL','iPhone','Apple'];
+  const detectedBrand = knownBrands.find(b => producto.toLowerCase().includes(b.toLowerCase()));
+  const marcaTxt = (detectedBrand && detectedBrand !== 'iPhone' && detectedBrand !== 'Apple')
+    ? ` de la marca ${detectedBrand}` : '';
+  // Evita redundancia tipo "un teléfono celular cualquier celular" cuando el
+  // producto es genérico (promos sin modelo específico, ej. regalo de accesorios).
+  const esGenerico = !producto || producto.toLowerCase() === 'smartphone' || producto.toLowerCase().startsWith('cualquier');
+  const productoDesc = esGenerico ? 'un teléfono celular moderno' : `un teléfono celular ${producto}`;
+
+  return [
+    `Fotografía publicitaria de ${productoDesc}${marcaTxt}, en ${colorDesc}${toqueTropical}.`,
+    ` El teléfono se ve grande y bien iluminado, como en una vitrina de tienda.`,
+    ` Escrito en letras grandes y gruesas está el texto "${titular}".`,
+    mensajeVal ? ` Debajo, en letras más pequeñas, dice "${mensajeVal}".` : '',
+    precio ? ` En números grandes en color turquesa aparece "${precio}".` : '',
+    ctaActivo ? ` En la parte inferior hay un botón turquesa que dice "${cta}".` : '',
+    ` Composición comercial, limpia y llamativa, estilo publicidad de retail.`,
+    ` Deja la esquina superior derecha vacía y sin texto adicional.`,
+  ].filter(Boolean).join('');
+}
+
 
 // ── Sistema de referencias visuales del mercado ─────────────────
 const BRAND_COLORS = {
@@ -2545,6 +2628,7 @@ async function generarImagen(callerBtn = null) {
 
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) return;
+  const promptGemini = isWorkerEngine ? buildImgPromptGemini() : null; // FIX 02-jul-2026
 
   const btn = document.getElementById('img-gen-btn');
   const spinner = document.getElementById('img-spinner');
@@ -2560,9 +2644,9 @@ async function generarImagen(callerBtn = null) {
   resultDiv.style.display = 'none'; errDiv.style.display = 'none';
 
   try {
-    lastImgModelLabel = currentEngine === 'gemini' ? 'Gemini Flash 2.5' : 'GPT Image 2';
+    lastImgModelLabel = currentEngine === 'gemini' ? 'Imagen 4 (Vertex)' : 'GPT Image 2';
     const src = currentEngine === 'gemini'
-      ? await generarConGemini(key, prompt)
+      ? await generarConGemini(key, promptGemini)
       : await generarConDalle(key, prompt);
     imgHistory = [src];
     imgHistoryIdx = 0;
@@ -2615,7 +2699,7 @@ async function generarConGemini(key, prompt) {
   const pred = data.predictions?.[0];
   if (!pred?.bytesBase64Encoded) throw new Error('El Worker no devolvió imagen. Verifica la configuración WIF de Vertex AI.');
 
-  lastImgModelLabel = data.label || 'Imagen 3 (Vertex)';
+  lastImgModelLabel = data.label || 'Imagen 4 (Vertex)';
   const mime = pred.mimeType || 'image/png';
   const b64 = pred.bytesBase64Encoded.replace(/\s/g, '');
   const src = `data:${mime};base64,${b64}`;
@@ -2712,7 +2796,8 @@ async function aplicarCambioImagen() {
 
     if (currentEngine === 'gemini') {
       const key = localStorage.getItem('ck_gemini_key') || '';
-      const editPrompt = `${promptBase}\n\nMODIFICACIÓN SOLICITADA: ${instruccion}`;
+      const promptBaseGemini = buildImgPromptGemini(); // FIX 02-jul-2026
+      const editPrompt = `${promptBaseGemini} Además: ${instruccion}`;
       newSrc = await generarConGemini(key, editPrompt);
       document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
     } else {
@@ -2757,6 +2842,7 @@ async function generarAB() {
   if (!keyOpenAI || keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
+  const promptGemini = buildImgPromptGemini(); // FIX 02-jul-2026
 
   const btn = document.getElementById('img-ab-btn');
   const spinner = document.getElementById('img-ab-spinner');
@@ -2776,7 +2862,7 @@ async function generarAB() {
   resultDiv.style.display = 'block';
 
   const [gemRes, dalleRes] = await Promise.allSettled([
-    generarConGemini(keyGemini, prompt),
+    generarConGemini(keyGemini, promptGemini),
     generarConDalle(keyOpenAI, prompt)
   ]);
 
@@ -2822,6 +2908,7 @@ async function generarConModelos() {
   buildImgPrompt();
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
+  const promptGemini = buildImgPromptGemini(); // FIX 02-jul-2026
 
   const useGemini = document.getElementById('chk-gemini')?.checked;
   const useDalle  = document.getElementById('chk-dalle')?.checked;
@@ -2848,7 +2935,7 @@ async function generarConModelos() {
 
   const callEngine = (id) => {
     const key = id === 'dalle' ? keyOpenAI : keyGemini;
-    if (id === 'gemini') return generarConGemini(key, prompt);
+    if (id === 'gemini') return generarConGemini(key, promptGemini);
     return generarConDalle(key, prompt);
   };
 
