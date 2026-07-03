@@ -2048,7 +2048,7 @@ function buildImgPrompt() {
 
     const estiloRico = {
       formal:     'Professional, trustworthy, aspirational. Geometric accents in turquoise at low opacity. Corporate credibility.',
-      costeno:    'Caribbean Colombian energy. Add tropical decorative elements: palm silhouettes, tropical flowers, warm colors, Caribbean cultural motifs. Integrated naturally, not pasted.',
+      costeno:    'Authentic everyday Caribbean Colombian life — warm natural light, genuine warmth. At most ONE subtle authentic detail (coconut water, a palm tree, floral-print dress, distant drum) — never combine several at once, that looks staged like a party. No confetti or costumes at all.',
       chistoso:   'Playful commercial humor. Fun graphic elements, confetti, speech bubbles in turquoise. Brand that smiles.',
       minimalista:'Ultra minimal. Maximum white space. One strong visual. Elegant restraint.',
       custom:     estiloCustomVal ? `Custom style: ${estiloCustomVal}` : 'Professional clean modern.',
@@ -2178,7 +2178,7 @@ function buildImgPrompt() {
 
   const mensajeMap = {
     formal:      `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
-    costeno:     `Tono caribeño colombiano: alegre, festivo, cercano y con sabor costeño. Energético, celebratorio, con el calor y la picardía del Caribe colombiano. ELEMENTOS VISUALES CARIBEÑOS OBLIGATORIOS: seleccionar exactamente 3 o 4 elementos: palmas de coco, tamboras vallenatas, sombrero vueltiao, mariposas amarillas, flores tropicales, confeti multicolor, acordeón vallenato, mar caribeño turquesa, atardecer costeño, hamacas coloridas, frutas tropicales, gaitas colombianas, mochilas wayuu. Los elementos elegidos deben integrarse naturalmente en el diseño.`,
+    costeno:     `Tono caribeño colombiano auténtico y cotidiano — la vida costeña real, cálida y alegre, no una fiesta montada para la foto. Luz natural cálida de atardecer o mañana tropical, colores vivos, calidez humana genuina. Como mucho UN detalle auténtico costeño (nunca varios juntos): puede ser agua de coco, una palmera, un vestido con print floral, o un tambor sonando de fondo — elegir solo uno, de forma sutil y natural, no como protagonista de la escena. NUNCA combinar varios elementos culturales a la vez (eso se ve armado y saturado, no real — aquí no se vive en modo fiesta todos los días). Evitar por completo: confeti, disfraces o máscaras de comparsa.`,
     chistoso:    `Tono de humor comercial ligero. Crear contraste entre celular viejo y ${producto}. Humor cálido colombiano — divertido sin perder credibilidad.`,
     minimalista: `Tono sereno y aspiracional. Menos texto, más espacio en blanco. El producto habla solo. Mensaje único, breve y poderoso.`,
     custom:      estiloCustomVal || `Estilo libre. Aplicar criterio artístico según las instrucciones.`,
@@ -2287,14 +2287,14 @@ function buildImgPromptGeminiFallback() {
 
   const colorMap = {
     formal:      'tonos azul marino profundo con acentos turquesa, elegante y confiable',
-    costeno:     'colores cálidos caribeños, azul marino y turquesa vibrante, con un toque tropical festivo',
+    costeno:     'colores cálidos y luz natural del Caribe colombiano — turquesa del mar, dorado del atardecer — auténtico y cotidiano, no una fiesta montada',
     chistoso:    'colores vivos y alegres, azul marino y turquesa con energía divertida',
     minimalista: 'azul marino profundo, mucho espacio en blanco, muy pocos elementos',
     custom:      estiloCustomVal || 'azul marino y turquesa, estilo moderno',
   };
   const colorDesc = colorMap[currentEstilo] || colorMap.formal;
   const toqueTropical = currentEstilo === 'costeno'
-    ? ', con detalles tropicales sutiles como hojas de palma o flores caribeñas de fondo'
+    ? ', con como mucho un detalle costeño sutil y natural (ej. una palmera, agua de coco, o un vestido con print floral) — nunca varios combinados, para que se vea vida real y no una fiesta armada'
     : '';
 
   // ── MODOS SIN CELULAR (captación, institucional, jornada) ──
