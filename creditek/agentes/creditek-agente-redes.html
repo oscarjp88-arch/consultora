@@ -2276,7 +2276,7 @@ function buildImgPrompt() {
 // NO se le pide el logo ni logos de financieras: la API :predict de Imagen 4
 // no acepta imágenes de referencia, así que pedirlo solo produce un logo
 // inventado. En su lugar se deja limpia la esquina superior derecha.
-function buildImgPromptGemini() {
+function buildImgPromptGeminiFallback() {
   const producto   = document.getElementById('producto').value.trim() || 'smartphone';
   const ciudad     = document.getElementById('ciudad').value || 'Colombia';
   const modo       = document.getElementById('modo')?.value || 'credito';
@@ -2347,6 +2347,83 @@ function buildImgPromptGemini() {
     ` Composición comercial, limpia y llamativa, estilo publicidad de retail.`,
     ` Deja la esquina superior derecha vacía y sin texto adicional.`,
   ].filter(Boolean).join('');
+}
+
+// ── TRADUCTOR CON CLAUDE PARA GEMINI (Fix 5, 02-jul-2026) ───────────────
+// En vez de una plantilla fija, le pedimos a Claude Sonnet 4.6 (ya configurado
+// en este Hub — mismo patrón que corregirMensajeSecundario()) que redacte una
+// escena narrativa rica para Imagen 4, a partir de los mismos datos de negocio.
+// Si no hay API key de Claude o la llamada falla, cae automáticamente al
+// template estático de Fix 3 (buildImgPromptGeminiFallback) — nunca bloquea
+// la generación.
+async function buildImgPromptGemini() {
+  const apiKey = sessionStorage.getItem('ck_api_key') || '';
+  if (!apiKey.startsWith('sk-ant-')) return buildImgPromptGeminiFallback();
+
+  const producto = document.getElementById('producto').value.trim() || 'smartphone';
+  const modo     = document.getElementById('modo')?.value || 'credito';
+  const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
+  const estiloDescMap = {
+    formal:      'profesional, confiable, elegante',
+    costeno:     'caribeño colombiano, alegre, festivo, cálido',
+    chistoso:    'divertido, humor comercial ligero',
+    minimalista: 'minimalista, mucho espacio en blanco, sereno',
+    custom:      estiloCustomVal || 'moderno',
+  };
+  const estiloDesc = estiloDescMap[currentEstilo] || estiloDescMap.formal;
+
+  let titular, mensajeVal, precio, cta;
+  if (['captacion','institucional','jornada'].includes(modo)) {
+    titular    = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
+    mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
+    precio     = '';
+    cta        = document.getElementById('chk-cta-activo')?.checked !== false
+                   ? (document.getElementById('img-cta')?.value.trim() || 'Síguenos en Creditek') : '';
+  } else {
+    const cuota      = document.getElementById('cuota').value.trim();
+    const ciudad     = document.getElementById('ciudad').value || 'Colombia';
+    const esCiudad   = isCiudadCompleta(ciudad);
+    const tiendaInfo = getTiendaInfo(ciudad);
+    const nombreCta  = esCiudad ? getCiudadNombre(ciudad) : (tiendaInfo?.nombre || getCiudadNombre(ciudad));
+    titular    = document.getElementById('img-titular')?.value.trim() || (cuota ? `¡Tu celular desde ${cuota}!` : `¡Visítanos en ${nombreCta}!`);
+    mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
+    precio     = document.getElementById('img-precio')?.value.trim() || '';
+    cta        = document.getElementById('chk-cta-activo')?.checked !== false
+                   ? (document.getElementById('img-cta')?.value.trim() || `Visítanos en ${nombreCta}`) : '';
+  }
+
+  const instruccion = `Eres un director de arte experto en prompts para modelos de generación de imágenes por difusión (como Imagen 4 de Google). Convierte estos datos en UN SOLO prompt narrativo en español para pedirle una imagen a Imagen 4.
+
+REGLAS OBLIGATORIAS:
+- Describe una escena fotográfica real (personas, ambiente, luz, colores). NUNCA uses etiquetas técnicas, códigos hexadecimales, tamaños en pt ni nombres de tipografía.
+- Usa nombres de color, no códigos hex.
+- Cada texto exacto debe aparecer UNA sola vez, entre comillas dobles, integrado naturalmente en la descripción física (ej: "sostiene un letrero donde está escrito...").
+- NO uses comillas para nada más en el prompt.
+- SIEMPRE termina indicando que la esquina superior derecha debe quedar limpia, sin logotipos ni texto adicional — ese espacio se compone con un logo real por separado, después, con código.
+- Máximo 130 palabras.
+- Responde SOLO con el prompt final. Sin explicaciones, sin markdown, sin comillas envolviendo todo el texto.
+
+DATOS DE LA PIEZA:
+Producto: ${producto}
+Estilo/tono: ${estiloDesc}
+Titular exacto: "${titular}"
+${mensajeVal ? `Mensaje secundario exacto: "${mensajeVal}"` : ''}
+${precio ? `Precio/cuota exacto: "${precio}"` : ''}
+${cta ? `Botón CTA exacto: "${cta}"` : ''}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:'claude-sonnet-4-6', max_tokens: 400, messages:[{role:'user', content: instruccion}]})
+    });
+    const data = await res.json();
+    const promptGenerado = data.content?.find(b=>b.type==='text')?.text?.trim() || '';
+    if (promptGenerado && promptGenerado.length > 30) return promptGenerado;
+    return buildImgPromptGeminiFallback();
+  } catch(e) {
+    return buildImgPromptGeminiFallback();
+  }
 }
 
 
@@ -2628,7 +2705,7 @@ async function generarImagen(callerBtn = null) {
 
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) return;
-  const promptGemini = isWorkerEngine ? buildImgPromptGemini() : null; // FIX 02-jul-2026
+  const promptGemini = isWorkerEngine ? await buildImgPromptGemini() : null; // FIX 02-jul-2026
 
   const btn = document.getElementById('img-gen-btn');
   const spinner = document.getElementById('img-spinner');
@@ -2667,44 +2744,77 @@ async function generarImagen(callerBtn = null) {
   spinner.style.display = 'none'; label.textContent = '🖼 Generar imagen';
 }
 
+// ── OVERLAY DE LOGO — RESPALDO si Nano Banana 2 falla (Fix 6, 02-jul-2026) ──
+async function componerLogoSobreImagen(dataUrlImagen) {
+  const logo = await loadLogoBase64();
+  if (!logo) return dataUrlImagen;
+
+  return new Promise((resolve) => {
+    const imgBase = new Image();
+    imgBase.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = imgBase.width;
+      canvas.height = imgBase.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgBase, 0, 0);
+
+      const imgLogo = new Image();
+      imgLogo.onload = () => {
+        const margen    = canvas.width * 0.04;
+        const logoAncho = canvas.width * 0.16;
+        const logoAlto  = logoAncho * (imgLogo.height / imgLogo.width);
+        const x = canvas.width - logoAncho - margen;
+        const y = margen;
+        ctx.drawImage(imgLogo, x, y, logoAncho, logoAlto);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      imgLogo.onerror = () => resolve(dataUrlImagen);
+      imgLogo.src = logo;
+    };
+    imgBase.onerror = () => resolve(dataUrlImagen);
+    imgBase.src = dataUrlImagen;
+  });
+}
+
 async function generarConGemini(key, prompt) {
   const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
+  // Logo real de Creditek — se manda como imagen de referencia a Gemini 3 Pro Image
+  const logoUrl = 'https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png';
 
-  const reqBody = { prompt, aspectRatio };
-  if (key?.length > 10) reqBody.apiKey = key;
-
-  const res = await fetch('https://creditek-gemini-proxy.comercial-853.workers.dev/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(reqBody),
-  });
-
-  const data = await res.json().catch(() => ({}));
-  console.log('[generarConGemini] Worker response:', {
-    status: res.status, ok: res.ok,
-    keys: Object.keys(data),
-    predictions: data.predictions?.length,
-    firstPredKeys: data.predictions?.[0] ? Object.keys(data.predictions[0]) : null,
-    b64Length: data.predictions?.[0]?.bytesBase64Encoded?.length,
-    label: data.label,
-    error: data.error,
-  });
-
-  if (!res.ok) {
-    const msg = data.error || `Error ${res.status}`;
-    if (res.status === 401 || res.status === 403) throw new Error(`Sin acceso a Vertex AI: ${msg}`);
-    throw new Error(msg);
+  async function llamarWorker(reqBody) {
+    const res = await fetch('https://creditek-gemini-proxy.comercial-853.workers.dev/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reqBody),
+    });
+    const data = await res.json().catch(() => ({}));
+    console.log('[generarConGemini] Worker response:', { status: res.status, ok: res.ok, label: data.label, error: data.error });
+    if (!res.ok) {
+      const msg = data.error || `Error ${res.status}`;
+      throw new Error(msg);
+    }
+    const pred = data.predictions?.[0];
+    if (!pred?.bytesBase64Encoded) throw new Error('El Worker no devolvió imagen.');
+    lastImgModelLabel = data.label || 'Gemini';
+    const mime = pred.mimeType || 'image/png';
+    const b64 = pred.bytesBase64Encoded.replace(/\s/g, '');
+    return `data:${mime};base64,${b64}`;
   }
 
-  const pred = data.predictions?.[0];
-  if (!pred?.bytesBase64Encoded) throw new Error('El Worker no devolvió imagen. Verifica la configuración WIF de Vertex AI.');
+  const reqBase = { prompt, aspectRatio };
+  if (key?.length > 10) reqBase.apiKey = key;
 
-  lastImgModelLabel = data.label || 'Imagen 4 (Vertex)';
-  const mime = pred.mimeType || 'image/png';
-  const b64 = pred.bytesBase64Encoded.replace(/\s/g, '');
-  const src = `data:${mime};base64,${b64}`;
-  console.log('[generarConGemini] data URL:', mime, 'b64 chars:', b64.length, 'src prefix:', src.slice(0, 40));
-  return src;
+  // FIX 7, 03-jul-2026: intento principal — Gemini 3 Pro Image con el logo real como
+  // referencia (ruta ya construida en el Worker, vía Vertex/WIF, no depende del crédito
+  // de AI Studio). Si falla por cualquier razón, cae al flujo normal del Worker
+  // (Vía 0 Nano Banana 2 → Vía 1 Vertex/Imagen — sin logo garantizado, pero nunca se
+  // rompe la generación).
+  try {
+    return await llamarWorker({ ...reqBase, engine: 'gemini3pro', imageUrl: logoUrl });
+  } catch (errPrincipal) {
+    console.warn('[generarConGemini] gemini3pro falló, usando vía normal del Worker:', errPrincipal.message);
+    return await llamarWorker(reqBase);
+  }
 }
 
 async function generarConDalle(key, prompt) {
@@ -2796,7 +2906,7 @@ async function aplicarCambioImagen() {
 
     if (currentEngine === 'gemini') {
       const key = localStorage.getItem('ck_gemini_key') || '';
-      const promptBaseGemini = buildImgPromptGemini(); // FIX 02-jul-2026
+      const promptBaseGemini = await buildImgPromptGemini(); // FIX 02-jul-2026
       const editPrompt = `${promptBaseGemini} Además: ${instruccion}`;
       newSrc = await generarConGemini(key, editPrompt);
       document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
@@ -2842,7 +2952,7 @@ async function generarAB() {
   if (!keyOpenAI || keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
-  const promptGemini = buildImgPromptGemini(); // FIX 02-jul-2026
+  const promptGemini = await buildImgPromptGemini(); // FIX 02-jul-2026
 
   const btn = document.getElementById('img-ab-btn');
   const spinner = document.getElementById('img-ab-spinner');
@@ -2908,7 +3018,7 @@ async function generarConModelos() {
   buildImgPrompt();
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
-  const promptGemini = buildImgPromptGemini(); // FIX 02-jul-2026
+  const promptGemini = await buildImgPromptGemini(); // FIX 02-jul-2026
 
   const useGemini = document.getElementById('chk-gemini')?.checked;
   const useDalle  = document.getElementById('chk-dalle')?.checked;

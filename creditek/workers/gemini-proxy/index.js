@@ -678,6 +678,7 @@ if (path === '/test-fetch') {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
           }),
           signal: AbortSignal.timeout(90_000),
         });

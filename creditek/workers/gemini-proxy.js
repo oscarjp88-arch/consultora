@@ -92,16 +92,22 @@ async function handlePredict(body, apiKey) {
 async function handleGenerateContent(body, apiKey) {
   const {
     prompt,
-    model      = 'gemini-2.0-flash-exp',
+    model      = 'gemini-3.1-flash-image-preview', // FIX 6, 02-jul-2026: Nano Banana 2
     apiVersion = 'v1beta',
+    images     = [], // FIX 6: [{ mimeType, data }] — imágenes de referencia (ej. logo real)
   } = body;
 
   if (!prompt) return jsonResponse({ error: 'Campo "prompt" requerido' }, 400);
 
   const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${apiKey}`;
 
+  const parts = [
+    { text: prompt },
+    ...images.map(img => ({ inlineData: { mimeType: img.mimeType || 'image/png', data: img.data } })),
+  ];
+
   return proxyFetch(url, {
-    contents: [{ parts: [{ text: prompt }] }],
+    contents: [{ parts }],
     generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
   });
 }
@@ -123,6 +129,7 @@ async function handleTest(body, apiKey) {
     { id: 'imagegeneration@005',               ver: 'v1beta', type: 'predict' },
     { id: 'imagen-4.0-generate-preview-06-06', ver: 'v1',     type: 'predict' },
     { id: 'imagen-4.0-generate-preview-05-20', ver: 'v1',     type: 'predict' },
+    { id: 'gemini-3.1-flash-image-preview',    ver: 'v1beta', type: 'generateContent' },
     { id: 'gemini-2.0-flash-exp',              ver: 'v1beta', type: 'generateContent' },
   ];
 
