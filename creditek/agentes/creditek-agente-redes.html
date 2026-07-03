@@ -2179,7 +2179,9 @@ function buildImgPrompt() {
   const mensajeMap = {
     formal:      `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
     costeno:     `Tono caribeño colombiano auténtico y cotidiano — la vida costeña real, cálida y alegre, no una fiesta montada para la foto. Luz natural cálida de atardecer o mañana tropical, colores vivos, calidez humana genuina. Como mucho UN detalle auténtico costeño (nunca varios juntos): puede ser agua de coco, una palmera, un vestido con print floral, o un tambor sonando de fondo — elegir solo uno, de forma sutil y natural, no como protagonista de la escena. NUNCA combinar varios elementos culturales a la vez (eso se ve armado y saturado, no real — aquí no se vive en modo fiesta todos los días). Evitar por completo: confeti, disfraces o máscaras de comparsa.`,
-    chistoso:    `Tono de humor comercial ligero. Crear contraste entre celular viejo y ${producto}. Humor cálido colombiano — divertido sin perder credibilidad.`,
+    chistoso:    /lavadora|\bmoto\b|nevera|televisor|\btv\b|estufa|licuadora|parlante|bicicleta|colchon/i.test(producto||'')
+      ? `Tono de humor comercial ligero sobre ${producto}. Humor cálido colombiano — divertido sin perder credibilidad. NO mencionar ni mostrar celulares — el producto de esta pieza no es un celular.`
+      : `Tono de humor comercial ligero. Crear contraste entre celular viejo y ${producto}. Humor cálido colombiano — divertido sin perder credibilidad.`,
     minimalista: `Tono sereno y aspiracional. Menos texto, más espacio en blanco. El producto habla solo. Mensaje único, breve y poderoso.`,
     custom:      estiloCustomVal || `Estilo libre. Aplicar criterio artístico según las instrucciones.`,
   };
@@ -2255,7 +2257,7 @@ function buildImgPrompt() {
     `- NO modificar el logo Creditek.`,
     `- Textos nítidos y completamente legibles.`,
     `- Proporciones reales del dispositivo, iluminación de estudio.`,
-    `- CELULAR EXACTO: debe ser ${producto}. No inventar modelos.`,
+    `- ${/lavadora|\bmoto\b|nevera|televisor|\btv\b|estufa|licuadora|parlante|bicicleta|colchon/i.test(producto||'') ? 'PRODUCTO EXACTO' : 'CELULAR EXACTO'}: debe ser ${producto}. No inventar modelos ni mezclar con otro tipo de producto — si el producto NO es un celular, NO incluir ningún celular en la imagen.`,
     `- PRECIOS: ${priceRule}`,
     `- NO agregar textos, frases promocionales, urgencia ("solo hoy", "última oportunidad", cuentas regresivas, etc.) ni llamados a la acción que NO estén listados explícitamente en "TEXTOS EXACTOS EN LA IMAGEN" arriba.`,
     brandBlock     ? `- ${brandBlock}`     : null,
@@ -2334,8 +2336,11 @@ function buildImgPromptGeminiFallback() {
     ? ` de la marca ${detectedBrand}` : '';
   // Evita redundancia tipo "un teléfono celular cualquier celular" cuando el
   // producto es genérico (promos sin modelo específico, ej. regalo de accesorios).
+  const esOtroProducto = /lavadora|\bmoto\b|nevera|televisor|\btv\b|estufa|licuadora|parlante|bicicleta|colchon/i.test(producto || '');
   const esGenerico = !producto || producto.toLowerCase() === 'smartphone' || producto.toLowerCase().startsWith('cualquier');
-  const productoDesc = esGenerico ? 'un teléfono celular moderno' : `un teléfono celular ${producto}`;
+  const productoDesc = esOtroProducto
+    ? producto
+    : (esGenerico ? 'un teléfono celular moderno' : `un teléfono celular ${producto}`);
 
   return [
     `Fotografía publicitaria de ${productoDesc}${marcaTxt}, en ${colorDesc}${toqueTropical}.`,
