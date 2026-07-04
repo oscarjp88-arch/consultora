@@ -2275,9 +2275,9 @@ function buildImgPrompt() {
 // 02-jul-2026). Esta función es independiente de buildImgPrompt() (GPT) —
 // no la toca ni depende de ella.
 //
-// NO se le pide el logo ni logos de financieras: la API :predict de Imagen 4
-// no acepta imágenes de referencia, así que pedirlo solo produce un logo
-// inventado. En su lugar se deja limpia la esquina superior derecha.
+// [Actualizado 03-jul-2026] Ya NO se reserva la esquina superior derecha.
+// Decisión: la imagen debe salir completa, igual que la de GPT. El logo
+// se resuelve por separado (ver FIX 4 / decisión pendiente con Oscar).
 function buildImgPromptGeminiFallback() {
   const producto   = document.getElementById('producto').value.trim() || 'smartphone';
   const ciudad     = document.getElementById('ciudad').value || 'Colombia';
@@ -2311,8 +2311,7 @@ function buildImgPromptGeminiFallback() {
       ` El fondo es en ${colorDesc}.`,
       ` En el centro está escrito en letras grandes y gruesas el texto "${titularVal}".`,
       mensajeVal ? ` Debajo, en letras más pequeñas, dice "${mensajeVal}".` : '',
-      ` Composición limpia, comercial y llamativa, estilo publicidad moderna.`,
-      ` Deja la esquina superior derecha vacía y sin texto adicional.`,
+      ` Composición limpia, comercial y llamativa, estilo publicidad moderna, usando todo el lienzo de borde a borde, sin zonas vacías.`,
     ].filter(Boolean).join('');
   }
 
@@ -2349,8 +2348,7 @@ function buildImgPromptGeminiFallback() {
     mensajeVal ? ` Debajo, en letras más pequeñas, dice "${mensajeVal}".` : '',
     precio ? ` En números grandes en color turquesa aparece "${precio}".` : '',
     ctaActivo ? ` En la parte inferior hay un botón turquesa que dice "${cta}".` : '',
-    ` Composición comercial, limpia y llamativa, estilo publicidad de retail.`,
-    ` Deja la esquina superior derecha vacía y sin texto adicional.`,
+    ` Composición comercial, limpia y llamativa, estilo publicidad de retail, usando todo el lienzo de borde a borde, sin zonas vacías.`,
   ].filter(Boolean).join('');
 }
 
@@ -2404,7 +2402,7 @@ REGLAS OBLIGATORIAS:
 - Usa nombres de color, no códigos hex.
 - Cada texto exacto debe aparecer UNA sola vez, entre comillas dobles, integrado naturalmente en la descripción física (ej: "sostiene un letrero donde está escrito...").
 - NO uses comillas para nada más en el prompt.
-- SIEMPRE termina indicando que la esquina superior derecha debe quedar limpia, sin logotipos ni texto adicional — ese espacio se compone con un logo real por separado, después, con código.
+- La composición debe usar el lienzo completo de borde a borde, igual que una pieza publicitaria profesional real. NO dejes ninguna esquina ni zona vacía reservada para nada.
 - Máximo 130 palabras.
 - Responde SOLO con el prompt final. Sin explicaciones, sin markdown, sin comillas envolviendo todo el texto.
 
@@ -2782,9 +2780,12 @@ async function componerLogoSobreImagen(dataUrlImagen) {
 }
 
 async function generarConGemini(key, prompt) {
-  const aspectRatio = currentFormat === 'stories' ? '9:16' : '1:1';
-  // Logo real de Creditek — se manda como imagen de referencia a Gemini 3 Pro Image
-  const logoUrl = 'https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png';
+  // FIX 03-jul-2026: relación de aspecto exacta para calzar con GPT
+  // (GPT: 1024x1024 = 1:1 · 1024x1536 = 2:3).
+  // gemini3pro SÍ admite 2:3 exacto. El respaldo Imagen 4 :predict NO admite
+  // 2:3 (solo 1:1/3:4/4:3/9:16/16:9) — usa 3:4 como la más cercana si se cae ahí.
+  const aspectRatioG3       = currentFormat === 'stories' ? '2:3' : '1:1';
+  const aspectRatioFallback = currentFormat === 'stories' ? '3:4' : '1:1';
 
   async function llamarWorker(reqBody) {
     const res = await fetch('https://creditek-gemini-proxy.comercial-853.workers.dev/generate', {
@@ -2806,20 +2807,21 @@ async function generarConGemini(key, prompt) {
     return `data:${mime};base64,${b64}`;
   }
 
-  const reqBase = { prompt, aspectRatio };
+  const reqBase = { prompt };
   if (key?.length > 10) reqBase.apiKey = key;
 
-  // FIX 7, 03-jul-2026: intento principal — Gemini 3 Pro Image con el logo real como
-  // referencia (ruta ya construida en el Worker, vía Vertex/WIF, no depende del crédito
-  // de AI Studio). Si falla por cualquier razón, cae al flujo normal del Worker
-  // (Vía 0 Nano Banana 2 → Vía 1 Vertex/Imagen — sin logo garantizado, pero nunca se
-  // rompe la generación).
+  // FIX 4, 03-jul-2026: ya NO se le pide a la IA que dibuje el logo (imageUrl
+  // eliminado del engine gemini3pro — era poco confiable y podía chocar con
+  // el logo pegado por código). El logo real se compone SIEMPRE después,
+  // determinísticamente, con componerLogoSobreImagen().
+  let src;
   try {
-    return await llamarWorker({ ...reqBase, engine: 'gemini3pro', imageUrl: logoUrl });
+    src = await llamarWorker({ ...reqBase, aspectRatio: aspectRatioG3, engine: 'gemini3pro' });
   } catch (errPrincipal) {
     console.warn('[generarConGemini] gemini3pro falló, usando vía normal del Worker:', errPrincipal.message);
-    return await llamarWorker(reqBase);
+    src = await llamarWorker({ ...reqBase, aspectRatio: aspectRatioFallback });
   }
+  return await componerLogoSobreImagen(src);
 }
 
 async function generarConDalle(key, prompt) {

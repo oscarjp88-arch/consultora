@@ -648,7 +648,10 @@ if (path === '/test-fetch') {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts }],
-          generationConfig: { responseModalities: ['IMAGE'] },
+          generationConfig: {
+            responseModalities: ['IMAGE'],
+            imageConfig: { aspectRatio },
+          },
         }),
         signal: AbortSignal.timeout(60_000),
       });
