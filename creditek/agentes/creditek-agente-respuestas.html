@@ -251,9 +251,9 @@ async function loadStats(){
   try{
     const d=await(await fetch(API+'/api/stats')).json();
     document.getElementById('s-clientes').textContent=d.total_clientes||0;
-    document.getElementById('s-convs').textContent=d.conversaciones_hoy||0;
-    document.getElementById('s-optins').textContent=d.optins_activos||0;
-    document.getElementById('s-leads').textContent=d.leads_nuevos||0;
+    document.getElementById('s-convs').textContent=d.hoy||0;
+    document.getElementById('s-optins').textContent=d.optins||0;
+    document.getElementById('s-leads').textContent=d.leads||0;
   }catch(e){console.error(e)}
 }
 
