@@ -2012,6 +2012,76 @@ function updateImgKeyStatus() {
   if (sod) sod.className = 'img-key-dot' + (dalleOk  ? ' ok' : '');
 }
 
+// ── Banco de detalles auténticos por estilo (04-jul-2026) ──────────────
+// Antes cada estilo tenía 3-4 ejemplos fijos → la IA siempre convergía en
+// los mismos ("persona + palmerita"). Con publicaciones a diario, todo el
+// mes, se necesita variedad real. Rotación por día del mes + contador de
+// sesión: sin estado persistente, sin repetir incluso generando el mes
+// completo en batch el mismo día.
+const BANCO_DETALLES = {
+  costeno: [
+    'un carrito de raspado',
+    'una plaza de pueblo con palomas, estilo Corozal o Chinú',
+    'una iglesia colonial costera',
+    'alguien comiendo mango biche con sal',
+    'un guacamayo en un balcón',
+    'una calle con casas de colores pastel',
+    'un pescador arreglando su red',
+    'un atardecer sobre el mar Caribe',
+    'una hamaca en un patio',
+    'un ventilador de techo antiguo',
+    'una tienda de barrio con gaseosas frías',
+    'un mercado de frutas tropicales',
+    'una moto con parrillero',
+    'un abanico de palma',
+    'agua de coco recién partido',
+    'una palmera con el mar de fondo',
+    'un vestido con print floral tropical',
+    'un tambor o caja vallenata sonando de fondo, sutil',
+  ],
+  chistoso: [
+    'una cara de sorpresa exagerada',
+    'un contraste "antes/después" con un celular viejo roto',
+    'un perrito con cara de aprobación',
+    'un gesto de "mente volada" (manos en la cabeza)',
+    'un globo de cómic con una frase graciosa',
+    'una celebración exagerada tipo gol',
+    'una cara de shock mirando el precio',
+    'un meme visual tipo "cuando por fin llega tu celular nuevo"',
+    'una selfie con un filtro exagerado',
+    'una mano deteniendo un celular viejo humeando',
+  ],
+  formal: [
+    'una oficina moderna minimalista',
+    'una persona en traje casual de negocios sonriendo',
+    'líneas geométricas turquesa sutiles',
+    'iluminación de estudio profesional',
+    'un escritorio limpio con laptop',
+    'un apretón de manos',
+    'una vista de ciudad de fondo, fuera de foco',
+    'una gráfica de crecimiento sutil en turquesa',
+  ],
+  minimalista: [
+    'un solo objeto centrado, mucho espacio en blanco',
+    'una sombra larga y limpia',
+    'una paleta de máximo 2 colores',
+    'una línea horizontal delgada como único acento',
+    'la tipografía como protagonista, sin imágenes de fondo',
+  ],
+};
+
+// Contador de sesión — se reinicia si se recarga la página, y eso está bien:
+// solo existe para que un batch de varias piezas seguidas no repita detalle.
+let _detalleContador = 0;
+
+function getDetalleDelDia(estilo) {
+  const banco = BANCO_DETALLES[estilo] || BANCO_DETALLES.formal;
+  const dia = new Date().getDate(); // 1-31, para que cada día del mes arranque en un punto distinto
+  const idx = (dia - 1 + _detalleContador) % banco.length;
+  _detalleContador++;
+  return banco[idx];
+}
+
 function buildImgPrompt() {
   // ── Variables comunes ────────────────────────────────────────────
   const producto       = document.getElementById('producto').value.trim() || 'smartphone';
@@ -2046,11 +2116,12 @@ function buildImgPrompt() {
           jornada:       `Credit event poster. EVENT DATE "${jornadaFecha}" as visual hero in large turquoise numbers. Location: "${jornadaLugar}". Time: "${jornadaHora}".`,
         }[modo] || 'Brand identity post. Creditek logo prominent. Clean, commercial, compelling.';
 
+    const detalleDia = getDetalleDelDia(currentEstilo);
     const estiloRico = {
-      formal:     'Professional, trustworthy, aspirational. Geometric accents in turquoise at low opacity. Corporate credibility.',
-      costeno:    'Authentic everyday Caribbean Colombian life — warm natural light, genuine warmth. At most ONE subtle authentic detail (coconut water, a palm tree, floral-print dress, distant drum) — never combine several at once, that looks staged like a party. No confetti or costumes at all.',
-      chistoso:   'Playful commercial humor. Fun graphic elements, confetti, speech bubbles in turquoise. Brand that smiles.',
-      minimalista:'Ultra minimal. Maximum white space. One strong visual. Elegant restraint.',
+      formal:     `Professional, trustworthy, aspirational. Geometric accents in turquoise at low opacity. Corporate credibility. Visual detail: ${detalleDia}.`,
+      costeno:    `Authentic everyday Caribbean Colombian life — warm natural light, genuine warmth. At most ONE subtle authentic detail: ${detalleDia} — never combine several at once, that looks staged like a party. No confetti or costumes at all.`,
+      chistoso:   `Playful commercial humor. Fun graphic elements in turquoise. Brand that smiles. Visual detail: ${detalleDia}.`,
+      minimalista:`Ultra minimal. Maximum white space. One strong visual: ${detalleDia}. Elegant restraint.`,
       custom:     estiloCustomVal ? `Custom style: ${estiloCustomVal}` : 'Professional clean modern.',
     }[currentEstilo] || 'Professional brand design.';
 
@@ -2176,13 +2247,14 @@ function buildImgPrompt() {
     ? `Incluir callout labels flotantes alrededor del ${producto} con estas specs técnicas: ${specsItems.join(', ')}. Cada label: fondo turquesa #00C4CC, texto blanco, tipografía pequeña y limpia, sin tapar la pantalla.`
     : `Sin especificaciones técnicas ni callout labels alrededor del producto. Diseño limpio centrado en el producto y el mensaje.`;
 
+  const detalleDiaMsg = getDetalleDelDia(currentEstilo);
   const mensajeMap = {
-    formal:      `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
-    costeno:     `Tono caribeño colombiano auténtico y cotidiano — la vida costeña real, cálida y alegre, no una fiesta montada para la foto. Luz natural cálida de atardecer o mañana tropical, colores vivos, calidez humana genuina. Como mucho UN detalle auténtico costeño (nunca varios juntos): puede ser agua de coco, una palmera, un vestido con print floral, o un tambor sonando de fondo — elegir solo uno, de forma sutil y natural, no como protagonista de la escena. NUNCA combinar varios elementos culturales a la vez (eso se ve armado y saturado, no real — aquí no se vive en modo fiesta todos los días). Evitar por completo: confeti, disfraces o máscaras de comparsa.`,
+    formal:      `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Detalle visual: ${detalleDiaMsg}. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
+    costeno:     `Tono caribeño colombiano auténtico y cotidiano — la vida costeña real, cálida y alegre, no una fiesta montada para la foto. Luz natural cálida de atardecer o mañana tropical, colores vivos, calidez humana genuina. Como mucho UN detalle auténtico costeño (nunca varios juntos), este: ${detalleDiaMsg} — de forma sutil y natural, no como protagonista de la escena. NUNCA combinar varios elementos culturales a la vez (eso se ve armado y saturado, no real — aquí no se vive en modo fiesta todos los días). Evitar por completo: confeti, disfraces o máscaras de comparsa.`,
     chistoso:    /lavadora|\bmoto\b|nevera|televisor|\btv\b|estufa|licuadora|parlante|bicicleta|colchon/i.test(producto||'')
-      ? `Tono de humor comercial ligero sobre ${producto}. Humor cálido colombiano — divertido sin perder credibilidad. NO mencionar ni mostrar celulares — el producto de esta pieza no es un celular.`
-      : `Tono de humor comercial ligero. Crear contraste entre celular viejo y ${producto}. Humor cálido colombiano — divertido sin perder credibilidad.`,
-    minimalista: `Tono sereno y aspiracional. Menos texto, más espacio en blanco. El producto habla solo. Mensaje único, breve y poderoso.`,
+      ? `Tono de humor comercial ligero sobre ${producto}. Humor cálido colombiano — divertido sin perder credibilidad. Detalle visual: ${detalleDiaMsg}. NO mencionar ni mostrar celulares — el producto de esta pieza no es un celular.`
+      : `Tono de humor comercial ligero. Crear contraste entre celular viejo y ${producto}. Humor cálido colombiano — divertido sin perder credibilidad. Detalle visual: ${detalleDiaMsg}.`,
+    minimalista: `Tono sereno y aspiracional. Menos texto, más espacio en blanco. Un solo elemento visual: ${detalleDiaMsg}. El producto habla solo. Mensaje único, breve y poderoso.`,
     custom:      estiloCustomVal || `Estilo libre. Aplicar criterio artístico según las instrucciones.`,
   };
   const mensajeEstilo = mensajeMap[currentEstilo] || mensajeMap.formal;
@@ -2295,9 +2367,10 @@ function buildImgPromptGeminiFallback() {
     custom:      estiloCustomVal || 'azul marino y turquesa, estilo moderno',
   };
   const colorDesc = colorMap[currentEstilo] || colorMap.formal;
+  const detalleDiaGem = getDetalleDelDia(currentEstilo);
   const toqueTropical = currentEstilo === 'costeno'
-    ? ', con como mucho un detalle costeño sutil y natural (ej. una palmera, agua de coco, o un vestido con print floral) — nunca varios combinados, para que se vea vida real y no una fiesta armada'
-    : '';
+    ? `, con como mucho un detalle costeño sutil y natural (${detalleDiaGem}) — nunca varios combinados, para que se vea vida real y no una fiesta armada`
+    : ` — incorporar este detalle visual, sutil: ${detalleDiaGem}`;
 
   // ── MODOS SIN CELULAR (captación, institucional, jornada) ──
   if (['captacion','institucional','jornada'].includes(modo)) {
@@ -2366,11 +2439,12 @@ async function buildImgPromptGemini() {
   const producto = document.getElementById('producto').value.trim() || 'smartphone';
   const modo     = document.getElementById('modo')?.value || 'credito';
   const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
+  const detalleDiaClaude = getDetalleDelDia(currentEstilo);
   const estiloDescMap = {
-    formal:      'profesional, confiable, elegante',
-    costeno:     'caribeño colombiano, alegre, festivo, cálido',
-    chistoso:    'divertido, humor comercial ligero',
-    minimalista: 'minimalista, mucho espacio en blanco, sereno',
+    formal:      `profesional, confiable, elegante — incorporar este detalle visual: ${detalleDiaClaude}`,
+    costeno:     `caribeño colombiano, alegre, cálido — como mucho un detalle auténtico costeño, este: ${detalleDiaClaude}, nunca combinar varios`,
+    chistoso:    `divertido, humor comercial ligero — incorporar este detalle visual: ${detalleDiaClaude}`,
+    minimalista: `minimalista, mucho espacio en blanco, sereno — un solo elemento visual: ${detalleDiaClaude}`,
     custom:      estiloCustomVal || 'moderno',
   };
   const estiloDesc = estiloDescMap[currentEstilo] || estiloDescMap.formal;
@@ -2768,7 +2842,30 @@ async function componerLogoSobreImagen(dataUrlImagen) {
         const logoAlto  = logoAncho * (imgLogo.height / imgLogo.width);
         const x = canvas.width - logoAncho - margen;
         const y = margen;
+        const radio = canvas.width * 0.012; // esquinas redondeadas — se lee como tarjeta de marca, no como pegado
+
+        // FIX 04-jul-2026: sombra suave detrás de la tarjeta del logo — el PNG
+        // real no tiene transparencia (fondo blanco sólido horneado en el
+        // archivo), así que sin esto se ve como pegado encima de la foto.
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur = canvas.width * 0.015;
+        ctx.shadowOffsetX = canvas.width * 0.004;
+        ctx.shadowOffsetY = canvas.width * 0.006;
+        ctx.beginPath();
+        ctx.roundRect(x, y, logoAncho, logoAlto, radio);
+        ctx.fillStyle = 'white'; // dispara la sombra; el logo real se dibuja encima
+        ctx.fill();
+        ctx.restore();
+
+        // Recortar el logo real a las mismas esquinas redondeadas
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(x, y, logoAncho, logoAlto, radio);
+        ctx.clip();
         ctx.drawImage(imgLogo, x, y, logoAncho, logoAlto);
+        ctx.restore();
+
         resolve(canvas.toDataURL('image/png'));
       };
       imgLogo.onerror = () => resolve(dataUrlImagen);
