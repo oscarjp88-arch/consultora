@@ -169,8 +169,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <option value="nuevo">Nuevos</option>
         <option value="con_optin">Con opt-in</option>
         <option value="sin_optin">Sin opt-in</option>
-        <option value="lead">Leads</option>
-        <option value="baja">Baja</option>
+        <option value="contactado">Contactados</option>
+        <option value="ciudad_identificada">Ciudad identificada</option>
+        <option value="lead_caliente">Leads calientes</option>
+        <option value="transferido_asesor">Transferidos a asesor</option>
+        <option value="perdido">Perdidos</option>
       </select>
     </div>
     <div class="conv-scroll" id="conv-list"></div>
@@ -360,8 +363,13 @@ function applyFilters(){
   if(cf!=='all')entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);if(!c||!c.tienda_origen_id)return false;return cityMap[c.tienda_origen_id]===cf});
   if(sf!=='all')entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);if(!c)return false;
     if(sf==='nuevo')return c.estado_funnel==='nuevo';if(sf==='con_optin')return c.optin_datos;
-    if(sf==='sin_optin')return!c.optin_datos;if(sf==='lead')return c.estado_funnel==='lead';
-    if(sf==='baja')return c.estado_funnel==='baja';return true});
+    if(sf==='sin_optin')return!c.optin_datos;
+    if(sf==='contactado')return c.estado_funnel==='contactado';
+    if(sf==='ciudad_identificada')return c.estado_funnel==='ciudad_identificada';
+    if(sf==='lead_caliente')return c.estado_funnel==='lead_caliente';
+    if(sf==='transferido_asesor')return c.estado_funnel==='transferido_asesor';
+    if(sf==='perdido')return c.estado_funnel==='perdido';
+    return true});
   renderConvList(entries);
 }
 

@@ -2113,7 +2113,12 @@ function buildImgPrompt() {
       : {
           institucional: 'Brand institutional post. Pure brand identity. Clean minimal premium design — large logo, bold headline, generous white space.',
           captacion:     'Community engagement post. Bold large typography as visual hero. Caribbean Colombian energy. Fun turquoise graphic elements.',
-          jornada:       `Credit event poster. EVENT DATE "${jornadaFecha}" as visual hero in large turquoise numbers. Location: "${jornadaLugar}". Time: "${jornadaHora}".`,
+          jornada: [
+            'Credit event poster.',
+            jornadaFecha ? ` EVENT DATE "${jornadaFecha}" as visual hero in large turquoise numbers.` : ' Do NOT invent or render any specific date — none was provided, omit it completely.',
+            jornadaLugar ? ` Location: "${jornadaLugar}".` : ' Do NOT invent or render any specific address or location — none was provided, omit it completely.',
+            jornadaHora  ? ` Time: "${jornadaHora}".` : ' Do NOT invent or render any specific time — none was provided, omit it completely.',
+          ].join(''),
         }[modo] || 'Brand identity post. Creditek logo prominent. Clean, commercial, compelling.';
 
     const detalleDia = getDetalleDelDia(currentEstilo);
