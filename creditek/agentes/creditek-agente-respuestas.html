@@ -30,7 +30,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .main{display:flex;flex:1;overflow:hidden}
 
 .sidebar{width:var(--sidebar-w);background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
-.sidebar-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0}
 .sidebar-tab{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
 .sidebar-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .sidebar-tab:hover{color:var(--text)}
@@ -155,7 +155,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="sidebar-tab" onclick="switchView('clients',this)"><i class="ti ti-users" aria-hidden="true"></i> Clientes <span class="tab-badge" id="b-clients">0</span></div>
       <div class="sidebar-tab" onclick="switchView('optins',this)"><i class="ti ti-shield-check" aria-hidden="true"></i> Legal <span class="tab-badge" id="b-optins">0</span></div>
       <div class="sidebar-tab" onclick="switchView('correcciones',this)"><i class="ti ti-pencil" aria-hidden="true"></i> IA <span class="tab-badge" id="b-correcciones">0</span></div>
-      <div class="sidebar-tab" onclick="switchView('dashboard',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i> Dashboard</div>
+      <div class="sidebar-tab" onclick="switchView('dashboard',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i> CRM</div>
     </div>
     <div class="sidebar-filters">
       <input type="text" class="search-box" id="searchInput" placeholder="Buscar nombre o telefono..." oninput="applyFilters()">
