@@ -2392,15 +2392,21 @@ function buildImgPromptGeminiFallback() {
   // ── MODOS SIN CELULAR (captación, institucional, jornada) ──
   if (['captacion','institucional','jornada'].includes(modo)) {
     const tipoPersonalizado = document.getElementById('tipo-personalizado')?.value.trim() || '';
-    const titularVal = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
-    const mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
+    const titularVal   = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
+    const mensajeVal   = document.getElementById('img-mensaje')?.value.trim() || '';
+    const jornadaFecha = document.getElementById('jornada-fecha')?.value.trim() || '';
+    const jornadaLugar = document.getElementById('jornada-lugar')?.value.trim() || '';
+    const jornadaHora  = document.getElementById('jornada-hora')?.value.trim()  || '';
     const escena = tipoPersonalizado || 'una publicación de marca limpia y atractiva';
 
     return [
       `Anuncio publicitario en redes sociales sobre ${escena}${toqueTropical}.`,
       ` El fondo es en ${colorDesc}.`,
       ` En el centro está escrito en letras grandes y gruesas el texto "${titularVal}".`,
-      mensajeVal ? ` Debajo, en letras más pequeñas, dice "${mensajeVal}".` : '',
+      mensajeVal   ? ` Debajo, en letras más pequeñas, dice "${mensajeVal}".` : '',
+      jornadaFecha ? ` En números muy grandes y destacados aparece la fecha del evento: "${jornadaFecha}".` : '',
+      jornadaLugar ? ` El nombre del lugar del evento aparece claramente: "${jornadaLugar}".` : '',
+      jornadaHora  ? ` El horario del evento aparece visible: "${jornadaHora}".` : '',
       ` Composición limpia, comercial y llamativa, estilo publicidad moderna, usando todo el lienzo de borde a borde, sin zonas vacías.`,
     ].filter(Boolean).join('');
   }
@@ -2466,14 +2472,20 @@ async function buildImgPromptGemini() {
   };
   const estiloDesc = estiloDescMap[currentEstilo] || estiloDescMap.formal;
 
-  let titular, mensajeVal, precio, cta;
+  let titular, mensajeVal, precio, cta, jornadaFecha, jornadaLugar, jornadaHora;
   if (['captacion','institucional','jornada'].includes(modo)) {
-    titular    = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
-    mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
-    precio     = '';
-    cta        = document.getElementById('chk-cta-activo')?.checked !== false
+    titular      = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
+    mensajeVal   = document.getElementById('img-mensaje')?.value.trim() || '';
+    precio       = '';
+    jornadaFecha = document.getElementById('jornada-fecha')?.value.trim() || '';
+    jornadaLugar = document.getElementById('jornada-lugar')?.value.trim() || '';
+    jornadaHora  = document.getElementById('jornada-hora')?.value.trim()  || '';
+    cta          = document.getElementById('chk-cta-activo')?.checked !== false
                    ? (document.getElementById('img-cta')?.value.trim() || 'Síguenos en Creditek') : '';
   } else {
+    jornadaFecha = '';
+    jornadaLugar = '';
+    jornadaHora  = '';
     const cuota      = document.getElementById('cuota').value.trim();
     const ciudad     = document.getElementById('ciudad').value || 'Colombia';
     const esCiudad   = isCiudadCompleta(ciudad);
@@ -2503,7 +2515,10 @@ Estilo/tono: ${estiloDesc}
 Titular exacto: "${titular}"
 ${mensajeVal ? `Mensaje secundario exacto: "${mensajeVal}"` : ''}
 ${precio ? `Precio/cuota exacto: "${precio}"` : ''}
-${cta ? `Botón CTA exacto: "${cta}"` : ''}`;
+${cta ? `Botón CTA exacto: "${cta}"` : ''}
+${jornadaFecha ? `Fecha del evento (mostrar MUY GRANDE y destacada): "${jornadaFecha}"` : ''}
+${jornadaLugar ? `Lugar del evento (mostrar claramente): "${jornadaLugar}"` : ''}
+${jornadaHora  ? `Horario del evento (mostrar visible): "${jornadaHora}"` : ''}`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
