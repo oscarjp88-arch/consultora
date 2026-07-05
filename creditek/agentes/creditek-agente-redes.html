@@ -772,7 +772,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
               Incluir en imagen
             </label>
           </div>
-          <input type="text" class="img-prev-input" id="img-cta" placeholder="Síguenos en Creditek" oninput="buildImgPrompt()">
+          <input type="text" class="img-prev-input" id="img-cta" placeholder="Escríbenos por WhatsApp" oninput="buildImgPrompt()">
         </div>
       </div>
       <div class="img-prompt-wrap">
@@ -1950,12 +1950,12 @@ function resetPreviewFields() {
     '| dirección resultante:', dirImg,
     '| CTA final:', dirImg ? `Visítanos en ${nombreCta} · ${dirImg}` : `Visítanos en ${nombreCta}`);
   const ctaDefaults = {
-    captacion:     'Síguenos en Creditek',
-    institucional: 'Síguenos en Creditek',
+    captacion:     'Escríbenos por WhatsApp',
+    institucional: 'Escríbenos por WhatsApp',
     jornada:       `Visítanos en ${nombreCta}`,
-    credito:       ciudad && ciudad !== 'general' ? `Visítanos en ${nombreCta}` : 'Visítanos en Creditek',
-    promo:         ciudad && ciudad !== 'general' ? `Visítanos en ${nombreCta}` : 'Visítanos en Creditek',
-    tienda:        ciudad && ciudad !== 'general' ? `Visítanos en ${nombreCta}` : 'Visítanos en Creditek',
+    credito:       ciudad && ciudad !== 'general' ? `Visítanos en ${nombreCta}` : 'Escríbenos por WhatsApp',
+    promo:         ciudad && ciudad !== 'general' ? `Visítanos en ${nombreCta}` : 'Escríbenos por WhatsApp',
+    tienda:        ciudad && ciudad !== 'general' ? `Visítanos en ${nombreCta}` : 'Escríbenos por WhatsApp',
     servicio:      ciudad && ciudad !== 'general' ? `Contáctanos en ${nombreCta}` : 'Contáctanos',
   };
   const ctaBase = ctaDefaults[modo] || `Visítanos en ${nombreCta}`;
@@ -2101,7 +2101,7 @@ function buildImgPrompt() {
   if (['captacion','institucional','jornada'].includes(modo)) {
     const tipoPersonalizado = document.getElementById('tipo-personalizado')?.value.trim() || '';
     const titularVal = document.getElementById('img-titular')?.value.trim() || 'Aquí te atendemos bien, siempre.';
-    const ctaVal     = document.getElementById('img-cta')?.value.trim() || `Síguenos en Creditek`;
+    const ctaVal     = document.getElementById('img-cta')?.value.trim() || `Escríbenos por WhatsApp`;
     const mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
     const jornadaFecha = document.getElementById('jornada-fecha')?.value.trim() || '';
     const jornadaLugar = document.getElementById('jornada-lugar')?.value.trim() || '';
