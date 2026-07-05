@@ -2146,6 +2146,18 @@ function buildImgPrompt() {
           '- All text sharp and fully legible.',
         ];
 
+    // FIX v1, 04-jul-2026: antes esta regla era fija para los 4 estilos, forzando
+    // 80% de navy+turquesa incluso en Chistoso/Costeno, donde no aplica - ahi la
+    // marca solo necesita estar presente en el CTA y el logo, no dominar el fondo.
+    const paletaPorEstilo = {
+      formal:      { paleta: 'azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF', dominio: 'azul marino + turquesa mínimo 80% del diseño.' },
+      chistoso:    { paleta: 'colores vivos, saturados y alegres — los que mejor comuniquen humor y energía (no restringido a azul/turquesa) — con turquesa #00C4CC como acento de marca en el CTA y el logo', dominio: 'turquesa #00C4CC visible en el CTA y el logo — el resto de la paleta es libre, priorizando humor y energía visual real, no institucional.' },
+      costeno:     { paleta: 'colores cálidos y vivos del Caribe colombiano real (turquesa del mar, dorado de atardecer, tonos de casas coloniales) — con turquesa #00C4CC como acento de marca en el CTA y el logo', dominio: 'turquesa #00C4CC visible en el CTA y el logo — el resto de la paleta refleja el Caribe real, nunca institucional ni azul marino dominante.' },
+      minimalista: { paleta: 'azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF', dominio: 'mucho espacio en blanco — azul marino y turquesa como únicos acentos puntuales, sin llenar el lienzo.' },
+      custom:      { paleta: 'azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF', dominio: 'azul marino + turquesa mínimo 80% del diseño.' },
+    };
+    const paletaEstilo = paletaPorEstilo[currentEstilo] || paletaPorEstilo.formal;
+
     const prompt = [
       'ROLE: Senior advertising art director for Colombian Caribbean brand. Create a commercially compelling, visually rich image.',
       `FORMAT: ${formatSpec}`,
@@ -2320,8 +2332,8 @@ function buildImgPrompt() {
     `- Español colombiano natural — sin frases forzadas`,
     `IDENTIDAD VISUAL:`,
     `- Fondo: ${bgSpec}`,
-    `- Paleta: azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF`,
-    `- Dominio: azul marino + turquesa mínimo 80% del diseño.`,
+    `- Paleta: ${paletaEstilo.paleta}`,
+    `- Dominio: ${paletaEstilo.dominio}`,
     `- Logo Creditek: esquina superior derecha — check circular turquesa + wordmark Montserrat Bold. NO modificar.`,
     `- Tipografía: Montserrat Bold titulares; DM Sans secundarios`,
     finStrip        ? `- ${finStrip}`     : null,
