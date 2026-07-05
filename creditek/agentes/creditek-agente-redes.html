@@ -2020,24 +2020,24 @@ function updateImgKeyStatus() {
 // completo en batch el mismo día.
 const BANCO_DETALLES = {
   costeno: [
-    'un carrito de raspado',
-    'una plaza de pueblo con palomas, estilo Corozal o Chinú',
-    'una iglesia colonial costera',
-    'alguien comiendo mango biche con sal',
-    'un guacamayo en un balcón',
-    'una calle con casas de colores pastel',
-    'un pescador arreglando su red',
-    'un atardecer sobre el mar Caribe',
-    'una hamaca en un patio',
-    'un ventilador de techo antiguo',
-    'una tienda de barrio con gaseosas frías',
-    'un mercado de frutas tropicales',
-    'una moto con parrillero',
-    'un abanico de palma',
-    'agua de coco recién partido',
-    'una palmera con el mar de fondo',
-    'un vestido con print floral tropical',
-    'un tambor o caja vallenata sonando de fondo, sutil',
+    // Escenas plausibles: cliente + celular como foco, lo costeño como contexto natural.
+    // Cada entrada es un MOMENTO que de verdad pasa un día cualquiera en la costa — no un objeto pegado.
+    'dos amigas de rasgos costeños riéndose mientras miran juntas un celular nuevo, una sostiene un coco frío',
+    'un joven costeño mostrando su celular nuevo a un amigo en la plaza del pueblo, palomas y iglesia de fondo',
+    'una madre costeña sonriendo con su celular nuevo, sentada en un banco de la plaza colonial',
+    'un cliente saliendo feliz de un local comercial con la bolsa de su celular nuevo en la mano',
+    'una pareja joven costeña tomándose una selfie con su celular recién estrenado',
+    'una chica de rasgos costeños disfrutando un raspao mientras revisa su celular nuevo',
+    'un grupo de amigos costeños celebrando alrededor de un celular nuevo, casas de colores pastel de fondo',
+    'un joven trabajador costeño revisando su celular nuevo en una calle comercial del pueblo',
+    'una señora costeña estrenando su celular, con un mercado de frutas tropicales detrás',
+    'un cliente feliz recibiendo la caja de su celular nuevo de manos de un asesor, vitrina de celulares al fondo',
+    'dos jóvenes en una moto mostrando el celular nuevo, ambiente de pueblo costeño real',
+    'una chica costeña riéndose con su celular nuevo, con un vaso de agua de coco natural en la mano',
+    'un padre mostrándole a su hijo cómo usar el celular nuevo, patio costeño con brisa',
+    'una joven costeña frente a la iglesia colonial del pueblo, feliz con su celular nuevo',
+    'un cliente comparando su celular nuevo con el viejo, cara de satisfacción, local comercial de fondo',
+    'una vitrina iluminada y surtida de celulares con un cliente eligiendo, ambiente comercial digno',
   ],
   chistoso: [
     'una cara de sorpresa exagerada',
@@ -2124,7 +2124,7 @@ function buildImgPrompt() {
     const detalleDia = getDetalleDelDia(currentEstilo);
     const estiloRico = {
       formal:     `Professional, trustworthy, aspirational. Geometric accents in turquoise at low opacity. Corporate credibility. Visual detail: ${detalleDia}.`,
-      costeno:    `Authentic everyday Caribbean Colombian life — warm natural light, genuine warmth. At most ONE subtle authentic detail: ${detalleDia} — never combine several at once, that looks staged like a party. No confetti or costumes at all.`,
+      costeno:    `Authentic everyday Caribbean Colombian commercial life — a happy customer enjoying their new phone as the clear focus, warm natural light, genuine warmth. Scene: ${detalleDia}. RULE: the scene must be PLAUSIBLE — a real moment that could actually happen on any ordinary day in a coastal town (Corozal, Chinú, Ciénaga). Several Caribbean elements are fine ONLY if they naturally belong together in one real moment; NEVER stack unrelated tropical clichés (no confetti + palms + flowers + coconut piled together to "shout Coast"). No carnival costumes.`,
       chistoso:   `Playful commercial humor. Fun graphic elements in turquoise. Brand that smiles. Visual detail: ${detalleDia}.`,
       minimalista:`Ultra minimal. Maximum white space. One strong visual: ${detalleDia}. Elegant restraint.`,
       custom:     estiloCustomVal ? `Custom style: ${estiloCustomVal}` : 'Professional clean modern.',
@@ -2169,7 +2169,7 @@ function buildImgPrompt() {
           inst_valores:'ADD: clean icon — heart or shield — in turquoise.',
           inst_logro:'ADD: trophy or star graphic.',
           captacion_pregunta:'ADD: oversized question mark in turquoise as background element.',
-          captacion_humor:'ADD: playful Caribbean elements — palms, sun, waves.',
+          captacion_humor:'ADD: ONE genuine Caribbean commercial moment — a real everyday scene, never a stack of tropical clichés (no piling palms + confetti + flowers + coconut together).',
           jornada_urgencia:'ADD: countdown clock in turquoise. Maximum urgency.',
         }[tipo] || null
       ),
@@ -2267,7 +2267,7 @@ function buildImgPrompt() {
   const detalleDiaMsg = getDetalleDelDia(currentEstilo);
   const mensajeMap = {
     formal:      `Tono comercial profesional, confiable y aspiracional. Resaltar el beneficio principal del equipo. Detalle visual: ${detalleDiaMsg}. Mensaje directo, elegante y sin estridencias — que transmita solidez de marca y confianza al comprador.`,
-    costeno:     `Tono caribeño colombiano auténtico y cotidiano — la vida costeña real, cálida y alegre, no una fiesta montada para la foto. Luz natural cálida de atardecer o mañana tropical, colores vivos, calidez humana genuina. Como mucho UN detalle auténtico costeño (nunca varios juntos), este: ${detalleDiaMsg} — de forma sutil y natural, no como protagonista de la escena. NUNCA combinar varios elementos culturales a la vez (eso se ve armado y saturado, no real — aquí no se vive en modo fiesta todos los días). Evitar por completo: confeti, disfraces o máscaras de comparsa.`,
+    costeno:     `Tono caribeño colombiano auténtico y comercial — un cliente feliz disfrutando su celular nuevo como foco claro de la escena. Luz natural cálida, colores vivos, calidez humana genuina. Escena: ${detalleDiaMsg}. REGLA DE ORO: la escena debe ser PLAUSIBLE — un momento que de verdad podría pasar un día cualquiera en un pueblo de la costa (Corozal, Chinú, Ciénaga). Varios elementos costeños están bien SOLO si conviven de forma natural en un mismo momento real (ej: dos amigas en la plaza, una con un coco, mirando el celular). Lo PROHIBIDO es apilar elementos que no conviven en la vida real solo para "gritar Costa" (confeti + palmeras + flores + coco todos juntos = falso). Nada de confeti, disfraces ni máscaras de comparsa.`,
     chistoso:    /lavadora|\bmoto\b|nevera|televisor|\btv\b|estufa|licuadora|parlante|bicicleta|colchon/i.test(producto||'')
       ? `Tono de humor comercial ligero sobre ${producto}. Humor cálido colombiano — divertido sin perder credibilidad. Detalle visual: ${detalleDiaMsg}. NO mencionar ni mostrar celulares — el producto de esta pieza no es un celular.`
       : `Tono de humor comercial ligero. Crear contraste entre celular viejo y ${producto}. Humor cálido colombiano — divertido sin perder credibilidad. Detalle visual: ${detalleDiaMsg}.`,
@@ -2378,7 +2378,7 @@ function buildImgPromptGeminiFallback() {
 
   const colorMap = {
     formal:      'tonos azul marino profundo con acentos turquesa, elegante y confiable',
-    costeno:     'colores cálidos y luz natural del Caribe colombiano — turquesa del mar, dorado del atardecer — auténtico y cotidiano, no una fiesta montada',
+    costeno:     'colores cálidos y luz natural del Caribe colombiano, ambiente comercial cotidiano y real (plaza de pueblo, calle comercial, local surtido) con un cliente feliz disfrutando su celular nuevo — auténtico, nunca una postal turística ni una fiesta montada',
     chistoso:    'colores vivos y alegres, azul marino y turquesa con energía divertida',
     minimalista: 'azul marino profundo, mucho espacio en blanco, muy pocos elementos',
     custom:      estiloCustomVal || 'azul marino y turquesa, estilo moderno',
@@ -2459,7 +2459,7 @@ async function buildImgPromptGemini() {
   const detalleDiaClaude = getDetalleDelDia(currentEstilo);
   const estiloDescMap = {
     formal:      `profesional, confiable, elegante — incorporar este detalle visual: ${detalleDiaClaude}`,
-    costeno:     `caribeño colombiano, alegre, cálido — como mucho un detalle auténtico costeño, este: ${detalleDiaClaude}, nunca combinar varios`,
+    costeno:     `caribeño colombiano comercial, alegre y cálido — un cliente feliz disfrutando su celular nuevo como foco. Escena plausible y real (un momento que de verdad pasa en un pueblo de la costa): ${detalleDiaClaude}. Varios elementos costeños están bien solo si conviven naturalmente en el mismo momento; nunca apilar clichés turísticos para decorar`,
     chistoso:    `divertido, humor comercial ligero — incorporar este detalle visual: ${detalleDiaClaude}`,
     minimalista: `minimalista, mucho espacio en blanco, sereno — un solo elemento visual: ${detalleDiaClaude}`,
     custom:      estiloCustomVal || 'moderno',
