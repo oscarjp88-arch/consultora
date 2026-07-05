@@ -101,6 +101,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .data-table th{text-align:left;padding:10px 12px;font-size:10px;color:var(--text3);text-transform:uppercase;background:#f9fafb;border-bottom:1px solid var(--border);font-weight:500}
 .data-table td{padding:9px 12px;border-bottom:1px solid #f8fafc}
 .data-table tr:hover{background:#f8fafc}
+.db-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.db-panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.db-panel h3{font-size:13px;margin:0 0 12px;color:var(--text)}
+.db-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.db-label{width:150px;font-size:11.5px;color:var(--text2);flex-shrink:0}
+.db-track{flex:1;background:var(--bg);border-radius:6px;height:22px;position:relative}
+.db-fill{height:100%;border-radius:6px;background:var(--accent);display:flex;align-items:center;padding-left:8px;color:#fff;font-size:11px;font-weight:600;min-width:24px;transition:width .4s ease}
 
 .chart-container{padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--card)}
 .chart-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px}
@@ -148,6 +155,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="sidebar-tab" onclick="switchView('clients',this)"><i class="ti ti-users" aria-hidden="true"></i> Clientes <span class="tab-badge" id="b-clients">0</span></div>
       <div class="sidebar-tab" onclick="switchView('optins',this)"><i class="ti ti-shield-check" aria-hidden="true"></i> Legal <span class="tab-badge" id="b-optins">0</span></div>
       <div class="sidebar-tab" onclick="switchView('correcciones',this)"><i class="ti ti-pencil" aria-hidden="true"></i> IA <span class="tab-badge" id="b-correcciones">0</span></div>
+      <div class="sidebar-tab" onclick="switchView('dashboard',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i> Dashboard</div>
     </div>
     <div class="sidebar-filters">
       <input type="text" class="search-box" id="searchInput" placeholder="Buscar nombre o telefono..." oninput="applyFilters()">
@@ -221,6 +229,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Correcciones guardadas</div>
       <div id="corrList"><div style="text-align:center;color:var(--text3);padding:30px;font-size:13px;">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- FIX v1, 04-jul-2026: Dashboard ejecutivo (Fase 3 del CRM) -->
+  <div class="table-view" id="view-dashboard">
+    <div style="max-width:960px;margin:0 auto;padding:16px 0;">
+      <div class="db-grid">
+        <div class="db-panel"><h3>Embudo de conversion</h3><div id="db-embudo"></div></div>
+        <div class="db-panel"><h3>Fuente de clientes</h3><div id="db-fuente"></div></div>
+      </div>
+      <div class="db-panel" style="margin-top:14px">
+        <h3>Ranking por tienda</h3>
+        <table class="data-table">
+          <tr><th>Tienda</th><th>Ciudad</th><th>Clientes</th><th>Transferidos</th><th>Conversion</th></tr>
+          <tbody id="db-tiendas"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -441,6 +466,43 @@ function renderClients(){
   el.innerHTML=allClients.map(c=>'<tr style="cursor:pointer" onclick="switchView(\'chats\',document.querySelector(\'.sidebar-tab\'));openChat(\''+c.telefono+'\')"><td style="font-weight:500">'+(c.nombre||'Sin nombre')+'</td><td>'+c.telefono+'</td><td>'+(c.segmento||'-')+'</td><td>'+(c.estado_funnel||'-')+'</td><td>'+dot(c.optin_datos)+'</td><td>'+dot(c.optin_operativo)+'</td><td>'+dot(c.optin_comercial)+'</td><td>'+(c.fuente||'-')+'</td><td>'+(c.created_at?new Date(c.created_at).toLocaleDateString('es-CO'):'-')+'</td></tr>').join('');
 }
 
+// FIX v1, 04-jul-2026: Dashboard ejecutivo (Fase 3 del CRM) — usa allClients
+// y allTiendas ya cargados en memoria, sin pedir nada nuevo a Supabase.
+function cargarDashboard(){
+  const labelsEstado={nuevo:'Nuevo',contactado:'Contactado',ciudad_identificada:'Ciudad identificada',lead_caliente:'Lead caliente',transferido_asesor:'Transferido asesor',perdido:'Perdido'};
+  const porEstado={};
+  Object.keys(labelsEstado).forEach(e=>porEstado[e]=0);
+  allClients.forEach(c=>{const e=c.estado_funnel||'nuevo';if(porEstado[e]!==undefined)porEstado[e]++});
+  const maxEstado=Math.max(1,...Object.values(porEstado));
+  document.getElementById('db-embudo').innerHTML=Object.entries(porEstado).map(([k,v])=>
+    `<div class="db-row"><div class="db-label">${labelsEstado[k]}</div><div class="db-track"><div class="db-fill" style="width:${Math.round(v/maxEstado*100)}%">${v}</div></div></div>`
+  ).join('');
+
+  const porFuente={};
+  allClients.forEach(c=>{const f=c.fuente||'sin_fuente';porFuente[f]=(porFuente[f]||0)+1});
+  const maxFuente=Math.max(1,...Object.values(porFuente));
+  document.getElementById('db-fuente').innerHTML=Object.entries(porFuente).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+    `<div class="db-row"><div class="db-label">${k}</div><div class="db-track"><div class="db-fill" style="width:${Math.round(v/maxFuente*100)}%">${v}</div></div></div>`
+  ).join('');
+
+  const porTienda={};
+  allClients.forEach(c=>{
+    if(!c.tienda_id) return;
+    if(!porTienda[c.tienda_id]) porTienda[c.tienda_id]={total:0,transferidos:0};
+    porTienda[c.tienda_id].total++;
+    if(c.estado_funnel==='transferido_asesor') porTienda[c.tienda_id].transferidos++;
+  });
+  const tiendaMap={};
+  (allTiendas||[]).forEach(t=>tiendaMap[t.id]=t);
+  document.getElementById('db-tiendas').innerHTML=Object.entries(porTienda)
+    .sort((a,b)=>b[1].total-a[1].total)
+    .map(([id,d])=>{
+      const t=tiendaMap[id]||{};
+      const pct=d.total?Math.round(d.transferidos/d.total*100):0;
+      return `<tr><td style="font-weight:500">${t.nombre_comercial||t.nombre||id}</td><td>${t.ciudad||'-'}</td><td>${d.total}</td><td>${d.transferidos}</td><td>${pct}%</td></tr>`;
+    }).join('');
+}
+
 function renderOptins(){
   const el=document.getElementById('optins-tbody');
   const dot=v=>'<span class="dot '+(v?'dot-g':'dot-r')+'"></span>';
@@ -455,8 +517,10 @@ function switchView(view,el){
   document.getElementById('center-clients').className=view==='clients'?'table-view active':'table-view';
   document.getElementById('center-optins').className=view==='optins'?'table-view active':'table-view';
   document.getElementById('view-correcciones').className=view==='correcciones'?'table-view active':'table-view';
+  document.getElementById('view-dashboard').className=view==='dashboard'?'table-view active':'table-view';
   document.getElementById('right-panel').className=view==='chats'&&currentTel?'right-panel show':'right-panel';
   if(view==='correcciones') cargarCorrecciones();
+  if(view==='dashboard') cargarDashboard();
 }
 
 function exportCSV(){
