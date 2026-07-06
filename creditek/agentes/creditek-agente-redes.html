@@ -2226,6 +2226,14 @@ function buildImgPrompt() {
     ? 'Composición VERTICAL 1080×1920 px: zona superior (0–20%) → logo Creditek centrado. Zona media (20–70%) → producto protagonista grande, bien iluminado, con iluminación de estudio. Zona inferior (70–100%) → titular en Montserrat Bold + precio en turquesa + botón CTA. Aprovechar toda la altura con espaciado generoso.'
     : 'Composición CUADRADA 1080×1080 px: producto en primer plano a la derecha (55% del ancho), textos jerarquizados a la izquierda (titular → precio → CTA), logo Creditek esquina superior derecha. Equilibrio visual horizontal, punto focal central fuerte.';
 
+  const paletaPorEstilo_B = {
+    formal:      { paleta: 'azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF', dominio: 'azul marino + turquesa mínimo 80% del diseño.' },
+    chistoso:    { paleta: 'colores vivos, saturados y alegres — los que mejor comuniquen humor y energía (no restringido a azul/turquesa) — con turquesa #00C4CC como acento de marca en el CTA y el logo', dominio: 'turquesa #00C4CC visible en el CTA y el logo — el resto de la paleta es libre, priorizando humor y energía visual real, no institucional.' },
+    costeno:     { paleta: 'colores cálidos y vivos del Caribe colombiano real (turquesa del mar, dorado de atardecer, tonos de casas coloniales) — con turquesa #00C4CC como acento de marca en el CTA y el logo', dominio: 'turquesa #00C4CC visible en el CTA y el logo — el resto de la paleta refleja el Caribe real, nunca institucional ni azul marino dominante.' },
+    minimalista: { paleta: 'azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF', dominio: 'mucho espacio en blanco — azul marino y turquesa como únicos acentos puntuales, sin llenar el lienzo.' },
+    custom:      { paleta: 'azul marino #0B1E3D | turquesa #00C4CC | blanco #FFFFFF', dominio: 'azul marino + turquesa mínimo 80% del diseño.' },
+  };
+  const paletaEstilo = paletaPorEstilo_B[currentEstilo] || paletaPorEstilo_B.formal;
   const tipoPersonalizadoVal = document.getElementById('tipo-personalizado')?.value.trim() || '';
   const tipoImgMap = {
     oferta_semana:    `Oferta de la semana: ${producto} protagonista grande y bien iluminado.${precio ? ` Badge de precio "${precio}" muy prominente en turquesa #00C4CC, números grandes y en negrita, posición superior izquierda.` : ''} Titular en Montserrat Bold en la zona izquierda. Jerarquía visual clara: titular → precio → producto → CTA.`,
