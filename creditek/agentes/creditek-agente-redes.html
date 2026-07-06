@@ -2224,7 +2224,7 @@ const BANCO_DETALLES = {
     'una iglesia colonial costera con su parque',
     'alguien comiendo mango biche con sal',
     'una calle comercial de pueblo costeño con locales abiertos',
-    'una tienda de barrio con gaseosas frías en la nevera',
+    'un local de tecnología con vitrinas iluminadas y celulares en exhibición',
     'una vitrina de celulares y accesorios bien iluminada',
     'un mercado de frutas tropicales colorido',
     'una moto con parrillero en calle de pueblo',
@@ -2713,28 +2713,33 @@ async function buildImgPromptGemini() {
                    ? (document.getElementById('img-cta')?.value.trim() || `Visítanos en ${nombreCta}`) : '';
   }
 
-  const instruccion = `Eres un director de arte experto en prompts para modelos de generación de imágenes por difusión (como Imagen 4 de Google). Convierte estos datos en UN SOLO prompt narrativo en español para pedirle una imagen a Imagen 4.
+  const instruccion = `Eres un Director de Arte experto en prompt engineering para modelos de difusión de Google (Imagen 4 / Gemini). Tu objetivo es recibir un brief de diseño y traducirlo a UN SOLO párrafo narrativo en español de máximo 80 palabras.
 
-REGLAS OBLIGATORIAS:
-- Describe una escena fotográfica real (personas, ambiente, luz, colores). NUNCA uses etiquetas técnicas, códigos hexadecimales, tamaños en pt ni nombres de tipografía.
-- Usa nombres de color, no códigos hex.
-- Cada texto exacto debe aparecer UNA sola vez, entre comillas dobles, integrado naturalmente en la descripción física (ej: "sostiene un letrero donde está escrito...").
-- NO uses comillas para nada más en el prompt.
-- La composición debe usar el lienzo completo de borde a borde, igual que una pieza publicitaria profesional real.
-- CRÍTICO: La esquina superior derecha debe tener fondo liso azul marino oscuro (#0B1E3D), sin personas, sin texturas, sin elementos decorativos — es la zona reservada para el logo de la marca. Esto es innegociable.
-- Máximo 130 palabras.
-- Responde SOLO con el prompt final. Sin explicaciones, sin markdown, sin comillas envolviendo todo el texto.
+RESTRICCIONES ESTRICTAS — NUNCA incluyas en tu salida:
+- Palabras técnicas: "capa", "layout", "composición", "vector", "PNG", "feed", "1080px"
+- Códigos hex ni tamaños en puntos. Tradúcelos: azul marino oscuro, letras muy grandes
+- Nombres de tipografías. Usa: tipografía sans-serif gruesa y moderna
+- Comillas dobles para NADA excepto texto literal a renderizar en la imagen
 
-DATOS DE LA PIEZA:
+FÓRMULA OBLIGATORIA — escribe en este orden exacto:
+1. ESCENA BASE: tipo de imagen y estética general
+2. SUJETO PRINCIPAL: persona o producto, posición y acción. IMPORTANTE: el sujeto debe ser una persona colombiana de clase media trabajadora, bien vestida, en ambiente comercial digno (local de tecnología surtido, vitrina iluminada, calle comercial). NUNCA pobreza, NUNCA tienda humilde, NUNCA ropa desgastada.
+3. ENTORNO: ambiente, colores, accesorios. La esquina superior derecha debe ser fondo liso azul marino oscuro sin texturas ni personas — zona reservada para logo.
+4. TEXTOS: cada texto como objeto físico con ubicación exacta usando la fórmula: "en [ubicación] está escrito el texto [TEXTO ENTRE COMILLAS]"
+5. ILUMINACIÓN: calidad fotográfica, vibrante, profesional
+
+BRIEF DE LA PIEZA:
 Producto: ${producto}
 Estilo/tono: ${estiloDesc}
-Titular exacto: "${titular}"
-${mensajeVal ? `Mensaje secundario exacto: "${mensajeVal}"` : ''}
-${precio ? `Precio/cuota exacto: "${precio}"` : ''}
-${cta ? `Botón CTA exacto: "${cta}"` : ''}
-${jornadaFecha ? `Fecha del evento (mostrar MUY GRANDE y destacada): "${jornadaFecha}"` : ''}
-${jornadaLugar ? `Lugar del evento (mostrar claramente): "${jornadaLugar}"` : ''}
-${jornadaHora  ? `Horario del evento (mostrar visible): "${jornadaHora}"` : ''}`;
+Titular: ${titular}
+${mensajeVal ? `Mensaje secundario: ${mensajeVal}` : ''}
+${precio ? `Precio/cuota: ${precio}` : ''}
+${cta ? `CTA (botón): ${cta}` : ''}
+${jornadaFecha ? `Fecha del evento: ${jornadaFecha}` : ''}
+${jornadaLugar ? `Lugar: ${jornadaLugar}` : ''}
+${jornadaHora  ? `Horario: ${jornadaHora}` : ''}
+
+Responde SOLO con el prompt final. Sin explicaciones, sin markdown.`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
