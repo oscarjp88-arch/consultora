@@ -122,14 +122,18 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   font-family: 'Montserrat', sans-serif;
 }
 .ck-tooltip {
-  display: none; position: absolute; right: 0; left: auto; top: calc(100% + 6px);
-  background: #0B1E3D; color: #fff; font-size: 11px; line-height: 1.5;
-  padding: 8px 11px; border-radius: 8px; z-index: 999; width: 240px;
-  max-width: calc(100vw - 40px);
-  box-shadow: 0 4px 16px rgba(11,30,61,0.25); pointer-events: none;
+  display: none; position: fixed; top: auto; left: auto;
+  background: #0B1E3D; color: #fff; font-size: 13px; line-height: 1.6;
+  padding: 10px 14px; border-radius: 10px; z-index: 9999; width: 260px;
+  box-shadow: 0 4px 20px rgba(11,30,61,0.35); pointer-events: none;
   font-family: 'DM Sans', sans-serif; white-space: normal;
+  transform: translateX(-50%);
 }
-.ck-tooltip-wrap:hover .ck-tooltip { display: block; }
+.ck-tooltip-wrap:hover .ck-tooltip {
+  display: block;
+  left: 150px;
+  top: calc(var(--tooltip-top, 0px) + 24px);
+}
 .ck-tooltip b { color: var(--turquesa); }
 
 /* Indicador del detalle del día */
@@ -2033,6 +2037,20 @@ function onProdFileChange(input) {
   reader.readAsDataURL(file);
 }
 
+// Tooltip posición dinámica (v4b, 05-jul-2026)
+document.addEventListener('mouseover', function(e) {
+  const wrap = e.target.closest('.ck-tooltip-wrap');
+  if (!wrap) return;
+  const tooltip = wrap.querySelector('.ck-tooltip');
+  if (!tooltip) return;
+  const rect = wrap.getBoundingClientRect();
+  tooltip.style.position = 'fixed';
+  tooltip.style.left = '160px';
+  tooltip.style.top = (rect.bottom + 6) + 'px';
+  tooltip.style.transform = 'none';
+  tooltip.style.width = '240px';
+  tooltip.style.zIndex = '9999';
+});
 function selectEstilo(estilo, btn) {
   currentEstilo = estilo;
   document.querySelectorAll('.estilo-btn').forEach(b => b.classList.remove('active'));
