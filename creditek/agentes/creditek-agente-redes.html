@@ -3027,16 +3027,9 @@ function submitImgKey() {
 }
 
 async function generarImagen(callerBtn = null) {
-  await corregirMensajeSecundario();
-  const isWorkerEngine = currentEngine === 'gemini';
-  const keyName = isWorkerEngine ? 'ck_gemini_key' : 'ck_openai_key';
-  const key = localStorage.getItem(keyName) || '';
-  if (!isWorkerEngine && key.length < 10) { abrirImgKeyModal('openai'); return; }
-
-  const prompt = document.getElementById('img-prompt-ta').value.trim();
-  if (!prompt) return;
-  const promptGemini = isWorkerEngine ? await buildImgPromptGemini() : null; // FIX 02-jul-2026
-
+  // FIX v4e (06-jul-2026): feedback visual INMEDIATO al hacer clic —
+  // antes, corregirMensajeSecundario() corría primero y dejaba el botón
+  // "muerto" 2-5 segundos sin ninguna señal para el usuario.
   const btn = document.getElementById('img-gen-btn');
   const spinner = document.getElementById('img-spinner');
   const label = document.getElementById('img-gen-label');
@@ -3047,8 +3040,33 @@ async function generarImagen(callerBtn = null) {
   visibleBtn.disabled = true;
   const originalLabel = callerBtn ? visibleBtn.textContent : null;
   if (callerBtn) visibleBtn.textContent = '⏳ Generando...';
-  spinner.style.display = 'block'; label.textContent = 'Generando imagen...';
+  spinner.style.display = 'block'; label.textContent = 'Corrigiendo texto...';
   resultDiv.style.display = 'none'; errDiv.style.display = 'none';
+
+  await corregirMensajeSecundario();
+  label.textContent = 'Generando imagen...'; // avanza el mensaje de estado a la fase de imagen
+
+  const isWorkerEngine = currentEngine === 'gemini';
+  const keyName = isWorkerEngine ? 'ck_gemini_key' : 'ck_openai_key';
+  const key = localStorage.getItem(keyName) || '';
+  if (!isWorkerEngine && key.length < 10) {
+    // FIX v4e: si falta la key, hay que revertir el feedback visual que ya se activó arriba
+    visibleBtn.disabled = false;
+    if (callerBtn && originalLabel) visibleBtn.textContent = originalLabel;
+    spinner.style.display = 'none';
+    abrirImgKeyModal('openai');
+    return;
+  }
+
+  const prompt = document.getElementById('img-prompt-ta').value.trim();
+  if (!prompt) {
+    // FIX v4e: mismo caso — revertir feedback visual si no hay prompt
+    visibleBtn.disabled = false;
+    if (callerBtn && originalLabel) visibleBtn.textContent = originalLabel;
+    spinner.style.display = 'none';
+    return;
+  }
+  const promptGemini = isWorkerEngine ? await buildImgPromptGemini() : null; // FIX 02-jul-2026
 
   try {
     lastImgModelLabel = currentEngine === 'gemini' ? 'Imagen 4 (Vertex)' : 'GPT Image 2';
