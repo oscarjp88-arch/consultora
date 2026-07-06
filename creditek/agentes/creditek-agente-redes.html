@@ -110,6 +110,62 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   border-radius: 50%; animation: spin 0.7s linear infinite; display: none;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Tooltip system (05-jul-2026) ────────────────────────── */
+.ck-tooltip-wrap { position: relative; display: inline-block; width: 100%; }
+.ck-tooltip-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--turquesa); color: #fff;
+  font-size: 9px; font-weight: 700; cursor: help;
+  margin-left: 5px; flex-shrink: 0; vertical-align: middle;
+  font-family: 'Montserrat', sans-serif;
+}
+.ck-tooltip {
+  display: none; position: absolute; left: 0; top: calc(100% + 6px);
+  background: #0B1E3D; color: #fff; font-size: 11px; line-height: 1.5;
+  padding: 8px 11px; border-radius: 8px; z-index: 999; width: 240px;
+  box-shadow: 0 4px 16px rgba(11,30,61,0.25); pointer-events: none;
+  font-family: 'DM Sans', sans-serif;
+}
+.ck-tooltip-wrap:hover .ck-tooltip { display: block; }
+.ck-tooltip b { color: var(--turquesa); }
+
+/* Indicador del detalle del día */
+.detalle-dia-row {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; color: var(--text3); padding: 5px 4px 2px;
+}
+.detalle-dia-val { color: var(--text2); font-style: italic; }
+.detalle-dia-btn {
+  background: none; border: none; color: var(--turquesa);
+  font-size: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  text-decoration: underline; padding: 0;
+}
+
+/* Aviso de specs */
+.specs-aviso {
+  font-size: 10px; color: #f59e0b; padding: 4px 4px 0;
+  display: none; line-height: 1.4;
+}
+
+/* Campo de contexto por modo */
+.modo-contexto-wrap { margin-top: 8px; display: none; }
+.modo-contexto-wrap textarea {
+  min-height: 60px; font-size: 12px;
+  border-color: rgba(0,196,204,0.4);
+}
+.modo-contexto-lbl {
+  font-size: 10px; color: var(--turquesa); font-weight: 600;
+  padding: 0 4px 4px; display: block;
+}
+
+/* Indicador paso 1 → paso 2 */
+.flujo-indicador {
+  font-size: 10px; color: var(--text3); text-align: center;
+  padding: 4px 0 2px; letter-spacing: 0.04em;
+}
+.flujo-indicador span { color: var(--turquesa); font-weight: 700; }
 .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .top-bar {
   padding: 18px 28px 14px; border-bottom: 1px solid var(--border);
@@ -477,7 +533,13 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   <div class="sidebar-section">
     <div class="sidebar-label">Configurar pieza</div>
     <div class="field-group">
-      <label class="field-label">Ciudad / tienda</label>
+      <label class="field-label">
+        Ciudad / tienda
+        <span class="ck-tooltip-wrap" style="float:right;width:auto">
+          <span class="ck-tooltip-icon">?</span>
+          <span class="ck-tooltip">Selecciona la tienda para la que vas a generar la pieza.<br><b>General Creditek:</b> piezas de marca sin tienda específica.<br><b>Tienda específica:</b> el copy y el CTA (llamado a la acción) usan el nombre real de esa tienda.</span>
+        </span>
+      </label>
       <select id="ciudad" onchange="resetPreviewFields()">
         <option value="">Seleccionar tienda...</option>
         <option value="general">🏢 General Creditek</option>
@@ -485,7 +547,13 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </select>
     </div>
     <div class="field-group">
-      <label class="field-label">Modo de publicidad</label>
+      <label class="field-label">
+        Modo de publicidad
+        <span class="ck-tooltip-wrap" style="float:right;width:auto">
+          <span class="ck-tooltip-icon">?</span>
+          <span class="ck-tooltip"><b>Celular a crédito:</b> copy de financiación, cuotas, aprobación.<br><b>Promoción:</b> oferta de precio, sin mencionar crédito.<br><b>Tienda:</b> muestra el local y el equipo.<br><b>Servicio:</b> beneficio puntual (revisión, garantía).<br><b>Captación:</b> engagement (interacción), sin producto ni precio.<br><b>Jornada:</b> evento presencial con fecha y lugar.<br><b>Institucional:</b> marca, valores, aniversario.</span>
+        </span>
+      </label>
       <select id="modo" onchange="updateModoUI()">
         <option value="credito">📱 Celular a crédito</option>
         <option value="promo">🎁 Promoción especial</option>
@@ -496,9 +564,19 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <option value="institucional">🏢 Institucional / Marca</option>
       </select>
       <div id="modo-desc" style="font-size:11px;color:var(--text3);padding:5px 4px 0;line-height:1.5;"></div>
+      <div class="modo-contexto-wrap" id="modo-contexto-wrap">
+        <span class="modo-contexto-lbl">✦ Contexto específico de esta pieza</span>
+        <textarea id="modo-contexto" oninput="buildImgPrompt()" placeholder="Describe el contexto concreto — Ej: Esta semana tenemos 5 Samsung A16 a $599.000, solo hasta el viernes..."></textarea>
+      </div>
     </div>
     <div class="field-group">
-      <label class="field-label">Tipo de pieza</label>
+      <label class="field-label">
+        Tipo de pieza
+        <span class="ck-tooltip-wrap" style="float:right;width:auto">
+          <span class="ck-tooltip-icon">?</span>
+          <span class="ck-tooltip"><b>Oferta de la semana:</b> urgencia + precio + CTA presencial.<br><b>Showcase:</b> producto como protagonista, specs destacadas.<br><b>Testimonio:</b> voz del cliente en primera persona.<br><b>Educativo:</b> explica cómo funciona el crédito.<br><b>Promo urgencia:</b> cuenta regresiva, "solo hoy".<br><b>Detrás de cámara:</b> muestra la tienda desde adentro.<br><b>Personalizado:</b> tú defines el tipo.</span>
+        </span>
+      </label>
       <select id="tipo" onchange="updateTipoUI()">
         <option value="oferta_semana">🎯 Oferta de la semana</option>
         <option value="showcase_producto">📱 Showcase de producto</option>
@@ -539,7 +617,14 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <input type="text" id="jornada-hora" placeholder="Ej: 9am – 5pm">
     </div>
     <div class="field-group" id="fg-specs">
-      <label class="field-label">Specs técnicas en imagen <span>opcional</span></label>
+      <label class="field-label">
+        Specs técnicas en imagen <span>opcional</span>
+        <span class="ck-tooltip-wrap" style="float:right;width:auto;margin-right:40px">
+          <span class="ck-tooltip-icon">?</span>
+          <span class="ck-tooltip">Los valores (RAM, cámara, batería) se toman automáticamente de las páginas de marcas.<br><b>Requisito:</b> haz clic en "Actualizar" en Referencias del mercado antes de usar.<br>Si no se actualizan, GPT puede <b>inventar los valores</b> — desmarca para evitarlo.</span>
+        </span>
+      </label>
+      <div class="specs-aviso" id="specs-aviso">⚠️ Referencias sin actualizar — los valores de specs pueden ser inventados. Haz clic en "Actualizar" primero.</div>
       <div style="display:flex;flex-direction:column;gap:3px;margin-top:6px">
         <label class="checkbox-row"><input type="checkbox" id="spec-ram" checked onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">RAM</span></label>
         <label class="checkbox-row"><input type="checkbox" id="spec-storage" checked onchange="buildImgPrompt()"><span style="font-size:12px;color:var(--text2)">Almacenamiento</span></label>
@@ -551,8 +636,14 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </div>
     </div>
     <div class="field-group">
-      <label class="field-label">Nota especial <span>opcional</span></label>
-      <textarea id="nota" placeholder="Ej: Solo 3 unidades, promoción hasta el viernes..." oninput="buildImgPrompt()"></textarea>
+      <label class="field-label">
+        Instrucción para la IA <span>opcional</span>
+        <span class="ck-tooltip-wrap" style="float:right;width:auto;margin-right:40px">
+          <span class="ck-tooltip-icon">?</span>
+          <span class="ck-tooltip">Instrucción técnica para el agente — <b>no es el mensaje de la pieza</b>.<br>Úsala para: "no mencionar precio", "tono más urgente", "solo para stories", "enfocarse en la batería del equipo".<br>El mensaje de la pieza va en <b>Contexto específico</b> (arriba del modo).</span>
+        </span>
+      </label>
+      <textarea id="nota" placeholder="Ej: No mencionar precio · Solo para Stories · Enfocarse en la aprobación rápida..." oninput="buildImgPrompt()"></textarea>
     </div>
     <div class="field-group">
       <label class="field-label">Fecha especial / Temporada <span>opcional</span></label>
@@ -626,6 +717,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </label>
     </div>
     <div class="fin-note">Aparecerán en la franja inferior de la imagen, alineados horizontalmente</div>
+    <div class="fin-note" style="color:#f59e0b;margin-top:3px">⚠️ Solo disponible con GPT Image 2 — Gemini no acepta imágenes de referencia.</div>
   </div>
   <div class="sidebar-section" style="padding-bottom:10px">
     <div class="sidebar-label">API Key</div>
@@ -649,11 +741,15 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   <div class="sidebar-section" style="padding-bottom:8px">
     <div class="sidebar-label">Estilo visual de imagen</div>
     <div class="estilo-grid">
-      <button class="estilo-btn active" onclick="selectEstilo('formal',this)">🏢 Formal</button>
-      <button class="estilo-btn" onclick="selectEstilo('costeno',this)">🎉 Alegre costeño</button>
-      <button class="estilo-btn" onclick="selectEstilo('chistoso',this)">😂 Chistoso</button>
-      <button class="estilo-btn" onclick="selectEstilo('minimalista',this)">◻ Minimalista</button>
-      <button class="estilo-btn" onclick="selectEstilo('custom',this)">✏️ Personalizar</button>
+      <button class="estilo-btn active" onclick="selectEstilo('formal',this)" title="Composición profesional y aspiracional. Paleta azul marino + turquesa dominante. Para piezas institucionales, crédito y showcase.">🏢 Formal</button>
+      <button class="estilo-btn" onclick="selectEstilo('costeno',this)" title="Energía costeña colombiana. Colores cálidos, ambiente comercial real de pueblo. Para captación, promo y crédito con público de la Costa.">🎉 Alegre costeño</button>
+      <button class="estilo-btn" onclick="selectEstilo('chistoso',this)" title="Humor comercial colombiano. Paleta libre, energía visual divertida. Para captación y piezas que buscan engagement (interacción) alto.">😂 Chistoso</button>
+      <button class="estilo-btn" onclick="selectEstilo('minimalista',this)" title="Máximo espacio en blanco. Un solo punto focal. Para showcase de producto premium y piezas institucionales limpias.">◻ Minimalista</button>
+      <button class="estilo-btn" onclick="selectEstilo('custom',this)" title="Tú defines el estilo en texto libre. Úsalo para campañas especiales o fechas específicas.">✏️ Personalizar</button>
+    </div>
+    <div class="detalle-dia-row" id="detalle-dia-row" style="display:none">
+      <span>Detalle hoy: <span class="detalle-dia-val" id="detalle-dia-val">—</span></span>
+      <button class="detalle-dia-btn" onclick="cambiarDetalleDia()">↺ cambiar</button>
     </div>
     <textarea class="estilo-custom-ta" id="estilo-custom" placeholder="Describe el estilo visual que quieres para la imagen..." oninput="buildImgPrompt()"></textarea>
   </div>
@@ -916,10 +1012,39 @@ async function generarMasTitulares() {
   const estilo = estiloBtn ? estiloBtn.textContent.trim().replace(/^[^\w]+/,'') : 'Formal';
   const modoLabel = {credito:'Celular a crédito',promo:'Promoción especial',tienda:'Contenido de tienda',servicio:'Servicio / beneficio',captacion:'Captación de seguidores',jornada:'Jornada de crédito',institucional:'Institucional / Marca'}[modo] || modo;
   const estiloInstrucciones = {
-    'alegre costeño': 'Expresiones caribeñas reales: ombe, llave, mija, qué lo que, papi. Calor humano del Caribe colombiano.',
-    'chistoso': 'Humor colombiano actual: memes, referencias pop, POV, comparaciones inesperadas, giros cómicos. Cambia el formato cada vez.',
-    'formal': 'Profesional, aspiracional, confiable. Lenguaje cuidado sin jerga.',
-    'minimalista': 'Una idea poderosa. Muy corto. Menos es más. Impacto máximo con mínimas palabras.',
+    'alegre costeño': `Tono costeño COMERCIAL — calor humano del Caribe colombiano pero enfocado en la venta.
+Patrones de hook (gancho — la primera frase que para el scroll) que debes usar:
+- Identidad local + alivio: "Llave, ese celular sí se puede." / "Ombe, aquí sí te aprueban."
+- Permiso/solución directa: "Sin banco. Con la cédula alcanza."
+- Contraste costeño: "En otra tienda te dijeron que no. En Creditek di que sí."
+Expresiones válidas: ombe, llave, mano, papi, mija, qué lo que, dale.
+PROHIBIDO: genérico ("tecnología"), corporativo ("conecta tu futuro"), poético sin venta.`,
+
+    'chistoso': `Humor COMERCIAL colombiano — el chiste abre la puerta, la venta cierra.
+Patrones de hook que debes usar:
+- Contraste inesperado: "Tu bolsillo dijo no. Creditek dijo: dale."
+- Formato POV/meme: "POV: entraste sin cupo y saliste con equipo nuevo."
+- Comparación colombiana actual: "El VAR revisó y confirmó: este precio sí es gol."
+- Tensión cómica: "Tu celular ya dijo adiós. Nosotros le decimos bienvenido al nuevo."
+REGLA: el humor debe estar en el texto — NO pedir "persona riendo" ni "cara de sorpresa".
+PROHIBIDO: chistes forzados, humor que no vende, punchlines sin beneficio claro.`,
+
+    'formal': `Copywriting directo de conversión (conversion copywriting — texto diseñado para generar acción inmediata).
+Patrones de hook que debes usar:
+- Resultado específico: "Aprobado hoy. Samsung en tus manos."
+- Problema + solución en 6 palabras: "Sin historial. Con tu cédula alcanza."
+- Urgencia real con dato concreto: "Solo 3 unidades. Solo esta semana."
+- Beneficio innegable: "Mismo día. Sin banco. Sin rollo."
+REGLA: cada titular debe funcionar solo, sin necesitar la siguiente frase.
+PROHIBIDO: aspiracional genérico, corporativo ("potencia", "conecta", "descubre", "innovador").`,
+
+    'minimalista': `Una sola idea. Máximo impacto. Mínimas palabras.
+Patrones de hook que debes usar:
+- Fragmento directo: "Sale hoy." / "Con la cédula." / "Sin banco."
+- Contraste en 3 palabras: "Dijeron no. Creditek sí."
+- Afirmación de resultado: "Aprobado. Mismo día."
+REGLA ESTRICTA: máximo 4 palabras. Sin puntuación decorativa. Sin adjetivos innecesarios.
+PROHIBIDO: más de 4 palabras, cualquier palabra que no aporte conversión directa.`,
   };
   const estiloKey = Object.keys(estiloInstrucciones).find(k => estilo.toLowerCase().includes(k.split(' ')[0])) || 'formal';
   const prompt = `Eres el mejor copywriter de Colombia especializado en publicidad comercial para el Caribe colombiano. Trabajas para Creditek, empresa de tecnología a crédito (celulares, electrodomésticos, electrónica).
@@ -938,7 +1063,10 @@ REGLAS:
 - Máximo 6 palabras por titular
 - Sin emojis. Sin "Creditek" (está en el logo)
 - Basarse en el mensaje del cliente corregido
-- Nivel: Coca-Cola, Claro Colombia, Éxito — cortos, memorables, que venden
+- Nivel: el mejor vendedor costeño que conoce a su cliente — directo, sin rodeos, habla exactamente de lo que le duele y cómo resolverlo. NO aspiracional de marca global.
+- Cada titular debe funcionar SOLO en 1.5 segundos de scroll — si necesita la siguiente frase para tener sentido, está roto.
+- Varía los patrones de hook (gancho): urgencia / permiso-alivio / contraste / identidad local / resultado específico / humor comercial
+- PROHIBIDO en titulares: "conéctate", "potencia", "descubre", "tecnología", "innovador", cualquier frase que aplique a cualquier marca.
 - TONO según estilo "${estilo}": ${estiloInstrucciones[estiloKey]}
 - PROHIBIDO: "Aquí te atendemos bien", frases genéricas de atención
 - Varía los enfoques: urgencia / emoción / beneficio directo / humor / aspiracional / costeño
@@ -1201,6 +1329,32 @@ function updateModoUI() {
   };
   const descEl = document.getElementById('modo-desc');
   if (descEl) descEl.textContent = modoDescMap[modo] || '';
+
+  // Campo de contexto por modo (05-jul-2026)
+  const placeholderMap = {
+    credito:       'Ej: Esta semana tenemos Samsung A16 128GB a $157.000/mes. Quedan 4 unidades en Corozal...',
+    promo:         'Ej: Oferta de contado: A17 a $599.000 solo hasta el viernes. Tienda Chinú Cell...',
+    tienda:        'Ej: Mostramos cómo es un día normal en la tienda. El equipo está listo para atender...',
+    servicio:      'Ej: Esta semana revisión gratuita de celulares. Sin costo, sin compromiso de compra...',
+    captacion:     'Ej: Queremos mostrar que en la Costa también se estrena tecnología de calidad...',
+    jornada:       'Ej: Jornada especial con aprobación express. Traer cédula. Cupos limitados...',
+    institucional: 'Ej: Cumplimos 3 años atendiendo a Corozal. Gracias a todos los que han confiado en nosotros...',
+  };
+  const ctxWrap = document.getElementById('modo-contexto-wrap');
+  const ctxArea = document.getElementById('modo-contexto');
+  if (ctxWrap && ctxArea) {
+    ctxWrap.style.display = 'block';
+    ctxArea.placeholder = placeholderMap[modo] || 'Describe el contexto específico de esta pieza...';
+  }
+
+  // Aviso de specs si referencias no actualizadas
+  const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
+  const avisoEl = document.getElementById('specs-aviso');
+  if (avisoEl) {
+    const stale = !stored || (Date.now() - stored.timestamp) > 15 * 24 * 60 * 60 * 1000;
+    avisoEl.style.display = (showProducto && stale) ? 'block' : 'none';
+  }
+
   actualizarTiposPorModo(modo);
 }
 
@@ -1251,6 +1405,7 @@ async function generarContenido() {
   const cuota = document.getElementById('cuota').value.trim();
   const inicial = document.getElementById('inicial').value.trim();
   const nota = document.getElementById('nota').value.trim();
+  const modoContexto = document.getElementById('modo-contexto')?.value.trim() || '';
   const tipoPersonalizadoTxt = document.getElementById('tipo-personalizado')?.value.trim() || '';
   const fechaKey = document.getElementById('fecha-especial')?.value || '';
   const fechaData = FECHAS_ESPECIALES[fechaKey] || null;
@@ -1398,7 +1553,8 @@ ${tipoPersonalizadoTxt ? '- CONTEXTO INTERNO DE CREACIÓN (usa para entender el 
 ${producto ? '- Producto: ' + producto : ''}
 ${cuota && modo === 'credito' ? '- Precio cuota mensual: ' + cuota : ''}
 ${inicial && modo === 'credito' ? '- Cuota inicial: ' + inicial : ''}
-${nota ? '- MENSAJE PÚBLICO (base obligatoria del copy — usa estas palabras, corrígelas si tienen errores ortográficos, y construye el copy alrededor de esta idea): ' + nota : ''}
+${modoContexto ? '- CONTEXTO ESPECÍFICO DE ESTA PIEZA (base obligatoria del copy — construye todo alrededor de esta situación concreta): ' + modoContexto : ''}
+${nota ? '- INSTRUCCIÓN TÉCNICA PARA LA IA (no es el mensaje — aplícala al generar, no la menciones en el copy): ' + nota : ''}
 ${direccion ? '- Dirección(es) de tienda: ' + direccion : ''}
 - Plataformas: ${platformsList}
 
@@ -1880,8 +2036,30 @@ function selectEstilo(estilo, btn) {
   currentEstilo = estilo;
   document.querySelectorAll('.estilo-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const ta = document.getElementById('estilo-custom');
-  ta.style.display = estilo === 'custom' ? 'block' : 'none';
+  document.querySelector('.estilo-custom-ta').style.display = estilo === 'custom' ? 'block' : 'none';
+  // Mostrar detalle del día (05-jul-2026)
+  const detRow = document.getElementById('detalle-dia-row');
+  const detVal = document.getElementById('detalle-dia-val');
+  if (detRow && detVal && estilo !== 'custom') {
+    detRow.style.display = 'flex';
+    detVal.textContent = getDetalleDelDia(estilo);
+  } else if (detRow) {
+    detRow.style.display = 'none';
+  }
+  buildImgPrompt();
+}
+
+// Permite cambiar el detalle del día manualmente (05-jul-2026)
+let detalleOverride = {};
+function cambiarDetalleDia() {
+  const banco = window.BANCO_DETALLES_REF || {};
+  const lista = banco[currentEstilo] || [];
+  if (!lista.length) return;
+  const actual = document.getElementById('detalle-dia-val')?.textContent || '';
+  const siguiente = lista.find(d => d !== actual) || lista[0];
+  detalleOverride[currentEstilo] = siguiente;
+  const detVal = document.getElementById('detalle-dia-val');
+  if (detVal) detVal.textContent = siguiente;
   buildImgPrompt();
 }
 
@@ -2020,24 +2198,26 @@ function updateImgKeyStatus() {
 // completo en batch el mismo día.
 const BANCO_DETALLES = {
   costeno: [
-    // Escenas plausibles: cliente + celular como foco, lo costeño como contexto natural.
-    // Cada entrada es un MOMENTO que de verdad pasa un día cualquiera en la costa — no un objeto pegado.
-    'dos amigas de rasgos costeños riéndose mientras miran juntas un celular nuevo, una sostiene un coco frío',
-    'un joven costeño mostrando su celular nuevo a un amigo en la plaza del pueblo, palomas y iglesia de fondo',
-    'una madre costeña sonriendo con su celular nuevo, sentada en un banco de la plaza colonial',
-    'un cliente saliendo feliz de un local comercial con la bolsa de su celular nuevo en la mano',
-    'una pareja joven costeña tomándose una selfie con su celular recién estrenado',
-    'una chica de rasgos costeños disfrutando un raspao mientras revisa su celular nuevo',
-    'un grupo de amigos costeños celebrando alrededor de un celular nuevo, casas de colores pastel de fondo',
-    'un joven trabajador costeño revisando su celular nuevo en una calle comercial del pueblo',
-    'una señora costeña estrenando su celular, con un mercado de frutas tropicales detrás',
-    'un cliente feliz recibiendo la caja de su celular nuevo de manos de un asesor, vitrina de celulares al fondo',
-    'dos jóvenes en una moto mostrando el celular nuevo, ambiente de pueblo costeño real',
-    'una chica costeña riéndose con su celular nuevo, con un vaso de agua de coco natural en la mano',
-    'un padre mostrándole a su hijo cómo usar el celular nuevo, patio costeño con brisa',
-    'una joven costeña frente a la iglesia colonial del pueblo, feliz con su celular nuevo',
-    'un cliente comparando su celular nuevo con el viejo, cara de satisfacción, local comercial de fondo',
-    'una vitrina iluminada y surtida de celulares con un cliente eligiendo, ambiente comercial digno',
+    // Elementos sueltos de inspiración (no escenas literales) — la IA construye su propia escena alrededor de cada uno.
+    // Mezcla de culturales auténticos + comerciales reales de pueblo costeño.
+    'un carrito de raspado en la esquina del parque',
+    'una plaza de pueblo con palomas, estilo Corozal o Chinú',
+    'una iglesia colonial costera con su parque',
+    'alguien comiendo mango biche con sal',
+    'una calle comercial de pueblo costeño con locales abiertos',
+    'una tienda de barrio con gaseosas frías en la nevera',
+    'una vitrina de celulares y accesorios bien iluminada',
+    'un mercado de frutas tropicales colorido',
+    'una moto con parrillero en calle de pueblo',
+    'un local de tecnología con clientes siendo atendidos',
+    'casas de colores pastel con puertas abiertas',
+    'un guacamayo en un balcón de casa costeña',
+    'el atrio de una iglesia colonial un domingo',
+    'una cancha de microfútbol de barrio al atardecer',
+    'un ventilador de techo girando en un local comercial',
+    'una familia costeña viendo un celular juntos',
+    'una joven trabajadora usando su celular en el mostrador',
+    'un tambor vallenato apoyado en una pared de colores',
   ],
   chistoso: [
     'una cara de sorpresa exagerada',
@@ -2074,7 +2254,10 @@ const BANCO_DETALLES = {
 // solo existe para que un batch de varias piezas seguidas no repita detalle.
 let _detalleContador = 0;
 
+// Exponer banco para que cambiarDetalleDia() pueda acceder (05-jul-2026)
+window.BANCO_DETALLES_REF = BANCO_DETALLES;
 function getDetalleDelDia(estilo) {
+  if (detalleOverride && detalleOverride[estilo]) return detalleOverride[estilo];
   const banco = BANCO_DETALLES[estilo] || BANCO_DETALLES.formal;
   const dia = new Date().getDate(); // 1-31, para que cada día del mes arranque en un punto distinto
   const idx = (dia - 1 + _detalleContador) % banco.length;
@@ -2259,10 +2442,15 @@ function buildImgPrompt() {
     const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
     if (stored?.brands) {
       const prod = producto.toLowerCase();
+      // Fix 05-jul-2026: buscar por palabras clave individuales en vez del string completo
+      // "samsung a16" encuentra "samsung galaxy a16 128gb" porque comparte "samsung" y "a16"
+      const prodTokens = prod.split(/\s+/).filter(t => t.length > 1);
       outer: for (const [, d] of Object.entries(stored.brands)) {
         for (const m of (d.modelos || [])) {
           const n = m.nombre.toLowerCase();
-          if (n.includes(prod) || prod.includes(n.split(' ').slice(0,3).join(' '))) { foundSpecs = m.specs||{}; break outer; }
+          const nTokens = n.split(/\s+/);
+          const matches = prodTokens.filter(t => nTokens.some(nt => nt.includes(t) || t.includes(nt)));
+          if (matches.length >= Math.min(2, prodTokens.length)) { foundSpecs = m.specs||{}; break outer; }
         }
       }
     }
@@ -2513,7 +2701,8 @@ REGLAS OBLIGATORIAS:
 - Usa nombres de color, no códigos hex.
 - Cada texto exacto debe aparecer UNA sola vez, entre comillas dobles, integrado naturalmente en la descripción física (ej: "sostiene un letrero donde está escrito...").
 - NO uses comillas para nada más en el prompt.
-- La composición debe usar el lienzo completo de borde a borde, igual que una pieza publicitaria profesional real. NO dejes ninguna esquina ni zona vacía reservada para nada.
+- La composición debe usar el lienzo completo de borde a borde, igual que una pieza publicitaria profesional real.
+- CRÍTICO: La esquina superior derecha debe tener fondo liso azul marino oscuro (#0B1E3D), sin personas, sin texturas, sin elementos decorativos — es la zona reservada para el logo de la marca. Esto es innegociable.
 - Máximo 130 palabras.
 - Responde SOLO con el prompt final. Sin explicaciones, sin markdown, sin comillas envolviendo todo el texto.
 
