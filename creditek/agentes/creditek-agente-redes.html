@@ -122,11 +122,12 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   font-family: 'Montserrat', sans-serif;
 }
 .ck-tooltip {
-  display: none; position: absolute; left: 0; top: calc(100% + 6px);
+  display: none; position: absolute; right: 0; left: auto; top: calc(100% + 6px);
   background: #0B1E3D; color: #fff; font-size: 11px; line-height: 1.5;
   padding: 8px 11px; border-radius: 8px; z-index: 999; width: 240px;
+  max-width: calc(100vw - 40px);
   box-shadow: 0 4px 16px rgba(11,30,61,0.25); pointer-events: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'DM Sans', sans-serif; white-space: normal;
 }
 .ck-tooltip-wrap:hover .ck-tooltip { display: block; }
 .ck-tooltip b { color: var(--turquesa); }
