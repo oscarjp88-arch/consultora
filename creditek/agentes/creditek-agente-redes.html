@@ -642,13 +642,23 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <div class="field-group">
       <label class="field-label">
-        Instrucción para la IA <span>opcional</span>
+        Mensaje secundario <span>opcional</span>
         <span class="ck-tooltip-wrap" style="float:right;width:auto;margin-right:40px">
           <span class="ck-tooltip-icon">?</span>
-          <span class="ck-tooltip">Instrucción técnica para el agente — <b>no es el mensaje de la pieza</b>.<br>Úsala para: "no mencionar precio", "tono más urgente", "solo para stories", "enfocarse en la batería del equipo".<br>El mensaje de la pieza va en <b>Contexto específico</b> (arriba del modo).</span>
+          <span class="ck-tooltip">Texto que aparecerá escrito directamente en la imagen, debajo del titular principal.<br>Ejemplo: "Ven y compra tu celular a crédito, no importa si estás reportado."</span>
         </span>
       </label>
-      <textarea id="nota" placeholder="Ej: No mencionar precio · Solo para Stories · Enfocarse en la aprobación rápida..." oninput="buildImgPrompt()"></textarea>
+      <textarea id="nota" placeholder="Ej: Ven y compra tu celular a crédito, no importa si estás reportado..." oninput="buildImgPrompt()"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label">
+        Instrucción adicional para la IA <span>opcional</span>
+        <span class="ck-tooltip-wrap" style="float:right;width:auto;margin-right:40px">
+          <span class="ck-tooltip-icon">?</span>
+          <span class="ck-tooltip">Guía de tono, variación o enfoque especial — <b>nunca aparece como texto en la imagen</b>.<br>Úsala para: "no mencionar precio", "tono más urgente", "solo para stories", "que se vea de noche", "recrear con más luz natural".</span>
+        </span>
+      </label>
+      <textarea id="instruccion-ia-extra" placeholder="Ej: Tono más urgente · Que se vea de noche · Recrear con más luz natural..." oninput="buildImgPrompt()"></textarea>
     </div>
     <div class="field-group">
       <label class="field-label">Fecha especial / Temporada <span>opcional</span></label>
@@ -1409,7 +1419,7 @@ async function generarContenido() {
   const producto = document.getElementById('producto').value.trim();
   const cuota = document.getElementById('cuota').value.trim();
   const inicial = document.getElementById('inicial').value.trim();
-  const nota = document.getElementById('nota').value.trim();
+  const notaInstruccion = document.getElementById('instruccion-ia-extra')?.value.trim() || ''; // FIX v4f: antes leía 'nota'
   const modoContexto = document.getElementById('modo-contexto')?.value.trim() || '';
   const tipoPersonalizadoTxt = document.getElementById('tipo-personalizado')?.value.trim() || '';
   const fechaKey = document.getElementById('fecha-especial')?.value || '';
@@ -1559,7 +1569,7 @@ ${producto ? '- Producto: ' + producto : ''}
 ${cuota && modo === 'credito' ? '- Precio cuota mensual: ' + cuota : ''}
 ${inicial && modo === 'credito' ? '- Cuota inicial: ' + inicial : ''}
 ${modoContexto ? '- CONTEXTO ESPECÍFICO DE ESTA PIEZA (base obligatoria del copy — construye todo alrededor de esta situación concreta): ' + modoContexto : ''}
-${nota ? '- INSTRUCCIÓN TÉCNICA PARA LA IA (no es el mensaje — aplícala al generar, no la menciones en el copy): ' + nota : ''}
+${notaInstruccion ? '- INSTRUCCIÓN TÉCNICA PARA LA IA (no es el mensaje — aplícala al generar, no la menciones en el copy): ' + notaInstruccion : ''}
 ${direccion ? '- Dirección(es) de tienda: ' + direccion : ''}
 - Plataformas: ${platformsList}
 
@@ -2132,9 +2142,9 @@ function resetPreviewFields() {
     document.getElementById('img-titular').value = titularDefaults[modo] || titularDefaults.credito;
   }
   document.getElementById('img-precio').value  = precioDefaults[modo] ?? '';
-  // Llenar mensaje secundario con la nota especial
-  const mensajeEl = document.getElementById('img-mensaje');
-  if (mensajeEl && notaVal && !mensajeEl.dataset.editado) mensajeEl.value = notaVal;
+  // FIX v4f (06-jul-2026): se ELIMINA la copia automática. El cuadro "nota"
+  // (renombrado a "Mensaje secundario" en la UI) ahora ES el mensaje secundario
+  // directamente — ya no necesita copiarse hacia img-mensaje.
   const chkEl = document.getElementById('chk-direccion');
   const inclDirImg = chkEl ? chkEl.checked : false;
   if (inclDirImg && (esCiudadReset || ciudad === 'general')) showToast('Dirección no disponible para esta selección', '#f59e0b');
@@ -2290,7 +2300,7 @@ function buildImgPrompt() {
   const ciudad         = document.getElementById('ciudad').value || 'Colombia';
   const modo           = document.getElementById('modo')?.value || 'credito';
   const tipo           = document.getElementById('tipo')?.value || 'oferta_semana';
-  const nota           = document.getElementById('nota')?.value.trim() || '';
+  const notaInstruccion = document.getElementById('instruccion-ia-extra')?.value.trim() || ''; // FIX v4f: antes leía 'nota'
   const isStories      = currentFormat === 'stories';
   const formatSpec     = isStories ? '1080x1920px vertical (Stories/Reels)' : '1080x1080px square (Feed)';
   const esCiudad       = isCiudadCompleta(ciudad);
@@ -2532,7 +2542,7 @@ function buildImgPrompt() {
     `MODALIDAD: ${modoLabel}`, ``,
     `COMPOSICIÓN: ${tipoDesc}`, specsBlock, ``,
     `ESTILO "${currentEstilo}": ${mensajeEstilo}`,
-    nota ? `INSTRUCCIÓN OPERADOR: ${nota}` : null, ``,
+    notaInstruccion ? `INSTRUCCIÓN OPERADOR: ${notaInstruccion}` : null, ``,
     `TEXTOS EXACTOS EN LA IMAGEN (en español colombiano, sin traducir):`,
     `1. Titular: "${titular}" — Montserrat Bold, posición destacada, máx. 2 líneas`,
     mensajeVal ? `${2}. Mensaje secundario: "${mensajeVal}" — texto pequeño bajo el titular` : null,
@@ -3066,7 +3076,12 @@ async function generarImagen(callerBtn = null) {
     spinner.style.display = 'none';
     return;
   }
+  // FIX v4f (06-jul-2026): buildImgPromptGemini() hace su propia llamada de red
+  // (redacción del prompt visual vía Claude) — sin este mensaje, el label se
+  // queda estático varios segundos dando sensación de que no está avanzando.
+  if (isWorkerEngine) label.textContent = 'Redactando prompt visual...';
   const promptGemini = isWorkerEngine ? await buildImgPromptGemini() : null; // FIX 02-jul-2026
+  if (isWorkerEngine) label.textContent = 'Generando imagen...';
 
   try {
     lastImgModelLabel = currentEngine === 'gemini' ? 'Imagen 4 (Vertex)' : 'GPT Image 2';
