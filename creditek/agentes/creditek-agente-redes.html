@@ -573,7 +573,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <span class="modo-contexto-lbl">✦ Contexto específico de esta pieza
           <span class="ck-tooltip-wrap" style="float:right;width:auto;margin-right:40px">
             <span class="ck-tooltip-icon">?</span>
-            <span class="ck-tooltip">Brief interno para que la IA entienda el motivo u ocasión de esta pieza — <b>nunca aparece como texto en la imagen</b>.<br>Ejemplo: "Cumplimos 3 años atendiendo a Corozal" ayuda a que la escena tenga sentido con esa ocasión, pero esas palabras no se imprimen — para eso existe "Mensaje secundario".</span>
+            <span class="ck-tooltip">Brief interno para que la IA entienda el motivo u ocasión de esta pieza — <b>nunca aparece como texto en la imagen</b>.<br>Ejemplo: "Cumplimos 3 años atendiendo a Corozal" ayuda a que la escena tenga sentido con esa ocasión, pero esas palabras no se imprimen — para eso existe "Texto 2 de imagen" en Piezas generadas.</span>
           </span>
         </span>
         <textarea id="modo-contexto" oninput="buildImgPrompt()" placeholder="Describe el contexto concreto — Ej: Esta semana tenemos 5 Samsung A16 a $599.000, solo hasta el viernes..."></textarea>
@@ -647,13 +647,13 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <div class="field-group">
       <label class="field-label">
-        Mensaje secundario <span>opcional</span>
+        Copy secundario <span>opcional</span>
         <span class="ck-tooltip-wrap" style="float:right;width:auto;margin-right:40px">
           <span class="ck-tooltip-icon">?</span>
-          <span class="ck-tooltip">Texto que aparecerá escrito directamente en la imagen, debajo del titular principal.<br>Ejemplo: "Ven y compra tu celular a crédito, no importa si estás reportado."</span>
+          <span class="ck-tooltip">Guía de tono o enfoque para el copy (texto publicitario) generado — <b>nunca aparece impreso en la imagen</b>.<br>Ejemplo: "que suene urgente", "enfocarse en la aprobación rápida", "sin mencionar precio".<br>El texto que SÍ aparece impreso en la imagen se escribe en <b>Texto 2 de imagen</b>, dentro de "Piezas generadas" →.</span>
         </span>
       </label>
-      <textarea id="nota" placeholder="Ej: Ven y compra tu celular a crédito, no importa si estás reportado..." oninput="buildImgPrompt()"></textarea>
+      <textarea id="nota" placeholder="Ej: Que suene urgente · Enfocarse en la aprobación rápida..." oninput="buildImgPrompt()"></textarea>
     </div>
     <div class="field-group">
       <label class="field-label">
@@ -875,8 +875,8 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
           <input type="text" class="img-prev-input" id="img-titular" placeholder="¡Tu celular desde $157.000/mes!" oninput="buildImgPrompt()">
         </div>
         <div class="img-prev-field">
-          <span class="img-prev-fl">Mensaje secundario <span style="color:var(--text3);font-size:10px">revisa ortografía y redacción</span></span>
-          <textarea class="img-prev-input" id="img-mensaje" placeholder="Texto secundario que aparecerá en la imagen..." oninput="this.dataset.editado='1';buildImgPrompt()" style="min-height:60px;resize:vertical;line-height:1.5"></textarea>
+          <span class="img-prev-fl">Texto 2 de imagen <span style="color:var(--text3);font-size:10px">revisa ortografía y redacción</span></span>
+          <textarea class="img-prev-input" id="img-mensaje" placeholder="Texto que aparecerá impreso en la imagen, debajo del titular..." oninput="this.dataset.editado='1';buildImgPrompt()" style="min-height:60px;resize:vertical;line-height:1.5"></textarea>
         </div>
         <div class="img-prev-field">
           <span class="img-prev-fl">Precio / cuota mensual</span>
@@ -2162,9 +2162,11 @@ function resetPreviewFields() {
     document.getElementById('img-titular').value = titularDefaults[modo] || titularDefaults.credito;
   }
   document.getElementById('img-precio').value  = precioDefaults[modo] ?? '';
-  // FIX v4f (06-jul-2026): se ELIMINA la copia automática. El cuadro "nota"
-  // (renombrado a "Mensaje secundario" en la UI) ahora ES el mensaje secundario
-  // directamente — ya no necesita copiarse hacia img-mensaje.
+  // FIX v4f (06-jul-2026): se ELIMINA la copia automática hacia img-mensaje.
+  // FIX v4h (07-jul-2026): el cuadro "nota" se renombró de nuevo — de "Mensaje
+  // secundario" (v4f) a "Copy secundario" — porque ya existía un segundo campo
+  // (img-mensaje, panel derecho) con el mismo nombre y el que de verdad se
+  // imprime en la imagen. "nota" es solo guía de tono (notaInstruccion, v4f).
   const chkEl = document.getElementById('chk-direccion');
   const inclDirImg = chkEl ? chkEl.checked : false;
   if (inclDirImg && (esCiudadReset || ciudad === 'general')) showToast('Dirección no disponible para esta selección', '#f59e0b');
