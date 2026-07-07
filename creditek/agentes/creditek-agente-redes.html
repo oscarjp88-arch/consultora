@@ -123,8 +123,8 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 }
 .ck-tooltip {
   display: none; position: fixed; top: auto; left: auto;
-  background: #0B1E3D; color: #fff; font-size: 13px; line-height: 1.6;
-  padding: 10px 14px; border-radius: 10px; z-index: 9999; width: 260px;
+  background: #0B1E3D; color: #fff; font-size: 15px; line-height: 1.65;
+  padding: 12px 16px; border-radius: 10px; z-index: 9999; width: 300px;
   box-shadow: 0 4px 20px rgba(11,30,61,0.35); pointer-events: none;
   font-family: 'DM Sans', sans-serif; white-space: normal;
   transform: translateX(-50%);
@@ -570,7 +570,12 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       </select>
       <div id="modo-desc" style="font-size:11px;color:var(--text3);padding:5px 4px 0;line-height:1.5;"></div>
       <div class="modo-contexto-wrap" id="modo-contexto-wrap">
-        <span class="modo-contexto-lbl">✦ Contexto específico de esta pieza</span>
+        <span class="modo-contexto-lbl">✦ Contexto específico de esta pieza
+          <span class="ck-tooltip-wrap" style="float:right;width:auto;margin-right:40px">
+            <span class="ck-tooltip-icon">?</span>
+            <span class="ck-tooltip">Brief interno para que la IA entienda el motivo u ocasión de esta pieza — <b>nunca aparece como texto en la imagen</b>.<br>Ejemplo: "Cumplimos 3 años atendiendo a Corozal" ayuda a que la escena tenga sentido con esa ocasión, pero esas palabras no se imprimen — para eso existe "Mensaje secundario".</span>
+          </span>
+        </span>
         <textarea id="modo-contexto" oninput="buildImgPrompt()" placeholder="Describe el contexto concreto — Ej: Esta semana tenemos 5 Samsung A16 a $599.000, solo hasta el viernes..."></textarea>
       </div>
     </div>
@@ -662,7 +667,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     </div>
     <div class="field-group">
       <label class="field-label">Fecha especial / Temporada <span>opcional</span></label>
-      <select id="fecha-especial" onchange="buildImgPrompt()">
+      <select id="fecha-especial" onchange="updateFechaEspecialUI()">
         <option value="">Sin fecha especial</option>
         <option value="madre">🌸 Día de la Madre (mayo)</option>
         <option value="padre">👔 Día del Padre (junio)</option>
@@ -672,7 +677,9 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         <option value="halloween">🎃 Halloween (octubre)</option>
         <option value="anonuevo">🥂 Año Nuevo</option>
         <option value="clases">📚 Regreso a clases</option>
+        <option value="personalizada">✏️ Otra (personalizada)</option>
       </select>
+      <input type="text" id="fecha-especial-personalizada" placeholder="Ej: Día del Policía, Semana de vacaciones, Aniversario de la tienda..." style="display:none;margin-top:6px">
     </div>
   </div>
   <div class="sidebar-section">
@@ -1398,6 +1405,13 @@ function updateTipoUI() {
   if (custom) custom.style.display = tipo === 'personalizado' ? 'block' : 'none';
 }
 
+function updateFechaEspecialUI() {
+  const fecha = document.getElementById('fecha-especial').value;
+  const custom = document.getElementById('fecha-especial-personalizada');
+  if (custom) custom.style.display = fecha === 'personalizada' ? 'block' : 'none';
+  buildImgPrompt();
+}
+
 function toggleKey(inputId, btn) {
   const el = document.getElementById(inputId);
   const show = el.type === 'password';
@@ -1423,7 +1437,13 @@ async function generarContenido() {
   const modoContexto = document.getElementById('modo-contexto')?.value.trim() || '';
   const tipoPersonalizadoTxt = document.getElementById('tipo-personalizado')?.value.trim() || '';
   const fechaKey = document.getElementById('fecha-especial')?.value || '';
-  const fechaData = FECHAS_ESPECIALES[fechaKey] || null;
+  const fechaPersonalizadaTxt = document.getElementById('fecha-especial-personalizada')?.value.trim() || '';
+  // FIX v4g (07-jul-2026): si es "personalizada", construir un fechaData simplificado
+  // en tiempo real en vez de depender del diccionario fijo FECHAS_ESPECIALES —
+  // mismo principio que tipoPersonalizado: el texto libre del operador manda.
+  const fechaData = fechaKey === 'personalizada' && fechaPersonalizadaTxt
+    ? { label: fechaPersonalizadaTxt, colores: 'según la paleta de marca vigente', elementos: 'elementos visuales apropiados para la ocasión, sin forzar clichés', tono: 'apropiado para la ocasión mencionada', ganchos: [] }
+    : (FECHAS_ESPECIALES[fechaKey] || null);
   const platforms = getActivePlatforms();
   const inclHashtags = document.getElementById('chk-hashtags').checked;
   const inclBrief = document.getElementById('chk-brief').checked;
@@ -2058,7 +2078,7 @@ document.addEventListener('mouseover', function(e) {
   tooltip.style.left = '160px';
   tooltip.style.top = (rect.bottom + 6) + 'px';
   tooltip.style.transform = 'none';
-  tooltip.style.width = '240px';
+  tooltip.style.width = '300px'; // FIX v4g: sincronizado con el ancho nuevo del CSS .ck-tooltip (antes 240px pisaba el cambio a 300px)
   tooltip.style.zIndex = '9999';
 });
 function selectEstilo(estilo, btn) {
@@ -2425,7 +2445,12 @@ function buildImgPrompt() {
   const ctaEl      = document.getElementById('img-cta');
   const mensajeVal = document.getElementById('img-mensaje')?.value.trim() || '';
   const fechaKey   = document.getElementById('fecha-especial')?.value || '';
-  const fechaData  = FECHAS_ESPECIALES[fechaKey] || null;
+  const fechaPersonalizadaTxt = document.getElementById('fecha-especial-personalizada')?.value.trim() || '';
+  // FIX v4g (07-jul-2026): mismo criterio que en generarContenido() — fecha personalizada
+  // construye un fechaData en tiempo real en vez de depender del diccionario fijo.
+  const fechaData  = fechaKey === 'personalizada' && fechaPersonalizadaTxt
+    ? { label: fechaPersonalizadaTxt, colores: 'según la paleta de marca vigente', elementos: 'elementos visuales apropiados para la ocasión, sin forzar clichés', tono: 'apropiado para la ocasión mencionada', ganchos: [] }
+    : (FECHAS_ESPECIALES[fechaKey] || null);
   const inclDir    = !esCiudad && document.getElementById('chk-direccion').checked;
   const dir        = inclDir ? (tiendaInfo?.direccion || DIRECCIONES[ciudad] || null) : null;
   const ctaFallback = dir ? `Visítanos en ${nombreCta} · ${dir}` : `Visítanos en ${nombreCta}`;
