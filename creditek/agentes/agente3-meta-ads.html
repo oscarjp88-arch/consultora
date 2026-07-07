@@ -102,6 +102,9 @@ tr:hover td{background:#F8FAFC}
 .status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600}
 .status-badge.active{background:rgba(16,185,129,.1);color:var(--green)}
 .status-badge.paused{background:rgba(148,163,184,.1);color:var(--text3)}
+.ab-col{flex:1;background:var(--bg);border-radius:8px;padding:12px 14px}
+.ab-var{font-size:12px;font-weight:700;color:var(--text1);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.ab-metric{font-size:12px;color:var(--text2);margin-bottom:3px}
 .perf-bar{height:4px;background:var(--border);border-radius:2px;width:80px;display:inline-block;vertical-align:middle}
 .perf-fill{height:100%;border-radius:2px;background:var(--turq)}
 .action-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:3px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--font)}
@@ -336,6 +339,14 @@ tr:hover td{background:#F8FAFC}
     </div>
   </div>
 
+  <!-- A/B comparison panel -->
+  <div class="table-card" id="ab-panel" style="display:none;margin-top:16px">
+    <div class="table-header">
+      <div class="table-title">🧪 Comparación de variantes A/B</div>
+    </div>
+    <div id="ab-wrap"></div>
+  </div>
+
 </div>
 
 <!-- Modal config -->
@@ -439,12 +450,26 @@ tr:hover td{background:#F8FAFC}
     <!-- Paso 3: Creative -->
     <div class="wiz-step" id="wiz-step-3">
       <div class="field">
-        <label>Imagen del anuncio</label>
+        <label>Imagen del anuncio <span id="wiz-img-a-label" style="display:none">(Variante A)</span></label>
         <div class="upload-zone" id="wiz-upload-zone" onclick="document.getElementById('wiz-file-input').click()">
           <div id="wiz-upload-placeholder">📷 Clic para subir una imagen</div>
           <img id="wiz-img-preview" style="display:none">
         </div>
         <input type="file" id="wiz-file-input" accept="image/*" style="display:none">
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="wiz-ab-toggle" style="width:auto" onchange="wizToggleAB()">
+          🧪 Probar 2 variantes (A/B testing) — mismo copy, imagen distinta
+        </label>
+      </div>
+      <div class="field" id="wiz-field-imgb" style="display:none">
+        <label>Imagen del anuncio (Variante B)</label>
+        <div class="upload-zone" id="wiz-upload-zone-b" onclick="document.getElementById('wiz-file-input-b').click()">
+          <div id="wiz-upload-placeholder-b">📷 Clic para subir una imagen</div>
+          <img id="wiz-img-preview-b" style="display:none">
+        </div>
+        <input type="file" id="wiz-file-input-b" accept="image/*" style="display:none">
       </div>
       <div class="field">
         <label>Titular del anuncio (headline — texto en negrita que ve el cliente)</label>
@@ -512,6 +537,8 @@ let wizSelectedZones = new Set();
 let wizCustomZones = {};
 let wizDuration = 7;
 let wizImageBase64 = null;
+let wizImageBaseB = null; // A/B testing — imagen de la Variante B
+let wizABTest = false;    // A/B testing — activado/desactivado
 
 function abrirWizard() {
   if (!localStorage.getItem('ck_meta_token') || !localStorage.getItem('ck_meta_account')) {
@@ -590,6 +617,17 @@ async function wizSearchCity() {
   }
 }
 
+function wizToggleAB() {
+  wizABTest = document.getElementById('wiz-ab-toggle').checked;
+  document.getElementById('wiz-field-imgb').style.display = wizABTest ? 'block' : 'none';
+  document.getElementById('wiz-img-a-label').style.display = wizABTest ? 'inline' : 'none';
+  if (!wizABTest) {
+    wizImageBaseB = null;
+    document.getElementById('wiz-img-preview-b').style.display = 'none';
+    document.getElementById('wiz-upload-placeholder-b').style.display = 'block';
+  }
+}
+
 function renderWizDuration() {
   const group = document.getElementById('wiz-dur-group');
   group.innerHTML = '';
@@ -626,12 +664,28 @@ document.addEventListener('DOMContentLoaded', () => {
       reader.readAsDataURL(file);
     });
   }
+  const fileInputB = document.getElementById('wiz-file-input-b');
+  if (fileInputB) {
+    fileInputB.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        wizImageBaseB = ev.target.result.split(',')[1];
+        document.getElementById('wiz-img-preview-b').src = ev.target.result;
+        document.getElementById('wiz-img-preview-b').style.display = 'block';
+        document.getElementById('wiz-upload-placeholder-b').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 });
 
 function wizGoStep(n) {
   if (n === 2 && wizSelectedZones.size === 0) { showToast('Elige al menos una zona', '#EF4444'); return; }
   if (n === 4) {
     if (!wizImageBase64) { showToast('Sube una imagen', '#EF4444'); return; }
+    if (wizABTest && !wizImageBaseB) { showToast('Sube la imagen de la Variante B', '#EF4444'); return; }
     if (!document.getElementById('wiz-headline').value.trim()) { showToast('Escribe el titular del anuncio', '#EF4444'); return; }
     if (!document.getElementById('wiz-ad-text').value.trim()) { showToast('Escribe el texto del anuncio', '#EF4444'); return; }
   }
@@ -670,7 +724,7 @@ async function publicarCampana() {
     const copySnippet = adText ? adText.split(' ').slice(0,4).join(' ') : 'sin-copy';
     const campaignName = `Creditek - ${[...wizSelectedZones].map(id => wizAllZones()[id].name).join('+')} - ${new Date().toLocaleDateString('es-CO')} ${horaActual} - ${copySnippet}`;
 
-    // 1. Subir imagen
+    // 1. Subir imagen(es)
     progress.textContent = 'Subiendo imagen...';
     const imgRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adimages`, {
       method: 'POST',
@@ -679,6 +733,18 @@ async function publicarCampana() {
     const imgData = await imgRes.json();
     if (imgData.error) throw new Error('Imagen: ' + (imgData.error.error_user_msg || imgData.error.message));
     const imageHash = Object.values(imgData.images)[0].hash;
+
+    let imageHashB = null;
+    if (wizABTest && wizImageBaseB) {
+      progress.textContent = 'Subiendo imagen Variante B...';
+      const imgResB = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adimages`, {
+        method: 'POST',
+        body: new URLSearchParams({ access_token: token, bytes: wizImageBaseB })
+      });
+      const imgDataB = await imgResB.json();
+      if (imgDataB.error) throw new Error('Imagen B: ' + (imgDataB.error.error_user_msg || imgDataB.error.message));
+      imageHashB = Object.values(imgDataB.images)[0].hash;
+    }
 
     // 2. Crear campaña
     progress.textContent = 'Creando campaña...';
@@ -738,76 +804,91 @@ async function publicarCampana() {
     const adsetData = await adsetRes.json();
     if (adsetData.error) throw new Error('Ad set: ' + (adsetData.error.error_user_msg || adsetData.error.message));
 
-    // 4. Crear creative
-    progress.textContent = 'Creando anuncio...';
+    // 4. Crear creative(s) y ad(s) — 1 si es sencilla, 2 si es A/B (mismo ad set)
     const ctaInstagram = { type: 'VIEW_INSTAGRAM_PROFILE', value: { link: 'http://instagram.com/creditekco' } };
 
-    let creativeBody;
-    if (esMensajesWA) {
-      creativeBody = {
-        access_token: token,
-        name: 'Creative - ' + campaignName,
-        object_story_spec: JSON.stringify({
-          page_id: WIZ_PAGE_ID,
-          link_data: {
-            name: headlineText, // fix H — antes usaba campaignName (nombre interno) como titular público
-            message: adText,
-            image_hash: imageHash,
-            link: 'https://api.whatsapp.com/send',
-            call_to_action: { type: 'WHATSAPP_MESSAGE', value: { app_destination: 'WHATSAPP' } }
-          }
-        })
-      };
-    } else {
-      creativeBody = {
-        access_token: token,
-        name: 'Creative - ' + campaignName,
-        object_story_spec: JSON.stringify({
-          page_id: WIZ_PAGE_ID,
-          instagram_user_id: WIZ_IG_USER_ID,
-          link_data: {
-            name: headlineText, // fix H — agrega titular público, esta rama no tenía ninguno antes
-            link: 'http://instagram.com/creditekco',
-            message: adText,
-            image_hash: imageHash,
-            call_to_action: ctaInstagram
-          }
-        })
-      };
-    }
-    const creativeRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adcreatives`, {
-      method: 'POST',
-      body: new URLSearchParams(creativeBody)
-    });
-    const creativeData = await creativeRes.json();
-    if (creativeData.error) { console.error('CREATIVE ERROR FULL:', JSON.stringify(creativeData.error)); throw new Error('Creative: ' + (creativeData.error.error_user_msg || creativeData.error.message) + ' | Code: ' + creativeData.error.code + ' Subcode: ' + creativeData.error.error_subcode); }
+    async function crearCreativeYAd(imgHash, variantLabel) {
+      const nombreVariante = variantLabel ? `${campaignName} - ${variantLabel}` : campaignName;
+      let creativeBody;
+      if (esMensajesWA) {
+        creativeBody = {
+          access_token: token,
+          name: 'Creative - ' + nombreVariante,
+          object_story_spec: JSON.stringify({
+            page_id: WIZ_PAGE_ID,
+            link_data: {
+              name: headlineText,
+              message: adText,
+              image_hash: imgHash,
+              link: 'https://api.whatsapp.com/send',
+              call_to_action: { type: 'WHATSAPP_MESSAGE', value: { app_destination: 'WHATSAPP' } }
+            }
+          })
+        };
+      } else {
+        creativeBody = {
+          access_token: token,
+          name: 'Creative - ' + nombreVariante,
+          object_story_spec: JSON.stringify({
+            page_id: WIZ_PAGE_ID,
+            instagram_user_id: WIZ_IG_USER_ID,
+            link_data: {
+              name: headlineText,
+              link: 'http://instagram.com/creditekco',
+              message: adText,
+              image_hash: imgHash,
+              call_to_action: ctaInstagram
+            }
+          })
+        };
+      }
+      const creativeRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/adcreatives`, {
+        method: 'POST',
+        body: new URLSearchParams(creativeBody)
+      });
+      const creativeData = await creativeRes.json();
+      if (creativeData.error) { console.error('CREATIVE ERROR FULL:', JSON.stringify(creativeData.error)); throw new Error('Creative' + (variantLabel ? ' ' + variantLabel : '') + ': ' + (creativeData.error.error_user_msg || creativeData.error.message) + ' | Code: ' + creativeData.error.code + ' Subcode: ' + creativeData.error.error_subcode); }
 
-    // 5. Crear ad
-    progress.textContent = 'Publicando...';
-    const adRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/ads`, {
-      method: 'POST',
-      body: new URLSearchParams({
-        access_token: token,
-        name: campaignName,
-        adset_id: adsetData.id,
-        creative: JSON.stringify({ creative_id: creativeData.id }),
-        status: status
-      })
-    });
-    const adData = await adRes.json();
-    if (adData.error) throw new Error('Ad: ' + (adData.error.error_user_msg || adData.error.message));
+      const adRes = await fetch(`https://graph.facebook.com/v19.0/act_${account}/ads`, {
+        method: 'POST',
+        body: new URLSearchParams({
+          access_token: token,
+          name: nombreVariante,
+          adset_id: adsetData.id,
+          creative: JSON.stringify({ creative_id: creativeData.id }),
+          status: status
+        })
+      });
+      const adData = await adRes.json();
+      if (adData.error) throw new Error('Ad' + (variantLabel ? ' ' + variantLabel : '') + ': ' + (adData.error.error_user_msg || adData.error.message));
+      return adData;
+    }
+
+    progress.textContent = 'Publicando anuncio...';
+    await crearCreativeYAd(imageHash, wizABTest ? 'Variante A' : null);
+    if (wizABTest && imageHashB) {
+      progress.textContent = 'Publicando Variante B...';
+      await crearCreativeYAd(imageHashB, 'Variante B');
+    }
 
     progress.textContent = '✓ ¡Campaña publicada!';
-    showToast('✓ Campaña creada en Meta correctamente', '#10B981');
+    showToast(wizABTest ? '✓ Campaña con 2 variantes A/B creada en Meta' : '✓ Campaña creada en Meta correctamente', '#10B981');
     setTimeout(() => {
       cerrarWizard();
       wizSelectedZones = new Set();
       wizCustomZones = {};
       wizImageBase64 = null;
+      wizImageBaseB = null;
+      wizABTest = false;
+      document.getElementById('wiz-ab-toggle').checked = false;
+      document.getElementById('wiz-field-imgb').style.display = 'none';
+      document.getElementById('wiz-img-a-label').style.display = 'none';
       document.getElementById('wiz-headline').value = '';
       document.getElementById('wiz-ad-text').value = '';
       document.getElementById('wiz-img-preview').style.display = 'none';
       document.getElementById('wiz-upload-placeholder').style.display = 'block';
+      document.getElementById('wiz-img-preview-b').style.display = 'none';
+      document.getElementById('wiz-upload-placeholder-b').style.display = 'block';
       progress.style.display = 'none';
       cargarDatos();
     }, 1500);
@@ -946,6 +1027,12 @@ async function cargarDatos() {
     }
     campsData = campsData.map(c => ({ ...c, effective_status: statusMap[c.campaign_id] || 'DESCONOCIDO' }));
 
+    // A/B testing — traer datos a nivel de anuncio (ad) para comparar variantes
+    const urlAds = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=ad_id,ad_name,campaign_id,spend,reach,ctr,cpc,actions,effective_status&time_range={"since":"${since}","until":"${until}"}&level=ad&access_token=${token}`;
+    const resAds = await fetch(urlAds);
+    const dataAds = await resAds.json();
+    const adsData = (dataAds.data || []).filter(a => a.ad_name && a.ad_name.includes(' - Variante '));
+
     // Tendencia semanal (4 semanas)
     const trendData = [];
     for (let w = 3; w >= 0; w--) {
@@ -957,7 +1044,7 @@ async function cargarDatos() {
       trendData.push({ week: w, data: wDat.data?.[0] || null });
     }
 
-    lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: campsData, trend: trendData };
+    lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: campsData, trend: trendData, ads: adsData };
     renderDatos(lastData);
     document.getElementById('last-update').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CO');
 
@@ -1043,6 +1130,9 @@ function renderDatos(d) {
   // Campañas
   renderCampañas(d.camps);
 
+  // A/B testing
+  renderVariantes(d.ads);
+
   // Tendencia
   renderTendencia(d.trend);
 }
@@ -1122,6 +1212,68 @@ function renderCampañas(camps) {
       </tr>`;
     }).join('')}
     </tbody></table></div>`;
+}
+
+function renderVariantes(ads) {
+  const panel = document.getElementById('ab-panel');
+  const wrap = document.getElementById('ab-wrap');
+  if (!ads || ads.length === 0) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+
+  // Agrupar por nombre base de campaña (sin el sufijo de variante)
+  const grupos = {};
+  ads.forEach(a => {
+    const base = a.ad_name.replace(/ - Variante [AB]$/, '');
+    const variante = a.ad_name.includes('Variante A') ? 'A' : 'B';
+    if (!grupos[base]) grupos[base] = {};
+    grupos[base][variante] = a;
+  });
+
+  wrap.innerHTML = Object.entries(grupos).map(([base, g]) => {
+    const columnas = ['A', 'B'].map(v => {
+      const a = g[v];
+      if (!a) return `<div class="ab-col"><div class="ab-var">Variante ${v}</div><div style="color:var(--text3);font-size:12px">Sin datos aún</div></div>`;
+      const spend   = parseFloat(a.spend || 0) / COP_TO_USD;
+      const ctr     = parseFloat(a.ctr || 0);
+      const cpc     = parseFloat(a.cpc || 0);
+      const results = contarResultadosReales(a.actions);
+      const cpr     = results > 0 ? (spend / results).toFixed(2) : 'N/A';
+      const activo  = a.effective_status === 'ACTIVE';
+      return `<div class="ab-col">
+        <div class="ab-var">Variante ${v} ${activo ? '<span class="status-badge active">● Activa</span>' : '<span class="status-badge paused">● Pausada</span>'}</div>
+        <div class="ab-metric">Gasto: <b>$${spend.toFixed(2)}</b></div>
+        <div class="ab-metric">CTR: <b>${ctr.toFixed(2)}%</b></div>
+        <div class="ab-metric">CPC: <b>$${cpc.toFixed(2)}</b></div>
+        <div class="ab-metric">Resultados: <b>${results}</b></div>
+        <div class="ab-metric">CPR: <b>$${cpr}</b></div>
+        ${activo ? `<button class="btn-secondary" style="margin-top:8px;font-size:11px;padding:6px 10px" onclick="pausarAd('${a.ad_id}', this)">⏸ Pausar esta variante</button>` : ''}
+      </div>`;
+    }).join('');
+    return `<div style="border-bottom:1px solid var(--border);padding:14px 0">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">${base}</div>
+      <div style="display:flex;gap:16px">${columnas}</div>
+    </div>`;
+  }).join('');
+}
+
+async function pausarAd(adId, btnEl) {
+  const token = localStorage.getItem('ck_meta_token');
+  btnEl.disabled = true;
+  btnEl.textContent = 'Pausando...';
+  try {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${adId}`, {
+      method: 'POST',
+      body: new URLSearchParams({ access_token: token, status: 'PAUSED' })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    showToast('✓ Variante pausada', '#10B981');
+    cargarDatos();
+  } catch (err) {
+    showToast('Error al pausar: ' + err.message, '#EF4444');
+    btnEl.disabled = false;
+    btnEl.textContent = '⏸ Pausar esta variante';
+  }
 }
 
 function renderTendencia(trend) {
