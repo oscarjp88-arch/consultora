@@ -447,6 +447,11 @@ tr:hover td{background:#F8FAFC}
         <input type="file" id="wiz-file-input" accept="image/*" style="display:none">
       </div>
       <div class="field">
+        <label>Titular del anuncio (headline — texto en negrita que ve el cliente)</label>
+        <input type="text" id="wiz-headline" maxlength="40" placeholder="Financia tu celular hoy" style="width:100%;font-size:13px;font-family:var(--font);padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;outline:none">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Máx. 40 caracteres recomendados — Meta lo trunca en la mayoría de formatos</div>
+      </div>
+      <div class="field">
         <label>Texto del anuncio</label>
         <textarea id="wiz-ad-text" rows="4" style="width:100%;font-size:13px;font-family:var(--font);padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;outline:none;resize:vertical" placeholder="📱 ¡Estrena celular hoy mismo! Financiación fácil y rápida en Creditek..."></textarea>
         <div style="font-size:11px;color:var(--text3);margin-top:4px">Sin hashtags — no aplican en anuncios pagados</div>
@@ -627,6 +632,7 @@ function wizGoStep(n) {
   if (n === 2 && wizSelectedZones.size === 0) { showToast('Elige al menos una zona', '#EF4444'); return; }
   if (n === 4) {
     if (!wizImageBase64) { showToast('Sube una imagen', '#EF4444'); return; }
+    if (!document.getElementById('wiz-headline').value.trim()) { showToast('Escribe el titular del anuncio', '#EF4444'); return; }
     if (!document.getElementById('wiz-ad-text').value.trim()) { showToast('Escribe el texto del anuncio', '#EF4444'); return; }
   }
   [1, 2, 3, 4].forEach(i => {
@@ -657,6 +663,7 @@ async function publicarCampana() {
     const budgetUsd = parseInt(document.getElementById('wiz-budget-slider').value);
     const dailyBudgetCop = Math.round((budgetUsd * COP_TO_USD) / 7);
     const adText = document.getElementById('wiz-ad-text').value.trim();
+    const headlineText = document.getElementById('wiz-headline').value.trim();
     const activarYa = document.getElementById('wiz-activar-ya').checked;
     const status = activarYa ? 'ACTIVE' : 'PAUSED';
     const horaActual = new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit', hour12:false});
@@ -743,7 +750,7 @@ async function publicarCampana() {
         object_story_spec: JSON.stringify({
           page_id: WIZ_PAGE_ID,
           link_data: {
-            name: campaignName,
+            name: headlineText, // fix H — antes usaba campaignName (nombre interno) como titular público
             message: adText,
             image_hash: imageHash,
             link: 'https://api.whatsapp.com/send',
@@ -759,6 +766,7 @@ async function publicarCampana() {
           page_id: WIZ_PAGE_ID,
           instagram_user_id: WIZ_IG_USER_ID,
           link_data: {
+            name: headlineText, // fix H — agrega titular público, esta rama no tenía ninguno antes
             link: 'http://instagram.com/creditekco',
             message: adText,
             image_hash: imageHash,
@@ -796,6 +804,7 @@ async function publicarCampana() {
       wizSelectedZones = new Set();
       wizCustomZones = {};
       wizImageBase64 = null;
+      document.getElementById('wiz-headline').value = '';
       document.getElementById('wiz-ad-text').value = '';
       document.getElementById('wiz-img-preview').style.display = 'none';
       document.getElementById('wiz-upload-placeholder').style.display = 'block';
