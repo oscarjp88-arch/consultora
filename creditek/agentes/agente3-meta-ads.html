@@ -359,6 +359,10 @@ tr:hover td{background:#F8FAFC}
       <label>Presupuesto semanal (USD)</label>
       <input type="number" id="inp-budget" placeholder="50" min="1" step="1">
     </div>
+    <div class="field">
+      <label>Tasa de cambio COP → USD (actualízala cuando cambie el dólar)</label>
+      <input type="number" id="inp-tasa" placeholder="3350" min="1000" step="1">
+    </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="cerrarConfig()">Cancelar</button>
       <button class="btn-primary" onclick="guardarConfig()">Guardar y conectar</button>
@@ -655,7 +659,9 @@ async function publicarCampana() {
     const adText = document.getElementById('wiz-ad-text').value.trim();
     const activarYa = document.getElementById('wiz-activar-ya').checked;
     const status = activarYa ? 'ACTIVE' : 'PAUSED';
-    const campaignName = `Creditek - ${[...wizSelectedZones].map(id => wizAllZones()[id].name).join('+')} - ${new Date().toLocaleDateString('es-CO')}`;
+    const horaActual = new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit', hour12:false});
+    const copySnippet = adText ? adText.split(' ').slice(0,4).join(' ') : 'sin-copy';
+    const campaignName = `Creditek - ${[...wizSelectedZones].map(id => wizAllZones()[id].name).join('+')} - ${new Date().toLocaleDateString('es-CO')} ${horaActual} - ${copySnippet}`;
 
     // 1. Subir imagen
     progress.textContent = 'Subiendo imagen...';
@@ -806,7 +812,7 @@ async function publicarCampana() {
 let lastData = null;
 
 // ── Config ───────────────────────────────────────────────────────
-const COP_TO_USD = 4200; // Tasa COP a USD
+let COP_TO_USD = parseFloat(localStorage.getItem('ck_cop_usd')) || 3350; // Tasa COP a USD — editable en ⚙ Configurar (antes fija en 4200, desactualizada)
 
 // Fix v1 — solo contar acciones que representan intención real (lead/conversación/clic),
 // no cualquier interacción (reacción, guardado, engagement de página, etc.)
@@ -827,6 +833,7 @@ function abrirConfig() {
   document.getElementById('inp-account').value = localStorage.getItem('ck_meta_account') || '';
   document.getElementById('inp-claude').value  = localStorage.getItem('ck_claude_key') || '';
   document.getElementById('inp-budget').value  = localStorage.getItem('ck_weekly_budget') || '50';
+  document.getElementById('inp-tasa').value    = localStorage.getItem('ck_cop_usd') || COP_TO_USD;
   document.getElementById('modal').classList.add('open');
 }
 function cerrarConfig() {
@@ -838,10 +845,12 @@ function guardarConfig() {
   const c = document.getElementById('inp-claude').value.trim();
   if (!t || !a) { showToast('Token e ID son obligatorios', '#EF4444'); return; }
   const b = document.getElementById('inp-budget').value.trim();
+  const tasa = document.getElementById('inp-tasa').value.trim();
   localStorage.setItem('ck_meta_token',   t);
   localStorage.setItem('ck_meta_account', a);
   if (c) localStorage.setItem('ck_claude_key', c);
   if (b) localStorage.setItem('ck_weekly_budget', b);
+  if (tasa) { localStorage.setItem('ck_cop_usd', tasa); COP_TO_USD = parseFloat(tasa); }
   cerrarConfig();
   showToast('✓ Configuración guardada');
   cargarDatos();
@@ -975,7 +984,7 @@ function renderDatos(d) {
   // Conversiones / resultados
   const actions = m.actions || [];
   const results = contarResultadosReales(actions);
-  const cpr     = results > 0 ? spendCOP / results : 0; // CPR en COP
+  const cpr     = results > 0 ? spend / results : 0; // CPR en USD (fix v2 — antes usaba spendCOP sin convertir, inflaba el número por la tasa completa)
   const roas    = spendCOP > 0 ? (results * 50000 / spendCOP) : 0; // estimado: ingreso estimado / gasto en COP
 
   // Previo
@@ -1075,7 +1084,7 @@ function renderCampañas(camps) {
 
   // Ordenar por gasto descendente
   const sorted = [...camps].sort((a, b) => parseFloat(b.spend||0) - parseFloat(a.spend||0));
-  const maxSpend = parseFloat(sorted[0]?.spend || 1);
+  const maxSpend = parseFloat(sorted[0]?.spend || 1) / COP_TO_USD; // fix v2 — antes comparaba USD contra COP sin convertir, la barra quedaba casi invisible
 
   wrap.innerHTML = `<div class="table-wrapper"><table>
     <thead><tr>
