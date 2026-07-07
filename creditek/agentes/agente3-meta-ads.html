@@ -247,17 +247,17 @@ tr:hover td{background:#F8FAFC}
   <div class="kpi-grid" id="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-rank">#1</div>
-      <div class="kpi-label">ROAS</div>
-      <div class="kpi-value turq" id="kpi-roas">—</div>
-      <div class="kpi-delta neutral" id="delta-roas">Sin datos</div>
-      <div class="kpi-sub">Retorno por peso invertido</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-rank">#2</div>
       <div class="kpi-label">Costo por resultado</div>
       <div class="kpi-value" id="kpi-cpr">—</div>
       <div class="kpi-delta neutral" id="delta-cpr">Sin datos</div>
       <div class="kpi-sub">CPR — lead / mensaje</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-rank">⚠</div>
+      <div class="kpi-label">ROAS estimado</div>
+      <div class="kpi-value turq" id="kpi-roas">—</div>
+      <div class="kpi-delta neutral" id="delta-roas">Sin datos</div>
+      <div class="kpi-sub">Proyección — no confirma venta real</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-rank">#3</div>
@@ -808,6 +808,20 @@ let lastData = null;
 // ── Config ───────────────────────────────────────────────────────
 const COP_TO_USD = 4200; // Tasa COP a USD
 
+// Fix v1 — solo contar acciones que representan intención real (lead/conversación/clic),
+// no cualquier interacción (reacción, guardado, engagement de página, etc.)
+const RESULT_ACTION_TYPES = [
+  'onsite_conversion.messaging_conversation_started_7d',
+  'onsite_conversion.messaging_first_reply',
+  'link_click',
+  'landing_page_view'
+];
+function contarResultadosReales(actions) {
+  return (actions || [])
+    .filter(a => RESULT_ACTION_TYPES.includes(a.action_type))
+    .reduce((s, a) => s + parseInt(a.value || 0), 0);
+}
+
 function abrirConfig() {
   document.getElementById('inp-token').value   = localStorage.getItem('ck_meta_token') || '';
   document.getElementById('inp-account').value = localStorage.getItem('ck_meta_account') || '';
@@ -903,6 +917,17 @@ async function cargarDatos() {
       }
     }
 
+    // Fix v1 — traer el estado real de cada campaña (insights no lo tiene, /campaigns sí)
+    const campaignIds = campsData.map(c => c.campaign_id).filter(Boolean);
+    let statusMap = {};
+    if (campaignIds.length > 0) {
+      const urlStatus = `https://graph.facebook.com/v19.0/?ids=${campaignIds.join(',')}&fields=effective_status&access_token=${token}`;
+      const resStatus = await fetch(urlStatus);
+      const dataStatus = await resStatus.json();
+      campaignIds.forEach(id => { statusMap[id] = dataStatus[id]?.effective_status || 'DESCONOCIDO'; });
+    }
+    campsData = campsData.map(c => ({ ...c, effective_status: statusMap[c.campaign_id] || 'DESCONOCIDO' }));
+
     // Tendencia semanal (4 semanas)
     const trendData = [];
     for (let w = 3; w >= 0; w--) {
@@ -949,7 +974,7 @@ function renderDatos(d) {
 
   // Conversiones / resultados
   const actions = m.actions || [];
-  const results = actions.reduce((s, a) => s + parseInt(a.value || 0), 0);
+  const results = contarResultadosReales(actions);
   const cpr     = results > 0 ? spendCOP / results : 0; // CPR en COP
   const roas    = spendCOP > 0 ? (results * 50000 / spendCOP) : 0; // estimado: ingreso estimado / gasto en COP
 
@@ -962,11 +987,11 @@ function renderDatos(d) {
   const pFreq   = parseFloat(p.frequency || 0);
   const pCpm    = parseFloat(p.cpm || 0);
   const pCpc    = parseFloat(p.cpc || 0);
-  const pAct    = (p.actions||[]).reduce((s,a) => s + parseInt(a.value||0), 0);
+  const pAct    = contarResultadosReales(p.actions);
   const pCpr    = pAct > 0 ? pSpend / pAct : 0;
 
   // KPIs
-  setKPI('kpi-roas',   roas > 0 ? roas.toFixed(1)+'x' : 'N/A', null, null, 'Retorno estimado');
+  setKPI('kpi-roas',   roas > 0 ? roas.toFixed(1)+'x' : 'N/A', null, null, 'Proyección — no confirma venta real');
   setKPI('kpi-cpr',    cpr > 0 ? '$'+cpr.toFixed(2) : 'N/A', pCpr, cpr, 'Por lead/mensaje');
   setKPI('kpi-ctr',    ctr.toFixed(2)+'%', pCtr, ctr, 'vs período anterior');
   setKPI('kpi-reach',  fmtNum(reach), pReach, reach, 'vs período anterior');
@@ -1028,6 +1053,19 @@ function fmtNum(n) {
   return n.toString();
 }
 
+function renderStatusBadge(status) {
+  const map = {
+    ACTIVE:          { label: 'Activa',      cls: 'active' },
+    PAUSED:          { label: 'Pausada',     cls: 'paused' },
+    CAMPAIGN_PAUSED: { label: 'Pausada',     cls: 'paused' },
+    ADSET_PAUSED:    { label: 'Pausada',     cls: 'paused' },
+    PENDING_REVIEW:  { label: 'En revisión', cls: 'paused' },
+    DISAPPROVED:     { label: 'Rechazada',   cls: 'paused' }
+  };
+  const s = map[status] || { label: status || 'Desconocido', cls: 'paused' };
+  return `<span class="status-badge ${s.cls}">● ${s.label}</span>`;
+}
+
 function renderCampañas(camps) {
   const wrap = document.getElementById('campaigns-wrap');
   if (!camps || camps.length === 0) {
@@ -1051,12 +1089,12 @@ function renderCampañas(camps) {
       const ctr     = parseFloat(c.ctr || 0);
       const cpc     = parseFloat(c.cpc || 0);
       const reach   = parseInt(c.reach || 0);
-      const actions = (c.actions || []).reduce((s, a) => s + parseInt(a.value || 0), 0);
+      const actions = contarResultadosReales(c.actions);
       const perfPct = Math.round((spend / maxSpend) * 100);
       return `<tr>
         <td style="font-weight:700;color:var(--text3)">${i+1}</td>
         <td class="camp-name" title="${c.campaign_name}">${c.campaign_name || '—'}</td>
-        <td><span class="status-badge active">● Activa</span></td>
+        <td>${renderStatusBadge(c.effective_status)}</td>
         <td style="font-weight:600">$${spend.toFixed(2)}</td>
         <td>${fmtNum(reach)}</td>
         <td>${ctr.toFixed(2)}%</td>
@@ -1076,7 +1114,7 @@ function renderTendencia(trend) {
 
   row.innerHTML = trend.map((t, i) => {
     const spend   = parseFloat(t.data?.spend || 0) / COP_TO_USD;
-    const results = (t.data?.actions || []).reduce((s, a) => s + parseInt(a.value || 0), 0);
+    const results = contarResultadosReales(t.data?.actions);
     const pct     = Math.round((spend / maxSpend) * 100);
     return `<div class="trend-card">
       <div class="trend-week">${labels[i]}</div>
@@ -1099,7 +1137,7 @@ async function analizarConIA(data) {
   const ctr     = parseFloat(m.ctr || 0);
   const freq    = parseFloat(m.frequency || 0);
   const cpm     = parseFloat(m.cpm || 0);
-  const results = (m.actions || []).reduce((s, a) => s + parseInt(a.value || 0), 0);
+  const results = contarResultadosReales(m.actions);
   const cpr     = results > 0 ? (spend / results).toFixed(2) : 'N/A';
 
   const prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza estos datos de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
