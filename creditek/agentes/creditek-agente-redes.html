@@ -849,6 +849,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
       <div class="engine-row">
         <label class="model-chk-label"><input type="checkbox" id="chk-gemini" checked onchange="updateImgKeyStatus()"> 📷 Foto producto</label>
         <label class="model-chk-label"><input type="checkbox" id="chk-dalle" checked onchange="updateImgKeyStatus()"> ⬡ GPT Image 2</label>
+        <label class="model-chk-label"><input type="checkbox" id="chk-pipeline" onchange="updateImgKeyStatus()"> 🔗 Pipeline (mejor de ambos)</label>
       </div>
       <div class="fmt-toggle">
         <button class="fmt-btn active" id="fmt-feed" onclick="selectFormat('feed')">📱 Feed (1080×1080)</button>
@@ -2841,6 +2842,75 @@ Responde SOLO con el prompt final. Sin explicaciones, sin markdown.`;
   }
 }
 
+// ── PIPELINE v4d (07-jul-2026): variante "solo foto" para Gemini ────────
+// Gemini genera ÚNICAMENTE la fotografía de escena — sin texto, sin logo.
+// GPT compone titular/precio/CTA/logo encima en el paso 2 del pipeline
+// (ver generarConPipelineGeminiGPT() más abajo). Reutiliza la misma lógica
+// de escena/sujeto/estilo de buildImgPromptGemini(), quitando los bloques
+// de texto y cualquier reserva de esquina para el logo.
+async function buildImgPromptGeminiFotoLimpia() {
+  const producto = document.getElementById('producto').value.trim() || 'smartphone';
+  const estiloCustomVal = document.getElementById('estilo-custom')?.value.trim();
+  const detalleDiaClaude = getDetalleDelDia(currentEstilo);
+  const estiloDescMap = {
+    formal:      `profesional, confiable, elegante — incorporar este detalle visual: ${detalleDiaClaude}`,
+    costeno:     `caribeño colombiano comercial, alegre y cálido — un cliente feliz disfrutando su celular nuevo como foco. Escena plausible y real (un momento que de verdad pasa en un pueblo de la costa): ${detalleDiaClaude}. Varios elementos costeños están bien solo si conviven naturalmente en el mismo momento; nunca apilar clichés turísticos para decorar`,
+    chistoso:    `divertido, humor comercial ligero — incorporar este detalle visual: ${detalleDiaClaude}`,
+    minimalista: `minimalista, mucho espacio en blanco, sereno — un solo elemento visual: ${detalleDiaClaude}`,
+    custom:      estiloCustomVal || 'moderno',
+  };
+  const estiloDesc = estiloDescMap[currentEstilo] || estiloDescMap.formal;
+
+  const fallbackEstatico = () => {
+    const colorMap = {
+      formal:      'tonos azul marino profundo con acentos turquesa, elegante y confiable',
+      costeno:     'colores cálidos y luz natural del Caribe colombiano, ambiente comercial cotidiano y real (plaza de pueblo, calle comercial, local surtido) con un cliente feliz disfrutando su celular nuevo — auténtico, nunca una postal turística ni una fiesta montada',
+      chistoso:    'colores vivos y alegres, azul marino y turquesa con energía divertida',
+      minimalista: 'azul marino profundo, mucho espacio en blanco, muy pocos elementos',
+      custom:      estiloCustomVal || 'azul marino y turquesa, estilo moderno',
+    };
+    const colorDesc = colorMap[currentEstilo] || colorMap.formal;
+    return `Fotografía publicitaria realista de ${producto}, en ${colorDesc}. El producto se ve grande y bien iluminado, como en una vitrina de tienda. Composición fotográfica limpia, comercial, sin ningún texto, letra o logo en la imagen — solo la escena. Usar todo el lienzo de borde a borde, sin zonas vacías.`;
+  };
+
+  const apiKey = sessionStorage.getItem('ck_api_key') || '';
+  if (!apiKey.startsWith('sk-ant-')) return fallbackEstatico();
+
+  const instruccion = `Eres un Director de Arte experto en prompt engineering para modelos de difusión de Google (Imagen 4 / Gemini). Tu objetivo es describir SOLO una fotografía de escena — SIN NINGÚN TEXTO, SIN LOGO — en UN SOLO párrafo narrativo en español de máximo 60 palabras. El texto y el logo se agregan después con otro motor; tu escena debe quedar completamente limpia para eso.
+
+RESTRICCIONES ESTRICTAS — NUNCA incluyas en tu salida:
+- Ningún texto a renderizar, ninguna palabra entre comillas, ningún titular ni CTA
+- Ninguna mención de logo, marca Creditek escrita, ni zona reservada para nada
+- Palabras técnicas: "capa", "layout", "composición", "vector", "PNG", "feed", "1080px"
+- Códigos hex ni tamaños en puntos. Tradúcelos: azul marino oscuro
+- Nombres de tipografías
+
+FÓRMULA OBLIGATORIA — escribe en este orden exacto:
+1. ESCENA BASE: tipo de fotografía y estética general
+2. SUJETO PRINCIPAL: persona o producto, posición y acción. IMPORTANTE: el sujeto debe ser una persona colombiana de clase media trabajadora, bien vestida, en ambiente comercial digno (local de tecnología surtido, vitrina iluminada, calle comercial). NUNCA pobreza, NUNCA tienda humilde, NUNCA ropa desgastada.
+3. ENTORNO E ILUMINACIÓN: ambiente, colores, accesorios, calidad fotográfica vibrante y profesional
+
+BRIEF DE LA PIEZA:
+Producto: ${producto}
+Estilo/tono: ${estiloDesc}
+
+Responde SOLO con el prompt final. Sin explicaciones, sin markdown.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:'claude-sonnet-4-6', max_tokens: 300, messages:[{role:'user', content: instruccion}]})
+    });
+    const data = await res.json();
+    const promptGenerado = data.content?.find(b=>b.type==='text')?.text?.trim() || '';
+    if (promptGenerado && promptGenerado.length > 20) return promptGenerado;
+    return fallbackEstatico();
+  } catch(e) {
+    return fallbackEstatico();
+  }
+}
+
 
 // ── Sistema de referencias visuales del mercado ─────────────────
 const BRAND_COLORS = {
@@ -3237,7 +3307,7 @@ async function componerLogoSobreImagen(dataUrlImagen) {
   });
 }
 
-async function generarConGemini(key, prompt) {
+async function generarConGemini(key, prompt, soloFoto = false) {
   // FIX 03-jul-2026: relación de aspecto exacta para calzar con GPT
   // (GPT: 1024x1024 = 1:1 · 1024x1536 = 2:3).
   // gemini3pro SÍ admite 2:3 exacto. El respaldo Imagen 4 :predict NO admite
@@ -3279,6 +3349,9 @@ async function generarConGemini(key, prompt) {
     console.warn('[generarConGemini] gemini3pro falló, usando vía normal del Worker:', errPrincipal.message);
     src = await llamarWorker({ ...reqBase, aspectRatio: aspectRatioFallback });
   }
+  // FIX v4d (07-jul-2026): si es para el pipeline, devolver la foto CRUDA sin
+  // overlay de logo — GPT se encarga del logo y el texto en el paso 2.
+  if (soloFoto) return src;
   return await componerLogoSobreImagen(src);
 }
 
@@ -3325,6 +3398,51 @@ async function generarConDalle(key, prompt) {
   const imageCall = data.output?.find(o => o.type === 'image_generation_call');
   const b64 = imageCall?.result;
   if (!b64) throw new Error('OpenAI no devolvió imagen. Revisa la consola para ver la respuesta completa.');
+  return 'data:image/png;base64,' + b64;
+}
+
+// ── PIPELINE v4d (07-jul-2026): Gemini genera la foto, GPT compone encima ──
+// Idea central: cada motor hace lo que sabe hacer mejor. Gemini → fotografía
+// realista sin texto ni logo. GPT → recibe esa foto como input_image de
+// referencia + el logo + el copy, y compone titular/precio/CTA/logo como
+// capas limpias encima, en vez de que el logo se pegue por Canvas después.
+// FIX v4d (nota de Cowork): el doc original pasaba `null` como key de Gemini
+// en el paso 1 — se cambió para recibir y usar la key real del usuario
+// (mismo criterio que generarConModelos usa para las otras 2 opciones),
+// evitando ignorar silenciosamente una key de Gemini ya configurada.
+async function generarConPipelineGeminiGPT(keyOpenAI, keyGemini, promptGeminiFoto, promptComposicionGPT) {
+  // Paso 1 — Gemini genera la foto limpia (sin texto, sin logo)
+  const fotoBase = await generarConGemini(keyGemini, promptGeminiFoto, /* soloFoto */ true);
+
+  // Paso 2 — GPT recibe la foto como input_image + logo como input_image + el copy como input_text
+  const logo = await loadLogoBase64();
+  const content = [
+    { type: 'input_text', text: 'Base photograph — do not regenerate the scene, only add the following graphic elements on top as clean layers:' },
+    { type: 'input_image', image_url: fotoBase },
+  ];
+  if (logo) {
+    content.push({ type: 'input_text', text: 'Brand logo — place in top-right corner, small card with soft shadow:' });
+    content.push({ type: 'input_image', image_url: logo });
+  }
+  content.push({ type: 'input_text', text: promptComposicionGPT });
+
+  const res = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keyOpenAI },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      input: [{ role: 'user', content }],
+      tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1536' : '1024x1024' }]
+    })
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.error?.message || `Error OpenAI ${res.status}`);
+  }
+  const data = await res.json();
+  const imageCall = data.output?.find(o => o.type === 'image_generation_call');
+  const b64 = imageCall?.result;
+  if (!b64) throw new Error('OpenAI no devolvió imagen del pipeline.');
   return 'data:image/png;base64,' + b64;
 }
 
@@ -3485,12 +3603,18 @@ async function generarConModelos() {
   if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
   const promptGemini = await buildImgPromptGemini(); // FIX 02-jul-2026
 
-  const useGemini = document.getElementById('chk-gemini')?.checked;
-  const useDalle  = document.getElementById('chk-dalle')?.checked;
+  const useGemini   = document.getElementById('chk-gemini')?.checked;
+  const useDalle    = document.getElementById('chk-dalle')?.checked;
+  const usePipeline = document.getElementById('chk-pipeline')?.checked; // FIX v4d, 07-jul-2026
+
+  // FIX v4d (07-jul-2026): el prompt "solo foto" solo se calcula si el pipeline
+  // está seleccionado — evita una llamada extra a Claude cuando nadie lo usa.
+  const promptGeminiFotoLimpia = usePipeline ? await buildImgPromptGeminiFotoLimpia() : null;
 
   const MODELS = [
-    { id: 'gemini', label: '📷 Foto producto', checked: useGemini },
-    { id: 'dalle',  label: '⬡ GPT Image 2',    checked: useDalle },
+    { id: 'gemini',   label: '📷 Foto producto',           checked: useGemini },
+    { id: 'dalle',    label: '⬡ GPT Image 2',              checked: useDalle },
+    { id: 'pipeline', label: '🔗 Pipeline (mejor de ambos)', checked: usePipeline },
   ];
   const selected = MODELS.filter(m => m.checked);
 
@@ -3498,7 +3622,7 @@ async function generarConModelos() {
 
   const keyGemini = localStorage.getItem('ck_gemini_key') || '';
   const keyOpenAI = localStorage.getItem('ck_openai_key') || '';
-  if (useDalle && keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
+  if ((useDalle || usePipeline) && keyOpenAI.length < 10) { abrirImgKeyModal('openai'); return; }
 
   const btn = document.getElementById('action-gen-btn');
   btn.disabled = true;
@@ -3511,6 +3635,7 @@ async function generarConModelos() {
   const callEngine = (id) => {
     const key = id === 'dalle' ? keyOpenAI : keyGemini;
     if (id === 'gemini') return generarConGemini(key, promptGemini);
+    if (id === 'pipeline') return generarConPipelineGeminiGPT(keyOpenAI, keyGemini, promptGeminiFotoLimpia, prompt);
     return generarConDalle(key, prompt);
   };
 
@@ -3518,7 +3643,7 @@ async function generarConModelos() {
     const m = selected[0];
     currentEngine = m.id;
     try {
-      lastImgModelLabel = m.label.replace(/^[✦⬡◈] /, '');
+      lastImgModelLabel = m.label.replace(/^(?:✦|⬡|◈|🔗)\s+/, '');
       const src = await callEngine(m.id);
       imgHistory = [src]; imgHistoryIdx = 0;
       mostrarImgVersion(src);
@@ -3572,7 +3697,7 @@ async function generarConModelos() {
           imgHistory = [imgSrc]; imgHistoryIdx = 0;
           mostrarImgVersion(imgSrc);
           document.getElementById('img-result').style.display = 'block';
-          document.getElementById('img-model-lbl').textContent = `Generado con ${m.label.replace(/^[✦⬡◈] /, '')}`;
+          document.getElementById('img-model-lbl').textContent = `Generado con ${m.label.replace(/^(?:✦|⬡|◈|🔗)\s+/, '')}`;
           document.getElementById('img-editor').style.display = 'block';
           renderImgHistoryNav();
           abResult.style.display = 'none';
