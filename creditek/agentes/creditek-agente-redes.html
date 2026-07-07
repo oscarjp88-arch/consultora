@@ -1059,7 +1059,14 @@ Patrones de hook que debes usar:
 - Comparación colombiana actual: "El VAR revisó y confirmó: este precio sí es gol."
 - Tensión cómica: "Tu celular ya dijo adiós. Nosotros le decimos bienvenido al nuevo."
 REGLA: el humor debe estar en el texto — NO pedir "persona riendo" ni "cara de sorpresa".
-PROHIBIDO: chistes forzados, humor que no vende, punchlines sin beneficio claro.`,
+
+REGLA DE ESPECIFICIDAD (specificity check — obligatoria en TODOS los titulares, no solo en los ejemplos):
+Cada titular DEBE incluir al menos UNO de estos elementos concretos, además del chiste:
+1. Una objeción real resuelta (reportado, sin fiador, sin codeudor, sin banco)
+2. Un resultado tangible (aprobado, te lo llevas, te lo dan)
+3. Una marca o modelo específico + una acción concreta sobre esa marca
+Un chiste que no conecte con ninguno de los 3 elementos de arriba SE RECHAZA — el humor debe vender, no solo hacer reír.
+PROHIBIDO: chistes forzados, humor que no vende, punchlines sin beneficio claro, humor genérico sin conexión al producto/crédito.`,
 
     'formal': `Copywriting directo de conversión (conversion copywriting — texto diseñado para generar acción inmediata).
 Patrones de hook que debes usar:
@@ -1068,7 +1075,14 @@ Patrones de hook que debes usar:
 - Urgencia real con dato concreto: "Solo 3 unidades. Solo esta semana."
 - Beneficio innegable: "Mismo día. Sin banco. Sin rollo."
 REGLA: cada titular debe funcionar solo, sin necesitar la siguiente frase.
-PROHIBIDO: aspiracional genérico, corporativo ("potencia", "conecta", "descubre", "innovador").`,
+
+REGLA DE ESPECIFICIDAD (specificity check — obligatoria en TODOS los titulares, no solo en los ejemplos):
+Cada titular DEBE incluir al menos UNO de estos elementos concretos:
+1. Una objeción real resuelta (reportado, sin fiador, sin codeudor, sin banco, sin historial)
+2. Un resultado tangible con marco temporal (aprobado hoy, mismo día, en minutos)
+3. Una marca o modelo específico + una acción concreta sobre esa marca
+Un titular aspiracional sin ninguno de los 3 elementos de arriba SE RECHAZA.
+PROHIBIDO: aspiracional genérico, corporativo ("potencia", "conecta", "descubre", "innovador"), frases motivacionales sin dato concreto de crédito/producto.`,
 
     'minimalista': `Una sola idea. Máximo impacto. Mínimas palabras.
 Patrones de hook que debes usar:
@@ -1076,7 +1090,14 @@ Patrones de hook que debes usar:
 - Contraste en 3 palabras: "Dijeron no. Creditek sí."
 - Afirmación de resultado: "Aprobado. Mismo día."
 REGLA ESTRICTA: máximo 4 palabras. Sin puntuación decorativa. Sin adjetivos innecesarios.
-PROHIBIDO: más de 4 palabras, cualquier palabra que no aporte conversión directa.`,
+
+REGLA DE ESPECIFICIDAD (specificity check — obligatoria en TODOS los titulares, no solo en los ejemplos):
+Dado el límite estricto de 4 palabras, el elemento concreto debe ser la PALABRA CLAVE central del fragmento:
+1. Una objeción resuelta en una palabra ("Sin banco", "Sin fiador", "Reportado")
+2. Un resultado en una palabra ("Aprobado", "Hoy", "Ya")
+3. Una marca específica ("Samsung ya", "iPhone hoy")
+Un fragmento minimalista que solo use adjetivos vacíos ("Lo mejor.", "Calidad total.") SE RECHAZA — el minimalismo debe mantener un elemento concreto, no sacrificarlo por brevedad.
+PROHIBIDO: más de 4 palabras, cualquier palabra que no aporte conversión directa, fragmentos vacíos de contenido aunque sean cortos.`,
   };
   const estiloKey = Object.keys(estiloInstrucciones).find(k => estilo.toLowerCase().includes(k.split(' ')[0])) || 'formal';
   const prompt = `Eres el mejor copywriter de Colombia especializado en publicidad comercial para el Caribe colombiano. Trabajas para Creditek, empresa de tecnología a crédito (celulares, electrodomésticos, electrónica).
