@@ -714,6 +714,11 @@ if (path === '/test-fetch') {
 
     // ── Vía 1: Vertex AI con WIF + SA impersonation (Imagen 4) ───────────────
     if (env.GCP_WIF_PRIVATE_KEY && env.GCP_WIF_AUDIENCE && env.GCP_SA_EMAIL) {
+      // FIX v4o (07-jul-2026): loguear cuando se cae a fallbacks viejos —
+      // Google apagó Imagen 2.x/3.x/4.x el 30-jun-2026, alta probabilidad
+      // de que estas rutas ya no respondan. Esto ayuda a diagnosticar rápido
+      // si un fallo de logo es por esto, no por el prompt.
+      console.warn('[gemini-proxy] Cayendo a fallback viejo (Imagen 4/3, Vía 1) — probablemente inactivo desde 30-jun-2026. Revisar si el logo/imagen falló por esta causa.');
       try {
         const token = await getVertexToken(env);
 
@@ -755,6 +760,9 @@ if (path === '/test-fetch') {
     }
 
     // ── Vía 2: AI Studio key fallback (Imagen 3 + Gemini) ────────────────────
+    // FIX v4o (07-jul-2026): mismo logueo que Vía 1 — Imagen 3 también está
+    // en la lista de modelos apagados por Google el 30-jun-2026.
+    console.warn('[gemini-proxy] Cayendo a fallback viejo (Imagen 3, Vía 2) — probablemente inactivo desde 30-jun-2026. Revisar si el logo/imagen falló por esta causa.');
     const studioKey = (env.GEMINI_API_KEY || apiKey || '').trim();
     if (!studioKey) {
       return err('Configura GCP_WIF_PRIVATE_KEY (Vertex AI) o provee apiKey de AI Studio', 401);

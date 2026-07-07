@@ -2810,7 +2810,7 @@ RESTRICCIONES ESTRICTAS — NUNCA incluyas en tu salida:
 FÓRMULA OBLIGATORIA — escribe en este orden exacto:
 1. ESCENA BASE: tipo de imagen y estética general
 2. SUJETO PRINCIPAL: persona o producto, posición y acción. IMPORTANTE: el sujeto debe ser una persona colombiana de clase media trabajadora, bien vestida, en ambiente comercial digno (local de tecnología surtido, vitrina iluminada, calle comercial). NUNCA pobreza, NUNCA tienda humilde, NUNCA ropa desgastada.
-3. ENTORNO: ambiente, colores, accesorios. La esquina superior derecha debe ser fondo liso azul marino oscuro sin texturas ni personas — zona reservada para logo.
+3. ENTORNO: ambiente, colores, accesorios.
 4. TEXTOS: cada texto como objeto físico con ubicación exacta usando la fórmula: "en [ubicación] está escrito el texto [TEXTO ENTRE COMILLAS]"
 5. ILUMINACIÓN: calidad fotográfica, vibrante, profesional
 
@@ -3338,13 +3338,27 @@ async function generarConGemini(key, prompt, soloFoto = false) {
   const reqBase = { prompt };
   if (key?.length > 10) reqBase.apiKey = key;
 
-  // FIX 4, 03-jul-2026: ya NO se le pide a la IA que dibuje el logo (imageUrl
-  // eliminado del engine gemini3pro — era poco confiable y podía chocar con
-  // el logo pegado por código). El logo real se compone SIEMPRE después,
-  // determinísticamente, con componerLogoSobreImagen().
+  // FIX v4o (07-jul-2026): revierte el FIX 4 (03-jul) — el logo real ahora
+  // se manda como imagen de referencia a Nano Banana Pro (gemini3pro), que
+  // sí soporta reference images de forma confiable. Reemplaza el enfoque de
+  // "zona reservada" (pegado después con Canvas) que Oscar confirmó que se
+  // veía como error de diseño.
+  // NO se manda en modo soloFoto (pipeline v4d): ahí Gemini debe entregar la
+  // foto limpia sin logo — GPT lo compone en el paso 2 del pipeline. Tampoco
+  // se manda a la vía de respaldo (fallback sin engine): esa ruta (Nano
+  // Banana 2 / Imagen 4-3) no soporta imagen de referencia.
+  const reqBaseGemini3Pro = { ...reqBase };
+  if (!soloFoto) {
+    reqBaseGemini3Pro.imageUrl = 'https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png';
+    reqBaseGemini3Pro.prompt = `${prompt} Reference brand logo provided — integrate it naturally into the composition.`;
+  }
+
   let src;
+  let logoYaIntegrado = false;
   try {
-    src = await llamarWorker({ ...reqBase, aspectRatio: aspectRatioG3, engine: 'gemini3pro' });
+    src = await llamarWorker({ ...reqBaseGemini3Pro, aspectRatio: aspectRatioG3, engine: 'gemini3pro' });
+    // gemini3pro ya recibió el logo como imagen de referencia (salvo en modo soloFoto) — no hace falta pegarlo de nuevo.
+    logoYaIntegrado = !soloFoto;
   } catch (errPrincipal) {
     console.warn('[generarConGemini] gemini3pro falló, usando vía normal del Worker:', errPrincipal.message);
     src = await llamarWorker({ ...reqBase, aspectRatio: aspectRatioFallback });
@@ -3352,7 +3366,12 @@ async function generarConGemini(key, prompt, soloFoto = false) {
   // FIX v4d (07-jul-2026): si es para el pipeline, devolver la foto CRUDA sin
   // overlay de logo — GPT se encarga del logo y el texto en el paso 2.
   if (soloFoto) return src;
-  return await componerLogoSobreImagen(src);
+  // FIX v4o (07-jul-2026): si gemini3pro ya integró el logo como imagen de
+  // referencia real, NO pegar otro logo encima por Canvas — duplicaría el
+  // logo. componerLogoSobreImagen() queda como respaldo SOLO para cuando el
+  // flujo cae al fallback (que no soporta imagen de referencia) — ahí sigue
+  // siendo necesario, si no la imagen saldría sin logo del todo.
+  return logoYaIntegrado ? src : await componerLogoSobreImagen(src);
 }
 
 async function generarConDalle(key, prompt) {
