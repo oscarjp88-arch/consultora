@@ -653,7 +653,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
           <span class="ck-tooltip">Guía de tono o enfoque para el copy (texto publicitario) generado — <b>nunca aparece impreso en la imagen</b>.<br>Ejemplo: "que suene urgente", "enfocarse en la aprobación rápida", "sin mencionar precio".<br>El texto que SÍ aparece impreso en la imagen se escribe en <b>Texto 2 de imagen</b>, dentro de "Piezas generadas" →.</span>
         </span>
       </label>
-      <textarea id="nota" placeholder="Ej: Que suene urgente · Enfocarse en la aprobación rápida..." oninput="buildImgPrompt()"></textarea>
+      <textarea id="nota" placeholder="Ej: Ven por tu celular a crédito, solo necesitas tu cédula..." oninput="sincronizarCopySecundario(this.value); buildImgPrompt()"></textarea>
     </div>
     <div class="field-group">
       <label class="field-label">
@@ -1050,7 +1050,9 @@ Cada titular DEBE incluir al menos UNO de estos elementos concretos:
 3. Una marca o modelo específico + una acción concreta sobre esa marca
 Un titular que solo combine adjetivos genéricos ("las mejores marcas", "calidad garantizada", "lo mejor para ti") sin ninguno de los 3 elementos de arriba SE RECHAZA — no generar ese tipo de titular bajo ninguna circunstancia.
 
-PROHIBIDO: genérico ("tecnología", "las mejores marcas"), corporativo ("conecta tu futuro"), poético sin venta, listar marcas sin una acción concreta detrás, gramática forzada que suene poco natural en el habla real de la Costa.`,
+PROHIBIDO: genérico ("tecnología", "las mejores marcas"), corporativo ("conecta tu futuro"), poético sin venta, listar marcas sin una acción concreta detrás, gramática forzada que suene poco natural en el habla real de la Costa.
+
+REGLA DE ROTACIÓN (evitar monotonía estructural): de los 6 titulares generados por lote, NO más de 2 deben usar la misma familia estructural. Los 5 patrones disponibles son: (1) identidad+alivio, (2) permiso/solución "Sin X", (3) contraste "te dijeron no/aquí sí", (4) objeción resuelta, (5) marca+acción. Distribuir el lote entre al menos 4 de estos 5 patrones — no repetir "Sin X. Sin Y." en más de 2 titulares del mismo lote.`,
 
     'chistoso': `Humor COMERCIAL colombiano — el chiste abre la puerta, la venta cierra.
 Patrones de hook que debes usar:
@@ -1066,7 +1068,9 @@ Cada titular DEBE incluir al menos UNO de estos elementos concretos, además del
 2. Un resultado tangible (aprobado, te lo llevas, te lo dan)
 3. Una marca o modelo específico + una acción concreta sobre esa marca
 Un chiste que no conecte con ninguno de los 3 elementos de arriba SE RECHAZA — el humor debe vender, no solo hacer reír.
-PROHIBIDO: chistes forzados, humor que no vende, punchlines sin beneficio claro, humor genérico sin conexión al producto/crédito.`,
+PROHIBIDO: chistes forzados, humor que no vende, punchlines sin beneficio claro, humor genérico sin conexión al producto/crédito.
+
+REGLA DE ROTACIÓN (evitar monotonía estructural): de los 6 titulares generados por lote, distribuir entre los 4 patrones disponibles (contraste inesperado, POV/meme, comparación colombiana actual, tensión cómica) — no más de 2 titulares del mismo patrón en un mismo lote.`,
 
     'formal': `Copywriting directo de conversión (conversion copywriting — texto diseñado para generar acción inmediata).
 Patrones de hook que debes usar:
@@ -1082,7 +1086,9 @@ Cada titular DEBE incluir al menos UNO de estos elementos concretos:
 2. Un resultado tangible con marco temporal (aprobado hoy, mismo día, en minutos)
 3. Una marca o modelo específico + una acción concreta sobre esa marca
 Un titular aspiracional sin ninguno de los 3 elementos de arriba SE RECHAZA.
-PROHIBIDO: aspiracional genérico, corporativo ("potencia", "conecta", "descubre", "innovador"), frases motivacionales sin dato concreto de crédito/producto.`,
+PROHIBIDO: aspiracional genérico, corporativo ("potencia", "conecta", "descubre", "innovador"), frases motivacionales sin dato concreto de crédito/producto.
+
+REGLA DE ROTACIÓN (evitar monotonía estructural): de los 6 titulares generados por lote, distribuir entre los 4 patrones disponibles (resultado específico, problema+solución, urgencia con dato concreto, beneficio innegable) — no más de 2 titulares del mismo patrón en un mismo lote.`,
 
     'minimalista': `Una sola idea. Máximo impacto. Mínimas palabras.
 Patrones de hook que debes usar:
@@ -1097,7 +1103,9 @@ Dado el límite estricto de 4 palabras, el elemento concreto debe ser la PALABRA
 2. Un resultado en una palabra ("Aprobado", "Hoy", "Ya")
 3. Una marca específica ("Samsung ya", "iPhone hoy")
 Un fragmento minimalista que solo use adjetivos vacíos ("Lo mejor.", "Calidad total.") SE RECHAZA — el minimalismo debe mantener un elemento concreto, no sacrificarlo por brevedad.
-PROHIBIDO: más de 4 palabras, cualquier palabra que no aporte conversión directa, fragmentos vacíos de contenido aunque sean cortos.`,
+PROHIBIDO: más de 4 palabras, cualquier palabra que no aporte conversión directa, fragmentos vacíos de contenido aunque sean cortos.
+
+REGLA DE ROTACIÓN (evitar monotonía estructural): de los 6 titulares generados por lote, distribuir entre los 3 patrones disponibles (fragmento directo, contraste en 3 palabras, afirmación de resultado) — no más de 2 titulares del mismo patrón en un mismo lote.`,
   };
   const estiloKey = Object.keys(estiloInstrucciones).find(k => estilo.toLowerCase().includes(k.split(' ')[0])) || 'formal';
   const prompt = `Eres el mejor copywriter de Colombia especializado en publicidad comercial para el Caribe colombiano. Trabajas para Creditek, empresa de tecnología a crédito (celulares, electrodomésticos, electrónica).
@@ -2161,6 +2169,13 @@ function confirmarPreviewYGenerar() {
   generarConModelos();
 }
 
+// FIX v4k (07-jul-2026): sincroniza "Copy secundario" → "Texto 2 de imagen"
+// en tiempo real, respetando si el usuario ya editó el campo derecho a mano.
+function sincronizarCopySecundario(valor) {
+  const mensajeEl = document.getElementById('img-mensaje');
+  if (mensajeEl && !mensajeEl.dataset.editado) mensajeEl.value = valor;
+}
+
 function resetPreviewFields() {
   const modo  = document.getElementById('modo')?.value || 'credito';
   const cuota = document.getElementById('cuota').value.trim();
@@ -2193,11 +2208,13 @@ function resetPreviewFields() {
     document.getElementById('img-titular').value = titularDefaults[modo] || titularDefaults.credito;
   }
   document.getElementById('img-precio').value  = precioDefaults[modo] ?? '';
-  // FIX v4f (06-jul-2026): se ELIMINA la copia automática hacia img-mensaje.
-  // FIX v4h (07-jul-2026): el cuadro "nota" se renombró de nuevo — de "Mensaje
-  // secundario" (v4f) a "Copy secundario" — porque ya existía un segundo campo
-  // (img-mensaje, panel derecho) con el mismo nombre y el que de verdad se
-  // imprime en la imagen. "nota" es solo guía de tono (notaInstruccion, v4f).
+  // FIX v4k (07-jul-2026): Oscar confirma que "Copy secundario" (sidebar) y
+  // "Texto 2 de imagen" (panel derecho) SÍ deben sincronizarse — es el mismo
+  // dato en 2 pasos, no 2 campos independientes. Se restaura la auto-copia,
+  // respetando dataset.editado para no pisar una edición manual del usuario
+  // en "Texto 2 de imagen".
+  const mensajeEl = document.getElementById('img-mensaje');
+  if (mensajeEl && notaVal && !mensajeEl.dataset.editado) mensajeEl.value = notaVal;
   const chkEl = document.getElementById('chk-direccion');
   const inclDirImg = chkEl ? chkEl.checked : false;
   if (inclDirImg && (esCiudadReset || ciudad === 'general')) showToast('Dirección no disponible para esta selección', '#f59e0b');
