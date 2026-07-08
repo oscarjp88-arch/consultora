@@ -774,6 +774,9 @@ function wizGoStep(n) {
     dot.classList.toggle('active', i === n);
     dot.classList.toggle('done', i < n);
   });
+  if (n === 2) {
+    actualizarAudienciaEstimada();
+  }
   if (n === 4) {
     const zoneNames = [...wizSelectedZones].map(id => wizAllZones()[id].name).join(', ');
     const budgetVal = document.getElementById('wiz-budget-slider').value;
