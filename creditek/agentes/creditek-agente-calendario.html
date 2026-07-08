@@ -351,6 +351,9 @@ select option{background:var(--bg2)}
 function showToast(msg, color='#22c55e'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 
 const MODEL = 'claude-sonnet-4-6';
+const SUPABASE_URL = 'https://ditiwpndvmyuqcagupea.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_oVNantrnKzXdtXu5B7YQIg_9fxHp7aW';
+const MESES_NUM = { Enero:'01', Febrero:'02', Marzo:'03', Abril:'04', Mayo:'05', Junio:'06', Julio:'07', Agosto:'08', Septiembre:'09', Octubre:'10', Noviembre:'11', Diciembre:'12' };
 function getApiKey() { return sessionStorage.getItem('ck_api_key') || ''; }
 
 // ── Modal API Key ───────────────────────────────────────────────
@@ -500,6 +503,7 @@ hdr.innerHTML = `<span class="cal-title">📅 ${tituloCalendario} — ${mes} ${a
     const card = document.createElement('div');
     card.className = 'dcard';
     card.dataset.tipo = fk;
+    card.dataset.piezaId = d.supabaseId || '';
 
     const platsHtml = (d.plataformas || []).map(p => `<span class="plat-tag">${p}</span>`).join('');
 
@@ -606,14 +610,16 @@ CONTEXTO DE MARCA:
 - NUNCA uses "bacano" en el contenido
 - CTA siempre lleva a escribir al WhatsApp de Sofía (+57 324 2030299) o visitar la tienda aliada más cercana
 
-ROTACIÓN SEMANAL OBLIGATORIA (del skill redes-sociales):
-- Lunes → Educativo: cómo funciona el crédito, qué es PayJoy/AloCredit/Krediya/Addi, mitos sobre el crédito
-- Martes → Producto/Servicio: presentar un celular con precio de cuota, beneficios
-- Miércoles → Testimonio: historia realista de cliente que compró a crédito
-- Jueves → Storytelling: historia humana de Creditek, equipo, valores
-- Viernes → CTA Directo: urgencia, oferta, acción inmediata a tienda
-- Sábado → Tip: consejo de tecnología, cómo elegir celular, cuidado del equipo
-- Domingo → Reflexión (breve, humanización de marca) o CTA suave
+ROTACIÓN DE TEMAS OBLIGATORIA (del skill redes-sociales) — aplícala en este orden a las publicaciones que elijas, sin importar qué día de la semana caigan:
+1. Educativo: cómo funciona el crédito, qué es PayJoy/AloCredit/Krediya/Addi, mitos sobre el crédito
+2. Producto/Servicio: presentar un celular con precio de cuota, beneficios
+3. Testimonio: historia realista de cliente que compró a crédito
+4. Storytelling: historia humana de Creditek, equipo, valores
+5. CTA Directo: urgencia, oferta, acción inmediata a tienda
+6. Tip: consejo de tecnología, cómo elegir celular, cuidado del equipo
+7. Reflexión (breve, humanización de marca) o CTA suave
+
+CADENCIA: esto es contenido orgánico institucional (no pauta) — el objetivo es mantener la página activa, no vender agresivamente todos los días. Publica 3 a 4 veces por semana, en días espaciados (nunca 2 días seguidos), nunca los 7 días.
 
 ESTRUCTURA DE CADA TIPO:
 - Educativo: Dato/pregunta llamativa → Explicación simple → Aprendizaje → CTA suave
@@ -631,16 +637,16 @@ RESPONDE ÚNICAMENTE con un array JSON válido. Sin markdown, sin explicaciones,
     ? 'Genera contenido genérico para toda la red Creditek en el Caribe colombiano. NO menciones una ciudad específica.'
     : `Tienda específica: ${ciudad}. Puedes mencionar ${ciudadNombre} de forma breve y natural, sin forzarlo en cada post.`;
 
-  const userPrompt = `Genera el calendario de contenido de 30 días para:
+  const userPrompt = `Genera el calendario de contenido de los próximos 15 días (quincena) para:
 - ${contextoTienda}
-- Mes: ${mes} ${anio}
+- Empieza el día 1 de ${mes} ${anio}, cubre del día 1 al día 15
 - Plataformas: ${plats.join(', ')}${productoInfo}${notaInfo}
 
-Devuelve exactamente 30 objetos JSON con esta estructura:
+Devuelve entre 6 y 8 objetos JSON (3 a 4 publicaciones por semana, distribuidas en los 15 días, en días espaciados) con esta estructura:
 [
   {
-    "dia": 1,
-    "diaSemana": "Lunes",
+    "dia": 2,
+    "diaSemana": "Martes",
     "tipo": "Educativo",
     "emoji": "📚",
     "titulo": "Título corto del post (max 60 chars)",
@@ -649,8 +655,8 @@ Devuelve exactamente 30 objetos JSON con esta estructura:
   }
 ]
 
-El calendario empieza el día 1 de ${mes}. Calcula el día de la semana correcto para ${mes} ${anio}.
-Incluye exactamente 30 entradas. CADA COPY DEBE TENER MÁXIMO 3-4 LÍNEAS — esto es publicidad de redes sociales, no un artículo. La gente desliza rápido.
+Elige tú los días exactos (entre el 1 y el 15 de ${mes}) siguiendo una cadencia de 3-4 por semana, nunca 2 días seguidos. Calcula el día de la semana correcto para ${mes} ${anio}.
+CADA COPY DEBE TENER MÁXIMO 3-4 LÍNEAS — esto es publicidad de redes sociales, no un artículo. La gente desliza rápido.
 Varía los productos: Samsung, Xiaomi, Oppo, Honor, Infinix, Motorola, TCL, parlantes, accesorios, artículos de belleza.
 NUNCA uses "bacano".`;
 
@@ -699,6 +705,7 @@ NUNCA uses "bacano".`;
     pLbl.textContent = '¡Calendario listo!';
     setTimeout(() => { pw.style.display = 'none'; pFill.style.width = '0%'; }, 1200);
 
+    await guardarPiezasEnSupabase(dias, anio, mes);
     renderCalendario(dias, ciudad, mes, anio);
     guardarCalendario(dias, ciudad, mes, anio);
 
@@ -753,6 +760,7 @@ function construirItemPieza(idx) {
     producto: productoDetectado,
     ciudad: ciudadParam,
     titulo: titulo.substring(0, 100),
+    piezaId: card.dataset.piezaId || '',
   };
 }
 
@@ -779,6 +787,41 @@ function generarTodasLasPiezas() {
   params.set('batch', '1');
   window.open('../agentes/creditek-agente-redes.html?' + params.toString(), '_blank');
   showToast(`✓ Cola de ${items.length} piezas enviada al Agente 1`);
+}
+
+// ── Guardar cada pieza en Supabase (tabla calendario_piezas) ─────
+// Le asigna a cada objeto de `dias` un `supabaseId` con el id real de la fila,
+// para que Agente 1 pueda actualizar imagen_url/estado más adelante.
+async function guardarPiezasEnSupabase(dias, anio, mesNombre) {
+  try {
+    const mesNum = MESES_NUM[mesNombre] || '01';
+    const rows = dias.map(d => ({
+      fecha: `${anio}-${mesNum}-${String(d.dia).padStart(2,'0')}`,
+      dia_semana: d.diaSemana || '',
+      tipo: d.tipo || '',
+      copy: d.copy || '',
+      headline: d.titulo || '',
+      plataformas: (d.plataformas || []).map(p => p.toLowerCase()),
+      estado: 'sin_imagen'
+    }));
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/calendario_piezas`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(rows)
+    });
+    if (!res.ok) throw new Error('Supabase respondió ' + res.status);
+    const inserted = await res.json();
+    dias.forEach((d, i) => { d.supabaseId = inserted[i]?.id || null; });
+  } catch (err) {
+    console.error('Error guardando piezas en Supabase:', err);
+    showToast('El calendario se generó, pero no se pudo guardar en Supabase (revisa la consola)', '#f59e0b');
+  }
 }
 
 // ── Persistencia del calendario ──────────────────────────────────
