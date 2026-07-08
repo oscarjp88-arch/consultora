@@ -496,6 +496,10 @@ tr:hover td{background:#F8FAFC}
 
     <!-- Paso 4: Revisar -->
     <div class="wiz-step" id="wiz-step-4">
+      <div class="field">
+        <label>Nombre de la campaña (puedes editarlo)</label>
+        <input type="text" id="wiz-campaign-name" style="width:100%;font-size:13px;font-family:var(--font);padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;outline:none">
+      </div>
       <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:14px">
         <div class="wiz-review-row"><span class="lbl">📍 Zona</span><span class="val" id="wiz-rev-zone">—</span></div>
         <div class="wiz-review-row"><span class="lbl">💰 Presupuesto</span><span class="val" id="wiz-rev-budget">—</span></div>
@@ -784,6 +788,14 @@ function wizGoStep(n) {
     document.getElementById('wiz-rev-budget').textContent = '$' + budgetVal + ' USD/semana';
     document.getElementById('wiz-rev-duration').textContent = wizDuration + ' días';
     document.getElementById('wiz-rev-objective').textContent = document.getElementById('wiz-objective').selectedOptions[0].textContent.replace(' ✓ probado', '');
+
+    const adText4 = document.getElementById('wiz-ad-text').value.trim();
+    const horaActual4 = new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit', hour12:false});
+    const copySnippet4 = adText4 ? adText4.split(' ').slice(0,4).join(' ') : 'sin-copy';
+    const nombreAuto = `Creditek - ${[...wizSelectedZones].map(id => wizAllZones()[id].name).join('+')} - ${new Date().toLocaleDateString('es-CO')} ${horaActual4} - ${copySnippet4}`;
+    const campoNombre = document.getElementById('wiz-campaign-name');
+    if (!campoNombre.dataset.editado) { campoNombre.value = nombreAuto; }
+    campoNombre.oninput = function() { campoNombre.dataset.editado = '1'; };
   }
 }
 
@@ -804,7 +816,8 @@ async function publicarCampana() {
     const status = activarYa ? 'ACTIVE' : 'PAUSED';
     const horaActual = new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit', hour12:false});
     const copySnippet = adText ? adText.split(' ').slice(0,4).join(' ') : 'sin-copy';
-    const campaignName = `Creditek - ${[...wizSelectedZones].map(id => wizAllZones()[id].name).join('+')} - ${new Date().toLocaleDateString('es-CO')} ${horaActual} - ${copySnippet}`;
+    const nombreAutoFallback = `Creditek - ${[...wizSelectedZones].map(id => wizAllZones()[id].name).join('+')} - ${new Date().toLocaleDateString('es-CO')} ${horaActual} - ${copySnippet}`;
+    const campaignName = document.getElementById('wiz-campaign-name').value.trim() || nombreAutoFallback;
 
     // 1. Subir imagen(es)
     progress.textContent = 'Subiendo imagen...';
@@ -973,6 +986,8 @@ async function publicarCampana() {
       document.getElementById('wiz-ab-toggle').checked = false;
       document.getElementById('wiz-field-imgb').style.display = 'none';
       document.getElementById('wiz-img-a-label').style.display = 'none';
+      document.getElementById('wiz-campaign-name').value = '';
+      delete document.getElementById('wiz-campaign-name').dataset.editado;
       document.getElementById('wiz-headline').value = '';
       document.getElementById('wiz-ad-text').value = '';
       document.getElementById('wiz-img-preview').style.display = 'none';
