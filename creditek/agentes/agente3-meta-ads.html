@@ -581,6 +581,30 @@ function wizToggleSearch() {
   if (panel.style.display === 'block') document.getElementById('wiz-search-input').focus();
 }
 
+// Fix v6 — ciudades grandes vecinas, sin aliado hoy, que se excluyen siempre.
+// Actualizar esta lista el día que se consiga un aliado en alguna de ellas.
+const EXCLUDED_CITY_NAMES = ['Sincelejo', 'Montería'];
+
+async function resolverCiudadesExcluidas(token) {
+  const resultados = [];
+  for (const nombre of EXCLUDED_CITY_NAMES) {
+    try {
+      const url = `https://graph.facebook.com/v19.0/search?type=adgeolocation&location_types=${encodeURIComponent('["city"]')}&q=${encodeURIComponent(nombre)}&country_code=CO&access_token=${token}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const match = (data.data || []).find(c => c.type === 'city' && c.name === nombre);
+      if (match) {
+        resultados.push({ key: match.key, region: match.region, region_id: String(match.region_id), country: 'CO' });
+      } else {
+        console.warn(`No se pudo resolver la ciudad a excluir: ${nombre}`);
+      }
+    } catch (err) {
+      console.warn(`Error buscando ciudad a excluir ${nombre}:`, err);
+    }
+  }
+  return resultados;
+}
+
 async function wizSearchCity() {
   const q = document.getElementById('wiz-search-input').value.trim();
   const resultsDiv = document.getElementById('wiz-search-results');
@@ -769,15 +793,23 @@ async function publicarCampana() {
     progress.textContent = 'Configurando segmentación...';
     const startTime = new Date().toISOString();
     const endTime = new Date(Date.now() + wizDuration * 86400000).toISOString();
+    // Fix v6 — radio reducido de 40km a 15km, y exclusión explícita de ciudades
+    // grandes vecinas sin aliado (Sincelejo, Montería), para dejar de pagar por
+    // leads que Sofía no puede atender bien. Cuando haya aliado ahí, se agregan
+    // como zona propia en WIZ_ZONES, y se quitan de EXCLUDED_CITY_NAMES.
+    const excludedCities = await resolverCiudadesExcluidas(token);
     const targeting = {
       age_min: 18, age_max: 65,
       geo_locations: {
         cities: [...wizSelectedZones].map(id => ({
-          key: wizAllZones()[id].key, radius: 40, distance_unit: 'kilometer',
+          key: wizAllZones()[id].key, radius: 15, distance_unit: 'kilometer',
           region: wizAllZones()[id].region, region_id: wizAllZones()[id].region_id, country: 'CO'
         })),
         location_types: ['home', 'recent']
       },
+      ...(excludedCities.length > 0 ? {
+        excluded_geo_locations: { cities: excludedCities, location_types: ['home', 'recent'] }
+      } : {}),
       targeting_automation: { advantage_audience: 1 }
     };
     const adsetBody = {
