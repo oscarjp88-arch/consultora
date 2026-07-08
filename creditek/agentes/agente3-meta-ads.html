@@ -98,7 +98,7 @@ th{text-align:left;padding:8px 12px;font-size:11px;font-weight:600;color:var(--t
 td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text1)}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#F8FAFC}
-.camp-name{font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.camp-name{font-weight:500;max-width:280px;white-space:normal;word-break:break-word;line-height:1.3}
 .status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600}
 .status-badge.active{background:rgba(16,185,129,.1);color:var(--green)}
 .status-badge.paused{background:rgba(148,163,184,.1);color:var(--text3)}
@@ -248,35 +248,35 @@ tr:hover td{background:#F8FAFC}
 
   <!-- KPI Grid -->
   <div class="kpi-grid" id="kpi-grid">
-    <div class="kpi-card">
+    <div class="kpi-card" title="Cuánto pagas en promedio por cada resultado (mensaje o lead). Más bajo es mejor — te dice qué tan barato te está costando cada cliente potencial.">
       <div class="kpi-rank">#1</div>
       <div class="kpi-label">Costo por resultado</div>
       <div class="kpi-value" id="kpi-cpr">—</div>
       <div class="kpi-delta neutral" id="delta-cpr">Sin datos</div>
       <div class="kpi-sub">CPR — lead / mensaje</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Cuántas veces se supone que recuperas lo que inviertes, según una proyección estimada. No confirma una venta real — úsalo solo como referencia, no como dato exacto.">
       <div class="kpi-rank">⚠</div>
       <div class="kpi-label">ROAS estimado</div>
       <div class="kpi-value turq" id="kpi-roas">—</div>
       <div class="kpi-delta neutral" id="delta-roas">Sin datos</div>
       <div class="kpi-sub">Proyección — no confirma venta real</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Porcentaje de personas que vieron el anuncio y le dieron clic. Más alto significa que el anuncio genera más interés real.">
       <div class="kpi-rank">#3</div>
       <div class="kpi-label">CTR</div>
       <div class="kpi-value" id="kpi-ctr">—</div>
       <div class="kpi-delta neutral" id="delta-ctr">Sin datos</div>
       <div class="kpi-sub">Tasa de clics</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Cuántas personas distintas vieron tu anuncio, sin contar repeticiones. Si una persona lo vio 3 veces, aquí cuenta solo como 1.">
       <div class="kpi-rank">#4</div>
       <div class="kpi-label">Alcance</div>
       <div class="kpi-value" id="kpi-reach">—</div>
       <div class="kpi-delta neutral" id="delta-reach">Sin datos</div>
       <div class="kpi-sub">Personas únicas</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Cuántas veces en promedio cada persona vio el anuncio. Si sube mucho (arriba de 3.5), la gente empieza a cansarse de verlo — se le llama fatiga publicitaria.">
       <div class="kpi-rank">#5</div>
       <div class="kpi-label">Frecuencia</div>
       <div class="kpi-value" id="kpi-freq">—</div>
@@ -284,35 +284,35 @@ tr:hover td{background:#F8FAFC}
       <div class="kpi-sub" id="freq-alert">Alerta en 3.5</div>
       <div class="kpi-alert" id="freq-bar"></div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Cuánto dinero real se ha gastado en este período, ya convertido de pesos colombianos a dólares.">
       <div class="kpi-rank">#6</div>
       <div class="kpi-label">Gasto total</div>
       <div class="kpi-value" id="kpi-spend">—</div>
       <div class="kpi-delta neutral" id="delta-spend">Sin datos</div>
       <div class="kpi-sub">USD (convertido de COP)</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Cuántas veces se mostró el anuncio en total, contando repeticiones. A diferencia del Alcance, si una persona lo vio 3 veces, aquí cuenta 3 veces.">
       <div class="kpi-rank">#7</div>
       <div class="kpi-label">Impresiones</div>
       <div class="kpi-value" id="kpi-impr">—</div>
       <div class="kpi-delta neutral" id="delta-impr">Sin datos</div>
       <div class="kpi-sub">Total de veces visto</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Costo Por Mil impresiones — cuánto pagas cada vez que tu anuncio se muestra 1.000 veces, sin importar si le dan clic o no.">
       <div class="kpi-rank">#8</div>
       <div class="kpi-label">CPM</div>
       <div class="kpi-value" id="kpi-cpm">—</div>
       <div class="kpi-delta neutral" id="delta-cpm">Sin datos</div>
       <div class="kpi-sub">Costo por mil impresiones</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Acciones reales que cuentan como resultado (mensajes iniciados, clics al link), no cualquier interacción como un 'me gusta' o un comentario.">
       <div class="kpi-rank">#9</div>
       <div class="kpi-label">Conversiones</div>
       <div class="kpi-value" id="kpi-conv">—</div>
       <div class="kpi-delta neutral" id="delta-conv">Sin datos</div>
       <div class="kpi-sub">Acciones completadas</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" title="Costo Por Clic — cuánto pagas en promedio cada vez que alguien le da clic a tu anuncio.">
       <div class="kpi-rank">#10</div>
       <div class="kpi-label">CPC</div>
       <div class="kpi-value" id="kpi-cpc">—</div>
