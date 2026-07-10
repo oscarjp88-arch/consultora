@@ -3307,6 +3307,11 @@ async function componerLogoSobreImagen(dataUrlImagen) {
   });
 }
 
+// Fix v5 09-jul-2026 — secreto compartido para que el Worker rechace peticiones
+// que no vengan de este sitio. DEBE coincidir exacto con el valor configurado
+// en el Worker (wrangler secret put WORKER_SHARED_SECRET).
+const WORKER_SHARED_SECRET = '72c73c94244190777d08b12775b2dace13d26877a75367ec';
+
 async function generarConGemini(key, prompt, soloFoto = false) {
   // FIX 03-jul-2026: relación de aspecto exacta para calzar con GPT
   // (GPT: 1024x1024 = 1:1 · 1024x1536 = 2:3).
@@ -3318,7 +3323,7 @@ async function generarConGemini(key, prompt, soloFoto = false) {
   async function llamarWorker(reqBody) {
     const res = await fetch('https://creditek-gemini-proxy.comercial-853.workers.dev/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': WORKER_SHARED_SECRET },
       body: JSON.stringify(reqBody),
     });
     const data = await res.json().catch(() => ({}));

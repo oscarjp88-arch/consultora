@@ -385,7 +385,7 @@ function applyFilters(){
     else if(df==='week')since=new Date(now.getTime()-7*864e5);
     else since=new Date(now.getTime()-30*864e5);
     entries=entries.filter(([,m])=>m.some(x=>new Date(x.timestamp)>=since))}
-  if(cf!=='all')entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);if(!c||!c.tienda_origen_id)return false;return cityMap[c.tienda_origen_id]===cf});
+  if(cf!=='all')entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);if(!c||!c.tienda_id)return false;return cityMap[c.tienda_id]===cf});
   if(sf!=='all')entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);if(!c)return false;
     if(sf==='nuevo')return c.estado_funnel==='nuevo';if(sf==='con_optin')return c.optin_datos;
     if(sf==='sin_optin')return!c.optin_datos;

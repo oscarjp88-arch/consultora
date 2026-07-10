@@ -604,6 +604,18 @@ if (path === '/test-fetch') {
     if (path !== '/generate') return err('Usa POST /generate', 404);
     if (request.method !== 'POST') return err('Solo POST', 405);
 
+    // Fix v5 09-jul-2026 — hallazgo crítico: /generate estaba público sin
+    // ninguna autenticación (CORS abierto a '*', sin chequeo de Authorization/
+    // X-API-Key/origin). Esto permitió ~276.000 solicitudes en un día a costa
+    // de la cuenta de Google de Creditek, probablemente un bot escaneando
+    // subdominios *.workers.dev al azar. Este secreto compartido (idéntico al
+    // configurado en el frontend, WORKER_SHARED_SECRET) bloquea ese tráfico.
+    // No es seguridad perfecta (viaja en el JS fuente del sitio), pero corta
+    // por completo a bots automáticos sin este header.
+    if (!env.WORKER_SHARED_SECRET || request.headers.get('X-Worker-Secret') !== env.WORKER_SHARED_SECRET) {
+      return err('No autorizado', 401);
+    }
+
     let body;
     try { body = await request.json(); }
     catch { return err('JSON inválido', 400); }

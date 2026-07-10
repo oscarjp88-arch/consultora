@@ -10,6 +10,10 @@ GCP_PROJECT_ID   = "creditek-imagen"
 GCP_SA_EMAIL     = "creditek-vertex-sa@creditek-imagen.iam.gserviceaccount.com"
 
 # Secrets (nunca aquí — usar: wrangler secret put <NOMBRE>):
-#   GCP_WIF_PRIVATE_KEY  — clave privada RSA del Worker (firma el JWT)
-#   GCP_WIF_PUBLIC_JWK   — JWK de la clave pública (sirve en /.well-known/jwks.json)
-#   GEMINI_API_KEY       — API key de AI Studio (fallback)
+#   GCP_WIF_PRIVATE_KEY   — clave privada RSA del Worker (firma el JWT)
+#   GCP_WIF_PUBLIC_JWK    — JWK de la clave pública (sirve en /.well-known/jwks.json)
+#   GEMINI_API_KEY        — API key de AI Studio (fallback)
+#   WORKER_SHARED_SECRET  — Fix v5 09-jul-2026: secreto compartido con el frontend
+#                           (creditek-agente-redes.html, header X-Worker-Secret).
+#                           Sin esto, /generate rechaza la petición con 401.
+#                           Debe ser IDÉNTICO al valor pegado en el frontend.
