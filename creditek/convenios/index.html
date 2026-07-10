@@ -80,6 +80,17 @@
 <div class="container">
 <form id="formAliado" autocomplete="off">
 
+  <!-- 0. GESTOR INTERNO (SPEC v7, 10-jul-2026) -->
+  <div class="card">
+    <h2><span class="num">0</span>Gestión interna</h2>
+    <div class="field">
+      <label>¿Quién de nuestro equipo gestiona este convenio?</label>
+      <select id="vendedorCreador" required>
+        <option value="">Selecciona...</option>
+      </select>
+    </div>
+  </div>
+
   <!-- 1. REP LEGAL -->
   <div class="card">
     <h2><span class="num">1</span>Datos del representante legal</h2>
@@ -247,6 +258,25 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYrPbQ4hdb5KVaLry8h19re0yM-M6fwLHLit8Ai7Q8Lj8x4wbR91yzudBpQp5AmWUM/exec';
 // URL temporal para subir video directo a Drive (se obtiene del Apps Script)
 // Por ahora el video es opcional — se maneja por separado
+
+// ── GESTOR INTERNO (SPEC v7, 10-jul-2026) ────────────────────
+// Carga el dropdown obligatorio con el equipo comercial propio (tabla
+// "Vendedores" de Control Comercial Convenios) — distinto del array
+// data.vendedores que ya existe para el personal de cada tienda aliada.
+(async function cargarVendedoresConvenio(){
+  const select = document.getElementById('vendedorCreador');
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL + '?action=vendedores_convenio');
+    const data = await resp.json();
+    (data.vendedores || []).forEach(nombre=>{
+      const opt = document.createElement('option');
+      opt.value = nombre; opt.textContent = nombre;
+      select.appendChild(opt);
+    });
+  } catch(e) {
+    console.error('No se pudo cargar la lista de gestores:', e);
+  }
+})();
 
 // ── RADICADO Y FECHA ─────────────────────────────────────────
 function generarRadicado(){
@@ -416,6 +446,10 @@ agregarVendedor(); // primer vendedor por defecto
 document.getElementById('formAliado').addEventListener('submit',async e=>{
   e.preventDefault();
 
+  // Validar gestor interno (SPEC v7, 10-jul-2026)
+  const vendedorCreador=document.getElementById('vendedorCreador').value;
+  if(!vendedorCreador){ alert('Selecciona quién de nuestro equipo gestiona este convenio.'); return; }
+
   // Validar docs obligatorios
   const requeridos=[
     {key:'camaraComercio1',label:'Cámara de comercio (pág. 1)'},
@@ -458,6 +492,7 @@ document.getElementById('formAliado').addEventListener('submit',async e=>{
 
   const payload={
     radicado, fecha:fechaStr,
+    vendedorCreador,
     nombre:document.getElementById('nombre').value.trim(),
     cedula:document.getElementById('cedula').value.trim(),
     telefono:document.getElementById('telefono').value.trim(),

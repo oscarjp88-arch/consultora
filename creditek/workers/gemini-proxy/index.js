@@ -37,23 +37,12 @@ const CORS = {
 // El JWT se firma con aud = esta URL, y Google STS la valida contra esa lista.
 const WORKER_URL = 'https://creditek-gemini-proxy.comercial-853.workers.dev';
 
-const VERTEX_MODELS = [
-  { id: 'imagen-4.0-generate-preview-06-06', label: 'Imagen 4' },
-  { id: 'imagen-4.0-generate-preview-05-20', label: 'Imagen 4 (may)' },
-  // Imagen 3 GA — disponible sin allowlist, sirve como fallback mientras se activa Imagen 4 preview
-  { id: 'imagen-3.0-generate-001', label: 'Imagen 3 (Vertex)' },
-  { id: 'imagen-3.0-fast-generate-001', label: 'Imagen 3 Fast (Vertex)' },
-];
-
-const IMAGEN_STUDIO_MODELS = [
-  { id: 'imagen-3.0-generate-001', label: 'Imagen 3' },
-  { id: 'imagen-3.0-fast-generate-001', label: 'Imagen 3 Fast' },
-];
-
-const GEMINI_MODELS = [
-  { id: 'gemini-2.0-flash-exp-image-generation', label: 'Gemini Flash Image Gen' },
-  { id: 'gemini-2.0-flash-preview-image-generation', label: 'Gemini 2.0 Flash Image' },
-];
+// Fix v4 09-jul-2026: se eliminaron VERTEX_MODELS, IMAGEN_STUDIO_MODELS y
+// GEMINI_MODELS (8 modelos Imagen 2/3/4 + Gemini 2.0 Flash Image) — todos
+// apagados por Google el 30-jun-2026 o ya obsoletos (el propio código tenía
+// un comentario "FIX v4o" reconociendo esto sin corregirlo). La cascada
+// intentaba hasta 9 llamadas HTTP muertas antes de rendirse. Ver
+// llamarGemini3Pro_() más abajo — único respaldo real que queda tras Vía 0.
 
 // Token cache — persiste dentro del mismo isolate
 let _saToken = null;
@@ -153,6 +142,68 @@ async function getVertexToken(env) {
   _saToken = impData.accessToken;
   _saTokenExpiry = Math.floor(new Date(impData.expireTime).getTime() / 1000);
   return _saToken;
+}
+
+// Fix v4 09-jul-2026: extraída del bloque inline `if (engine === 'gemini3pro')`
+// para reutilizarla también como respaldo único de Vía 0 (ver más abajo), sin
+// duplicar la llamada a Vertex AI. Devuelve directamente un Response (ok/err).
+async function llamarGemini3Pro_(env, { prompt, imageUrl, aspectRatio, extra = {}, via = null }) {
+  if (!env.GCP_WIF_PRIVATE_KEY || !env.GCP_WIF_AUDIENCE) {
+    return err('Falta GCP_WIF_PRIVATE_KEY para gemini3pro', 401);
+  }
+  const token = await getVertexToken(env);
+  const g3url = `https://aiplatform.googleapis.com/v1/projects/${env.GCP_PROJECT_ID}/locations/global/publishers/google/models/gemini-3-pro-image:generateContent`;
+
+  const parts = [];
+
+  // Imagen de referencia del producto (desde /brand-references vía HTML)
+  if (imageUrl) {
+    try {
+      const imgRes = await fetch(imageUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(8_000),
+        redirect: 'follow',
+      });
+      if (imgRes.ok) {
+        const buf = await imgRes.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        const mimeType = imgRes.headers.get('content-type')?.split(';')[0] || 'image/jpeg';
+        parts.push({ inlineData: { mimeType, data: btoa(bin) } });
+      }
+    } catch { /* sin imagen de referencia — continuar solo con texto */ }
+  }
+
+  parts.push({ text: prompt });
+
+  const g3res = await fetch(g3url, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts }],
+      generationConfig: {
+        responseModalities: ['IMAGE'],
+        imageConfig: { aspectRatio },
+      },
+    }),
+    signal: AbortSignal.timeout(60_000),
+  });
+
+  if (!g3res.ok) {
+    const d = await g3res.json().catch(() => ({}));
+    return err(d.error?.message || `gemini3pro error ${g3res.status}`, g3res.status);
+  }
+
+  const g3data = await g3res.json().catch(() => ({}));
+  const imgPart = g3data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+  if (!imgPart) return err('gemini3pro: sin imagen en respuesta', 502);
+
+  return ok({
+    predictions: [{ bytesBase64Encoded: imgPart.inlineData.data }],
+    label: 'Gemini 3 Pro Image',
+    ...extra,
+  }, via);
 }
 
 export default {
@@ -625,62 +676,10 @@ if (path === '/test-fetch') {
     let via0Skip = null; // razón por la que Vía 0 fue omitida (para debug)
 
     // ── Gemini 3 Pro Image — endpoint global, generateContent multimodal ─────
+    // Fix v4 09-jul-2026: lógica extraída a llamarGemini3Pro_() (arriba), para
+    // reutilizarla también como respaldo único de Vía 0 sin duplicar código.
     if (engine === 'gemini3pro') {
-      if (!env.GCP_WIF_PRIVATE_KEY || !env.GCP_WIF_AUDIENCE) {
-        return err('Falta GCP_WIF_PRIVATE_KEY para gemini3pro', 401);
-      }
-      const token = await getVertexToken(env);
-      const g3url = `https://aiplatform.googleapis.com/v1/projects/${env.GCP_PROJECT_ID}/locations/global/publishers/google/models/gemini-3-pro-image:generateContent`;
-
-      const parts = [];
-
-      // Imagen de referencia del producto (desde /brand-references vía HTML)
-      if (imageUrl) {
-        try {
-          const imgRes = await fetch(imageUrl, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
-            signal: AbortSignal.timeout(8_000),
-            redirect: 'follow',
-          });
-          if (imgRes.ok) {
-            const buf = await imgRes.arrayBuffer();
-            const bytes = new Uint8Array(buf);
-            let bin = '';
-            for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-            const mimeType = imgRes.headers.get('content-type')?.split(';')[0] || 'image/jpeg';
-            parts.push({ inlineData: { mimeType, data: btoa(bin) } });
-          }
-        } catch { /* sin imagen de referencia — continuar solo con texto */ }
-      }
-
-      parts.push({ text: prompt });
-
-      const g3res = await fetch(g3url, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts }],
-          generationConfig: {
-            responseModalities: ['IMAGE'],
-            imageConfig: { aspectRatio },
-          },
-        }),
-        signal: AbortSignal.timeout(60_000),
-      });
-
-      if (!g3res.ok) {
-        const d = await g3res.json().catch(() => ({}));
-        return err(d.error?.message || `gemini3pro error ${g3res.status}`, g3res.status);
-      }
-
-      const g3data = await g3res.json().catch(() => ({}));
-      const imgPart = g3data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-      if (!imgPart) return err('gemini3pro: sin imagen en respuesta', 502);
-
-      return ok({
-        predictions: [{ bytesBase64Encoded: imgPart.inlineData.data }],
-        label: 'Gemini 3 Pro Image',
-      });
+      return await llamarGemini3Pro_(env, { prompt, imageUrl, aspectRatio });
     }
 
     // ── Vía 0: Nano Banana 2 — AI Studio gemini-3.1-flash-image-preview ────────
@@ -724,121 +723,18 @@ if (path === '/test-fetch') {
       } catch (_) { /* timeout o red — continuar */ }
     }
 
-    // ── Vía 1: Vertex AI con WIF + SA impersonation (Imagen 4) ───────────────
-    if (env.GCP_WIF_PRIVATE_KEY && env.GCP_WIF_AUDIENCE && env.GCP_SA_EMAIL) {
-      // FIX v4o (07-jul-2026): loguear cuando se cae a fallbacks viejos —
-      // Google apagó Imagen 2.x/3.x/4.x el 30-jun-2026, alta probabilidad
-      // de que estas rutas ya no respondan. Esto ayuda a diagnosticar rápido
-      // si un fallo de logo es por esto, no por el prompt.
-      console.warn('[gemini-proxy] Cayendo a fallback viejo (Imagen 4/3, Vía 1) — probablemente inactivo desde 30-jun-2026. Revisar si el logo/imagen falló por esta causa.');
-      try {
-        const token = await getVertexToken(env);
-
-        for (const model of VERTEX_MODELS) {
-          const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${env.GCP_PROJECT_ID}/locations/us-central1/publishers/google/models/${model.id}:predict`;
-          let res;
-          try {
-            res = await fetch(url, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                instances: [{ prompt }],
-                parameters: { sampleCount: 1, aspectRatio },
-              }),
-            });
-          } catch (_) { continue; }
-
-          if (res.status === 404) continue;
-          if (res.status === 403) {
-            const d = await res.json().catch(() => ({}));
-            return err(`Vertex 403 (permisos SA) model:${model.id}: ${JSON.stringify(d)}`, 403);
-          }
-          if (res.status === 401) break;
-
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) return err(`Vertex error ${res.status}: ${JSON.stringify(data)} model:${model.id}`, 500);
-
-          const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-          if (!b64) continue;
-
-          return ok({ predictions: data.predictions, model: model.id, label: model.label, ...(via0Skip && { via0Skip }) }, `1: Vertex AI (${model.id})`);
-        }
-      } catch (_e) {
-        return err(`WIF error: ${_e.message}`, 500);
-      }
-    }
-
-    // ── Vía 2: AI Studio key fallback (Imagen 3 + Gemini) ────────────────────
-    // FIX v4o (07-jul-2026): mismo logueo que Vía 1 — Imagen 3 también está
-    // en la lista de modelos apagados por Google el 30-jun-2026.
-    console.warn('[gemini-proxy] Cayendo a fallback viejo (Imagen 3, Vía 2) — probablemente inactivo desde 30-jun-2026. Revisar si el logo/imagen falló por esta causa.');
-    const studioKey = (env.GEMINI_API_KEY || apiKey || '').trim();
-    if (!studioKey) {
-      return err('Configura GCP_WIF_PRIVATE_KEY (Vertex AI) o provee apiKey de AI Studio', 401);
-    }
-
-    for (const model of IMAGEN_STUDIO_MODELS) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:predict?key=${studioKey}`;
-      let res;
-      try {
-        res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            instances: [{ prompt }],
-            parameters: { sampleCount: 1, aspectRatio },
-          }),
-        });
-      } catch (_) { continue; }
-
-      if (res.status === 404 || res.status === 403) continue;
-      if (res.status === 401) return err('API key de AI Studio inválida.', 401);
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) return err(`Studio error ${res.status}: ${JSON.stringify(data)} model:${model.id}`, 500);
-
-      const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-      if (!b64) continue;
-
-      return ok({ predictions: data.predictions, model: model.id, label: model.label, ...(via0Skip && { via0Skip }) }, `2: AI Studio Imagen (${model.id})`);
-    }
-
-    for (const model of GEMINI_MODELS) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model.id}:generateContent?key=${studioKey}`;
-      let res;
-      try {
-        res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
-          }),
-        });
-      } catch (_) { continue; }
-
-      if (res.status === 404 || res.status === 403) continue;
-      if (res.status === 401) return err('API key de AI Studio inválida.', 401);
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) return err(`Gemini error ${res.status}: ${JSON.stringify(data)} model:${model.id}`, 500);
-
-      const parts = data.candidates?.[0]?.content?.parts || [];
-      const imagePart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
-      if (!imagePart) continue;
-
-      return ok({
-        predictions: [{ bytesBase64Encoded: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType }],
-        model: model.id,
-        label: model.label,
-        ...(via0Skip && { via0Skip }),
-      }, `2: AI Studio Gemini (${model.id})`);
-    }
-
-    return err('Ningún modelo disponible. Verifica WIF o GEMINI_API_KEY.', 503);
+    // ── Vía 1: Gemini 3 Pro Image — único respaldo tras Vía 0 ────────────────
+    // Fix v4 09-jul-2026: reemplaza las Vías 1/2/3 viejas (8 modelos Imagen
+    // 2/3/4 + Gemini 2.0 Flash Image, hasta 9 llamadas HTTP en cascada, todas
+    // apagadas por Google el 30-jun-2026 o ya obsoletas). Si Vía 0 (Nano
+    // Banana 2) falla, el único respaldo real es Gemini 3 Pro Image — mismo
+    // motor que ya usa `engine === 'gemini3pro'` explícito, vía
+    // llamarGemini3Pro_() (definida arriba, después de getVertexToken).
+    return await llamarGemini3Pro_(env, {
+      prompt, imageUrl, aspectRatio,
+      extra: via0Skip ? { via0Skip } : {},
+      via: '1: Gemini 3 Pro Image (respaldo)',
+    });
   },
 };
 

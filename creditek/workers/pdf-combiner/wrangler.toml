@@ -1,0 +1,19 @@
+name               = "creditek-pdf-combiner"
+main               = "index.js"
+compatibility_date = "2024-09-23"
+# Fix v1 10-jul-2026: agregado tras error 1101 en producción ("Callback
+# returned incorrect type; expected 'Promise'") que no ocurría en wrangler
+# dev. pdf-lib es la única dependencia npm de este Worker — si algún camino
+# interno de pdf-lib (o de su dependencia pako, usada para compresión)
+# referencia un builtin de Node (Buffer, process, etc.) que dev tolera mejor
+# que el runtime real de producción, este flag lo resuelve. Es el mismo flag
+# que ya usa wrangler.toml de creditek-bot (Sofia).
+compatibility_flags = ["nodejs_compat"]
+
+# Secrets (nunca aquí — usar: wrangler secret put <NOMBRE>):
+#   WORKER_SHARED_SECRET  — secreto compartido con el caller (frontend o Apps
+#                           Script del Portal B2B, header X-Worker-Secret).
+#                           Sin esto, /combinar rechaza la petición con 401.
+#                           Debe ser IDÉNTICO al valor pegado en el caller.
+#                           Generar uno nuevo (no reutilizar el de gemini-proxy):
+#                             openssl rand -hex 24
