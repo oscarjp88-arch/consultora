@@ -377,7 +377,15 @@ function applyFilters(){
   const chf=document.getElementById('filterChannel').value;
   const sf=document.getElementById('filterStatus').value;
   let entries=Object.entries(grouped);
-  if(chf!=='all')entries=entries.filter(([t])=>chf==='facebook'?t.startsWith('fb_'):!t.startsWith('fb_'));
+  // Fix v4 09-jul-2026 — BUG A: el filtro solo miraba el prefijo "fb_" del
+  // teléfono (convención vieja de cuando Facebook Messenger DM no exponía el
+  // número real). Hoy los clientes de Meta Ads (Click-to-WhatsApp) llegan con
+  // su número real de WhatsApp y la atribución correcta vive en `fuente`
+  // (facebook_ads/instagram_ads) — confirmado con 573135113178 (fuente:
+  // facebook_ads, sin prefijo fb_, invisible para este filtro antes de hoy).
+  // Se mantiene t.startsWith('fb_') con || por retrocompatibilidad con
+  // clientes viejos que sí tengan ese prefijo.
+  if(chf!=='all')entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);if(!c)return false;if(chf==='facebook')return t.startsWith('fb_')||c.fuente==='facebook_ads'||c.fuente==='instagram_ads';return !(t.startsWith('fb_')||c.fuente==='facebook_ads'||c.fuente==='instagram_ads')});
   if(s)entries=entries.filter(([t])=>{const c=allClients.find(x=>x.telefono===t);return t.includes(s)||(c?.nombre||'').toLowerCase().includes(s)});
   if(df!=='all'){const now=new Date();let since;
     if(df==='today')since=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -393,6 +401,17 @@ function applyFilters(){
     if(sf==='ciudad_identificada')return c.estado_funnel==='ciudad_identificada';
     if(sf==='lead_caliente')return c.estado_funnel==='lead_caliente';
     if(sf==='transferido_asesor')return c.estado_funnel==='transferido_asesor';
+    // BUG B (hallazgo v4, 09-jul-2026, sin fix aplicado — pendiente spec v5):
+    // este filtro es un "filtro fantasma". Confirmado con SQL real contra los
+    // 221 clientes en Supabase: el valor estado_funnel='perdido' NUNCA
+    // aparece (nuevo:71, transferido_asesor:63, contactado:43,
+    // ciudad_identificada:31, lead_caliente:13 — perdido:0). La opción existe
+    // en el <select> y la comparación de abajo es correcta, pero ningún
+    // punto del código de Sofía asigna ese estado — así que "Perdidos"
+    // siempre mostrará "Sin resultados", sin importar cuántos clientes haya.
+    // Falta decidir la regla de negocio (ej. X días sin respuesta, handoff
+    // sin cierre del asesor, o botón manual) antes de programar el marcado —
+    // eso se define en el spec v5 en curso. No se toca esta línea todavía.
     if(sf==='perdido')return c.estado_funnel==='perdido';
     return true});
   renderConvList(entries);
