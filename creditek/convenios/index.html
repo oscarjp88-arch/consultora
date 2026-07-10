@@ -147,24 +147,13 @@
   <div class="card">
     <h2><span class="num">3</span>Documentos requeridos</h2>
 
-    <div class="upload-item" id="up_camara1">
-      <span class="icon">📄</span>
-      <span class="label-text">Cámara de comercio — Pág. 1<small>PDF o foto — menos de 45 días de expedido</small></span>
-      <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*,.pdf" data-key="camaraComercio1">
-    </div>
-    <div class="upload-item" id="up_camara2">
-      <span class="icon">📄</span>
-      <span class="label-text">Cámara de comercio — Pág. 2<small>PDF o foto</small></span>
-      <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*,.pdf" data-key="camaraComercio2">
-    </div>
-    <div class="upload-item" id="up_camara3">
-      <span class="icon">📄</span>
-      <span class="label-text">Cámara de comercio — Pág. 3 <span style="color:var(--turq);font-size:11px;">(opcional)</span><small>Solo si tiene más páginas</small></span>
-      <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*,.pdf" data-key="camaraComercio3">
-    </div>
+    <!-- Cámara de comercio dinámica (Parte C, SPEC v8, 10-jul-2026) — hasta
+         10 páginas, mismo patrón visual de "+ Agregar vendedor" para no
+         apilar 10 cajas sueltas. Página 1 no se puede quitar (obligatoria,
+         validada más abajo en "requeridos"). -->
+    <div id="camaraContainer"></div>
+    <button type="button" class="btn-add" id="btnAddCamara">+ Agregar página de cámara de comercio</button>
+    <p style="font-size:11px;color:var(--text-secondary);margin:4px 0 14px;text-align:center;" id="camaraContador">1 de 10 páginas agregadas</p>
     <div class="field" style="margin:10px 0 14px;">
       <label>Fecha de expedición de la cámara de comercio</label>
       <input type="date" id="fechaCamara" required>
@@ -173,31 +162,31 @@
       <span class="icon">👤</span>
       <span class="label-text">Cédula rep. legal — lado frontal<small>Foto clara y legible</small></span>
       <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*" capture="environment" data-key="cedulaFrontal">
+      <input type="file" accept="image/*,.pdf" capture="environment" data-key="cedulaFrontal">
     </div>
     <div class="upload-item" id="up_cedtrasera">
       <span class="icon">👤</span>
       <span class="label-text">Cédula rep. legal — lado trasero<small>Foto clara y legible</small></span>
       <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*" capture="environment" data-key="cedulaTrasera">
+      <input type="file" accept="image/*,.pdf" capture="environment" data-key="cedulaTrasera">
     </div>
     <div class="upload-item" id="up_fachada">
       <span class="icon">🏠</span>
       <span class="label-text">Foto fachada de la tienda<small>Vista exterior del negocio</small></span>
       <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*" capture="environment" data-key="fotoFachada">
+      <input type="file" accept="image/*,.pdf" capture="environment" data-key="fotoFachada">
     </div>
     <div class="upload-item" id="up_interior">
       <span class="icon">📷</span>
       <span class="label-text">Foto interior de la tienda<small>Vista general del espacio</small></span>
       <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*" capture="environment" data-key="fotoInterior">
+      <input type="file" accept="image/*,.pdf" capture="environment" data-key="fotoInterior">
     </div>
     <div class="upload-item" id="up_vitrinas">
       <span class="icon">📺</span>
       <span class="label-text">Foto vitrinas<small>Exhibición de productos</small></span>
       <span class="status" style="display:none;">✓ Listo</span>
-      <input type="file" accept="image/*" capture="environment" data-key="fotoVitrinas">
+      <input type="file" accept="image/*,.pdf" capture="environment" data-key="fotoVitrinas">
     </div>
 
     <!-- VIDEO 360 — sube directo a Drive -->
@@ -442,6 +431,64 @@ function handleCedVendedor(input,idx,tipo){
 btnAdd.addEventListener('click',agregarVendedor);
 agregarVendedor(); // primer vendedor por defecto
 
+// ── CÁMARA DE COMERCIO DINÁMICA (Parte C, SPEC v8, 10-jul-2026) ──────────
+// Mismo patrón que "+ Agregar vendedor" — reutilizado tal cual pide el spec,
+// en vez de inventar una UI nueva. Página 1 no tiene botón "Quitar" (es la
+// obligatoria, ya validada en el array "requeridos" más abajo).
+let camCount=0;
+const MAX_CAM=10;
+const camContainer=document.getElementById('camaraContainer');
+const btnAddCamara=document.getElementById('btnAddCamara');
+const camContador=document.getElementById('camaraContador');
+
+function actualizarContadorCamara(){
+  camContador.textContent=camCount+' de '+MAX_CAM+' páginas agregadas';
+}
+
+function agregarPaginaCamara(){
+  if(camCount>=MAX_CAM)return;
+  camCount++;
+  const n=camCount;
+  const div=document.createElement('div');
+  div.className='vendedor-card'; div.id='cam_'+n;
+  div.style.padding='10px 14px';
+  div.innerHTML=`
+    <div class="vendedor-title" style="margin-bottom:8px;">
+      <span style="font-size:12.5px;">Página ${n}${n===1?'':' (opcional)'}</span>
+      ${n>1?`<button type="button" class="btn-remove" onclick="quitarPaginaCamara(${n})">✕ Quitar</button>`:''}
+    </div>
+    <div class="upload-item" id="up_camara${n}">
+      <span class="icon">📄</span>
+      <span class="label-text">Cámara de comercio${n===1?'<small>PDF o foto — menos de 45 días de expedido</small>':'<small>PDF o foto</small>'}</span>
+      <span class="status" style="display:none;">✓ Listo</span>
+      <input type="file" accept="image/*,.pdf" onchange="handleCamaraFile(this,${n})">
+    </div>`;
+  camContainer.appendChild(div);
+  btnAddCamara.disabled=camCount>=MAX_CAM;
+  actualizarContadorCamara();
+}
+
+function quitarPaginaCamara(n){
+  const el=document.getElementById('cam_'+n); if(el)el.remove();
+  delete archivos['camaraComercio'+n];
+  camCount=camContainer.querySelectorAll('.vendedor-card').length;
+  btnAddCamara.disabled=camCount>=MAX_CAM;
+  actualizarContadorCamara();
+}
+
+function handleCamaraFile(input,n){
+  const file=input.files[0]; if(!file)return;
+  comprimirImagen(file,1280).then(r=>{
+    archivos['camaraComercio'+n]=r;
+    const item=input.closest('.upload-item');
+    item.classList.add('filled');
+    item.querySelector('.status').style.display='inline';
+  });
+}
+
+btnAddCamara.addEventListener('click',agregarPaginaCamara);
+agregarPaginaCamara(); // primera página obligatoria
+
 // ── ENVÍO ────────────────────────────────────────────────────
 document.getElementById('formAliado').addEventListener('submit',async e=>{
   e.preventDefault();
@@ -476,6 +523,12 @@ document.getElementById('formAliado').addEventListener('submit',async e=>{
       cedulaTrasera:archivos['cedulaVendedor'+num+'_trasera']||null
     });
   });
+
+  // Validar vendedor obligatorio con documento (SPEC v8 Parte B, 10-jul-2026)
+  const vendedorValido=vendedores.some(v=>
+    v.nombres && v.cedula && (v.cedulaPdf || (v.cedulaFrontal && v.cedulaTrasera))
+  );
+  if(!vendedorValido){ alert('Debes agregar al menos 1 vendedor con su documento de identidad antes de continuar'); return; }
 
   // Separar docs del video (puede ser grande)
   const docsPayload={};
