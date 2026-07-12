@@ -2591,8 +2591,20 @@ function buildImgPrompt() {
     }
   }
   const specsItems = checkedSpecs.map(s => (!s.key ? '5G' : (foundSpecs[s.key] || s.label)));
+  // FIX v14 12-jul-2026 (Parte B): antes se pedía un callout "flotante alrededor
+  // del producto" sin indicar dónde — GPT Image 2 dibujaba el label de cámara
+  // apuntando al aire en vez de al módulo real. Solo la cámara tiene una
+  // ubicación física real y visible; el resto (RAM, almacenamiento, batería,
+  // procesador, 5G) no corresponde a ningún punto del celular, así que se
+  // agrupan aparte en vez de intentar señalar algo que no existe.
+  const specCamIdx = checkedSpecs.findIndex(s => s.id === 'spec-camera');
+  const specCamItem = specCamIdx >= 0 ? specsItems[specCamIdx] : null;
+  const specOtrosItems = specsItems.filter((_, i) => checkedSpecs[i].id !== 'spec-camera');
   const specsBlock = checkedSpecs.length > 0
-    ? `Incluir callout labels flotantes alrededor del ${producto} con estas specs técnicas: ${specsItems.join(', ')}. Cada label: fondo turquesa #00C4CC, texto blanco, tipografía pequeña y limpia, sin tapar la pantalla.`
+    ? [
+        specCamItem ? `Label de cámara ("${specCamItem}"): el módulo de cámara trasero SIEMPRE está en la esquina superior trasera del celular (arriba, cerca del borde) — dibuja este label con una línea guía delgada que apunte EXACTAMENTE a ese módulo de lentes, nunca al centro ni a los bordes de la pantalla.` : null,
+        specOtrosItems.length ? `Otras specs (${specOtrosItems.join(', ')}): no corresponden a un punto físico visible del celular — agrúpalas en un solo bloque de labels apilados a un costado del producto (nunca sueltas ni apuntando al aire). Cada label: fondo turquesa #00C4CC, texto blanco, tipografía pequeña y limpia, sin tapar la pantalla.` : null,
+      ].filter(Boolean).join(' ')
     : `Sin especificaciones técnicas ni callout labels alrededor del producto. Diseño limpio centrado en el producto y el mensaje.`;
 
   const detalleDiaMsg = getDetalleDelDia(currentEstilo);
