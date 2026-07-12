@@ -584,7 +584,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
         Tipo de pieza
         <span class="ck-tooltip-wrap" style="float:right;width:auto">
           <span class="ck-tooltip-icon">?</span>
-          <span class="ck-tooltip"><b>Oferta de la semana:</b> urgencia + precio + CTA presencial.<br><b>Showcase:</b> producto como protagonista, specs destacadas.<br><b>Testimonio:</b> voz del cliente en primera persona.<br><b>Educativo:</b> explica cómo funciona el crédito.<br><b>Promo urgencia:</b> cuenta regresiva, "solo hoy".<br><b>Detrás de cámara:</b> muestra la tienda desde adentro.<br><b>Personalizado:</b> tú defines el tipo.</span>
+          <span class="ck-tooltip" id="tooltip-tipo-pieza"><b>Oferta de la semana:</b> urgencia + precio + CTA presencial.<br><b>Showcase:</b> producto como protagonista, specs destacadas.<br><b>Testimonio:</b> voz del cliente en primera persona.<br><b>Educativo:</b> explica cómo funciona el crédito.<br><b>Promo urgencia:</b> cuenta regresiva, "solo hoy".<br><b>Detrás de cámara:</b> muestra la tienda desde adentro.<br><b>Personalizado:</b> tú defines el tipo.</span>
         </span>
       </label>
       <select id="tipo" onchange="updateTipoUI()">
@@ -1421,6 +1421,13 @@ function updateModoUI() {
   if (avisoEl) {
     const stale = !stored || (Date.now() - stored.timestamp) > 15 * 24 * 60 * 60 * 1000;
     avisoEl.style.display = (showProducto && stale) ? 'block' : 'none';
+    // FIX v11 12-jul-2026 Hallazgo 2: mostrar hace cuántos días (reutiliza
+    // formatRefAge, ya usado en renderRefStatus) en vez del texto genérico fijo.
+    if (stale && showProducto) {
+      avisoEl.innerHTML = stored
+        ? `⚠️ Referencias desactualizadas (${formatRefAge(stored.timestamp)}) — los valores de specs pueden ser inventados. Haz clic en "Actualizar" en Referencias del mercado.`
+        : '⚠️ Referencias del mercado nunca actualizadas — los valores de specs pueden ser inventados. Haz clic en "Actualizar" primero.';
+    }
   }
 
   actualizarTiposPorModo(modo);
@@ -1436,12 +1443,29 @@ const TIPOS_POR_MODO = {
   institucional: [['inst_apertura','🏪 Apertura de tienda'],['inst_aniversario','🎂 Aniversario'],['inst_valores','💙 Valores de marca'],['inst_logro','🏆 Logro o reconocimiento'],['personalizado','✏️ Personalizado']],
 };
 
+// FIX v11 12-jul-2026: tooltip de "Tipo de pieza" por modo — antes era un texto fijo
+// que solo coincidía con el set de opciones de "credito" (7 opciones). Ojo: promo,
+// tienda y servicio NO comparten un set "general" único como asumía el diagnóstico
+// inicial — cada uno tiene su propio subconjunto real en TIPOS_POR_MODO, así que
+// aquí van las 7 claves reales, no una clave "general" compartida.
+const TIPO_TOOLTIPS = {
+  credito:       `<b>Oferta de la semana:</b> urgencia + precio + CTA presencial.<br><b>Showcase:</b> producto como protagonista, specs destacadas.<br><b>Testimonio:</b> voz del cliente en primera persona.<br><b>Educativo:</b> explica cómo funciona el crédito.<br><b>Promo urgencia:</b> cuenta regresiva, "solo hoy".<br><b>Detrás de cámara:</b> muestra la tienda desde adentro.<br><b>Personalizado:</b> tú defines el tipo.`,
+  promo:         `<b>Oferta de la semana:</b> urgencia + precio + CTA presencial.<br><b>Promo urgencia:</b> cuenta regresiva, "solo hoy".<br><b>Showcase:</b> producto como protagonista, specs destacadas.<br><b>Personalizado:</b> tú defines el tipo.`,
+  tienda:        `<b>Detrás de cámara:</b> muestra la tienda desde adentro.<br><b>Testimonio:</b> voz del cliente en primera persona.<br><b>Oferta de la semana:</b> urgencia + precio + CTA presencial.<br><b>Personalizado:</b> tú defines el tipo.`,
+  servicio:      `<b>Educativo:</b> explica cómo funciona el crédito.<br><b>Testimonio:</b> voz del cliente en primera persona.<br><b>Detrás de cámara:</b> muestra la tienda desde adentro.<br><b>Personalizado:</b> tú defines el tipo.`,
+  captacion:     `<b>Pregunta de engagement:</b> invita a comentar/responder.<br><b>Humor costeño:</b> tono divertido, sin vender directo.<br><b>Reto / Tag a amigo:</b> invita a etiquetar a alguien.<br><b>Debate / Opinión:</b> pregunta polémica o de opinión.<br><b>Personalizado:</b> tú defines el tipo.`,
+  jornada:       `<b>Invitación al evento:</b> fecha, hora y lugar de una jornada.<br><b>Urgencia de fecha:</b> cuenta regresiva al evento.<br><b>Recordatorio:</b> aviso de que el evento ya casi empieza.<br><b>Personalizado:</b> tú defines el tipo.`,
+  institucional: `<b>Apertura de tienda:</b> anuncio de nueva tienda o punto.<br><b>Aniversario:</b> celebración de un hito de la marca.<br><b>Valores de marca:</b> mensaje sobre lo que representa Creditek.<br><b>Logro o reconocimiento:</b> premio o hito alcanzado.<br><b>Personalizado:</b> tú defines el tipo.`,
+};
+
 function actualizarTiposPorModo(modo) {
   const sel = document.getElementById('tipo');
   const tipos = TIPOS_POR_MODO[modo] || TIPOS_POR_MODO.credito;
   const current = sel.value;
   sel.innerHTML = tipos.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
   if (tipos.find(([v]) => v === current)) sel.value = current;
+  const tooltipEl = document.getElementById('tooltip-tipo-pieza');
+  if (tooltipEl) tooltipEl.innerHTML = TIPO_TOOLTIPS[modo] || TIPO_TOOLTIPS.credito;
   updateTipoUI();
 }
 
