@@ -186,6 +186,16 @@ tr:hover td{background:#F8FAFC}
 .budget-bar-fill.warn{background:linear-gradient(90deg,var(--yellow),#D97706)}
 .budget-bar-fill.over{background:linear-gradient(90deg,var(--red),#DC2626)}
 .budget-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text2)}
+/* FIX v26, 13-jul-2026 — Fase 3, Mejora 6: banner de alertas activas en el
+   tablero (sobregasto >20%, frecuencia >2.5). Oscar confirmó: solo banner en
+   el tablero, sin WhatsApp ni correo — por eso no hay lógica de cron/dedup
+   aquí, se recalcula cada vez que se cargan los datos (idempotente). */
+.alert-banner{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:var(--radius);font-size:13px;border:1px solid transparent}
+.alert-item .alert-icon{font-size:16px;line-height:1.3}
+.alert-item b{font-weight:700}
+.alert-item.sev-red{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:var(--red)}
+.alert-item.sev-yellow{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--yellow)}
 </style>
 </head>
 <body>
@@ -227,6 +237,11 @@ tr:hover td{background:#F8FAFC}
        las campañas activas, no de una sola — antes no quedaba dicho en
        ningún lado. -->
   <div class="scope-label" id="scope-label" style="display:none"></div>
+
+  <!-- FIX v26, 13-jul-2026 — Fase 3, Mejora 6: banner de alertas activas
+       (sobregasto semanal >20%, frecuencia de campaña >2.5). Se llena en
+       renderAlertas(), llamado desde renderDatos(). -->
+  <div class="alert-banner" id="alert-banner" style="display:none"></div>
 
   <!-- Budget bar -->
   <div class="budget-section" id="budget-section" style="display:none">
@@ -336,8 +351,16 @@ tr:hover td{background:#F8FAFC}
     </div>
   </div>
 
-  <!-- Tendencia 4 semanas -->
-  <div class="trend-row" id="trend-row" style="display:none">
+  <!-- FIX v25, 13-jul-2026 — Fase 2, Mejora 3: se reemplazan los 4 recuadros
+       sueltos por una gráfica de línea real (gasto + CTR en el tiempo),
+       ampliada a 8 semanas (ver cargarDatos()) para que la línea tenga
+       suficientes puntos como para ser útil — con solo 4 no aportaba mucho
+       más que los recuadros que reemplaza. -->
+  <div class="trend-section" id="trend-section" style="display:none">
+    <div class="section-title" style="font-size:13px;font-weight:600;margin-bottom:10px">📈 Tendencia — últimas 8 semanas</div>
+    <div style="position:relative;height:220px">
+      <canvas id="trend-chart"></canvas>
+    </div>
   </div>
 
   <!-- Campaigns table -->
@@ -543,9 +566,40 @@ tr:hover td{background:#F8FAFC}
 
 <div id="toast"></div>
 
+<!-- FIX v25, 13-jul-2026 — Fase 2, Mejora 3: mismo Chart.js (misma versión)
+     ya usado en creditek-agente-respuestas.html, vía CDN. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ── Estado ────────────────────────────────────────────────────────
 let currentDays = 7;
+// FIX v24, 13-jul-2026 — Fase 1, Mejora 2: rango legible del período de
+// comparación ("vs anterior"), calculado en cargarDatos() junto con las
+// fechas reales que ya se usan para pedir el período anterior a Meta.
+let prevRangeLabel = '';
+
+// FIX v24, 13-jul-2026 — Fase 1: compartido por Mejora 1 (nombre corto de
+// campaña) y Mejora 2 (fechas del período de comparación).
+const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function formatFechaCorta(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d} ${MESES_CORTOS[m-1]}`;
+}
+
+// FIX v24, 13-jul-2026 — Fase 1, Mejora 1: patrón real confirmado en Meta
+// Ads Manager: "Creditek - [ciudades separadas con +] - [d/m/yyyy hh:mm] -
+// [mensaje opcional]". Se muestra fecha corta + el segmento distintivo final
+// (si existe); el nombre completo original sigue disponible en el atributo
+// title (tooltip), que ya existía en la celda de la tabla.
+function acortarNombreCampaña(nombre) {
+  if (!nombre) return '—';
+  const partes = nombre.split(' - ').map(p => p.trim());
+  const fechaIdx = partes.findIndex(p => /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(p));
+  if (fechaIdx === -1) return nombre; // no coincide con el patrón esperado — mostrar tal cual, sin arriesgar a cortar mal
+  const m = partes[fechaIdx].match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  const fechaCorta = `${parseInt(m[1],10)} ${MESES_CORTOS[parseInt(m[2],10)-1]}`;
+  const segmentoFinal = partes.slice(fechaIdx+1).join(' - ').trim();
+  return segmentoFinal ? `${fechaCorta} — ${segmentoFinal}` : fechaCorta;
+}
 
 // ── Wizard de campañas ──────────────────────────────────────────
 const WIZ_PAGE_ID = '1191052130747281';
@@ -1021,6 +1075,13 @@ async function publicarCampana() {
 }
 let lastData = null;
 
+// FIX v26, 13-jul-2026 — Fase 3, Mejora 5: mismo Worker y mismo secreto
+// compartido (X-Worker-Secret) ya usados por creditek-agente-respuestas.html
+// (FIX v22) — solo lectura agregada (conteos), nunca datos individuales de
+// clientes.
+const WORKER_API = 'https://creditek-bot.comercial-853.workers.dev';
+const WORKER_SHARED_SECRET = '73ef5474869b234c9d666476271a47fcf82b259d54ca3619';
+
 // ── Config ───────────────────────────────────────────────────────
 let COP_TO_USD = parseFloat(localStorage.getItem('ck_cop_usd')) || 3350; // Tasa COP a USD — editable en ⚙ Configurar (antes fija en 4200, desactualizada)
 
@@ -1100,6 +1161,11 @@ async function cargarDatos() {
   try {
     const { since, until } = getFechas(currentDays);
     const prevFechas = getFechas(currentDays * 2);
+    // FIX v24, 13-jul-2026 — Fase 1, Mejora 2: el período anterior real que
+    // se le pide a Meta (ver urlPrev abajo) es [prevFechas.since, since] —
+    // NO [prevFechas.since, prevFechas.until] — por eso se arma el label con
+    // esas mismas 2 fechas, para que coincida exacto con el dato mostrado.
+    prevRangeLabel = `${formatFechaCorta(prevFechas.since)} - ${formatFechaCorta(since)}`;
 
     // Actualizar label período
     document.getElementById('period-label').textContent =
@@ -1151,20 +1217,51 @@ async function cargarDatos() {
     const urlAds = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=ad_id,ad_name,campaign_id,spend,reach,ctr,cpc,actions,effective_status&time_range={"since":"${since}","until":"${until}"}&level=ad&access_token=${token}`;
     const resAds = await fetch(urlAds);
     const dataAds = await resAds.json();
-    const adsData = (dataAds.data || []).filter(a => a.ad_name && a.ad_name.includes(' - Variante '));
+    const todosLosAds = dataAds.data || []; // FIX v26 — sin filtrar, para el mapeo anuncio→campaña de Mejora 5
+    const adsData = todosLosAds.filter(a => a.ad_name && a.ad_name.includes(' - Variante '));
 
-    // Tendencia semanal (4 semanas)
+    // FIX v26, 13-jul-2026 — Fase 3, Mejora 5: costo real por venta.
+    // anuncio_id (guardado en Supabase por Sofía, viene del referral de Meta)
+    // es a nivel de ANUNCIO (ad_id), no de campaña — se necesita este mismo
+    // listado de anuncios (ya pedido arriba para A/B testing) para mapear
+    // cada anuncio a su campaign_id antes de cruzarlo con las ventas.
+    let ventasPorCampaña = {};
+    let pctSinAtribucion = null;
+    try {
+      const resVentas = await fetch(`${WORKER_API}/api/ventas-por-anuncio`, { headers: { 'X-Worker-Secret': WORKER_SHARED_SECRET } });
+      if (resVentas.ok) {
+        const ventasInfo = await resVentas.json();
+        const adIdToCampaignId = {};
+        todosLosAds.forEach(a => { if (a.ad_id && a.campaign_id) adIdToCampaignId[a.ad_id] = a.campaign_id; });
+        Object.entries(ventasInfo.ventas_por_anuncio || {}).forEach(([anuncioId, ventas]) => {
+          const campId = adIdToCampaignId[anuncioId];
+          if (campId) ventasPorCampaña[campId] = (ventasPorCampaña[campId] || 0) + ventas;
+        });
+        if (ventasInfo.total_clientes > 0) {
+          pctSinAtribucion = Math.round(100 - (ventasInfo.con_anuncio_id / ventasInfo.total_clientes) * 100);
+        }
+      } else {
+        console.warn('[VENTAS-POR-ANUNCIO] no autorizado o error:', resVentas.status);
+      }
+    } catch (e) { console.error('[VENTAS-POR-ANUNCIO] excepción:', e); }
+
+    // FIX v25, 13-jul-2026 — Fase 2, Mejora 3: ampliado de 4 a 8 semanas —
+    // con solo 4 puntos la gráfica de línea no aportaba mucho más que los 4
+    // recuadros que reemplaza. Se agrega "ctr" a los campos pedidos (antes
+    // solo spend/actions) porque la gráfica muestra gasto Y CTR en el tiempo.
+    // Si la cuenta/campañas son más nuevas que 8 semanas, las semanas sin
+    // actividad simplemente muestran $0 — es el dato real, no un error.
     const trendData = [];
-    for (let w = 3; w >= 0; w--) {
+    for (let w = 7; w >= 0; w--) {
       const wEnd   = new Date(); wEnd.setDate(wEnd.getDate() - w*7);
       const wStart = new Date(); wStart.setDate(wStart.getDate() - (w+1)*7);
-      const wUrl = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=spend,actions&time_range={"since":"${wStart.toISOString().split('T')[0]}","until":"${wEnd.toISOString().split('T')[0]}"}&level=account&access_token=${token}`;
+      const wUrl = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=spend,actions,ctr&time_range={"since":"${wStart.toISOString().split('T')[0]}","until":"${wEnd.toISOString().split('T')[0]}"}&level=account&access_token=${token}`;
       const wRes = await fetch(wUrl);
       const wDat = await wRes.json();
       trendData.push({ week: w, data: wDat.data?.[0] || null });
     }
 
-    lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: campsData, trend: trendData, ads: adsData };
+    lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: campsData, trend: trendData, ads: adsData, ventasPorCampaña, pctSinAtribucion };
     renderDatos(lastData);
     document.getElementById('last-update').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CO');
 
@@ -1262,13 +1359,52 @@ function renderDatos(d) {
   scopeLabel.style.display = 'inline-block';
 
   // Campañas
-  renderCampañas(d.camps);
+  renderCampañas(d.camps, d.ventasPorCampaña || {}, d.pctSinAtribucion);
 
   // A/B testing
   renderVariantes(d.ads);
 
   // Tendencia
   renderTendencia(d.trend);
+
+  // FIX v26, 13-jul-2026 — Fase 3, Mejora 6: alertas activas (sobregasto y
+  // frecuencia). Se recalculan con cada carga — no depende de WhatsApp/cron.
+  renderAlertas(pctReal, weeklyBudget, spendWeekly, d.camps);
+}
+
+// FIX v26, 13-jul-2026 — Fase 3, Mejora 6: banner de alertas en el tablero.
+// Umbrales confirmados por Oscar: sobregasto semanal >20% (pctReal>120) y
+// frecuencia de campaña >2.5 — sin WhatsApp ni correo, solo banner visual.
+function renderAlertas(pctReal, weeklyBudget, spendWeekly, camps) {
+  const banner = document.getElementById('alert-banner');
+  const alertas = [];
+
+  if (pctReal > 120) {
+    const exceso = pctReal - 100;
+    alertas.push({
+      sev: 'red',
+      icon: '🚨',
+      html: `<b>Sobregasto de ${exceso.toFixed(0)}%</b> esta semana — llevas gastado $${spendWeekly.toFixed(2)} de un presupuesto de $${weeklyBudget.toFixed(2)} USD.`
+    });
+  }
+
+  (camps || []).forEach(c => {
+    const freq = parseFloat(c.frequency || 0);
+    if (freq > 2.5) {
+      alertas.push({
+        sev: freq >= 4 ? 'red' : 'yellow',
+        icon: '⚠️',
+        html: `<b>Fatiga de anuncio</b> — "${acortarNombreCampaña(c.campaign_name)}" tiene frecuencia ${freq.toFixed(2)} (misma audiencia viendo el anuncio muchas veces). Considera refrescar el creativo o pausarla.`
+      });
+    }
+  });
+
+  if (alertas.length === 0) { banner.style.display = 'none'; banner.innerHTML = ''; return; }
+
+  banner.innerHTML = alertas.map(a =>
+    `<div class="alert-item sev-${a.sev}"><span class="alert-icon">${a.icon}</span><span>${a.html}</span></div>`
+  ).join('');
+  banner.style.display = 'flex';
 }
 
 function setKPI(id, val, prev, curr, sub) {
@@ -1284,7 +1420,11 @@ function setKPI(id, val, prev, curr, sub) {
     if (prev === 0) { el.textContent = 'Sin comparación'; el.className = 'kpi-delta neutral'; return; }
     const pct = ((curr - prev) / prev) * 100;
     const isPositive = id === 'kpi-cpr' || id === 'kpi-cpc' || id === 'kpi-cpm' ? pct < 0 : pct > 0;
-    el.textContent = (pct > 0 ? '▲ +' : '▼ ') + Math.abs(pct).toFixed(1) + '% vs anterior';
+    // FIX v24, 13-jul-2026 — Fase 1, Mejora 2: antes decía "vs anterior" sin
+    // especificar el período — ahora usa las fechas reales del rango de
+    // comparación (calculadas dinámicamente según 7/14/30 días en cargarDatos()).
+    const sufijoPeriodo = prevRangeLabel ? ('vs. ' + prevRangeLabel) : 'vs anterior';
+    el.textContent = (pct > 0 ? '▲ +' : '▼ ') + Math.abs(pct).toFixed(1) + '% ' + sufijoPeriodo;
     el.className = 'kpi-delta ' + (isPositive ? 'up' : pct === 0 ? 'neutral' : 'down');
   }
 }
@@ -1308,7 +1448,11 @@ function renderStatusBadge(status) {
   return `<span class="status-badge ${s.cls}">● ${s.label}</span>`;
 }
 
-function renderCampañas(camps) {
+// FIX v26, 13-jul-2026 — Fase 3, Mejora 5: parámetros nuevos ventasPorCampaña
+// (mapa campaign_id → ventas cerradas confirmadas) y pctSinAtribucion (% de
+// clientes sin anuncio_id, para no ocultar la limitación real del dato).
+function renderCampañas(camps, ventasPorCampaña, pctSinAtribucion) {
+  ventasPorCampaña = ventasPorCampaña || {};
   const wrap = document.getElementById('campaigns-wrap');
   if (!camps || camps.length === 0) {
     wrap.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Sin campañas activas</h3><p>No se encontraron campañas en el período seleccionado.</p></div>';
@@ -1319,11 +1463,17 @@ function renderCampañas(camps) {
   const sorted = [...camps].sort((a, b) => parseFloat(b.spend||0) - parseFloat(a.spend||0));
   const maxSpend = parseFloat(sorted[0]?.spend || 1) / COP_TO_USD; // fix v2 — antes comparaba USD contra COP sin convertir, la barra quedaba casi invisible
 
+  const notaAtribucion = pctSinAtribucion !== null
+    ? `<p style="font-size:11px;color:var(--text3);margin-top:6px">ℹ️ ${pctSinAtribucion}% de los clientes no tienen anuncio de origen identificado (ej. llegaron por canal orgánico) — el costo real por venta no los incluye.</p>`
+    : '';
+
   wrap.innerHTML = `<div class="table-wrapper"><table>
     <thead><tr>
       <th>#</th><th>Campaña</th><th>Estado</th>
       <th>Gasto</th><th>Alcance</th><th>CTR</th>
-      <th>CPC</th><th>Resultados</th><th>Rendimiento</th>
+      <th>CPC</th><th>Resultados</th>
+      <th title="Ventas confirmadas por el asesor (botón 'Cerré la venta') atribuidas a esta campaña">Costo real/venta</th>
+      <th>Rendimiento</th>
     </tr></thead>
     <tbody>
     ${sorted.map((c, i) => {
@@ -1333,19 +1483,28 @@ function renderCampañas(camps) {
       const reach   = parseInt(c.reach || 0);
       const actions = contarResultadosReales(c.actions);
       const perfPct = Math.round((spend / maxSpend) * 100);
+      // FIX v26, 13-jul-2026 — Fase 3, Mejora 5: si no hay ventas cerradas
+      // CONFIRMADAS aún para esta campaña, se dice explícitamente en vez de
+      // mostrar "$0.00" o "$Infinity" (mismo tipo de contradicción que el
+      // Hallazgo 4 de v23 con el ROAS).
+      const ventas = ventasPorCampaña[c.campaign_id] || 0;
+      const costoVenta = ventas > 0
+        ? `$${(spend / ventas).toFixed(2)} <span style="font-size:10px;color:var(--text3)">(${ventas} venta${ventas===1?'':'s'})</span>`
+        : `<span style="color:var(--text3);font-size:11px">Sin ventas confirmadas</span>`;
       return `<tr>
         <td style="font-weight:700;color:var(--text3)">${i+1}</td>
-        <td class="camp-name" title="${c.campaign_name}">${c.campaign_name || '—'}</td>
+        <td class="camp-name" title="${c.campaign_name || ''}">${acortarNombreCampaña(c.campaign_name)}</td>
         <td>${renderStatusBadge(c.effective_status)}</td>
         <td style="font-weight:600">$${spend.toFixed(2)}</td>
         <td>${fmtNum(reach)}</td>
         <td>${ctr.toFixed(2)}%</td>
         <td>$${cpc.toFixed(2)}</td>
         <td style="font-weight:600;color:var(--turq2)">${fmtNum(actions)}</td>
+        <td>${costoVenta}</td>
         <td><div class="perf-bar"><div class="perf-fill" style="width:${perfPct}%"></div></div></td>
       </tr>`;
     }).join('')}
-    </tbody></table></div>`;
+    </tbody></table></div>${notaAtribucion}`;
 }
 
 function renderVariantes(ads) {
@@ -1410,24 +1569,55 @@ async function pausarAd(adId, btnEl) {
   }
 }
 
+// FIX v25, 13-jul-2026 — Fase 2, Mejora 3: reemplaza los 4 recuadros sueltos
+// por una gráfica de línea real (Chart.js) con gasto y CTR en el tiempo,
+// sobre 8 semanas en vez de 4 (ver cargarDatos()).
+let trendChartInstance = null;
 function renderTendencia(trend) {
   if (!trend || trend.every(t => !t.data)) return;
-  const row = document.getElementById('trend-row');
-  const labels = ['Hace 4 sem','Hace 3 sem','Hace 2 sem','Esta semana'];
-  const maxSpend = Math.max(...trend.map(t => parseFloat(t.data?.spend || 0)), 1);
+  const section = document.getElementById('trend-section');
+  const labels = trend.map(t => t.week === 0 ? 'Esta semana' : `Hace ${t.week} sem`);
+  const spendSerie = trend.map(t => parseFloat(t.data?.spend || 0) / COP_TO_USD);
+  const ctrSerie   = trend.map(t => parseFloat(t.data?.ctr || 0));
 
-  row.innerHTML = trend.map((t, i) => {
-    const spend   = parseFloat(t.data?.spend || 0) / COP_TO_USD;
-    const results = contarResultadosReales(t.data?.actions);
-    const pct     = Math.round((spend / maxSpend) * 100);
-    return `<div class="trend-card">
-      <div class="trend-week">${labels[i]}</div>
-      <div class="trend-spend">$${spend.toFixed(2)}</div>
-      <div class="trend-results">${fmtNum(results)} resultados</div>
-      <div class="trend-bar-wrap"><div class="trend-bar-fill" style="width:${pct}%"></div></div>
-    </div>`;
-  }).join('');
-  row.style.display = 'grid';
+  const ctx = document.getElementById('trend-chart').getContext('2d');
+  if (trendChartInstance) trendChartInstance.destroy(); // evita acumular instancias al actualizar
+
+  trendChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Gasto (USD)',
+          data: spendSerie,
+          borderColor: '#00C4CC',
+          backgroundColor: 'rgba(0,196,204,.1)',
+          yAxisID: 'y',
+          tension: .3,
+          fill: true,
+        },
+        {
+          label: 'CTR (%)',
+          data: ctrSerie,
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245,158,11,.1)',
+          yAxisID: 'y1',
+          tension: .3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y:  { type: 'linear', position: 'left',  title: { display: true, text: 'Gasto (USD)' } },
+        y1: { type: 'linear', position: 'right', title: { display: true, text: 'CTR (%)' }, grid: { drawOnChartArea: false } },
+      },
+    },
+  });
+  section.style.display = 'block';
 }
 
 // ── Análisis IA con Claude ────────────────────────────────────────
@@ -1451,6 +1641,21 @@ async function analizarConIA(data) {
   // hace su propio cálculo de período con datos correctos.
   const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
 
+  // FIX v25, 13-jul-2026 — Fase 2, Mejora 7: antes Claude solo recibía el
+  // agregado total (nunca el detalle por campaña), así que su "recomendación"
+  // era genérica ("hay margen para escalar") sin poder decir CUÁL campaña.
+  // Se arma aquí el mismo detalle por campaña que ya se muestra en la tabla
+  // de ranking (top 8 por gasto, para no inflar el prompt si hay muchas),
+  // usando el mismo nombre corto de la Mejora 1 para que sea legible.
+  const campsOrdenadas = [...(data.camps || [])].sort((a, b) => parseFloat(b.spend||0) - parseFloat(a.spend||0)).slice(0, 8);
+  const campsResumen = campsOrdenadas.map(c => {
+    const cSpend   = parseFloat(c.spend || 0) / COP_TO_USD;
+    const cCtr     = parseFloat(c.ctr || 0);
+    const cResults = contarResultadosReales(c.actions);
+    const cCpr     = cResults > 0 ? (cSpend / cResults).toFixed(2) : 'N/A';
+    return `- ${acortarNombreCampaña(c.campaign_name)}: gasto $${cSpend.toFixed(2)}, CTR ${cCtr.toFixed(2)}%, resultados ${cResults}, costo/resultado $${cCpr}`;
+  }).join('\n') || 'Sin datos de campañas individuales.';
+
   const prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza estos datos de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
 
 DATOS DEL PERÍODO (${currentDays} días):
@@ -1463,10 +1668,14 @@ DATOS DEL PERÍODO (${currentDays} días):
 
 Campañas activas: ${data.camps?.length || 0}
 
-DA UN ANÁLISIS BREVE (3-4 oraciones) que incluya:
+CAMPAÑAS INDIVIDUALES (ordenadas por gasto, hasta 8):
+${campsResumen}
+
+DA UN ANÁLISIS BREVE (4-5 oraciones) que incluya:
 1. Evaluación general del rendimiento
 2. El problema más urgente a resolver
 3. La oportunidad más clara a aprovechar
+4. Una RECOMENDACIÓN CONCRETA Y ACCIONABLE de reasignación de presupuesto entre campañas específicas de la lista de arriba (ej. "Mueve $15 de [campaña de menor rendimiento] hacia [campaña con mejor CTR/costo por resultado]"), citando nombres reales — no una sugerencia genérica. Si no hay suficientes campañas o datos para recomendar esto con confianza, dilo explícitamente en vez de inventar una recomendación.
 
 Luego genera exactamente 3 alertas en este formato JSON:
 {"alerts": [{"type": "warn|good|bad", "text": "mensaje corto"}]}
