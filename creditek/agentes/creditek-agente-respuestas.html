@@ -80,6 +80,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;color:var(--text3);gap:8px}
 .chat-empty i{font-size:48px;opacity:.3}
 
+/* SPEC v5-CRM, 13-jul-2026 — Pieza 1: responder desde el panel */
+.chat-reply{display:flex;gap:8px;padding:10px 20px;border-top:1px solid var(--border);background:var(--card);flex-shrink:0;align-items:flex-end}
+.reply-input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--text);background:#fafafa;resize:none;min-height:38px;max-height:100px;box-sizing:border-box}
+.reply-input:focus{outline:none;border-color:var(--accent);background:#fff}
+.reply-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0}
+.reply-btn:hover{background:var(--accent2)}
+.reply-btn:disabled{opacity:.5;cursor:default}
+.reply-status{font-size:11px;color:var(--text3);align-self:center;margin-left:4px}
+.chat-reply-disabled{padding:12px 20px;border-top:1px solid var(--border);background:#fef3c7;color:#92400e;font-size:12px;flex-shrink:0;display:flex;align-items:center;gap:6px}
+
 .right-panel{width:280px;background:var(--card);border-left:1px solid var(--border);overflow-y:auto;flex-shrink:0;display:none}
 .right-panel.show{display:block}
 .client-profile{padding:20px;text-align:center;border-bottom:1px solid var(--border)}
@@ -255,6 +265,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const API='https://creditek-bot.comercial-853.workers.dev';
+// SPEC v5-CRM, 13-jul-2026 — secreto compartido para /api/enviar-mensaje,
+// mismo patron que ya usa gemini-proxy (X-Worker-Secret). DEBE coincidir
+// exacto con el valor configurado en el Worker (wrangler secret put
+// WORKER_SHARED_SECRET en creditek-bot).
+const WORKER_SHARED_SECRET='73ef5474869b234c9d666476271a47fcf82b259d54ca3619';
 let cityMap={};let allTiendas=[];
 let allConvs=[],allClients=[],grouped={},currentTel=null;
 const colors=['#8b5cf6','#0ea5e9','#f59e0b','#ef4444','#22c55e','#ec4899','#6366f1','#14b8a6'];
@@ -458,7 +473,15 @@ function openChat(tel){
     const intentTag=m.intent?'<div class="msg-intent">'+m.intent+'</div>':'';
     return '<div class="msg '+(isIn?'msg-in':'msg-out')+'"><div>'+(m.contenido||'')+'</div><div class="msg-meta">'+(isIn?'Cliente':'Sofia')+' · '+t+'</div>'+intentTag+'</div>'
   }).join('');
-  area.innerHTML='<div class="chat-header"><div class="chat-header-left"><h3>'+(cl?.nombre||tel)+'</h3><p>'+tel+' · '+(cl?.segmento||'sin clasificar')+'</p></div><div class="chat-badges">'+badges+'</div></div><div class="chat-msgs" id="chat-msgs-inner">'+msgsHtml+'</div>';
+  // SPEC v5-CRM, 13-jul-2026 — Pieza 1: la ventana de 24h de WhatsApp se
+  // calcula sobre el ULTIMO MENSAJE DEL CLIENTE (direccion:'entrada'), no
+  // sobre el ultimo mensaje en general (que podria ser de Sofia o de Oscar).
+  const lastIn=msgs.find(m=>m.direccion==='entrada');
+  const dentro24h=!!lastIn&&(Date.now()-new Date(lastIn.timestamp).getTime())<24*60*60*1000;
+  const replyHtml=dentro24h
+    ?'<div class="chat-reply"><textarea class="reply-input" id="replyInput" placeholder="Escribe un mensaje..." onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();enviarDesdePanel(\''+tel+'\')}"></textarea><button class="reply-btn" id="replyBtn" onclick="enviarDesdePanel(\''+tel+'\')">Enviar</button><span class="reply-status" id="replyStatus"></span></div>'
+    :'<div class="chat-reply-disabled"><i class="ti ti-lock" aria-hidden="true"></i> Fuera de la ventana de 24h — no se puede responder libremente. Usa una plantilla aprobada.</div>';
+  area.innerHTML='<div class="chat-header"><div class="chat-header-left"><h3>'+(cl?.nombre||tel)+'</h3><p>'+tel+' · '+(cl?.segmento||'sin clasificar')+'</p></div><div class="chat-badges">'+badges+'</div></div><div class="chat-msgs" id="chat-msgs-inner" style="max-height:calc(100vh - 190px)">'+msgsHtml+'</div>'+replyHtml;
   setTimeout(()=>{const cm=document.getElementById('chat-msgs-inner');if(cm)cm.scrollTop=cm.scrollHeight;},50);
   rp.className='right-panel show';
   const ci=Math.abs(hashCode(tel))%colors.length;
@@ -477,6 +500,39 @@ function openChat(tel){
     '<div class="detail-row"><span class="detail-label">Total mensajes</span><span class="detail-val">'+msgs.length+'</span></div>'+
     '<div class="detail-row"><span class="detail-label">Ultimo contacto</span><span class="detail-val">'+(msgs[0]?timeAgo(msgs[0].timestamp):'-')+'</span></div></div>';
   applyFilters();
+}
+
+// SPEC v5-CRM, 13-jul-2026 — Pieza 1: envia el mensaje al cliente usando el
+// mismo mecanismo que ya usa Sofia (enviarMensajeWA en creditek-bot), via el
+// nuevo endpoint /api/enviar-mensaje protegido con X-Worker-Secret. No hay
+// camino paralelo: el Worker es quien llama a la API de WhatsApp y guarda en
+// conversaciones (respondido_por:'admin'), igual que ya hace para Sofia.
+async function enviarDesdePanel(tel){
+  const input=document.getElementById('replyInput');
+  const btn=document.getElementById('replyBtn');
+  const statusEl=document.getElementById('replyStatus');
+  const mensaje=(input?.value||'').trim();
+  if(!mensaje)return;
+  if(btn)btn.disabled=true;
+  if(statusEl)statusEl.textContent='Enviando...';
+  try{
+    const res=await fetch(API+'/api/enviar-mensaje',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SHARED_SECRET},
+      body:JSON.stringify({telefono:tel,mensaje}),
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||data.error){
+      if(statusEl)statusEl.textContent='Error: '+(data.error||'no se pudo enviar');
+      if(btn)btn.disabled=false;
+      return;
+    }
+    await loadConvs();
+    openChat(tel);
+  }catch(e){
+    if(statusEl)statusEl.textContent='Error de red';
+    if(btn)btn.disabled=false;
+  }
 }
 
 function renderClients(){
