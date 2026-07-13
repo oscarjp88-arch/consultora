@@ -189,6 +189,18 @@ tr:hover td{background:#F8FAFC}
 .budget-bar-fill.warn{background:linear-gradient(90deg,var(--yellow),#D97706)}
 .budget-bar-fill.over{background:linear-gradient(90deg,var(--red),#DC2626)}
 .budget-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text2)}
+/* FIX v29, 13-jul-2026: Sección A — "Tu estado actual". Reutiliza el look de
+   .budget-section para la tarjeta de la semana (misma barra), y una tarjeta
+   más simple para el mes (sin barra — no existe un "presupuesto mensual"
+   configurado, solo se muestra el gasto real acumulado). */
+.estado-real-header{font-size:13px;font-weight:700;color:var(--text1,#0B1E3D);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.estado-real-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:8px}
+@media (max-width:700px){.estado-real-grid{grid-template-columns:1fr}}
+.estado-mes-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;justify-content:center}
+.estado-mes-label{font-size:13px;font-weight:600;margin-bottom:8px}
+.estado-mes-valor{font-size:26px;font-weight:700;color:var(--turq2)}
+.estado-mes-sub{font-size:11px;color:var(--text2);margin-top:4px}
+.section-divider{font-size:13px;font-weight:700;color:var(--text2);margin:24px 0 14px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px}
 /* FIX v26, 13-jul-2026 — Fase 3, Mejora 6: banner de alertas activas en el
    tablero (sobregasto >20%, frecuencia >2.5). Oscar confirmó: solo banner en
    el tablero, sin WhatsApp ni correo — por eso no hay lógica de cron/dedup
@@ -221,6 +233,40 @@ tr:hover td{background:#F8FAFC}
 </div>
 
 <div class="main">
+
+  <!-- FIX v29, 13-jul-2026: Sección A — "Tu estado actual". Datos reales de
+       calendario (semana lunes-hoy, mes 1°-hoy), vía consulta separada a Meta
+       con rango de fechas fijo — NO cambia con los botones 7/14/30 días de
+       abajo (Sección B). Corrige la causa raíz reportada por Oscar: antes el
+       número de "esta semana" era el gasto del rango visible prorrateado
+       matemáticamente a una equivalencia semanal
+       (spendWeekly = currentDays===7 ? spend : spend*(7/currentDays)), por
+       eso cambiaba sin que la semana real hubiera cambiado. Colocada arriba
+       del selector de rango para que la separación sea visualmente obvia —
+       asunción de diseño mía, ajustable si Oscar prefiere otro orden. -->
+  <div class="estado-real-header">🏠 Tu estado actual — no cambia con el rango de abajo</div>
+  <div class="estado-real-grid" id="estado-real-grid">
+    <div class="budget-section" id="estado-semana-section" style="margin-bottom:0">
+      <div class="budget-header">
+        <div class="budget-title" id="estado-semana-title">💰 Gasto real de esta semana (lun—hoy)</div>
+        <div class="budget-pct" id="estado-semana-pct">—</div>
+      </div>
+      <div class="budget-bar-wrap">
+        <div class="budget-bar-fill" id="estado-semana-bar" style="width:0%"></div>
+      </div>
+      <div class="budget-meta">
+        <span id="estado-semana-spent">Gastado: —</span>
+        <span id="estado-semana-remain"></span>
+      </div>
+    </div>
+    <div class="estado-mes-card" id="estado-mes-section">
+      <div class="estado-mes-label">📅 Gasto real de este mes (1° — hoy)</div>
+      <div class="estado-mes-valor" id="estado-mes-valor">—</div>
+      <div class="estado-mes-sub" id="estado-mes-sub"></div>
+    </div>
+  </div>
+
+  <div class="section-divider">📈 Análisis de rendimiento — según el rango seleccionado abajo, no afecta gasto/presupuesto</div>
 
   <!-- Period bar -->
   <div class="period-bar">
@@ -362,7 +408,16 @@ tr:hover td{background:#F8FAFC}
        suficientes puntos como para ser útil — con solo 4 no aportaba mucho
        más que los recuadros que reemplaza. -->
   <div class="trend-section" id="trend-section" style="display:none">
-    <div class="section-title" style="font-size:13px;font-weight:600;margin-bottom:10px">📈 Tendencia — últimas 8 semanas</div>
+    <div class="section-title" style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span id="trend-title">📈 Tendencia — últimas 8 semanas</span>
+      <!-- FIX v29, 13-jul-2026: "Total ejecutado por mes" — vista mensual
+           alternable en la misma gráfica, sin volver a pedir datos a Meta
+           (ya se cargan ambas series en cargarDatos()). -->
+      <div class="period-tabs" style="transform:scale(.85);transform-origin:right center">
+        <button class="period-tab active" id="trend-tab-semana" onclick="setTrendModo('semana')">Semanal</button>
+        <button class="period-tab" id="trend-tab-mes" onclick="setTrendModo('mes')">Mensual</button>
+      </div>
+    </div>
     <div style="position:relative;height:220px">
       <canvas id="trend-chart"></canvas>
     </div>
@@ -388,6 +443,18 @@ tr:hover td{background:#F8FAFC}
       <div class="table-title">🧪 Comparación de variantes A/B</div>
     </div>
     <div id="ab-wrap"></div>
+  </div>
+
+  <!-- FIX v29, 13-jul-2026: Costo final por campaña (histórico completo) —
+       bajo demanda, NO se carga automáticamente (consulta más pesada que el
+       resto: trae TODAS las campañas de la cuenta, activas o no, con su
+       gasto de los últimos 12 meses — no solo las del rango 7/14/30 días). -->
+  <div class="table-card" style="margin-top:16px">
+    <div class="table-header">
+      <div class="table-title">🗂️ Costo final por campaña — histórico completo (incluye pausadas/terminadas)</div>
+      <button class="btn-secondary" id="btn-costo-historico" onclick="cargarCostoHistorico()" style="font-size:12px;padding:8px 14px">Ver costo histórico completo</button>
+    </div>
+    <div id="costo-historico-wrap" style="display:none"></div>
   </div>
 
 </div>
@@ -1079,6 +1146,9 @@ async function publicarCampana() {
   btn.disabled = false;
 }
 let lastData = null;
+// FIX v29, 13-jul-2026: estado real de calendario (Sección A) — independiente
+// de lastData/currentDays. null hasta que cargarEstadoActual() resuelva.
+let estadoReal = { semanaSpendCOP: null, mesSpendCOP: null };
 
 // FIX v26, 13-jul-2026 — Fase 3, Mejora 5: mismo Worker y mismo secreto
 // compartido (X-Worker-Secret) ya usados por creditek-agente-respuestas.html
@@ -1151,6 +1221,95 @@ function getFechas(days) {
   };
 }
 
+// FIX v29, 13-jul-2026: Sección A — "Tu estado actual". Fechas de calendario
+// real, NO relativas a currentDays: lunes de esta semana → hoy, y día 1 de
+// este mes → hoy. Esto es justo lo que el Hallazgo del documento pedía
+// separar del selector 7/14/30 (ese rango prorrateaba el gasto para
+// "equivaler" a una semana, lo cual no es lo mismo que el gasto real de la
+// semana en curso).
+function getFechaLunesEstaSemana() {
+  const hoy = new Date();
+  const diaSemana = hoy.getDay(); // 0 = domingo
+  const offsetLunes = diaSemana === 0 ? 6 : diaSemana - 1;
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate() - offsetLunes);
+  return lunes;
+}
+function getFechaPrimerDiaMes() {
+  const hoy = new Date();
+  return new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+}
+function fmtFecha(d) { return d.toISOString().split('T')[0]; }
+
+// ── Sección A: estado real de calendario (semana + mes) ───────────
+async function cargarEstadoActual() {
+  const token   = localStorage.getItem('ck_meta_token');
+  const account = localStorage.getItem('ck_meta_account');
+  if (!token || !account) return;
+
+  const hoy = new Date();
+  const lunes = getFechaLunesEstaSemana();
+  const primerDiaMes = getFechaPrimerDiaMes();
+
+  try {
+    const [resSemana, resMes] = await Promise.all([
+      fetch(`https://graph.facebook.com/v19.0/act_${account}/insights?fields=spend&time_range={"since":"${fmtFecha(lunes)}","until":"${fmtFecha(hoy)}"}&level=account&access_token=${token}`),
+      fetch(`https://graph.facebook.com/v19.0/act_${account}/insights?fields=spend&time_range={"since":"${fmtFecha(primerDiaMes)}","until":"${fmtFecha(hoy)}"}&level=account&access_token=${token}`),
+    ]);
+    const [dSemana, dMes] = await Promise.all([resSemana.json(), resMes.json()]);
+    if (dSemana.error) throw new Error(dSemana.error.message);
+    if (dMes.error) throw new Error(dMes.error.message);
+
+    estadoReal.semanaSpendCOP = parseFloat(dSemana.data?.[0]?.spend || 0);
+    estadoReal.mesSpendCOP    = parseFloat(dMes.data?.[0]?.spend || 0);
+    renderEstadoActual();
+  } catch (e) {
+    console.error('[ESTADO-ACTUAL] error:', e);
+  }
+}
+
+function renderEstadoActual() {
+  if (estadoReal.semanaSpendCOP === null) return;
+  const weeklyBudget  = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
+  const spendSemana   = estadoReal.semanaSpendCOP / COP_TO_USD;
+  const spendMes      = estadoReal.mesSpendCOP / COP_TO_USD;
+
+  // Misma lógica de v23 (sin capear el sobregasto real), solo que ahora
+  // alimentada con el gasto real de la semana en curso, no con el rango
+  // prorrateado.
+  const pctReal = (spendSemana / weeklyBudget) * 100;
+  const pctBar  = Math.min(pctReal, 100);
+  document.getElementById('estado-semana-pct').textContent = pctReal.toFixed(0) + '%';
+  const bar = document.getElementById('estado-semana-bar');
+  bar.style.width = pctBar + '%';
+  bar.className = 'budget-bar-fill' + (pctReal >= 100 ? ' over' : pctReal >= 80 ? ' warn' : '');
+  document.getElementById('estado-semana-spent').textContent  = 'Gastado: $' + spendSemana.toFixed(2);
+  document.getElementById('estado-semana-remain').textContent = pctReal > 100
+    ? 'Sobregasto: $' + (spendSemana - weeklyBudget).toFixed(2)
+    : 'Restante: $' + (weeklyBudget - spendSemana).toFixed(2);
+  const copEquivSemana = (weeklyBudget * COP_TO_USD).toLocaleString('es-CO');
+  document.getElementById('estado-semana-title').textContent = `💰 Gasto real de esta semana (lun—hoy) — presupuesto $${weeklyBudget} USD (~$${copEquivSemana} COP)`;
+
+  document.getElementById('estado-mes-valor').textContent = '$' + spendMes.toFixed(2) + ' USD';
+  document.getElementById('estado-mes-sub').textContent = `~$${Math.round(spendMes * COP_TO_USD).toLocaleString('es-CO')} COP · desde el 1° del mes hasta hoy`;
+
+  // La alerta de sobregasto (v26) ahora se alimenta de este dato real, no
+  // del gasto prorrateado de la Sección B — ver refrescarAlertas().
+  refrescarAlertas();
+}
+
+// FIX v29, 13-jul-2026: única fuente de la alerta de sobregasto (siempre el
+// dato real de la semana, Sección A) combinada con la alerta de frecuencia
+// (que sí depende de qué esté seleccionado en la Sección B — combinada o una
+// campaña). Se llama desde renderEstadoActual() (cuando cambia el gasto
+// real) y desde renderVista() (cuando cambia la selección de campaña).
+function refrescarAlertas(camps) {
+  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
+  const pctReal      = estadoReal.semanaSpendCOP !== null ? ((estadoReal.semanaSpendCOP / COP_TO_USD) / weeklyBudget) * 100 : null;
+  const spendSemana  = estadoReal.semanaSpendCOP !== null ? estadoReal.semanaSpendCOP / COP_TO_USD : 0;
+  renderAlertas(pctReal, weeklyBudget, spendSemana, camps || lastData?.camps || []);
+}
+
 // ── Cargar datos Meta API ─────────────────────────────────────────
 async function cargarDatos() {
   const token   = localStorage.getItem('ck_meta_token');
@@ -1162,6 +1321,12 @@ async function cargarDatos() {
   btn.disabled = true;
   icon.style.animation = 'spin 1s linear infinite';
   icon.style.display = 'inline-block';
+
+  // FIX v29, 13-jul-2026: Sección A ("Tu estado actual") se refresca en
+  // paralelo, sin esperar — es una consulta independiente con rango de
+  // fechas FIJO (semana/mes de calendario), no afectada por currentDays ni
+  // por lo que tarde el resto de cargarDatos().
+  cargarEstadoActual();
 
   try {
     const { since, until } = getFechas(currentDays);
@@ -1266,7 +1431,22 @@ async function cargarDatos() {
       trendData.push({ week: w, data: wDat.data?.[0] || null });
     }
 
-    lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: campsData, trend: trendData, ads: adsData, ventasPorCampaña, pctSinAtribucion };
+    // FIX v29, 13-jul-2026: "Total ejecutado por mes" (histórico) — misma
+    // gráfica de tendencia, con una vista mensual alternable (setTrendModo)
+    // además de la semanal de arriba. 6 meses (no más) para no sumar
+    // demasiadas llamadas extra a Meta en cada carga.
+    const trendDataMensual = [];
+    for (let mAtras = 5; mAtras >= 0; mAtras--) {
+      const hoyM = new Date();
+      const inicioMes = new Date(hoyM.getFullYear(), hoyM.getMonth() - mAtras, 1);
+      const finMes = mAtras === 0 ? hoyM : new Date(hoyM.getFullYear(), hoyM.getMonth() - mAtras + 1, 0);
+      const mUrl = `https://graph.facebook.com/v19.0/act_${account}/insights?fields=spend,actions,ctr&time_range={"since":"${fmtFecha(inicioMes)}","until":"${fmtFecha(finMes)}"}&level=account&access_token=${token}`;
+      const mRes = await fetch(mUrl);
+      const mDat = await mRes.json();
+      trendDataMensual.push({ mesLabel: `${MESES_CORTOS[inicioMes.getMonth()]} ${inicioMes.getFullYear()}`, data: mDat.data?.[0] || null });
+    }
+
+    lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: campsData, trend: trendData, trendMensual: trendDataMensual, ads: adsData, ventasPorCampaña, pctSinAtribucion };
     renderDatos(lastData);
     document.getElementById('last-update').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CO');
     // FIX v28, 13-jul-2026: el análisis de IA (analizarConIA) ya no se llama
@@ -1329,7 +1509,7 @@ function renderDatos(d) {
   // 10 tarjetas de arriba, el análisis de IA y la barra de presupuesto (v28).
   renderCampañas(d.camps, d.ventasPorCampaña || {}, d.pctSinAtribucion);
   renderVariantes(d.ads);
-  renderTendencia(d.trend);
+  renderTendencia(d.trend, d.trendMensual);
 
   renderVista();
 }
@@ -1392,49 +1572,34 @@ function renderVista() {
   else if (k.freq >= 3) { freqBar.className = 'kpi-alert yellow'; }
   else { freqBar.className = 'kpi-alert green'; }
 
-  // Budget bar / gasto de campaña — FIX v28: en modo individual se reemplaza
-  // por el gasto real de esa campaña, sin comparar contra presupuesto.
-  // Confirmado con Oscar: el presupuesto semanal es manual y de cuenta total
-  // (no desglosado por campaña), por eso no aplica aquí.
-  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
-  const spendWeekly  = currentDays === 7 ? k.spend : k.spend * (7 / currentDays);
-  let pctReal = null;
+  // Gasto de campaña — FIX v28/v29: en modo individual se muestra el gasto
+  // real de ESA campaña en el rango seleccionado (7/14/30 días), sin
+  // comparar contra presupuesto (el presupuesto es de cuenta total, no por
+  // campaña). En modo combinado, esta tarjeta ya NO se muestra aquí — el
+  // control de gasto/presupuesto de cuenta ahora vive fijo en la Sección A
+  // de arriba ("Tu estado actual"), que usa datos reales de calendario en
+  // vez del gasto del rango prorrateado (causa raíz de la confusión que
+  // reportó Oscar: "esta semana" cambiaba solo por tocar 7/14/30 días).
   if (modoIndividual) {
-    document.getElementById('budget-title').textContent = `💰 Gasto de esta campaña — $${k.spend.toFixed(2)} USD`;
+    document.getElementById('budget-title').textContent = `💰 Gasto de esta campaña en este rango (${currentDays} días) — $${k.spend.toFixed(2)} USD`;
     document.getElementById('budget-pct').textContent = '';
     const bar = document.getElementById('budget-bar');
     bar.style.width = '100%';
     bar.className = 'budget-bar-fill';
     document.getElementById('budget-spent').textContent = `Gastado: $${k.spend.toFixed(2)}`;
     document.getElementById('budget-remain').textContent = '';
+    document.getElementById('budget-section').style.display = 'block';
   } else {
-    // FIX v23, 13-jul-2026 — Hallazgo 2: pctReal ya NO se capea en 100 — antes
-    // Math.min(...,100) hacía que un sobregasto de 26%, 91% o cualquier otro
-    // valor siempre mostrara "100%" y "Restante: $0.00", ocultando qué tan
-    // grave era el sobregasto real. El ancho visual de la barra (pctBar) sí se
-    // capea en 100% porque no puede dibujarse más ancha que su contenedor.
-    pctReal = (spendWeekly / weeklyBudget) * 100;
-    const pctBar = Math.min(pctReal, 100);
-    document.getElementById('budget-pct').textContent = pctReal.toFixed(0) + '%';
-    const bar = document.getElementById('budget-bar');
-    bar.style.width = pctBar + '%';
-    bar.className = 'budget-bar-fill' + (pctReal >= 100 ? ' over' : pctReal >= 80 ? ' warn' : '');
-    document.getElementById('budget-spent').textContent  = 'Gastado: $' + spendWeekly.toFixed(2);
-    document.getElementById('budget-remain').textContent = pctReal > 100
-      ? 'Sobregasto: $' + (spendWeekly - weeklyBudget).toFixed(2)
-      : 'Restante: $' + (weeklyBudget - spendWeekly).toFixed(2);
-    const copEquiv = (weeklyBudget * 4200).toLocaleString('es-CO');
-    document.getElementById('budget-title').textContent = `💰 Presupuesto semanal — $${weeklyBudget} USD (~$${copEquiv} COP)`;
+    document.getElementById('budget-section').style.display = 'none';
   }
-  document.getElementById('budget-section').style.display = 'block';
 
-  // FIX v26 + v28: banner de alertas. En combinada, igual que antes
-  // (sobregasto + frecuencia de todas las campañas). En individual, solo se
-  // evalúa la frecuencia DE ESA campaña — el umbral de sobregasto no aplica
-  // a nivel de campaña porque el presupuesto es de cuenta total, no por
-  // campaña (pctReal=null hace que la condición de sobregasto de
-  // renderAlertas nunca se cumpla, sin tener que tocar esa función).
-  renderAlertas(pctReal, weeklyBudget, spendWeekly, modoIndividual ? [camp] : d.camps);
+  // FIX v29: la alerta de sobregasto ya no se calcula aquí (dependía del
+  // gasto prorrateado, el mismo dato que causaba la confusión) — ahora se
+  // alimenta del gasto real de la semana (Sección A, cargarEstadoActual()).
+  // La alerta de frecuencia sigue viniendo de aquí (combinada o de la
+  // campaña seleccionada), porque eso sí depende del rango/selector de la
+  // Sección B.
+  refrescarAlertas(modoIndividual ? [camp] : d.camps);
 
   // Análisis de IA — combinado o enfocado en la campaña seleccionada.
   if (localStorage.getItem('ck_claude_key')) {
@@ -1516,6 +1681,89 @@ function renderStatusBadge(status) {
   };
   const s = map[status] || { label: status || 'Desconocido', cls: 'paused' };
   return `<span class="status-badge ${s.cls}">● ${s.label}</span>`;
+}
+
+// FIX v29, 13-jul-2026: "Costo final por campaña" — histórico completo, bajo
+// demanda (no se carga sola con el resto del tablero, es una consulta más
+// pesada). Trae TODAS las campañas de la cuenta vía /campaigns (activas,
+// pausadas o ya terminadas — ese endpoint no está limitado por rango de
+// fechas, a diferencia de /insights), y cruza con su gasto de los últimos 12
+// meses (no "desde el inicio de la cuenta" — sería una consulta mucho más
+// lenta/costosa; 12 meses es el rango largo fijo que el documento permitía
+// como alternativa razonable).
+function estadoHistoricoLabel(c) {
+  const activos = ['ACTIVE'];
+  const pausados = ['PAUSED', 'CAMPAIGN_PAUSED', 'ADSET_PAUSED', 'PENDING_REVIEW'];
+  if (activos.includes(c.effective_status)) return { label: 'Activa', cls: 'active' };
+  if (pausados.includes(c.effective_status)) return { label: 'Pausada', cls: 'paused' };
+  // Si Meta ya no la reporta como activa/pausada (ARCHIVED, DELETED, etc.) o
+  // tiene fecha de fin ya pasada, se muestra como Terminada.
+  if (c.stop_time && new Date(c.stop_time) < new Date()) return { label: 'Terminada', cls: 'paused' };
+  return { label: c.effective_status || 'Desconocido', cls: 'paused' };
+}
+
+async function cargarCostoHistorico() {
+  const token   = localStorage.getItem('ck_meta_token');
+  const account = localStorage.getItem('ck_meta_account');
+  if (!token || !account) { abrirConfig(); return; }
+
+  const btn = document.getElementById('btn-costo-historico');
+  const wrap = document.getElementById('costo-historico-wrap');
+  btn.disabled = true;
+  btn.textContent = 'Cargando...';
+
+  try {
+    const hoy = new Date();
+    const hace12Meses = new Date(hoy.getFullYear() - 1, hoy.getMonth(), hoy.getDate());
+
+    const [resCamps, resInsights] = await Promise.all([
+      fetch(`https://graph.facebook.com/v19.0/act_${account}/campaigns?fields=id,name,effective_status,start_time,stop_time&limit=500&access_token=${token}`),
+      fetch(`https://graph.facebook.com/v19.0/act_${account}/insights?fields=campaign_id,campaign_name,spend&time_range={"since":"${fmtFecha(hace12Meses)}","until":"${fmtFecha(hoy)}"}&level=campaign&limit=500&access_token=${token}`),
+    ]);
+    const dCamps = await resCamps.json();
+    const dInsights = await resInsights.json();
+    if (dCamps.error) throw new Error(dCamps.error.message);
+    if (dInsights.error) throw new Error(dInsights.error.message);
+
+    const spendPorCampaña = {};
+    (dInsights.data || []).forEach(i => { spendPorCampaña[i.campaign_id] = parseFloat(i.spend || 0); });
+
+    const filas = (dCamps.data || []).map(c => ({
+      id: c.id,
+      nombre: c.name,
+      estado: estadoHistoricoLabel(c),
+      spendCOP: spendPorCampaña[c.id] || 0,
+      inicio: c.start_time ? c.start_time.split('T')[0] : null,
+      fin: c.stop_time ? c.stop_time.split('T')[0] : null,
+    })).sort((a, b) => b.spendCOP - a.spendCOP);
+
+    if (filas.length === 0) {
+      wrap.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Sin campañas</h3><p>No se encontraron campañas en esta cuenta.</p></div>';
+    } else {
+      wrap.innerHTML = `<div class="table-wrapper"><table>
+        <thead><tr>
+          <th>#</th><th>Campaña</th><th>Estado</th><th>Gasto (últimos 12 meses)</th><th>Inicio</th><th>Fin</th>
+        </tr></thead>
+        <tbody>
+        ${filas.map((f, i) => `<tr>
+          <td style="font-weight:700;color:var(--text3)">${i+1}</td>
+          <td class="camp-name" title="${f.nombre}">${acortarNombreCampaña(f.nombre)}</td>
+          <td><span class="status-badge ${f.estado.cls}">● ${f.estado.label}</span></td>
+          <td style="font-weight:600">$${(f.spendCOP / COP_TO_USD).toFixed(2)}</td>
+          <td>${f.inicio || '—'}</td>
+          <td>${f.fin || (f.estado.label === 'Activa' ? 'En curso' : '—')}</td>
+        </tr>`).join('')}
+        </tbody></table></div>
+        <p style="font-size:11px;color:var(--text3);margin-top:8px">ℹ️ Gasto de los últimos 12 meses, no de la vida completa de la cuenta (consultar desde la fecha de creación sería mucho más lento). Incluye campañas pausadas o terminadas, no solo las activas.</p>`;
+    }
+    wrap.style.display = 'block';
+  } catch (e) {
+    showToast('Error al cargar costo histórico: ' + e.message, '#EF4444');
+    console.error('[COSTO-HISTORICO]', e);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Ver costo histórico completo';
 }
 
 // FIX v26, 13-jul-2026 — Fase 3, Mejora 5: parámetros nuevos ventasPorCampaña
@@ -1643,12 +1891,36 @@ async function pausarAd(adId, btnEl) {
 // por una gráfica de línea real (Chart.js) con gasto y CTR en el tiempo,
 // sobre 8 semanas en vez de 4 (ver cargarDatos()).
 let trendChartInstance = null;
-function renderTendencia(trend) {
-  if (!trend || trend.every(t => !t.data)) return;
+let trendSemanalData = null;
+let trendMensualData = null;
+let trendModo = 'semana'; // FIX v29 — 'semana' (v25, sin cambios) o 'mes' (nuevo, histórico 6 meses)
+
+// FIX v29, 13-jul-2026: renderTendencia ahora recibe las 2 series (ya
+// cargadas de una sola vez en cargarDatos(), sin llamadas extra a Meta al
+// alternar) y solo dibuja la que esté activa según trendModo.
+function renderTendencia(trendSemanal, trendMensual) {
+  trendSemanalData = trendSemanal;
+  trendMensualData = trendMensual;
+  dibujarTendencia();
+}
+
+function setTrendModo(modo) {
+  trendModo = modo;
+  document.getElementById('trend-tab-semana').classList.toggle('active', modo === 'semana');
+  document.getElementById('trend-tab-mes').classList.toggle('active', modo === 'mes');
+  dibujarTendencia();
+}
+
+function dibujarTendencia() {
+  const trend = trendModo === 'mes' ? trendMensualData : trendSemanalData;
   const section = document.getElementById('trend-section');
-  const labels = trend.map(t => t.week === 0 ? 'Esta semana' : `Hace ${t.week} sem`);
+  if (!trend || trend.every(t => !t.data)) return;
+  const labels = trendModo === 'mes'
+    ? trend.map(t => t.mesLabel)
+    : trend.map(t => t.week === 0 ? 'Esta semana' : `Hace ${t.week} sem`);
   const spendSerie = trend.map(t => parseFloat(t.data?.spend || 0) / COP_TO_USD);
   const ctrSerie   = trend.map(t => parseFloat(t.data?.ctr || 0));
+  document.getElementById('trend-title').textContent = trendModo === 'mes' ? '📈 Tendencia — últimos 6 meses' : '📈 Tendencia — últimas 8 semanas';
 
   const ctx = document.getElementById('trend-chart').getContext('2d');
   if (trendChartInstance) trendChartInstance.destroy(); // evita acumular instancias al actualizar
