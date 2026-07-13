@@ -3362,7 +3362,7 @@ async function componerLogoSobreImagen(dataUrlImagen) {
 // en el Worker (wrangler secret put WORKER_SHARED_SECRET).
 const WORKER_SHARED_SECRET = '72c73c94244190777d08b12775b2dace13d26877a75367ec';
 
-async function generarConGemini(key, prompt, soloFoto = false, imagenRefDataUrl = null) {
+async function generarConGemini(key, prompt, soloFoto = false, imagenRefDataUrl = null, esEdicion = false) {
   // FIX 03-jul-2026: relación de aspecto exacta para calzar con GPT
   // (GPT: 1024x1024 = 1:1 · 1024x1536 = 2:3).
   // gemini3pro SÍ admite 2:3 exacto. El respaldo Imagen 4 :predict NO admite
@@ -3424,6 +3424,21 @@ async function generarConGemini(key, prompt, soloFoto = false, imagenRefDataUrl 
     // gemini3pro ya recibió el logo como imagen de referencia (salvo en modo soloFoto) — no hace falta pegarlo de nuevo.
     logoYaIntegrado = !soloFoto;
   } catch (errPrincipal) {
+    // FIX v17 12-jul-2026: decisión de Oscar — para EDICIÓN específicamente,
+    // si gemini3pro (el único motor con imagen de referencia) falla, NO caer
+    // a la vía normal del Worker (Nano Banana 2 / Vía 0), porque esa vía no
+    // manda ninguna imagen de referencia y el resultado sería una regeneración
+    // completa disfrazada de "edición" — el mismo problema que v16 resolvió.
+    // Nota: el "fallback a Vía 0" no ocurre dentro del Worker en una sola
+    // llamada — son 2 peticiones HTTP separadas orquestadas aquí en el
+    // frontend (el intento con engine=gemini3pro, y este segundo intento sin
+    // engine). Por eso el fix va aquí y no como un parámetro que el Worker
+    // deba respetar: si nunca se hace la segunda llamada, no hay nada que el
+    // Worker necesite bloquear.
+    if (esEdicion) {
+      console.warn('[generarConGemini] gemini3pro falló durante edición — NO se intenta Vía 0 (sin imagen de referencia):', errPrincipal.message);
+      throw new Error('No se pudo editar la imagen, intenta de nuevo.');
+    }
     console.warn('[generarConGemini] gemini3pro falló, usando vía normal del Worker:', errPrincipal.message);
     src = await llamarWorker({ ...reqBase, aspectRatio: aspectRatioFallback });
   }
@@ -3578,7 +3593,7 @@ async function aplicarCambioImagen() {
       // colores y specs cambiaban). Ahora se manda como imagen de referencia
       // adicional junto al logo (ver generarConGemini/llamarGemini3Pro_ en el Worker).
       const editPrompt = `${promptBaseGemini} Además: ${instruccion}. La imagen de referencia adjunta es la pieza ACTUAL — mantén exactamente igual todo lo demás (logo, colores de marca, composición, specs) y aplica únicamente este cambio.`;
-      newSrc = await generarConGemini(key, editPrompt, false, currentSrc);
+      newSrc = await generarConGemini(key, editPrompt, false, currentSrc, /* esEdicion */ true);
       document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
     } else {
       const key = localStorage.getItem('ck_openai_key');
