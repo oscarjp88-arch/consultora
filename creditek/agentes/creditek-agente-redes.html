@@ -2403,7 +2403,31 @@ function getDetalleDelDia(estilo) {
   return banco[idx];
 }
 
-function buildImgPrompt() {
+// FIX v13 12-jul-2026: completa el procesador de un modelo cuando el catálogo
+// (STATIC del Worker o scraping en vivo) no lo tiene. Usa la misma API key
+// de Claude ya configurada en la interfaz (nunca la del Worker — este Worker
+// no tiene ni necesita su propia ANTHROPIC_API_KEY). Si Claude tampoco tiene
+// certeza, devuelve null — nunca se muestra un valor inventado.
+async function obtenerProcesadorConIA(nombreModelo, apiKey) {
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 30,
+        messages: [{ role: 'user', content: `¿Cuál es el procesador/chipset del celular "${nombreModelo}"? Responde SOLO el nombre del procesador, sin explicación, máximo 5 palabras. Si no lo sabes con certeza, responde exactamente: "No disponible".` }]
+      })
+    });
+    const data = await res.json();
+    const respuesta = data.content?.find(b => b.type === 'text')?.text?.trim();
+    return (respuesta && respuesta !== 'No disponible') ? respuesta : null;
+  } catch {
+    return null; // fallback silencioso — el badge de procesador simplemente no se incluye
+  }
+}
+
+async function buildImgPrompt() {
   // ── Variables comunes ────────────────────────────────────────────
   const producto       = document.getElementById('producto').value.trim() || 'smartphone';
   const ciudad         = document.getElementById('ciudad').value || 'Colombia';
@@ -2581,19 +2605,41 @@ function buildImgPrompt() {
   ];
   const checkedSpecs = SPEC_FIELDS.filter(s => document.getElementById(s.id)?.checked);
   let foundSpecs = {};
+  let foundModelo = null;
   if (checkedSpecs.length > 0 && producto.length > 3) {
-    const stored = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
-    if (stored?.brands) {
+    var storedRefs = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
+    if (storedRefs?.brands) {
       const prod = producto.toLowerCase();
       // Fix 05-jul-2026: buscar por palabras clave individuales en vez del string completo
       // "samsung a16" encuentra "samsung galaxy a16 128gb" porque comparte "samsung" y "a16"
       const prodTokens = prod.split(/\s+/).filter(t => t.length > 1);
-      outer: for (const [, d] of Object.entries(stored.brands)) {
+      outer: for (const [, d] of Object.entries(storedRefs.brands)) {
         for (const m of (d.modelos || [])) {
           const n = m.nombre.toLowerCase();
           const nTokens = n.split(/\s+/);
           const matches = prodTokens.filter(t => nTokens.some(nt => nt.includes(t) || t.includes(nt)));
-          if (matches.length >= Math.min(2, prodTokens.length)) { foundSpecs = m.specs||{}; break outer; }
+          if (matches.length >= Math.min(2, prodTokens.length)) { foundSpecs = m.specs||{}; foundModelo = m; break outer; }
+        }
+      }
+    }
+    // FIX v13 12-jul-2026: si el usuario pidió el badge de "Procesador" y el
+    // modelo encontrado en el catálogo no lo tiene (caso confirmado: ninguno
+    // de los 39 modelos de STATIC en el Worker tenía este campo), completar
+    // con una consulta ligera a Claude en vez de dejarlo vacío o dejar que la
+    // IA de imagen lo invente. Reutiliza la misma API key de Claude que ya
+    // está configurada en esta interfaz (sessionStorage) — el Worker nunca
+    // tuvo ni necesita su propia ANTHROPIC_API_KEY para esto. Se cachea en
+    // el mismo localStorage.ck_referencias para no repetir la llamada la
+    // próxima vez que se genere con el mismo modelo.
+    const pideProcesador = checkedSpecs.some(s => s.id === 'spec-chip');
+    if (pideProcesador && foundModelo && !foundSpecs.procesador) {
+      const apiKeyClaude = sessionStorage.getItem('ck_api_key') || '';
+      if (apiKeyClaude.startsWith('sk-ant-')) {
+        const procesadorIA = await obtenerProcesadorConIA(foundModelo.nombre, apiKeyClaude);
+        if (procesadorIA) {
+          foundModelo.specs = { ...(foundModelo.specs || {}), procesador: procesadorIA };
+          foundSpecs = foundModelo.specs;
+          localStorage.setItem('ck_referencias', JSON.stringify(storedRefs));
         }
       }
     }
@@ -3710,7 +3756,12 @@ function descargarImagenAB(side) {
 
 async function generarConModelos() {
   await corregirMensajeSecundario();
-  buildImgPrompt();
+  // FIX v13 12-jul-2026: buildImgPrompt() ahora es async (puede consultar a
+  // Claude el procesador faltante) — aquí SÍ hace falta esperarlo, porque la
+  // siguiente línea lee el textarea inmediatamente. Los demás ~15 call sites
+  // de buildImgPrompt() en el archivo (onchange/oninput de la UI) no leen su
+  // resultado justo después, así que no necesitaron cambio.
+  await buildImgPrompt();
   const prompt = document.getElementById('img-prompt-ta').value.trim();
   if (!prompt) { showToast('Genera el copy primero para obtener el prompt de imagen', '#ef4444'); return; }
   const promptGemini = await buildImgPromptGemini(); // FIX 02-jul-2026

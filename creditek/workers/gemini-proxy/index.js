@@ -303,18 +303,18 @@ if (path === '/test-fetch') {
       //   NO es el precio de cuota de Creditek — el agente HTML nunca lo usa en el prompt de imagen.
       const STATIC = {
         'Xiaomi CO': [
-          { nombre: 'Redmi Note 15 Pro 5G', specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'200MP', bateria:'5110mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'Redmi Note 14 5G',     specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'5110mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'Poco X7 Pro 5G',       specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'6000mAh', pantalla:'6.67"' }, precioLista: null },
+          { nombre: 'Redmi Note 15 Pro 5G', specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'200MP', bateria:'5110mAh', pantalla:'6.67"', procesador:'MediaTek Dimensity 7400 Ultra' }, precioLista: null },
+          { nombre: 'Redmi Note 14 5G',     specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'108MP', bateria:'5110mAh', pantalla:'6.67"', procesador:'MediaTek Dimensity 7025 Ultra' }, precioLista: null },
+          { nombre: 'Poco X7 Pro 5G',       specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP',  bateria:'6000mAh', pantalla:'6.67"', procesador:'MediaTek Dimensity 7300 Ultra' }, precioLista: null },
           { nombre: 'Poco M6 Pro',          specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'64MP',  bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'Redmi 14C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5160mAh', pantalla:'6.88"' }, precioLista: null },
+          { nombre: 'Redmi 14C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5160mAh', pantalla:'6.88"', procesador:'MediaTek Helio G81 Ultra' }, precioLista: null },
           { nombre: 'Redmi 13C',            specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP',  bateria:'5000mAh', pantalla:'6.74"' }, precioLista: null },
         ],
         'Motorola CO': [
-          { nombre: 'Moto G85 5G',  specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.67"' }, precioLista: null },
-          { nombre: 'Moto G75 5G',  specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.78"' }, precioLista: null },
-          { nombre: 'Moto G55 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.49"' }, precioLista: null },
-          { nombre: 'Moto G35 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.72"' }, precioLista: null },
+          { nombre: 'Moto G85 5G',  specs: { ram:'12GB RAM', almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.67"', procesador:'Snapdragon 6s Gen 3' }, precioLista: null },
+          { nombre: 'Moto G75 5G',  specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.78"', procesador:'Snapdragon 6 Gen 3' }, precioLista: null },
+          { nombre: 'Moto G55 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.49"', procesador:'MediaTek Dimensity 7025' }, precioLista: null },
+          { nombre: 'Moto G35 5G',  specs: { ram:'8GB RAM',  almacenamiento:'128GB', camara:'50MP', bateria:'5000mAh', pantalla:'6.72"', procesador:'Unisoc T760' }, precioLista: null },
           { nombre: 'Moto E45',     specs: { ram:'4GB RAM',  almacenamiento:'128GB', camara:'48MP', bateria:'5000mAh', pantalla:'6.56"' }, precioLista: null },
           { nombre: 'Razr 50 5G',   specs: { ram:'8GB RAM',  almacenamiento:'256GB', camara:'50MP', bateria:'4200mAh', pantalla:'6.9"'  }, precioLista: null },
         ],
