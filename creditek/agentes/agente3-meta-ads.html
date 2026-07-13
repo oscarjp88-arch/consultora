@@ -48,6 +48,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .period-tab{padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;font-family:var(--font);color:var(--text2)}
 .period-tab.active{background:var(--navy);color:var(--white)}
 .last-update{font-size:11px;color:var(--text3)}
+.scope-label{font-size:12px;font-weight:600;color:var(--text2);background:var(--card2,rgba(0,0,0,.04));display:inline-block;padding:4px 10px;border-radius:6px;margin-bottom:10px}
 
 /* AI Analysis banner */
 .ai-banner{background:linear-gradient(135deg,var(--navy) 0%,#1a3a6e 100%);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;display:none}
@@ -221,6 +222,12 @@ tr:hover td{background:#F8FAFC}
     </div>
   </div>
 
+  <!-- FIX v23, 13-jul-2026 — Hallazgo 3: el presupuesto, el análisis de IA y
+       las tarjetas de indicadores de abajo son el TOTAL combinado de todas
+       las campañas activas, no de una sola — antes no quedaba dicho en
+       ningún lado. -->
+  <div class="scope-label" id="scope-label" style="display:none"></div>
+
   <!-- Budget bar -->
   <div class="budget-section" id="budget-section" style="display:none">
     <div class="budget-header">
@@ -259,7 +266,15 @@ tr:hover td{background:#F8FAFC}
       <div class="kpi-rank">⚠</div>
       <div class="kpi-label">ROAS estimado</div>
       <div class="kpi-value turq" id="kpi-roas">—</div>
-      <div class="kpi-delta neutral" id="delta-roas">Sin datos</div>
+      <!-- FIX v23, 13-jul-2026 — Hallazgo 4: "Sin datos" contradecía al
+           número mostrado arriba (ej. "158.6x") — sí hay dato, es una
+           proyección estimada (roas = resultados * $50.000 COP / gasto),
+           no la ausencia de datos. setKPI() nunca actualiza este texto
+           porque no hay un ROAS del período anterior con qué compararlo
+           (se llama con prev=null, curr=null a propósito) — "Sin
+           comparación" es la misma palabra que ya usa el resto del
+           tablero (setKPI) para ese caso exacto, sin inventar texto nuevo. -->
+      <div class="kpi-delta neutral" id="delta-roas">Sin comparación</div>
       <div class="kpi-sub">Proyección — no confirma venta real</div>
     </div>
     <div class="kpi-card" title="Porcentaje de personas que vieron el anuncio y le dieron clic. Más alto significa que el anuncio genera más interés real.">
@@ -1221,16 +1236,30 @@ function renderDatos(d) {
   // Budget bar
   const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
   const spendWeekly  = currentDays === 7 ? spend : spend * (7 / currentDays);
-  const pct          = Math.min((spendWeekly / weeklyBudget) * 100, 100);
-  document.getElementById('budget-pct').textContent = pct.toFixed(0) + '%';
+  // FIX v23, 13-jul-2026 — Hallazgo 2: pctReal ya NO se capea en 100 — antes
+  // Math.min(...,100) hacía que un sobregasto de 26%, 91% o cualquier otro
+  // valor siempre mostrara "100%" y "Restante: $0.00", ocultando qué tan
+  // grave era el sobregasto real. El ancho visual de la barra (pctBar) sí se
+  // capea en 100% porque no puede dibujarse más ancha que su contenedor.
+  const pctReal = (spendWeekly / weeklyBudget) * 100;
+  const pctBar  = Math.min(pctReal, 100);
+  document.getElementById('budget-pct').textContent = pctReal.toFixed(0) + '%';
   const bar = document.getElementById('budget-bar');
-  bar.style.width = pct + '%';
-  bar.className = 'budget-bar-fill' + (pct >= 100 ? ' over' : pct >= 80 ? ' warn' : '');
+  bar.style.width = pctBar + '%';
+  bar.className = 'budget-bar-fill' + (pctReal >= 100 ? ' over' : pctReal >= 80 ? ' warn' : '');
   document.getElementById('budget-spent').textContent    = 'Gastado: $' + spendWeekly.toFixed(2);
-  document.getElementById('budget-remain').textContent   = 'Restante: $' + Math.max(0, weeklyBudget - spendWeekly).toFixed(2);
+  document.getElementById('budget-remain').textContent   = pctReal > 100
+    ? 'Sobregasto: $' + (spendWeekly - weeklyBudget).toFixed(2)
+    : 'Restante: $' + (weeklyBudget - spendWeekly).toFixed(2);
   document.getElementById('budget-section').style.display = 'block';
   const copEquiv = (weeklyBudget * 4200).toLocaleString('es-CO');
   document.getElementById('budget-title').textContent = `💰 Presupuesto semanal — $${weeklyBudget} USD (~$${copEquiv} COP)`;
+
+  // FIX v23, 13-jul-2026 — Hallazgo 3: etiqueta de alcance (todas las
+  // campañas combinadas), usando el número real de campañas activas.
+  const scopeLabel = document.getElementById('scope-label');
+  scopeLabel.textContent = `📊 Resumen combinado — todas las campañas activas (${d.camps?.length || 0})`;
+  scopeLabel.style.display = 'inline-block';
 
   // Campañas
   renderCampañas(d.camps);
@@ -1414,11 +1443,18 @@ async function analizarConIA(data) {
   const cpm     = parseFloat(m.cpm || 0);
   const results = contarResultadosReales(m.actions);
   const cpr     = results > 0 ? (spend / results).toFixed(2) : 'N/A';
+  // FIX v23, 13-jul-2026 — Hallazgo 1: antes el prompt tenía "$50 USD" fijo,
+  // sin importar el presupuesto real configurado (el mismo que sí lee
+  // correctamente la tarjeta de arriba, vía este mismo localStorage). Con
+  // esto corregido, Claude ya no necesita duplicar/multiplicar el número
+  // fijo para 14/30 días — recibe el presupuesto SEMANAL real una sola vez y
+  // hace su propio cálculo de período con datos correctos.
+  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
 
   const prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza estos datos de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
 
 DATOS DEL PERÍODO (${currentDays} días):
-- Gasto: $${spend.toFixed(2)} USD (convertido de ${spendCOP.toFixed(0)} COP, presupuesto semanal: $50 USD)
+- Gasto: $${spend.toFixed(2)} USD (convertido de ${spendCOP.toFixed(0)} COP, presupuesto semanal: $${weeklyBudget} USD)
 - CTR: ${ctr.toFixed(2)}%
 - Frecuencia: ${freq.toFixed(2)}
 - CPM: $${cpm.toFixed(2)}
@@ -1457,7 +1493,17 @@ Responde primero el análisis en texto, luego el JSON en una línea separada.`;
 
     // Separar análisis de JSON
     const jsonMatch = text.match(/\{[\s\S]*"alerts"[\s\S]*\}/);
-    const analisis  = text.replace(jsonMatch?.[0] || '', '').trim();
+    let analisis = text.replace(jsonMatch?.[0] || '', '');
+    // FIX v23, 13-jul-2026 — Hallazgo 5: el reemplazo de arriba solo quita el
+    // objeto {...} en sí — si Claude lo envolvió en un bloque de código
+    // markdown (```json ... ```) o lo separó con un "---", esos residuos
+    // quedaban visibles al final del texto (evidencia: "--- ```json ```").
+    // Se limpian aquí antes de mostrarlo.
+    analisis = analisis
+      .replace(/```json[\s\S]*?```/gi, '')
+      .replace(/```/g, '')
+      .replace(/^-{3,}\s*$/gm, '')
+      .trim();
 
     document.getElementById('ai-content').textContent = analisis;
 
