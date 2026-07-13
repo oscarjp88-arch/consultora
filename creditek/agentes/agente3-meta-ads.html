@@ -49,6 +49,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .period-tab.active{background:var(--navy);color:var(--white)}
 .last-update{font-size:11px;color:var(--text3)}
 .scope-label{font-size:12px;font-weight:600;color:var(--text2);background:var(--card2,rgba(0,0,0,.04));display:inline-block;padding:4px 10px;border-radius:6px;margin-bottom:10px}
+/* FIX v28, 13-jul-2026: selector de campaña individual — mismo look que el
+   scope-label que reemplaza, pero interactivo. */
+.scope-selector{font-size:12px;font-weight:600;color:var(--text2);background:var(--card2,rgba(0,0,0,.04));display:inline-block;padding:6px 10px;border-radius:6px;margin-bottom:10px;border:1px solid var(--border);font-family:var(--font);cursor:pointer;max-width:100%}
 
 /* AI Analysis banner */
 .ai-banner{background:linear-gradient(135deg,var(--navy) 0%,#1a3a6e 100%);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;display:none}
@@ -235,8 +238,10 @@ tr:hover td{background:#F8FAFC}
   <!-- FIX v23, 13-jul-2026 — Hallazgo 3: el presupuesto, el análisis de IA y
        las tarjetas de indicadores de abajo son el TOTAL combinado de todas
        las campañas activas, no de una sola — antes no quedaba dicho en
-       ningún lado. -->
-  <div class="scope-label" id="scope-label" style="display:none"></div>
+       ningún lado.
+       FIX v28, 13-jul-2026: convertido de etiqueta fija a selector — permite
+       ver el combinado o una campaña individual. Ver poblarSelector()/renderVista(). -->
+  <select class="scope-selector" id="scope-selector" style="display:none" onchange="renderVista()"></select>
 
   <!-- FIX v26, 13-jul-2026 — Fase 3, Mejora 6: banner de alertas activas
        (sobregasto semanal >20%, frecuencia de campaña >2.5). Se llena en
@@ -1264,11 +1269,10 @@ async function cargarDatos() {
     lastData = { main: data.data?.[0], prev: dataPrev.data?.[0], camps: campsData, trend: trendData, ads: adsData, ventasPorCampaña, pctSinAtribucion };
     renderDatos(lastData);
     document.getElementById('last-update').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CO');
-
-    // Análisis IA
-    if (localStorage.getItem('ck_claude_key')) {
-      analizarConIA(lastData);
-    }
+    // FIX v28, 13-jul-2026: el análisis de IA (analizarConIA) ya no se llama
+    // aquí directo — ahora lo dispara renderVista(), que también se ejecuta
+    // al cambiar el selector de campaña, para que la IA se re-analice según
+    // lo seleccionado sin tener que recargar datos de Meta de nuevo.
 
   } catch(e) {
     showToast('Error: ' + e.message, '#EF4444');
@@ -1280,96 +1284,162 @@ async function cargarDatos() {
 }
 
 // ── Render datos ─────────────────────────────────────────────────
+// FIX v28, 13-jul-2026: extraído de renderDatos para poder recalcular los
+// mismos KPIs a partir de un objeto de cuenta (d.main) O de una sola
+// campaña (un elemento de d.camps) — ambos traen exactamente los mismos
+// campos de Meta Insights (spend, impressions, clicks, reach, frequency,
+// cpm, cpc, ctr, actions), así que la misma función sirve para los 2 casos.
+function computeKPIs(obj) {
+  obj = obj || {};
+  const spendCOP = parseFloat(obj.spend || 0);
+  const spend    = spendCOP / COP_TO_USD;
+  const impr     = parseInt(obj.impressions || 0);
+  const clicks   = parseInt(obj.clicks || 0);
+  const reach    = parseInt(obj.reach || 0);
+  const freq     = parseFloat(obj.frequency || 0);
+  const cpm      = parseFloat(obj.cpm || 0);
+  const cpc      = parseFloat(obj.cpc || 0);
+  const ctr      = parseFloat(obj.ctr || 0);
+  const results  = contarResultadosReales(obj.actions || []);
+  const cpr      = results > 0 ? spend / results : 0;
+  const roas     = spendCOP > 0 ? (results * 50000 / spendCOP) : 0;
+  return { spendCOP, spend, impr, clicks, reach, freq, cpm, cpc, ctr, results, cpr, roas };
+}
+
+// FIX v28, 13-jul-2026: construye las opciones del selector de campaña
+// (combinada + cada campaña individual, con el nombre corto de v24).
+// Conserva la selección previa si esa campaña sigue activa; si no, vuelve a
+// "combinada" — para no dejar el selector apuntando a una campaña que ya no existe.
+function poblarSelector(camps) {
+  const sel = document.getElementById('scope-selector');
+  const valorPrevio = sel.value || '__all__';
+  const opciones = [`<option value="__all__">📊 Todas las campañas combinadas (${camps?.length || 0})</option>`]
+    .concat((camps || []).map(c => `<option value="${c.campaign_id}">${acortarNombreCampaña(c.campaign_name)}</option>`));
+  sel.innerHTML = opciones.join('');
+  const sigueExistiendo = valorPrevio === '__all__' || (camps || []).some(c => c.campaign_id === valorPrevio);
+  sel.value = sigueExistiendo ? valorPrevio : '__all__';
+  sel.style.display = 'inline-block';
+}
+
 function renderDatos(d) {
-  const m = d.main || {};
-  const p = d.prev || {};
+  poblarSelector(d.camps);
 
-  const spendCOP = parseFloat(m.spend || 0);
-  const spend   = spendCOP / COP_TO_USD; // Convertir COP a USD
-  const impr    = parseInt(m.impressions || 0);
-  const clicks  = parseInt(m.clicks || 0);
-  const reach   = parseInt(m.reach || 0);
-  const freq    = parseFloat(m.frequency || 0);
-  const cpm     = parseFloat(m.cpm || 0);
-  const cpc     = parseFloat(m.cpc || 0);
-  const ctr     = parseFloat(m.ctr || 0);
-
-  // Conversiones / resultados
-  const actions = m.actions || [];
-  const results = contarResultadosReales(actions);
-  const cpr     = results > 0 ? spend / results : 0; // CPR en USD (fix v2 — antes usaba spendCOP sin convertir, inflaba el número por la tasa completa)
-  const roas    = spendCOP > 0 ? (results * 50000 / spendCOP) : 0; // estimado: ingreso estimado / gasto en COP
-
-  // Previo
-  const pSpendCOP = parseFloat(p.spend || 0);
-  const pSpend  = pSpendCOP / COP_TO_USD;
-  const pImpr   = parseInt(p.impressions || 0);
-  const pReach  = parseInt(p.reach || 0);
-  const pCtr    = parseFloat(p.ctr || 0);
-  const pFreq   = parseFloat(p.frequency || 0);
-  const pCpm    = parseFloat(p.cpm || 0);
-  const pCpc    = parseFloat(p.cpc || 0);
-  const pAct    = contarResultadosReales(p.actions);
-  const pCpr    = pAct > 0 ? pSpend / pAct : 0;
-
-  // KPIs
-  setKPI('kpi-roas',   roas > 0 ? roas.toFixed(1)+'x' : 'N/A', null, null, 'Proyección — no confirma venta real');
-  setKPI('kpi-cpr',    cpr > 0 ? '$'+cpr.toFixed(2) : 'N/A', pCpr, cpr, 'Por lead/mensaje');
-  setKPI('kpi-ctr',    ctr.toFixed(2)+'%', pCtr, ctr, 'vs período anterior');
-  setKPI('kpi-reach',  fmtNum(reach), pReach, reach, 'vs período anterior');
-  setKPI('kpi-freq',   freq.toFixed(2), pFreq, freq, freq >= 3.5 ? '⚠ Saturación' : 'Saludable');
-  setKPI('kpi-spend',  '$'+spend.toFixed(2), pSpend, spend, 'USD del periodo');
-  setKPI('kpi-impr',   fmtNum(impr), pImpr, impr, 'vs período anterior');
-  setKPI('kpi-cpm',    '$'+cpm.toFixed(2), pCpm, cpm, 'Por mil impresiones');
-  setKPI('kpi-conv',   fmtNum(results), pAct, results, 'Acciones totales');
-  setKPI('kpi-cpc',    '$'+cpc.toFixed(2), pCpc, cpc, 'Por clic');
-
-  // Alerta frecuencia
-  const freqBar = document.getElementById('freq-bar');
-  if (freq >= 4) { freqBar.className = 'kpi-alert red'; }
-  else if (freq >= 3) { freqBar.className = 'kpi-alert yellow'; }
-  else { freqBar.className = 'kpi-alert green'; }
-
-  // Budget bar
-  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
-  const spendWeekly  = currentDays === 7 ? spend : spend * (7 / currentDays);
-  // FIX v23, 13-jul-2026 — Hallazgo 2: pctReal ya NO se capea en 100 — antes
-  // Math.min(...,100) hacía que un sobregasto de 26%, 91% o cualquier otro
-  // valor siempre mostrara "100%" y "Restante: $0.00", ocultando qué tan
-  // grave era el sobregasto real. El ancho visual de la barra (pctBar) sí se
-  // capea en 100% porque no puede dibujarse más ancha que su contenedor.
-  const pctReal = (spendWeekly / weeklyBudget) * 100;
-  const pctBar  = Math.min(pctReal, 100);
-  document.getElementById('budget-pct').textContent = pctReal.toFixed(0) + '%';
-  const bar = document.getElementById('budget-bar');
-  bar.style.width = pctBar + '%';
-  bar.className = 'budget-bar-fill' + (pctReal >= 100 ? ' over' : pctReal >= 80 ? ' warn' : '');
-  document.getElementById('budget-spent').textContent    = 'Gastado: $' + spendWeekly.toFixed(2);
-  document.getElementById('budget-remain').textContent   = pctReal > 100
-    ? 'Sobregasto: $' + (spendWeekly - weeklyBudget).toFixed(2)
-    : 'Restante: $' + (weeklyBudget - spendWeekly).toFixed(2);
-  document.getElementById('budget-section').style.display = 'block';
-  const copEquiv = (weeklyBudget * 4200).toLocaleString('es-CO');
-  document.getElementById('budget-title').textContent = `💰 Presupuesto semanal — $${weeklyBudget} USD (~$${copEquiv} COP)`;
-
-  // FIX v23, 13-jul-2026 — Hallazgo 3: etiqueta de alcance (todas las
-  // campañas combinadas), usando el número real de campañas activas.
-  const scopeLabel = document.getElementById('scope-label');
-  scopeLabel.textContent = `📊 Resumen combinado — todas las campañas activas (${d.camps?.length || 0})`;
-  scopeLabel.style.display = 'inline-block';
-
-  // Campañas
+  // Campañas (tabla de ranking), A/B testing y tendencia: siempre muestran
+  // el detalle completo de todas las campañas — el selector solo afecta las
+  // 10 tarjetas de arriba, el análisis de IA y la barra de presupuesto (v28).
   renderCampañas(d.camps, d.ventasPorCampaña || {}, d.pctSinAtribucion);
-
-  // A/B testing
   renderVariantes(d.ads);
-
-  // Tendencia
   renderTendencia(d.trend);
 
-  // FIX v26, 13-jul-2026 — Fase 3, Mejora 6: alertas activas (sobregasto y
-  // frecuencia). Se recalculan con cada carga — no depende de WhatsApp/cron.
-  renderAlertas(pctReal, weeklyBudget, spendWeekly, d.camps);
+  renderVista();
+}
+
+// FIX v28, 13-jul-2026: renderiza las 10 tarjetas de KPI, la barra de
+// presupuesto, el banner de alertas y dispara el análisis de IA — según lo
+// que esté elegido en el selector (combinado o una campaña individual). Se
+// llama desde renderDatos() (carga inicial) y desde el onchange del selector
+// (sin volver a pedir datos a Meta — reutiliza lastData).
+function renderVista() {
+  const d = lastData;
+  if (!d) return;
+  const sel = document.getElementById('scope-selector');
+  const valor = sel.value || '__all__';
+  const modoIndividual = valor !== '__all__';
+  const camp = modoIndividual ? (d.camps || []).find(c => c.campaign_id === valor) : null;
+
+  // Si la campaña seleccionada ya no está en los datos más recientes (ej. se
+  // pausó/borró entre recargas), volvemos a la vista combinada en vez de
+  // mostrar números vacíos o romper.
+  if (modoIndividual && !camp) {
+    sel.value = '__all__';
+    return renderVista();
+  }
+
+  const k = computeKPIs(modoIndividual ? camp : d.main);
+
+  if (modoIndividual) {
+    // FIX v28: sin período de comparación por campaña individual — no se
+    // pidió (ni se pide aquí) una llamada extra a Meta por campaña para el
+    // período anterior, así que se muestra "Sin comparación" reutilizando
+    // la misma lógica que ya tiene setKPI() para prev===0.
+    setKPI('kpi-roas',  k.roas > 0 ? k.roas.toFixed(1)+'x' : 'N/A', 0, 1, 'Proyección — no confirma venta real');
+    setKPI('kpi-cpr',   k.cpr > 0 ? '$'+k.cpr.toFixed(2) : 'N/A', 0, 1, 'Por lead/mensaje');
+    setKPI('kpi-ctr',   k.ctr.toFixed(2)+'%', 0, 1, 'Solo esta campaña');
+    setKPI('kpi-reach', fmtNum(k.reach), 0, 1, 'Solo esta campaña');
+    setKPI('kpi-freq',  k.freq.toFixed(2), 0, 1, k.freq >= 3.5 ? '⚠ Saturación' : 'Saludable');
+    setKPI('kpi-spend', '$'+k.spend.toFixed(2), 0, 1, 'USD del periodo');
+    setKPI('kpi-impr',  fmtNum(k.impr), 0, 1, 'Solo esta campaña');
+    setKPI('kpi-cpm',   '$'+k.cpm.toFixed(2), 0, 1, 'Por mil impresiones');
+    setKPI('kpi-conv',  fmtNum(k.results), 0, 1, 'Acciones totales');
+    setKPI('kpi-cpc',   '$'+k.cpc.toFixed(2), 0, 1, 'Por clic');
+  } else {
+    const pk = computeKPIs(d.prev);
+    setKPI('kpi-roas',  k.roas > 0 ? k.roas.toFixed(1)+'x' : 'N/A', null, null, 'Proyección — no confirma venta real');
+    setKPI('kpi-cpr',   k.cpr > 0 ? '$'+k.cpr.toFixed(2) : 'N/A', pk.cpr, k.cpr, 'Por lead/mensaje');
+    setKPI('kpi-ctr',   k.ctr.toFixed(2)+'%', pk.ctr, k.ctr, 'vs período anterior');
+    setKPI('kpi-reach', fmtNum(k.reach), pk.reach, k.reach, 'vs período anterior');
+    setKPI('kpi-freq',  k.freq.toFixed(2), pk.freq, k.freq, k.freq >= 3.5 ? '⚠ Saturación' : 'Saludable');
+    setKPI('kpi-spend', '$'+k.spend.toFixed(2), pk.spend, k.spend, 'USD del periodo');
+    setKPI('kpi-impr',  fmtNum(k.impr), pk.impr, k.impr, 'vs período anterior');
+    setKPI('kpi-cpm',   '$'+k.cpm.toFixed(2), pk.cpm, k.cpm, 'Por mil impresiones');
+    setKPI('kpi-conv',  fmtNum(k.results), pk.results, k.results, 'Acciones totales');
+    setKPI('kpi-cpc',   '$'+k.cpc.toFixed(2), pk.cpc, k.cpc, 'Por clic');
+  }
+
+  // Alerta frecuencia (barra bajo la tarjeta de Frecuencia)
+  const freqBar = document.getElementById('freq-bar');
+  if (k.freq >= 4) { freqBar.className = 'kpi-alert red'; }
+  else if (k.freq >= 3) { freqBar.className = 'kpi-alert yellow'; }
+  else { freqBar.className = 'kpi-alert green'; }
+
+  // Budget bar / gasto de campaña — FIX v28: en modo individual se reemplaza
+  // por el gasto real de esa campaña, sin comparar contra presupuesto.
+  // Confirmado con Oscar: el presupuesto semanal es manual y de cuenta total
+  // (no desglosado por campaña), por eso no aplica aquí.
+  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
+  const spendWeekly  = currentDays === 7 ? k.spend : k.spend * (7 / currentDays);
+  let pctReal = null;
+  if (modoIndividual) {
+    document.getElementById('budget-title').textContent = `💰 Gasto de esta campaña — $${k.spend.toFixed(2)} USD`;
+    document.getElementById('budget-pct').textContent = '';
+    const bar = document.getElementById('budget-bar');
+    bar.style.width = '100%';
+    bar.className = 'budget-bar-fill';
+    document.getElementById('budget-spent').textContent = `Gastado: $${k.spend.toFixed(2)}`;
+    document.getElementById('budget-remain').textContent = '';
+  } else {
+    // FIX v23, 13-jul-2026 — Hallazgo 2: pctReal ya NO se capea en 100 — antes
+    // Math.min(...,100) hacía que un sobregasto de 26%, 91% o cualquier otro
+    // valor siempre mostrara "100%" y "Restante: $0.00", ocultando qué tan
+    // grave era el sobregasto real. El ancho visual de la barra (pctBar) sí se
+    // capea en 100% porque no puede dibujarse más ancha que su contenedor.
+    pctReal = (spendWeekly / weeklyBudget) * 100;
+    const pctBar = Math.min(pctReal, 100);
+    document.getElementById('budget-pct').textContent = pctReal.toFixed(0) + '%';
+    const bar = document.getElementById('budget-bar');
+    bar.style.width = pctBar + '%';
+    bar.className = 'budget-bar-fill' + (pctReal >= 100 ? ' over' : pctReal >= 80 ? ' warn' : '');
+    document.getElementById('budget-spent').textContent  = 'Gastado: $' + spendWeekly.toFixed(2);
+    document.getElementById('budget-remain').textContent = pctReal > 100
+      ? 'Sobregasto: $' + (spendWeekly - weeklyBudget).toFixed(2)
+      : 'Restante: $' + (weeklyBudget - spendWeekly).toFixed(2);
+    const copEquiv = (weeklyBudget * 4200).toLocaleString('es-CO');
+    document.getElementById('budget-title').textContent = `💰 Presupuesto semanal — $${weeklyBudget} USD (~$${copEquiv} COP)`;
+  }
+  document.getElementById('budget-section').style.display = 'block';
+
+  // FIX v26 + v28: banner de alertas. En combinada, igual que antes
+  // (sobregasto + frecuencia de todas las campañas). En individual, solo se
+  // evalúa la frecuencia DE ESA campaña — el umbral de sobregasto no aplica
+  // a nivel de campaña porque el presupuesto es de cuenta total, no por
+  // campaña (pctReal=null hace que la condición de sobregasto de
+  // renderAlertas nunca se cumpla, sin tener que tocar esa función).
+  renderAlertas(pctReal, weeklyBudget, spendWeekly, modoIndividual ? [camp] : d.camps);
+
+  // Análisis de IA — combinado o enfocado en la campaña seleccionada.
+  if (localStorage.getItem('ck_claude_key')) {
+    analizarConIA(d, modoIndividual ? camp : null);
+  }
 }
 
 // FIX v26, 13-jul-2026 — Fase 3, Mejora 6: banner de alertas en el tablero.
@@ -1621,42 +1691,67 @@ function renderTendencia(trend) {
 }
 
 // ── Análisis IA con Claude ────────────────────────────────────────
-async function analizarConIA(data) {
+// FIX v28, 13-jul-2026: nuevo parámetro opcional campañaIndividual — cuando
+// viene con datos (una fila de data.camps), el análisis se enfoca solo en
+// esa campaña, con un prompt distinto que NO compara contra el presupuesto
+// total ni sugiere mover plata hacia otra campaña (no aplica en esta vista).
+async function analizarConIA(data, campañaIndividual) {
   const key = localStorage.getItem('ck_claude_key');
-  if (!key || !data.main) return;
+  if (!key) return;
+  if (!campañaIndividual && !data.main) return;
 
-  const m = data.main;
-  const spendCOP = parseFloat(m.spend || 0);
-  const spend   = spendCOP / COP_TO_USD; // Convertir COP a USD
-  const ctr     = parseFloat(m.ctr || 0);
-  const freq    = parseFloat(m.frequency || 0);
-  const cpm     = parseFloat(m.cpm || 0);
-  const results = contarResultadosReales(m.actions);
-  const cpr     = results > 0 ? (spend / results).toFixed(2) : 'N/A';
-  // FIX v23, 13-jul-2026 — Hallazgo 1: antes el prompt tenía "$50 USD" fijo,
-  // sin importar el presupuesto real configurado (el mismo que sí lee
-  // correctamente la tarjeta de arriba, vía este mismo localStorage). Con
-  // esto corregido, Claude ya no necesita duplicar/multiplicar el número
-  // fijo para 14/30 días — recibe el presupuesto SEMANAL real una sola vez y
-  // hace su propio cálculo de período con datos correctos.
   const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
+  let prompt;
 
-  // FIX v25, 13-jul-2026 — Fase 2, Mejora 7: antes Claude solo recibía el
-  // agregado total (nunca el detalle por campaña), así que su "recomendación"
-  // era genérica ("hay margen para escalar") sin poder decir CUÁL campaña.
-  // Se arma aquí el mismo detalle por campaña que ya se muestra en la tabla
-  // de ranking (top 8 por gasto, para no inflar el prompt si hay muchas),
-  // usando el mismo nombre corto de la Mejora 1 para que sea legible.
-  const campsOrdenadas = [...(data.camps || [])].sort((a, b) => parseFloat(b.spend||0) - parseFloat(a.spend||0)).slice(0, 8);
-  const campsResumen = campsOrdenadas.map(c => {
-    const cSpend   = parseFloat(c.spend || 0) / COP_TO_USD;
-    const cCtr     = parseFloat(c.ctr || 0);
-    const cResults = contarResultadosReales(c.actions);
-    const cCpr     = cResults > 0 ? (cSpend / cResults).toFixed(2) : 'N/A';
-    return `- ${acortarNombreCampaña(c.campaign_name)}: gasto $${cSpend.toFixed(2)}, CTR ${cCtr.toFixed(2)}%, resultados ${cResults}, costo/resultado $${cCpr}`;
-  }).join('\n') || 'Sin datos de campañas individuales.';
+  if (campañaIndividual) {
+    const k = computeKPIs(campañaIndividual);
+    const nombreCorto = acortarNombreCampaña(campañaIndividual.campaign_name);
+    prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza el rendimiento de ESTA campaña específica de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
 
-  const prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza estos datos de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
+CAMPAÑA: ${nombreCorto}
+DATOS DEL PERÍODO (${currentDays} días):
+- Gasto: $${k.spend.toFixed(2)} USD
+- CTR: ${k.ctr.toFixed(2)}%
+- Frecuencia: ${k.freq.toFixed(2)}
+- CPM: $${k.cpm.toFixed(2)}
+- Resultados: ${k.results}
+- Costo por resultado: $${k.cpr > 0 ? k.cpr.toFixed(2) : 'N/A'}
+
+DA UN ANÁLISIS BREVE (3-4 oraciones) sobre ESTA campaña únicamente, que incluya:
+1. Evaluación del rendimiento de esta campaña específica
+2. El problema más urgente de esta campaña, si lo hay
+3. Una recomendación concreta sobre esta misma campaña (ej. pausarla, escalar su gasto, refrescar el creativo por fatiga de frecuencia). NO sugieras mover presupuesto hacia otra campaña ni la compares contra el presupuesto semanal total — esta vista es de una sola campaña, esa comparación no aplica aquí.
+
+Luego genera exactamente 3 alertas en este formato JSON:
+{"alerts": [{"type": "warn|good|bad", "text": "mensaje corto"}]}
+
+Responde primero el análisis en texto, luego el JSON en una línea separada.`;
+  } else {
+    const m = data.main;
+    const spendCOP = parseFloat(m.spend || 0);
+    const spend   = spendCOP / COP_TO_USD; // Convertir COP a USD
+    const ctr     = parseFloat(m.ctr || 0);
+    const freq    = parseFloat(m.frequency || 0);
+    const cpm     = parseFloat(m.cpm || 0);
+    const results = contarResultadosReales(m.actions);
+    const cpr     = results > 0 ? (spend / results).toFixed(2) : 'N/A';
+
+    // FIX v25, 13-jul-2026 — Fase 2, Mejora 7: antes Claude solo recibía el
+    // agregado total (nunca el detalle por campaña), así que su "recomendación"
+    // era genérica ("hay margen para escalar") sin poder decir CUÁL campaña.
+    // Se arma aquí el mismo detalle por campaña que ya se muestra en la tabla
+    // de ranking (top 8 por gasto, para no inflar el prompt si hay muchas),
+    // usando el mismo nombre corto de la Mejora 1 para que sea legible.
+    const campsOrdenadas = [...(data.camps || [])].sort((a, b) => parseFloat(b.spend||0) - parseFloat(a.spend||0)).slice(0, 8);
+    const campsResumen = campsOrdenadas.map(c => {
+      const cSpend   = parseFloat(c.spend || 0) / COP_TO_USD;
+      const cCtr     = parseFloat(c.ctr || 0);
+      const cResults = contarResultadosReales(c.actions);
+      const cCpr     = cResults > 0 ? (cSpend / cResults).toFixed(2) : 'N/A';
+      return `- ${acortarNombreCampaña(c.campaign_name)}: gasto $${cSpend.toFixed(2)}, CTR ${cCtr.toFixed(2)}%, resultados ${cResults}, costo/resultado $${cCpr}`;
+    }).join('\n') || 'Sin datos de campañas individuales.';
+
+    prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza estos datos de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
 
 DATOS DEL PERÍODO (${currentDays} días):
 - Gasto: $${spend.toFixed(2)} USD (convertido de ${spendCOP.toFixed(0)} COP, presupuesto semanal: $${weeklyBudget} USD)
@@ -1681,6 +1776,7 @@ Luego genera exactamente 3 alertas en este formato JSON:
 {"alerts": [{"type": "warn|good|bad", "text": "mensaje corto"}]}
 
 Responde primero el análisis en texto, luego el JSON en una línea separada.`;
+  }
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
