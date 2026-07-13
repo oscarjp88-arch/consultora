@@ -1967,6 +1967,18 @@ function dibujarTendencia() {
 // viene con datos (una fila de data.camps), el análisis se enfoca solo en
 // esa campaña, con un prompt distinto que NO compara contra el presupuesto
 // total ni sugiere mover plata hacia otra campaña (no aplica en esta vista).
+// FIX v30, 13-jul-2026 — Hallazgo 2: en vez de depender de un patrón de texto
+// frágil para separar el análisis narrativo del JSON de alertas (el de v23
+// dejaba de funcionar en cuanto Claude variaba el formato exacto de su
+// respuesta), se le pide a Claude un separador literal e inequívoco que no
+// aparecería en un texto narrativo normal en español. Se corta ahí en vez de
+// intentar adivinar el patrón — más robusto ante variaciones entre llamadas.
+const SEPARADOR_TOKEN = '===ALERTS_JSON===';
+const SEPARADOR_INSTRUCCION = `Cuando termines el análisis narrativo, escribe en una línea aparte, exactamente y sin nada más en esa línea, este separador: ${SEPARADOR_TOKEN}
+Inmediatamente después, en la siguiente línea, escribe SOLO el JSON de exactamente 3 alertas, sin bloques de código markdown ni texto adicional, en este formato exacto:
+{"alerts": [{"type": "warn|good|bad", "text": "mensaje corto"}]}
+No repitas el separador ni el JSON en ningún otro lugar de la respuesta.`;
+
 async function analizarConIA(data, campañaIndividual) {
   const key = localStorage.getItem('ck_claude_key');
   if (!key) return;
@@ -1994,10 +2006,7 @@ DA UN ANÁLISIS BREVE (3-4 oraciones) sobre ESTA campaña únicamente, que inclu
 2. El problema más urgente de esta campaña, si lo hay
 3. Una recomendación concreta sobre esta misma campaña (ej. pausarla, escalar su gasto, refrescar el creativo por fatiga de frecuencia). NO sugieras mover presupuesto hacia otra campaña ni la compares contra el presupuesto semanal total — esta vista es de una sola campaña, esa comparación no aplica aquí.
 
-Luego genera exactamente 3 alertas en este formato JSON:
-{"alerts": [{"type": "warn|good|bad", "text": "mensaje corto"}]}
-
-Responde primero el análisis en texto, luego el JSON en una línea separada.`;
+${SEPARADOR_INSTRUCCION}`;
   } else {
     const m = data.main;
     const spendCOP = parseFloat(m.spend || 0);
@@ -2023,10 +2032,25 @@ Responde primero el análisis en texto, luego el JSON en una línea separada.`;
       return `- ${acortarNombreCampaña(c.campaign_name)}: gasto $${cSpend.toFixed(2)}, CTR ${cCtr.toFixed(2)}%, resultados ${cResults}, costo/resultado $${cCpr}`;
     }).join('\n') || 'Sin datos de campañas individuales.';
 
+    // FIX v30, 13-jul-2026 — Hallazgo 1 (crítico): antes esta línea comparaba
+    // el gasto del RANGO SELECCIONADO (7/14/30 días, variable de la Sección
+    // B) contra el presupuesto SEMANAL — una comparación sin sentido (ej. 30
+    // días de gasto vs. presupuesto de 1 semana) que hacía que la IA
+    // reportara "sobregasto del 115%" mientras la Sección A, en la misma
+    // pantalla, mostraba correctamente 27% sin sobregasto. Ahora se le pasa
+    // el gasto REAL de la semana en curso (mismo dato de estadoReal que
+    // alimenta la Sección A, calculado en v29/cargarEstadoActual()), y AL
+    // MISMO TIEMPO el gasto del período seleccionado, cada uno etiquetado
+    // por separado para que Claude no los mezcle.
+    const gastoSemanaReal = estadoReal.semanaSpendCOP !== null ? (estadoReal.semanaSpendCOP / COP_TO_USD) : null;
+    const lineaGastoSemana = gastoSemanaReal !== null
+      ? `- Gasto REAL de esta semana (lunes a hoy, dato fijo de la Sección "Tu estado actual"): $${gastoSemanaReal.toFixed(2)} USD de $${weeklyBudget} USD presupuestados. Este es el único número que debes usar si vas a hablar de sobregasto o cumplimiento del presupuesto semanal.`
+      : `- Presupuesto semanal configurado: $${weeklyBudget} USD (el gasto real de la semana en curso no cargó aún — no asumas ni inventes ese número).`;
+
     prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza estos datos de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
 
-DATOS DEL PERÍODO (${currentDays} días):
-- Gasto: $${spend.toFixed(2)} USD (convertido de ${spendCOP.toFixed(0)} COP, presupuesto semanal: $${weeklyBudget} USD)
+${lineaGastoSemana}
+- Gasto TOTAL en el período analizado abajo (${currentDays} días, rango seleccionado en el tablero — esto es DISTINTO al gasto semanal de arriba, no lo compares contra el presupuesto semanal): $${spend.toFixed(2)} USD (convertido de ${spendCOP.toFixed(0)} COP)
 - CTR: ${ctr.toFixed(2)}%
 - Frecuencia: ${freq.toFixed(2)}
 - CPM: $${cpm.toFixed(2)}
@@ -2044,10 +2068,9 @@ DA UN ANÁLISIS BREVE (4-5 oraciones) que incluya:
 3. La oportunidad más clara a aprovechar
 4. Una RECOMENDACIÓN CONCRETA Y ACCIONABLE de reasignación de presupuesto entre campañas específicas de la lista de arriba (ej. "Mueve $15 de [campaña de menor rendimiento] hacia [campaña con mejor CTR/costo por resultado]"), citando nombres reales — no una sugerencia genérica. Si no hay suficientes campañas o datos para recomendar esto con confianza, dilo explícitamente en vez de inventar una recomendación.
 
-Luego genera exactamente 3 alertas en este formato JSON:
-{"alerts": [{"type": "warn|good|bad", "text": "mensaje corto"}]}
+IMPORTANTE: si mencionas sobregasto o cumplimiento de presupuesto semanal, usa EXCLUSIVAMENTE el "Gasto REAL de esta semana" de arriba — nunca el gasto total del período de ${currentDays} días para esa comparación específica, son 2 datos distintos y mezclarlos da un resultado incorrecto.
 
-Responde primero el análisis en texto, luego el JSON en una línea separada.`;
+${SEPARADOR_INSTRUCCION}`;
   }
 
   try {
@@ -2068,22 +2091,33 @@ Responde primero el análisis en texto, luego el JSON en una línea separada.`;
     const d = await res.json();
     const text = d.content?.[0]?.text || '';
 
-    // Separar análisis de JSON
-    const jsonMatch = text.match(/\{[\s\S]*"alerts"[\s\S]*\}/);
-    let analisis = text.replace(jsonMatch?.[0] || '', '');
-    // FIX v23, 13-jul-2026 — Hallazgo 5: el reemplazo de arriba solo quita el
-    // objeto {...} en sí — si Claude lo envolvió en un bloque de código
-    // markdown (```json ... ```) o lo separó con un "---", esos residuos
-    // quedaban visibles al final del texto (evidencia: "--- ```json ```").
-    // Se limpian aquí antes de mostrarlo.
+    // FIX v30, 13-jul-2026 — Hallazgo 2: mecanismo PRINCIPAL de separación es
+    // el token literal pedido en el prompt (SEPARADOR_TOKEN) — no un patrón de
+    // texto adivinado. El v23 (Hallazgo 5) buscaba patrones específicos
+    // (```json```, "---") que dejaban de funcionar en cuanto Claude variaba
+    // el formato exacto de su respuesta entre llamadas (evidencia real:
+    // "...con json {"alerts": [..." cortado a mitad de oración).
+    const partes = text.split(SEPARADOR_TOKEN);
+    let analisis = (partes[0] || text).trim();
+    const textoJson = partes.length > 1 ? partes[1] : text;
+
+    // Respaldo: si por alguna razón Claude no respetó el separador exacto
+    // (variación entre llamadas), se aplica también la limpieza de v23 sobre
+    // lo que vaya a mostrarse, para no dejar residuo visible en pantalla.
     analisis = analisis
+      .replace(/\{[\s\S]*"alerts"[\s\S]*\}/, '')
       .replace(/```json[\s\S]*?```/gi, '')
       .replace(/```/g, '')
       .replace(/^-{3,}\s*$/gm, '')
+      // FIX v30 — evidencia real de Oscar: "...con json {"alerts":..." — al
+      // quitar el objeto {...} de arriba quedaba la palabra suelta "json" al
+      // final (no venía en un bloque ```json``` sino como texto plano).
+      .replace(/\bjson\s*$/i, '')
       .trim();
 
     document.getElementById('ai-content').textContent = analisis;
 
+    const jsonMatch = textoJson.match(/\{[\s\S]*"alerts"[\s\S]*\}/);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[0]);
