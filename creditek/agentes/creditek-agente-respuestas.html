@@ -276,7 +276,7 @@ const colors=['#8b5cf6','#0ea5e9','#f59e0b','#ef4444','#22c55e','#ec4899','#6366
 
 async function loadTiendas(){
   try{
-    allTiendas=await(await fetch(API+'/api/tiendas')).json();
+    allTiendas=await(await fetch(API+'/api/tiendas',{headers:{'X-Worker-Secret':WORKER_SHARED_SECRET}})).json();
     cityMap={};
     const ciudades=new Set();
     allTiendas.forEach(t=>{cityMap[t.id]=t.ciudad;ciudades.add(t.ciudad)});
@@ -289,7 +289,10 @@ async function loadAll(){await loadTiendas();await Promise.all([loadStats(),load
 
 async function loadStats(){
   try{
-    const d=await(await fetch(API+'/api/stats')).json();
+    // FIX v22, 13-jul-2026 — Hallazgo 1: /api/stats y /api/tiendas ahora
+    // exigen el secreto compartido en el Worker (mismo patron que ya usa
+    // /api/enviar-mensaje).
+    const d=await(await fetch(API+'/api/stats',{headers:{'X-Worker-Secret':WORKER_SHARED_SECRET}})).json();
     document.getElementById('s-clientes').textContent=d.total_clientes||0;
     document.getElementById('s-convs').textContent=d.hoy||0;
     document.getElementById('s-optins').textContent=d.optins||0;
