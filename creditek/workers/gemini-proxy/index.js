@@ -30,7 +30,7 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Worker-Secret',
 };
 
 // Debe coincidir EXACTAMENTE con "allowed-audiences" configurado en el provider WIF.
@@ -147,7 +147,7 @@ async function getVertexToken(env) {
 // Fix v4 09-jul-2026: extraída del bloque inline `if (engine === 'gemini3pro')`
 // para reutilizarla también como respaldo único de Vía 0 (ver más abajo), sin
 // duplicar la llamada a Vertex AI. Devuelve directamente un Response (ok/err).
-async function llamarGemini3Pro_(env, { prompt, imageUrl, aspectRatio, extra = {}, via = null }) {
+async function llamarGemini3Pro_(env, { prompt, imageUrl, imageBase64, imageMimeType, aspectRatio, extra = {}, via = null }) {
   if (!env.GCP_WIF_PRIVATE_KEY || !env.GCP_WIF_AUDIENCE) {
     return err('Falta GCP_WIF_PRIVATE_KEY para gemini3pro', 401);
   }
@@ -156,7 +156,8 @@ async function llamarGemini3Pro_(env, { prompt, imageUrl, aspectRatio, extra = {
 
   const parts = [];
 
-  // Imagen de referencia del producto (desde /brand-references vía HTML)
+  // Imagen de referencia del producto/logo (desde /brand-references o el logo
+  // fijo de marca, vía HTML) — se descarga porque llega como URL remota.
   if (imageUrl) {
     try {
       const imgRes = await fetch(imageUrl, {
@@ -173,6 +174,14 @@ async function llamarGemini3Pro_(env, { prompt, imageUrl, aspectRatio, extra = {
         parts.push({ inlineData: { mimeType, data: btoa(bin) } });
       }
     } catch { /* sin imagen de referencia — continuar solo con texto */ }
+  }
+
+  // FIX v16 12-jul-2026: imagen ACTUAL a editar (desde "Aplicar cambio" en el
+  // frontend) — a diferencia de imageUrl, esta ya llega en base64 (currentSrc
+  // es un data URL generado en memoria por el navegador, nunca tuvo una URL
+  // pública que se pudiera fetch()ear). Se manda tal cual, sin descargar nada.
+  if (imageBase64) {
+    parts.push({ inlineData: { mimeType: imageMimeType || 'image/png', data: imageBase64 } });
   }
 
   parts.push({ text: prompt });
@@ -671,7 +680,7 @@ if (path === '/test-fetch') {
     try { body = await request.json(); }
     catch { return err('JSON inválido', 400); }
 
-    const { prompt, aspectRatio = '1:1', apiKey, engine, imageUrl } = body;
+    const { prompt, aspectRatio = '1:1', apiKey, engine, imageUrl, imageBase64, imageMimeType } = body;
     if (!prompt) return err('Campo "prompt" requerido', 400);
     let via0Skip = null; // razón por la que Vía 0 fue omitida (para debug)
 
@@ -679,7 +688,7 @@ if (path === '/test-fetch') {
     // Fix v4 09-jul-2026: lógica extraída a llamarGemini3Pro_() (arriba), para
     // reutilizarla también como respaldo único de Vía 0 sin duplicar código.
     if (engine === 'gemini3pro') {
-      return await llamarGemini3Pro_(env, { prompt, imageUrl, aspectRatio });
+      return await llamarGemini3Pro_(env, { prompt, imageUrl, imageBase64, imageMimeType, aspectRatio });
     }
 
     // ── Vía 0: Nano Banana 2 — AI Studio gemini-3.1-flash-image-preview ────────
@@ -731,7 +740,7 @@ if (path === '/test-fetch') {
     // motor que ya usa `engine === 'gemini3pro'` explícito, vía
     // llamarGemini3Pro_() (definida arriba, después de getVertexToken).
     return await llamarGemini3Pro_(env, {
-      prompt, imageUrl, aspectRatio,
+      prompt, imageUrl, imageBase64, imageMimeType, aspectRatio,
       extra: via0Skip ? { via0Skip } : {},
       via: '1: Gemini 3 Pro Image (respaldo)',
     });

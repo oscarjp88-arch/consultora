@@ -3362,7 +3362,7 @@ async function componerLogoSobreImagen(dataUrlImagen) {
 // en el Worker (wrangler secret put WORKER_SHARED_SECRET).
 const WORKER_SHARED_SECRET = '72c73c94244190777d08b12775b2dace13d26877a75367ec';
 
-async function generarConGemini(key, prompt, soloFoto = false) {
+async function generarConGemini(key, prompt, soloFoto = false, imagenRefDataUrl = null) {
   // FIX 03-jul-2026: relación de aspecto exacta para calzar con GPT
   // (GPT: 1024x1024 = 1:1 · 1024x1536 = 2:3).
   // gemini3pro SÍ admite 2:3 exacto. El respaldo Imagen 4 :predict NO admite
@@ -3392,6 +3392,15 @@ async function generarConGemini(key, prompt, soloFoto = false) {
 
   const reqBase = { prompt };
   if (key?.length > 10) reqBase.apiKey = key;
+
+  // FIX v16 12-jul-2026: imagen ACTUAL a editar (viene de aplicarCambioImagen,
+  // currentSrc = data URL en memoria, nunca tuvo URL pública) — a diferencia
+  // del logo (imageUrl, se descarga), esta ya llega en base64 y se manda tal
+  // cual al Worker, que la agrega como un segundo inlineData junto al logo.
+  if (imagenRefDataUrl) {
+    const m = /^data:([^;]+);base64,(.+)$/.exec(imagenRefDataUrl);
+    if (m) { reqBase.imageMimeType = m[1]; reqBase.imageBase64 = m[2]; }
+  }
 
   // FIX v4o (07-jul-2026): revierte el FIX 4 (03-jul) — el logo real ahora
   // se manda como imagen de referencia a Nano Banana Pro (gemini3pro), que
@@ -3564,17 +3573,31 @@ async function aplicarCambioImagen() {
     if (currentEngine === 'gemini') {
       const key = localStorage.getItem('ck_gemini_key') || '';
       const promptBaseGemini = await buildImgPromptGemini(); // FIX 02-jul-2026
-      const editPrompt = `${promptBaseGemini} Además: ${instruccion}`;
-      newSrc = await generarConGemini(key, editPrompt);
+      // FIX v16 12-jul-2026: antes no se mandaba currentSrc — Gemini regeneraba
+      // toda la escena desde cero por texto, sin "ver" la imagen real (logo,
+      // colores y specs cambiaban). Ahora se manda como imagen de referencia
+      // adicional junto al logo (ver generarConGemini/llamarGemini3Pro_ en el Worker).
+      const editPrompt = `${promptBaseGemini} Además: ${instruccion}. La imagen de referencia adjunta es la pieza ACTUAL — mantén exactamente igual todo lo demás (logo, colores de marca, composición, specs) y aplica únicamente este cambio.`;
+      newSrc = await generarConGemini(key, editPrompt, false, currentSrc);
       document.getElementById('img-model-lbl').textContent = `Generado con ${lastImgModelLabel}`;
     } else {
       const key = localStorage.getItem('ck_openai_key');
       if (!key || key.length < 10) throw new Error('Configura la API key de GPT Image 2 para editar.');
-      const editPrompt = `${promptBase}\n\nMODIFICACIÓN SOLICITADA: ${instruccion}`;
+      // FIX v16 12-jul-2026: antes se mandaba SOLO texto (prompt original +
+      // instrucción) — la IA nunca "veía" currentSrc, por eso regeneraba todo
+      // desde cero (logo, colores, specs distintos en cada edición). Ahora se
+      // adjunta currentSrc como input_image, mismo patrón ya usado y
+      // funcionando en generarConDalle() (logo/producto/financieras) —
+      // confirmado contra la documentación de OpenAI Responses API: input_image
+      // + image_url acepta data URLs base64 directamente, no solo URLs remotas.
+      const editPrompt = `${promptBase}\n\nMODIFICACIÓN SOLICITADA: ${instruccion}\n\nIMPORTANTE: la imagen adjunta es la pieza ACTUAL — edítala aplicando únicamente el cambio solicitado. Mantén exactamente igual todo lo demás (logo, colores de marca, textos, specs, composición). NO regeneres la pieza desde cero.`;
       const res = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-        body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content: [{ type: 'input_text', text: editPrompt }] }], tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1536' : '1024x1024' }] })
+        body: JSON.stringify({ model: 'gpt-4o', input: [{ role: 'user', content: [
+          { type: 'input_text', text: editPrompt },
+          { type: 'input_image', image_url: currentSrc },
+        ] }], tools: [{ type: 'image_generation', size: currentFormat === 'stories' ? '1024x1536' : '1024x1024' }] })
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
