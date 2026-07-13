@@ -1034,13 +1034,20 @@ async function generarMasTitulares() {
   const estiloBtn = document.querySelector('.estilo-btn.active');
   const estilo = estiloBtn ? estiloBtn.textContent.trim().replace(/^[^\w]+/,'') : 'Formal';
   const modoLabel = {credito:'Celular a crédito',promo:'Promoción especial',tienda:'Contenido de tienda',servicio:'Servicio / beneficio',captacion:'Captación de seguidores',jornada:'Jornada de crédito',institucional:'Institucional / Marca'}[modo] || modo;
+  // FIX v15 12-jul-2026 Parte 2: Oscar reportó que la IA repite los ejemplos de
+  // abajo casi literales en vez de generar variantes — porque el ejemplo era
+  // siempre el mismo texto en cada llamada. `pick()` elige una variante al azar
+  // de un pool de 2-3 por patrón en CADA generación, para que el "objetivo a
+  // copiar" cambie cada vez, combinado con la instrucción explícita de no-copia
+  // agregada más abajo en REGLAS.
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   const estiloInstrucciones = {
     'alegre costeño': `Tono costeño COMERCIAL — calor humano del Caribe colombiano pero enfocado en la venta.
 Patrones de hook (gancho — la primera frase que para el scroll) que debes usar:
-- Identidad local + alivio: "Llave, ese celular sí se puede." / "Ombe, aquí sí te aprueban."
-- Permiso/solución directa: "Sin banco. Con la cédula alcanza." / "Sin banco, sin codeudor, con cédula."
-- Objeción específica resuelta: "Sin fiador y con la cédula alcanza."
-- Marca + acción concreta: "Mija, ese Samsung sí te lo aprueban." (nunca solo listar marcas sin acción)
+- Identidad local + alivio: "${pick(['Llave, ese celular sí se puede.', 'Ombe, aquí empiezas tu trámite.', 'Mano, contigo sí hay solución.'])}"
+- Permiso/solución directa: "${pick(['Sin banco. Con la cédula alcanza.', 'Sin banco, sin codeudor, con cédula.', 'Sin fiador, sin vueltas, con cédula.'])}"
+- Objeción específica resuelta: "${pick(['Sin fiador y con la cédula alcanza.', 'Reportado también puede solicitar.', 'Sin codeudor, solo tu cédula.'])}"
+- Marca + acción concreta: "${pick(['Mija, ese Samsung solicítalo ya.', 'Ese Xiaomi, papi, ya casi es tuyo.', 'Llave, ese iPhone empieza tu trámite.'])}" (nunca solo listar marcas sin acción)
 Expresiones válidas: ombe, llave, mano, papi, mija, qué lo que, dale.
 
 REGLA DE ESPECIFICIDAD (specificity check — obligatoria en TODOS los titulares, no solo en los ejemplos):
@@ -1058,10 +1065,10 @@ CUMPLIMIENTO META (obligatorio, no negociable): nunca prometas aprobación garan
 
     'chistoso': `Humor COMERCIAL colombiano — el chiste abre la puerta, la venta cierra.
 Patrones de hook que debes usar:
-- Contraste inesperado: "Tu bolsillo dijo no. Creditek dijo: dale."
-- Formato POV/meme: "POV: entraste sin cupo y saliste con equipo nuevo."
-- Comparación colombiana actual: "El VAR revisó y confirmó: este precio sí es gol."
-- Tensión cómica: "Tu celular ya dijo adiós. Nosotros le decimos bienvenido al nuevo."
+- Contraste inesperado: "${pick(['Tu bolsillo dijo no. Creditek dijo: dale.', 'Tu billetera lloró. Tu celular sonrió.', 'El banco te ghosteó. Nosotros no.'])}"
+- Formato POV/meme: "${pick(['POV: entraste sin cupo y saliste con equipo nuevo.', 'POV: llegaste dudando y te vas solicitando.', 'POV: tu celular viejo viendo cómo lo reemplazan.'])}"
+- Comparación colombiana actual: "${pick(['El VAR revisó y confirmó: este precio sí es gol.', 'Como en el fútbol: aquí sí hay cambio de titular.', 'Esto tiene menos trampa que un partido de barrio.'])}"
+- Tensión cómica: "${pick(['Tu celular ya dijo adiós. Nosotros le decimos bienvenido al nuevo.', 'Tu pantalla rota ya no aguanta ni un meme más.', 'Ese celular ya jubilado necesita reemplazo urgente.'])}"
 REGLA: el humor debe estar en el texto — NO pedir "persona riendo" ni "cara de sorpresa".
 
 REGLA DE ESPECIFICIDAD (specificity check — obligatoria en TODOS los titulares, no solo en los ejemplos):
@@ -1078,10 +1085,10 @@ CUMPLIMIENTO META (obligatorio, no negociable): nunca prometas aprobación garan
 
     'formal': `Copywriting directo de conversión (conversion copywriting — texto diseñado para generar acción inmediata).
 Patrones de hook que debes usar:
-- Resultado específico: "Solicítalo hoy. Samsung en tus manos."
-- Problema + solución en 6 palabras: "Sin historial. Con tu cédula alcanza."
-- Urgencia real con dato concreto: "Solo 3 unidades. Solo esta semana."
-- Beneficio innegable: "Sin banco. Sin rollo. Así de fácil."
+- Resultado específico: "${pick(['Solicítalo hoy. Samsung en tus manos.', 'Empieza tu trámite. Tecnología al día.', 'Da el paso. Tu celular nuevo te espera.'])}"
+- Problema + solución en 6 palabras: "${pick(['Sin historial. Con tu cédula alcanza.', 'Sin codeudor. Solo tu cédula basta.', 'Sin fiador. El trámite es simple.'])}"
+- Urgencia real con dato concreto: "${pick(['Solo 3 unidades. Solo esta semana.', 'Quedan 5 cupos. Solo hoy.', 'Últimas unidades disponibles esta semana.'])}"
+- Beneficio innegable: "${pick(['Sin banco. Sin rollo. Así de fácil.', 'Sin trámites complicados. Solo tu cédula.', 'Simple, directo, sin enredos bancarios.'])}"
 REGLA: cada titular debe funcionar solo, sin necesitar la siguiente frase.
 
 REGLA DE ESPECIFICIDAD (specificity check — obligatoria en TODOS los titulares, no solo en los ejemplos):
@@ -1098,8 +1105,8 @@ CUMPLIMIENTO META (obligatorio, no negociable): nunca prometas aprobación garan
 
     'minimalista': `Una sola idea. Máximo impacto. Mínimas palabras.
 Patrones de hook que debes usar:
-- Fragmento directo: "Sale hoy." / "Con la cédula." / "Sin banco."
-- Afirmación de resultado: "Solicítalo. Hoy mismo."
+- Fragmento directo: "${pick(['Sale hoy.', 'Con la cédula.', 'Sin banco.'])}"
+- Afirmación de resultado: "${pick(['Solicítalo. Hoy mismo.', 'Trámite simple.', 'Ya casi tuyo.'])}"
 REGLA ESTRICTA: máximo 4 palabras. Sin puntuación decorativa. Sin adjetivos innecesarios.
 
 REGLA DE ESPECIFICIDAD (specificity check — obligatoria en TODOS los titulares, no solo en los ejemplos):
@@ -1138,6 +1145,7 @@ REGLAS:
 - TONO según estilo "${estilo}": ${estiloInstrucciones[estiloKey]}
 - PROHIBIDO: "Aquí te atendemos bien", frases genéricas de atención
 - Varía los enfoques: urgencia / emoción / beneficio directo / humor / aspiracional / costeño
+- Los ejemplos citados arriba en "TONO PARA ESTE ESTILO" son SOLO para mostrar la estructura del patrón — NUNCA los uses tal cual ni casi idénticos. Genera titulares 100% nuevos que sigan el patrón, no una copia de los ejemplos.
 
 Responde ÚNICAMENTE con los 6 titulares numerados, sin explicaciones:
 1. {titular}
@@ -1676,7 +1684,7 @@ ${modo === 'jornada' ? '- Clientes potenciales de la zona que quieren crédito e
 - Ha ido a otras tiendas y lo han tratado mal porque "no tiene cupo"
 - Le da vergüenza preguntar si le aprueban
 - Cuando le dicen que sí, siente alivio y orgullo
-El copy debe hacerlo sentir que Creditek es diferente: aquí sí lo atienden bien, aquí sí le aprueban, aquí nadie lo juzga.`}
+El copy debe hacerlo sentir que Creditek es diferente: aquí sí lo atienden bien, aquí puede solicitarlo sin miedo, aquí nadie lo juzga.`}
 
 ${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudadDisplay}:\n${culturaCtx}\n${!esCiudad && getTiendaInfo(ciudad)?.nombre ? `Tienda: ${getTiendaInfo(ciudad).nombre}. Puedes mencionar este nombre cuando aporte autenticidad local (ej: "Visítanos en ${getTiendaInfo(ciudad).nombre}").` : `CTA de ciudad: usa "Visítanos en ${ciudadDisplay}" sin nombrar tienda específica.`}\n\n` : ''}${(()=>{
   const btns = [...document.querySelectorAll('.estilo-btn.active')];
@@ -1686,7 +1694,7 @@ ${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudadDisplay}:\n${culturaCtx}\n${!esCi
 - Expresiones del Caribe colombiano: "mano", "llave", "mi amor", "papi", "venga le cuento", "oiga", "qué lo que", "eso sí fue", "ombe", "niña", "mija"
 - Referencias culturales de la Costa: el vallenato, el carnaval de Barranquilla, la cumbia, el sancocho, el calor, la playa, el partido
 - Tono cálido y directo — como un vecino del barrio que te da un buen dato
-- Ejemplo real: "Ombe llave, en Creditek te aprueban ese equipo rapidito. Solo la cédula y pa' lante."`,
+- Ejemplo real: "Ombe llave, en Creditek solicitas ese equipo rapidito. Solo la cédula y pa' lante."`,
     'chistoso': `TONO HUMORÍSTICO OBLIGATORIO — El humor está en el TEXTO, no en imágenes de gente riendo:
 - Usa referencias actuales colombianas: memes virales del momento, fútbol (goles, VAR, el profe), política colombiana, series o canciones que estén sonando
 - Formatos: comparaciones inesperadas, memes de formato conocido ("POV:", "El antes y el después"), giros de humor, referencias pop
@@ -2632,8 +2640,8 @@ function buildImgPrompt() {
   const selectedFins = getSelectedFinancieras();
   const _refsForFin = JSON.parse(localStorage.getItem('ck_referencias') || 'null');
   const FIN_CONTEXT_FALLBACK = {
-    payjoy:    { nombre:'PayJoy CO',  tagline:'Financia desde $0 de inicial', beneficios:'Aprobación inmediata con cédula · Sin codeudor' },
-    krediya:   { nombre:'Krediya',    tagline:'Crédito digital rápido',       beneficios:'Proceso 100% digital · Aprobación en minutos' },
+    payjoy:    { nombre:'PayJoy CO',  tagline:'Financia desde $0 de inicial', beneficios:'Solicitud con cédula · Sin codeudor' },
+    krediya:   { nombre:'Krediya',    tagline:'Crédito digital rápido',       beneficios:'Proceso 100% digital · Solicitud en minutos' },
     addi:      { nombre:'Addi CO',    tagline:'Compra ahora, paga después',   beneficios:'BNPL · Sin intereses en plazos cortos' },
     alocredit: { nombre:'Alo Credit', tagline:'Crédito fácil',               beneficios:'Inmediato · Sin historial crediticio requerido' },
   };
