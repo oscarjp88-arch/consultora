@@ -379,6 +379,9 @@ const MODEL = 'claude-sonnet-4-6';
 const SUPABASE_URL = 'https://ditiwpndvmyuqcagupea.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_oVNantrnKzXdtXu5B7YQIg_9fxHp7aW';
 const MESES_NUM = { Enero:'01', Febrero:'02', Marzo:'03', Abril:'04', Mayo:'05', Junio:'06', Julio:'07', Agosto:'08', Septiembre:'09', Octubre:'10', Noviembre:'11', Diciembre:'12' };
+// Mismo secreto compartido que ya usa Agente 1 (creditek-agente-redes.html)
+// para el Worker creditek-gemini-proxy — no requiere key personal de Gemini.
+const WORKER_SHARED_SECRET_AGENTE4 = '72c73c94244190777d08b12775b2dace13d26877a75367ec';
 function getApiKey() { return sessionStorage.getItem('ck_api_key') || ''; }
 
 // FIX v32, 13-jul-2026 — Fase 1: referencia única al calendario actualmente
@@ -937,8 +940,7 @@ async function aprobarYGenerarImagen(idx) {
   btn.textContent = 'Generando imagen...';
 
   try {
-    const prompt = construirPromptImagenPost(tipo, titulo, copy);
-    const imgB64 = await generarImagenGPTAgente4(openaiKey, prompt);
+    const imgB64 = await generarImagenPipelineAgente4(openaiKey, tipo, titulo, copy);
     btn.textContent = 'Subiendo imagen...';
     const publicUrl = await subirImagenASupabase(imgB64, piezaId);
 
@@ -973,6 +975,30 @@ async function aprobarYGenerarImagen(idx) {
   }
 }
 
+// FIX v37 — infiere el producto mencionado en el titular/copy con un match
+// simple de palabras clave (sin llamada de IA extra, mantiene el fix barato).
+// Fallback genérico a "smartphone" si no encuentra ninguna marca conocida.
+function inferirProductoAgente4(titulo, copy) {
+  const texto = `${titulo} ${copy}`.toLowerCase();
+  const marcas = ['samsung', 'xiaomi', 'oppo', 'honor', 'infinix', 'motorola', 'tcl'];
+  const marcaEncontrada = marcas.find(m => texto.includes(m));
+  if (marcaEncontrada) {
+    return marcaEncontrada.charAt(0).toUpperCase() + marcaEncontrada.slice(1) + ' — smartphone moderno';
+  }
+  if (texto.includes('parlante') || texto.includes('bocina') || texto.includes('audífono')) return 'parlante o audífono bluetooth';
+  if (texto.includes('belleza') || texto.includes('perfume') || texto.includes('maquillaje')) return 'producto de belleza';
+  return 'smartphone moderno';
+}
+
+// FIX v37 — prompt de escena para Gemini (paso 1 del pipeline), armado de
+// forma programática (sin llamada extra a Claude, a diferencia de Agente 1)
+// para mantener el costo y tiempo bajos. Estilo costeño fijo, ya es el tono
+// de marca establecido en el systemPrompt de este mismo archivo.
+function construirPromptGeminiFotoLimpiaAgente4(tipo, titulo, copy) {
+  const producto = inferirProductoAgente4(titulo, copy);
+  return `Fotografía publicitaria realista de ${producto}, en un ambiente comercial caribeño colombiano cálido y auténtico — una tienda de tecnología surtida y digna, luz natural cálida, colores vivos. El producto se ve grande, bien iluminado, como en una vitrina de tienda. Composición fotográfica limpia, profesional, sin ningún texto, letra o logo en la imagen — solo la escena. Usar todo el lienzo de borde a borde, sin zonas vacías. Nunca ambiente pobre o descuidado.`;
+}
+
 // Prompt simple y directo (Agente 4 no maneja foto de producto ni logos de
 // financiera como Agente 1 — este flujo es solo texto aprobado → gráfica).
 function construirPromptImagenPost(tipo, titulo, copy) {
@@ -1005,6 +1031,71 @@ async function cargarLogoBase64Agente4() {
       reader.readAsDataURL(blob);
     });
   } catch(e) { return null; }
+}
+
+// FIX v37 — paso 1 del pipeline: Gemini genera la foto limpia (sin texto ni
+// logo) vía el mismo Worker que usa Agente 1 en producción. No requiere key
+// personal de Gemini del usuario.
+async function generarFotoGeminiAgente4(prompt) {
+  const res = await fetch('https://creditek-gemini-proxy.comercial-853.workers.dev/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': WORKER_SHARED_SECRET_AGENTE4 },
+    body: JSON.stringify({ prompt })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error del Worker de Gemini ${res.status}`);
+  const pred = data.predictions?.[0];
+  if (!pred?.bytesBase64Encoded) throw new Error('El Worker de Gemini no devolvió imagen.');
+  const mime = pred.mimeType || 'image/png';
+  const b64 = pred.bytesBase64Encoded.replace(/\s/g, '');
+  return `data:${mime};base64,${b64}`;
+}
+
+// FIX v37 — pipeline completo de 2 pasos: Gemini (foto limpia) → GPT (compone
+// titular + logo encima, usando la foto como imagen de referencia real).
+// Reemplaza la llamada única a GPT que usaba antes construirPromptImagenPost.
+async function generarImagenPipelineAgente4(keyOpenAI, tipo, titulo, copy) {
+  const promptFoto = construirPromptGeminiFotoLimpiaAgente4(tipo, titulo, copy);
+  const fotoBase = await generarFotoGeminiAgente4(promptFoto);
+
+  const logo = await cargarLogoBase64Agente4();
+  const content = [
+    { type: 'input_text', text: 'Base photograph — do not regenerate the scene, only add the following graphic elements on top as clean layers:' },
+    { type: 'input_image', image_url: fotoBase },
+  ];
+  if (logo) {
+    content.push({ type: 'input_text', text: 'Brand logo — place in top-right corner, small card with soft shadow:' });
+    content.push({ type: 'input_image', image_url: logo });
+  }
+  content.push({ type: 'input_text', text: `Add these clean graphic layers on top of the base photograph, square format for social media (1024x1024):
+Headline text prominently placed and legible: "${titulo}"
+Short call-to-action phrase inferred from this context (do NOT render the full text below, just a short CTA of a few words): "${copy}"
+Turquoise #00C4CC and navy blue #0B1E3D as accent colors for text/CTA elements.
+Do not invent or display specific prices, discounts, or monthly payment amounts on the image.
+Post type: ${tipo}. Keep on-image text minimal — this is a social media ad, not an article.` });
+
+  const res = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keyOpenAI },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      input: [{ role: 'user', content }],
+      tools: [{ type: 'image_generation', size: '1024x1024' }]
+    })
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(
+      res.status === 401 ? 'API key de OpenAI inválida.' :
+      res.status === 429 ? 'Límite de uso de OpenAI alcanzado. Espera un momento.' :
+      e.error?.message || `Error OpenAI ${res.status}`
+    );
+  }
+  const data = await res.json();
+  const imageCall = data.output?.find(o => o.type === 'image_generation_call');
+  const b64 = imageCall?.result;
+  if (!b64) throw new Error('OpenAI no devolvió imagen. Revisa la consola.');
+  return b64; // base64 puro, mismo formato que ya espera subirImagenASupabase
 }
 
 async function generarImagenGPTAgente4(key, prompt) {
