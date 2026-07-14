@@ -1556,11 +1556,21 @@ function renderVista() {
     const pk = computeKPIs(d.prev);
     setKPI('kpi-roas',  k.roas > 0 ? k.roas.toFixed(1)+'x' : 'N/A', null, null, 'Proyección — no confirma venta real');
     setKPI('kpi-cpr',   k.cpr > 0 ? '$'+k.cpr.toFixed(2) : 'N/A', pk.cpr, k.cpr, 'Por lead/mensaje');
-    setKPI('kpi-ctr',   k.ctr.toFixed(2)+'%', pk.ctr, k.ctr, 'vs período anterior');
-    setKPI('kpi-reach', fmtNum(k.reach), pk.reach, k.reach, 'vs período anterior');
+    // FIX v31, 13-jul-2026: estas 3 tarjetas pasaban 'vs período anterior'
+    // como texto fijo (5° parámetro → .kpi-sub), que setKPI() escribe SIEMPRE
+    // — sin importar si la comparación es real o no. Eso duplicaba la fecha
+    // exacta que el propio setKPI() ya arma dinámicamente en la línea de
+    // arriba (.kpi-delta, con el sufijo real desde v24: "vs. 29 jun - 6
+    // jul"), quedando las 2 líneas juntas ("vs. 29 jun - 6 jul" + "vs período
+    // anterior"). Las otras 7 tarjetas nunca usaron esa frase en su 5°
+    // parámetro — aquí se reemplaza por el mismo tipo de descripción corta
+    // del dato que ya tienen las demás (y que coincide con el texto estático
+    // original del HTML antes de que setKPI() lo sobreescribiera).
+    setKPI('kpi-ctr',   k.ctr.toFixed(2)+'%', pk.ctr, k.ctr, 'Tasa de clics');
+    setKPI('kpi-reach', fmtNum(k.reach), pk.reach, k.reach, 'Personas únicas');
     setKPI('kpi-freq',  k.freq.toFixed(2), pk.freq, k.freq, k.freq >= 3.5 ? '⚠ Saturación' : 'Saludable');
     setKPI('kpi-spend', '$'+k.spend.toFixed(2), pk.spend, k.spend, 'USD del periodo');
-    setKPI('kpi-impr',  fmtNum(k.impr), pk.impr, k.impr, 'vs período anterior');
+    setKPI('kpi-impr',  fmtNum(k.impr), pk.impr, k.impr, 'Total de veces visto');
     setKPI('kpi-cpm',   '$'+k.cpm.toFixed(2), pk.cpm, k.cpm, 'Por mil impresiones');
     setKPI('kpi-conv',  fmtNum(k.results), pk.results, k.results, 'Acciones totales');
     setKPI('kpi-cpc',   '$'+k.cpc.toFixed(2), pk.cpc, k.cpc, 'Por clic');
