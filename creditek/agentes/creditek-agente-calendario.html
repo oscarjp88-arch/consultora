@@ -274,6 +274,13 @@ select option{background:var(--bg2)}
         <option value="2027">2027</option>
       </select>
     </div>
+    <div class="fg">
+      <label class="fl">Quincena</label>
+      <select id="quincena">
+        <option value="1" selected>1 — Días 1 al 15</option>
+        <option value="2">2 — Días 16 al fin de mes</option>
+      </select>
+    </div>
   </div>
 
   <div class="sec">
@@ -603,8 +610,17 @@ async function generar() {
   const ciudad   = document.getElementById('ciudad').value;
   const mes      = document.getElementById('mes').value;
   const anio     = document.getElementById('anio').value;
+  const quincena = document.getElementById('quincena').value;
   const brief = document.getElementById('brief').value.trim();
   const plats    = [...document.querySelectorAll('.pbtn.active')].map(b => b.dataset.plat);
+
+  // Calcula el rango real de días según la quincena elegida.
+  // new Date(año, mesNum, 0).getDate() da el último día real del mes
+  // (28/29/30/31), evitando asumir 31 en meses cortos o febrero.
+  const mesNum = parseInt(MESES_NUM[mes], 10);
+  const ultimoDiaMes = new Date(parseInt(anio, 10), mesNum, 0).getDate();
+  const diaInicio = quincena === '2' ? 16 : 1;
+  const diaFin    = quincena === '2' ? ultimoDiaMes : 15;
 
   if (!getApiKey().startsWith('sk-ant-')) {
     abrirModal();
@@ -703,9 +719,9 @@ RESPONDE ÚNICAMENTE con un array JSON válido. Sin markdown, sin explicaciones,
     ? 'Genera contenido genérico para toda la red Creditek en el Caribe colombiano. NO menciones una ciudad específica.'
     : `Tienda específica: ${ciudad}. Puedes mencionar ${ciudadNombre} de forma breve y natural, sin forzarlo en cada post.`;
 
-  const userPrompt = `Genera el calendario de contenido de los próximos 15 días (quincena) para:
+  const userPrompt = `Genera el calendario de contenido de la quincena para:
 - ${contextoTienda}
-- Empieza el día 1 de ${mes} ${anio}, cubre del día 1 al día 15
+- Cubre EXCLUSIVAMENTE del día ${diaInicio} al día ${diaFin} de ${mes} ${anio}. NO generes ningún día fuera de este rango.
 - Plataformas: ${plats.join(', ')}${briefInfo}
 
 Devuelve entre 8 y 10 objetos JSON (aprox. 4-5 publicaciones por semana, distribuidas en los 15 días, en días espaciados) con esta estructura:
@@ -721,7 +737,7 @@ Devuelve entre 8 y 10 objetos JSON (aprox. 4-5 publicaciones por semana, distrib
   }
 ]
 
-Elige tú los días exactos (entre el 1 y el 15 de ${mes}) siguiendo una cadencia de 4-5 por semana, nunca 2 días seguidos. Calcula el día de la semana correcto para ${mes} ${anio}.
+Elige tú los días exactos (entre el ${diaInicio} y el ${diaFin} de ${mes}) siguiendo una cadencia de 4-5 por semana, nunca 2 días seguidos. Calcula el día de la semana correcto para ${mes} ${anio}.
 CADA COPY DEBE TENER MÁXIMO 3-4 LÍNEAS — esto es publicidad de redes sociales, no un artículo. La gente desliza rápido.
 Varía los productos: Samsung, Xiaomi, Oppo, Honor, Infinix, Motorola, TCL, parlantes, accesorios, artículos de belleza — salvo que el brief indique un producto específico a destacar.
 NUNCA uses "bacano".`;
@@ -773,8 +789,8 @@ NUNCA uses "bacano".`;
 
     await guardarPiezasEnSupabase(dias, anio, mes);
     renderCalendario(dias, ciudad, mes, anio);
-    guardarCalendario(dias, ciudad, mes, anio);
-    calendarioActual = { dias, ciudad, mes, anio };
+    guardarCalendario(dias, ciudad, mes, anio, quincena);
+    calendarioActual = { dias, ciudad, mes, anio, quincena };
 
     document.getElementById('topTitle').textContent = `${ciudad} — ${mes} ${anio}`;
     document.getElementById('topSub').textContent = `${dias.length} publicaciones · ${plats.join(', ')}`;
@@ -870,7 +886,7 @@ async function guardarEdicion(el, campo, idx) {
     if (calendarioActual?.dias?.[idx]) {
       if (campo === 'headline') calendarioActual.dias[idx].titulo = valor;
       if (campo === 'copy') calendarioActual.dias[idx].copy = valor;
-      guardarCalendario(calendarioActual.dias, calendarioActual.ciudad, calendarioActual.mes, calendarioActual.anio);
+      guardarCalendario(calendarioActual.dias, calendarioActual.ciudad, calendarioActual.mes, calendarioActual.anio, calendarioActual.quincena);
     }
     showToast('✓ Guardado');
   } catch (err) {
@@ -944,7 +960,7 @@ async function aprobarYGenerarImagen(idx) {
     if (calendarioActual?.dias?.[idx]) {
       calendarioActual.dias[idx].estado = 'lista_para_publicar';
       calendarioActual.dias[idx].imagen_url = publicUrl;
-      guardarCalendario(calendarioActual.dias, calendarioActual.ciudad, calendarioActual.mes, calendarioActual.anio);
+      guardarCalendario(calendarioActual.dias, calendarioActual.ciudad, calendarioActual.mes, calendarioActual.anio, calendarioActual.quincena);
     }
     showToast('✓ Imagen generada y guardada');
   } catch (err) {
@@ -1055,9 +1071,9 @@ async function subirImagenASupabase(b64, piezaId) {
 }
 
 // ── Persistencia del calendario ──────────────────────────────────
-function guardarCalendario(dias, ciudad, mes, anio) {
+function guardarCalendario(dias, ciudad, mes, anio, quincena) {
   try {
-    localStorage.setItem('ck_calendario', JSON.stringify({ dias, ciudad, mes, anio, ts: Date.now() }));
+    localStorage.setItem('ck_calendario', JSON.stringify({ dias, ciudad, mes, anio, quincena, ts: Date.now() }));
   } catch(e) {}
 }
 
@@ -1088,21 +1104,24 @@ function cargarCalendarioGuardado() {
   try {
     const raw = localStorage.getItem('ck_calendario');
     if (!raw) return;
-    const { dias, ciudad, mes, anio, ts } = JSON.parse(raw);
+    const { dias, ciudad, mes, anio, quincena, ts } = JSON.parse(raw);
     // Solo cargar si tiene menos de 7 días
     if (Date.now() - ts > 7 * 24 * 60 * 60 * 1000) return;
-    
-    // Restaurar selector de ciudad y mes
+
+    // Restaurar selector de ciudad, mes y quincena (fallback '1' para
+    // calendarios guardados antes de este fix, que no tenían el campo).
     const selCiudad = document.getElementById('ciudad');
     const selMes = document.getElementById('mes');
     const selAnio = document.getElementById('anio');
+    const selQuincena = document.getElementById('quincena');
     [...selCiudad.options].forEach(o => { if (o.value === ciudad) o.selected = true; });
     [...selMes.options].forEach(o => { if (o.value === mes) o.selected = true; });
     [...selAnio.options].forEach(o => { if (o.value == anio) o.selected = true; });
-    
+    selQuincena.value = quincena || '1';
+
     renderCalendario(dias, ciudad, mes, anio);
-    guardarCalendario(dias, ciudad, mes, anio);
-    calendarioActual = { dias, ciudad, mes, anio };
+    guardarCalendario(dias, ciudad, mes, anio, quincena);
+    calendarioActual = { dias, ciudad, mes, anio, quincena };
     document.getElementById('topTitle').textContent = ciudad.startsWith('Toda la red') ? 'Toda la red Creditek' : ciudad.split(' (')[0].split(' — ')[0].trim() + ' — ' + mes + ' ' + anio;
     document.getElementById('topSub').textContent = dias.length + ' publicaciones guardadas';
     document.getElementById('filtersBar').style.display = 'flex';
