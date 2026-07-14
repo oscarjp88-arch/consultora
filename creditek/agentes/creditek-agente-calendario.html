@@ -99,6 +99,23 @@ select option{background:var(--bg2)}
 .badge-ref{background:rgba(255,255,255,.06);color:var(--txt3);border:1px solid rgba(255,255,255,.1)}
 
 .dcard-title{padding:10px 14px 4px;font-size:13px;font-weight:600;color:var(--txt);line-height:1.4}
+/* FIX v32, 13-jul-2026 — Fase 1, Parte A: texto editable directo en la
+   tarjeta (contenteditable), sin cambiar el look — solo un borde punteado
+   sutil al enfocar para que quede claro que se puede editar. */
+[contenteditable="true"]{cursor:text}
+[contenteditable="true"]:focus{outline:1px dashed var(--bord2);outline-offset:2px;background:rgba(0,196,204,.04)}
+/* FIX v32 — Parte C: indicador de estado por tarjeta */
+.dcard-estado{padding:0 14px 8px}
+.estado-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-block}
+.estado-pendiente{background:rgba(255,255,255,.06);color:var(--txt3);border:1px solid rgba(255,255,255,.12)}
+.estado-lista{background:rgba(154,230,180,.12);color:#9ae6b4;border:1px solid rgba(154,230,180,.3)}
+/* FIX v32 — Parte B: botón aprobar + imagen generada */
+.dcard-aprobar{padding:0 14px 12px}
+.approve-btn{width:100%;background:rgba(0,196,204,.1);border:1px solid var(--bord2);color:var(--turquesa);border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:12px;padding:9px;cursor:pointer;transition:all .15s}
+.approve-btn:hover:not(:disabled){background:rgba(0,196,204,.18)}
+.approve-btn:disabled{opacity:.6;cursor:not-allowed}
+.dcard-imagen-wrap{padding:0 14px 14px}
+.dcard-imagen{width:100%;border-radius:8px;border:1px solid var(--bord);display:block}
 
 .dcard-plats{padding:0 14px 8px;display:flex;gap:5px}
 .plat-tag{font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--bord);color:var(--txt3);background:var(--bg3)}
@@ -349,6 +366,14 @@ const SUPABASE_KEY = 'sb_publishable_oVNantrnKzXdtXu5B7YQIg_9fxHp7aW';
 const MESES_NUM = { Enero:'01', Febrero:'02', Marzo:'03', Abril:'04', Mayo:'05', Junio:'06', Julio:'07', Agosto:'08', Septiembre:'09', Octubre:'10', Noviembre:'11', Diciembre:'12' };
 function getApiKey() { return sessionStorage.getItem('ck_api_key') || ''; }
 
+// FIX v32, 13-jul-2026 — Fase 1: referencia única al calendario actualmente
+// en pantalla (dias/ciudad/mes/anio). Antes las acciones (copiar, abrirDiseno)
+// solo leían del DOM, sin necesitar el array — pero editar texto y aprobar
+// imagen sí necesitan poder ACTUALIZAR el array y volver a persistirlo en
+// localStorage (guardarCalendario), para que el estado/texto sobrevivan un
+// refresh de página sin tener que regenerar el calendario completo.
+let calendarioActual = null;
+
 // ── Modal API Key ───────────────────────────────────────────────
 function toggleModalKey() {
   const el = document.getElementById('modalKey');
@@ -493,12 +518,17 @@ hdr.innerHTML = `<span class="cal-title">📅 ${tituloCalendario} — ${mes} ${a
 
   dias.forEach((d, i) => {
     const fk = filterKey(d.tipo);
+    // FIX v32, 13-jul-2026 — Fase 1: si la pieza no trae estado (ej. recién
+    // generada, antes de guardarPiezasEnSupabase()), se asume 'sin_imagen',
+    // igual que el default que Supabase le pone a la fila.
+    d.estado = d.estado || 'sin_imagen';
     const card = document.createElement('div');
     card.className = 'dcard';
     card.dataset.tipo = fk;
     card.dataset.piezaId = d.supabaseId || '';
 
     const platsHtml = (d.plataformas || []).map(p => `<span class="plat-tag">${p}</span>`).join('');
+    const imagenHtml = d.imagen_url ? `<img class="dcard-imagen" id="imagen-${i}" src="${d.imagen_url}">` : `<img class="dcard-imagen" id="imagen-${i}" src="">`;
 
     card.innerHTML = `
       <div class="dcard-head">
@@ -511,21 +541,50 @@ hdr.innerHTML = `<span class="cal-title">📅 ${tituloCalendario} — ${mes} ${a
         </div>
         <span class="dtype-badge ${badgeClass(d.tipo)}">${d.emoji || ''} ${filterKey(d.tipo)}</span>
       </div>
-      <div class="dcard-title">${d.titulo || ''}</div>
+      <!-- FIX v32, 13-jul-2026 — Fase 1, Parte A: titular editable directo
+           (contenteditable) — se guarda en Supabase (columna headline) al
+           salir del campo (onblur), usando el piezaId de la tarjeta. -->
+      <div class="dcard-title" contenteditable="true" spellcheck="false"
+           onblur="guardarEdicion(this,'headline',${i})">${d.titulo || ''}</div>
       <div class="dcard-plats">${platsHtml}</div>
       <div class="dcard-copy">
-        <div class="copy-text" id="copy-${i}">${escapeHtml(d.copy || '')}</div>
+        <div class="copy-text expanded" id="copy-${i}" contenteditable="true" spellcheck="false"
+             onblur="guardarEdicion(this,'copy',${i})">${escapeHtml(d.copy || '')}</div>
         <div class="dcard-actions">
           <button class="cpbtn" onclick="copiar(this,${i})">Copiar</button>
-          <button class="expbtn" onclick="expandir(this,${i})">Ver más ▼</button>
-          <button class="cpbtn" onclick="abrirDiseno(${i})" style="border-color:rgba(0,196,204,.4);color:#00C4CC">🎨 Crear imagen</button>
+          <button class="expbtn" onclick="expandir(this,${i})">Ver menos ▲</button>
+          <button class="cpbtn" onclick="abrirDiseno(${i})" style="border-color:rgba(0,196,204,.4);color:#00C4CC">🎨 Crear imagen (Agente 1)</button>
         </div>
+      </div>
+      <!-- FIX v32 — Fase 1, Parte C: indicador de estado -->
+      <div class="dcard-estado" id="estado-${i}">${estadoBadgeHtml(d.estado)}</div>
+      <!-- FIX v32 — Fase 1, Parte B: aprobar y generar imagen con GPT -->
+      <div class="dcard-aprobar">
+        <button class="approve-btn" id="approve-btn-${i}" onclick="aprobarYGenerarImagen(${i})">✅ Aprobar y generar imagen</button>
+      </div>
+      <div class="dcard-imagen-wrap" id="imagen-wrap-${i}" style="display:${d.imagen_url ? 'block' : 'none'}">
+        ${imagenHtml}
       </div>
     `;
     grid.appendChild(card);
   });
 
   actualizarStats(dias);
+}
+
+// FIX v32, 13-jul-2026 — Fase 1, Parte C: badge visual de estado de cada
+// pieza, para que Oscar vea de un vistazo qué días ya están listos.
+function estadoBadgeHtml(estado) {
+  const map = {
+    sin_imagen:          { label: '○ Sin imagen',            cls: 'estado-pendiente' },
+    lista_para_publicar: { label: '✓ Lista para publicar',   cls: 'estado-lista' },
+  };
+  const e = map[estado] || { label: estado, cls: 'estado-pendiente' };
+  return `<span class="estado-badge ${e.cls}">${e.label}</span>`;
+}
+function actualizarEstadoBadge(idx, estado) {
+  const el = document.getElementById('estado-' + idx);
+  if (el) el.innerHTML = estadoBadgeHtml(estado);
 }
 
 function escapeHtml(str) {
@@ -703,6 +762,7 @@ NUNCA uses "bacano".`;
     await guardarPiezasEnSupabase(dias, anio, mes);
     renderCalendario(dias, ciudad, mes, anio);
     guardarCalendario(dias, ciudad, mes, anio);
+    calendarioActual = { dias, ciudad, mes, anio };
 
     document.getElementById('topTitle').textContent = `${ciudad} — ${mes} ${anio}`;
     document.getElementById('topSub').textContent = `${dias.length} publicaciones · ${plats.join(', ')}`;
@@ -819,6 +879,219 @@ async function guardarPiezasEnSupabase(dias, anio, mesNombre) {
   }
 }
 
+// ── FIX v32, 13-jul-2026 — Fase 1, Parte A: guardar edición de texto ────
+// Se llama al salir (onblur) de un campo contenteditable (titular o copy).
+// Actualiza Supabase directo por id (piezaId) y también el array en memoria
+// (calendarioActual) + localStorage, para que la edición sobreviva un refresh.
+async function guardarEdicion(el, campo, idx) {
+  const card = el.closest('.dcard');
+  const piezaId = card?.dataset.piezaId;
+  const valor = el.textContent.trim();
+
+  if (!piezaId) {
+    showToast('No se pudo guardar: esta pieza no tiene ID de Supabase — genera el calendario de nuevo', '#f59e0b');
+    return;
+  }
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/calendario_piezas?id=eq.${piezaId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ [campo]: valor })
+    });
+    if (!res.ok) throw new Error('Supabase respondió ' + res.status);
+
+    // Reflejar el cambio en el array en memoria (para que quede consistente
+    // si luego se genera la imagen o se recarga desde localStorage).
+    if (calendarioActual?.dias?.[idx]) {
+      if (campo === 'headline') calendarioActual.dias[idx].titulo = valor;
+      if (campo === 'copy') calendarioActual.dias[idx].copy = valor;
+      guardarCalendario(calendarioActual.dias, calendarioActual.ciudad, calendarioActual.mes, calendarioActual.anio);
+    }
+    showToast('✓ Guardado');
+  } catch (err) {
+    console.error('Error guardando edición:', err);
+    showToast('No se pudo guardar el cambio (revisa la consola)', '#ef4444');
+  }
+}
+
+// ── FIX v32, 13-jul-2026 — Fase 1, Parte B: aprobar + generar imagen ────
+// Toma el texto YA EDITADO de la tarjeta (no el original), genera la imagen
+// con GPT Image (única opción de esta fase, confirmado por Oscar), la sube al
+// bucket de Supabase Storage "calendario-imagenes" (ya existente y con RLS
+// de lectura pública/subida configurado) y actualiza calendario_piezas
+// (imagen_url + estado → 'lista_para_publicar').
+//
+// AVISO DE COSTO (obligatorio según el documento): cada clic en este botón
+// dispara 1 llamada real de generación de imagen a la API de OpenAI (GPT
+// Image, vía el mismo mecanismo `gpt-4o` + tool `image_generation` que ya
+// usa Agente 1) — no es gratis. Con ~8-10 piezas por quincena, aprobar todo
+// el lote de una sesión son ~8-10 generaciones. Precio de referencia (fuente:
+// documentación/agregadores públicos de OpenAI, jul-2026): GPT Image 2 a
+// calidad estándar/1024x1024 ronda los $0.04-$0.05 USD por imagen — confirma
+// el número exacto vigente en tu dashboard de OpenAI, los agregadores pueden
+// no reflejar cambios de precio recientes.
+async function aprobarYGenerarImagen(idx) {
+  const card = document.querySelectorAll('.dcard')[idx];
+  if (!card) return;
+  const piezaId = card.dataset.piezaId;
+  if (!piezaId) {
+    showToast('Esta pieza no tiene ID de Supabase — genera el calendario de nuevo', '#f59e0b');
+    return;
+  }
+
+  let openaiKey = localStorage.getItem('ck_openai_key');
+  if (!openaiKey) {
+    openaiKey = (window.prompt('Ingresa tu API key de OpenAI (para generar la imagen con GPT Image) — se guarda en este navegador, igual que en Agente 1:') || '').trim();
+    if (!openaiKey) return;
+    localStorage.setItem('ck_openai_key', openaiKey);
+  }
+
+  const titulo = card.querySelector('.dcard-title')?.textContent.trim() || '';
+  const copy   = document.getElementById('copy-' + idx)?.textContent.trim() || '';
+  const tipo   = card.querySelector('.dtype')?.textContent.trim() || '';
+
+  const btn = document.getElementById('approve-btn-' + idx);
+  btn.disabled = true;
+  btn.textContent = 'Generando imagen...';
+
+  try {
+    const prompt = construirPromptImagenPost(tipo, titulo, copy);
+    const imgB64 = await generarImagenGPTAgente4(openaiKey, prompt);
+    btn.textContent = 'Subiendo imagen...';
+    const publicUrl = await subirImagenASupabase(imgB64, piezaId);
+
+    const wrap = document.getElementById('imagen-wrap-' + idx);
+    const img  = document.getElementById('imagen-' + idx);
+    img.src = publicUrl;
+    wrap.style.display = 'block';
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/calendario_piezas?id=eq.${piezaId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ imagen_url: publicUrl, estado: 'lista_para_publicar' })
+    });
+    if (!res.ok) throw new Error('La imagen se generó pero no se pudo guardar el estado en Supabase (' + res.status + ')');
+
+    actualizarEstadoBadge(idx, 'lista_para_publicar');
+    if (calendarioActual?.dias?.[idx]) {
+      calendarioActual.dias[idx].estado = 'lista_para_publicar';
+      calendarioActual.dias[idx].imagen_url = publicUrl;
+      guardarCalendario(calendarioActual.dias, calendarioActual.ciudad, calendarioActual.mes, calendarioActual.anio);
+    }
+    showToast('✓ Imagen generada y guardada');
+  } catch (err) {
+    console.error('Error en aprobar y generar imagen:', err);
+    showToast(err.message || 'Error al generar la imagen', '#ef4444');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ Aprobar y generar imagen';
+  }
+}
+
+// Prompt simple y directo (Agente 4 no maneja foto de producto ni logos de
+// financiera como Agente 1 — este flujo es solo texto aprobado → gráfica).
+function construirPromptImagenPost(tipo, titulo, copy) {
+  return `Create a square (1024x1024) social media graphic for Creditek, a Colombian electronics/beauty products financing company on the Caribbean coast. Brand colors: turquoise #00C4CC and navy blue #0B1E3D. Style: modern, clean, warm and trustworthy — not corporate or cold.
+
+Post type: ${tipo}
+Headline to feature prominently on the graphic: "${titulo}"
+Context (do NOT render this full text on the image — just the headline and a short call-to-action phrase, keep on-image text minimal and legible): "${copy}"
+
+Include the Creditek brand logo (provided as a reference image) in a natural, unobtrusive position, e.g. top-right corner. Do not invent or display specific prices, discounts, or monthly payment amounts on the image.`;
+}
+
+// FIX v32, 13-jul-2026 — adaptado de generarConDalle() en
+// creditek-agente-redes.html (Agente 1) — misma llamada real a la API de
+// OpenAI (Responses API, modelo gpt-4o, tool image_generation). Simplificado
+// para Agente 4: sin selección de formato/foto de producto/logos de
+// financiera (Agente 1 sí los maneja, este flujo no los necesita), pero
+// reutilizando la MISMA mecánica de solicitud/respuesta, tal como pedía el
+// documento ("no reescribir esta lógica desde cero").
+let _logoBase64CacheAgente4 = null;
+async function cargarLogoBase64Agente4() {
+  if (_logoBase64CacheAgente4) return _logoBase64CacheAgente4;
+  try {
+    const resp = await fetch('logos/creditek_logo_corregido_alta.png');
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => { _logoBase64CacheAgente4 = e.target.result; resolve(_logoBase64CacheAgente4); };
+      reader.readAsDataURL(blob);
+    });
+  } catch(e) { return null; }
+}
+
+async function generarImagenGPTAgente4(key, prompt) {
+  const logo = await cargarLogoBase64Agente4();
+  let inputPayload;
+  if (logo) {
+    inputPayload = [{
+      role: 'user',
+      content: [
+        { type: 'input_text', text: 'Reference brand logo — reproduce exactly, small and unobtrusive:' },
+        { type: 'input_image', image_url: logo },
+        { type: 'input_text', text: prompt },
+      ]
+    }];
+  } else {
+    inputPayload = prompt;
+  }
+
+  const res = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      input: inputPayload,
+      tools: [{ type: 'image_generation', size: '1024x1024' }]
+    })
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(
+      res.status === 401 ? 'API key de OpenAI inválida.' :
+      res.status === 429 ? 'Límite de uso de OpenAI alcanzado. Espera un momento.' :
+      e.error?.message || `Error OpenAI ${res.status}`
+    );
+  }
+  const data = await res.json();
+  const imageCall = data.output?.find(o => o.type === 'image_generation_call');
+  const b64 = imageCall?.result;
+  if (!b64) throw new Error('OpenAI no devolvió imagen. Revisa la consola.');
+  return b64; // base64 puro, sin el prefijo data:image/png;base64,
+}
+
+// FIX v32, 13-jul-2026 — sube la imagen al bucket "calendario-imagenes" de
+// Supabase Storage (ya existente, con lectura pública y subida habilitada
+// para esta ruta específica) y devuelve la URL pública final para guardar en
+// calendario_piezas.imagen_url.
+async function subirImagenASupabase(b64, piezaId) {
+  const byteChars = atob(b64);
+  const byteNumbers = new Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+  const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'image/png' });
+
+  const path = `pieza-${piezaId}-${Date.now()}.png`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/calendario-imagenes/${path}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'image/png',
+    },
+    body: blob
+  });
+  if (!res.ok) throw new Error('No se pudo subir la imagen a Supabase Storage (' + res.status + ')');
+  return `${SUPABASE_URL}/storage/v1/object/public/calendario-imagenes/${path}`;
+}
+
 // ── Persistencia del calendario ──────────────────────────────────
 function guardarCalendario(dias, ciudad, mes, anio) {
   try {
@@ -844,6 +1117,7 @@ function cargarCalendarioGuardado() {
     
     renderCalendario(dias, ciudad, mes, anio);
     guardarCalendario(dias, ciudad, mes, anio);
+    calendarioActual = { dias, ciudad, mes, anio };
     document.getElementById('topTitle').textContent = ciudad.startsWith('Toda la red') ? 'Toda la red Creditek' : ciudad.split(' (')[0].split(' — ')[0].trim() + ' — ' + mes + ' ' + anio;
     document.getElementById('topSub').textContent = dias.length + ' publicaciones guardadas';
     document.getElementById('filtersBar').style.display = 'flex';
