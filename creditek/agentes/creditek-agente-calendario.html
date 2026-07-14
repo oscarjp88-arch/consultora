@@ -319,8 +319,16 @@ select option{background:var(--bg2)}
       <div class="tsub" id="topSub">Configura la tienda y el mes, luego genera</div>
     </div>
     <div class="topbar-actions">
+      <!-- FIX v33, 13-jul-2026 — Problema 2: no había forma visible de volver
+           al formulario para generar un calendario distinto una vez cargado
+           uno guardado (cargarCalendarioGuardado() oculta el emptyState sin
+           dejar salida). -->
+      <button class="abtn primary" id="nuevoCalBtn" onclick="nuevoCalendario()" style="display:none">+ Nuevo calendario</button>
       <button class="abtn" id="copyAllBtn" onclick="copiarTodo()" style="display:none">Copiar todo</button>
-      <button class="abtn primary" id="batchBtn" onclick="generarTodasLasPiezas()" style="display:none">🚀 Generar todas las piezas</button>
+      <!-- FIX v33 — Problema 1: se quita "🚀 Generar todas las piezas" (abría
+           Agente 1 en otra pestaña) — confirmado con Oscar, el flujo nuevo de
+           v32 (aprobar por día con GPT inline) lo reemplaza por completo, sin
+           dejarlo ni como respaldo. -->
       <button class="abtn primary" id="printBtn" onclick="window.print()" style="display:none">Imprimir / PDF</button>
     </div>
   </div>
@@ -553,7 +561,6 @@ hdr.innerHTML = `<span class="cal-title">📅 ${tituloCalendario} — ${mes} ${a
         <div class="dcard-actions">
           <button class="cpbtn" onclick="copiar(this,${i})">Copiar</button>
           <button class="expbtn" onclick="expandir(this,${i})">Ver menos ▲</button>
-          <button class="cpbtn" onclick="abrirDiseno(${i})" style="border-color:rgba(0,196,204,.4);color:#00C4CC">🎨 Crear imagen (Agente 1)</button>
         </div>
       </div>
       <!-- FIX v32 — Fase 1, Parte C: indicador de estado -->
@@ -774,7 +781,7 @@ NUNCA uses "bacano".`;
     document.getElementById('filtersBar').style.display = 'flex';
     document.getElementById('statsBar').style.display = 'flex';
     document.getElementById('copyAllBtn').style.display = '';
-    document.getElementById('batchBtn').style.display = '';
+    document.getElementById('nuevoCalBtn').style.display = '';
     document.getElementById('printBtn').style.display = '';
     showToast('✓ Calendario generado correctamente');
 
@@ -793,61 +800,11 @@ NUNCA uses "bacano".`;
   }
 }
 
-// ── Construir los datos de una pieza (post) para el Agente 1 ─────
-function construirItemPieza(idx) {
-  const card = document.querySelectorAll('.dcard')[idx];
-  if (!card) return null;
-  const copy = document.getElementById('copy-' + idx)?.textContent?.trim() || '';
-  const titulo = card.querySelector('.dcard-title')?.textContent?.trim() || '';
-  const tipo = card.querySelector('.dtype')?.textContent?.trim() || '';
-  const ciudadSel = document.getElementById('ciudad').value;
-
-  // Detectar producto en el copy
-  const marcas = ['Samsung','Xiaomi','Oppo','Honor','Infinix','Motorola','TCL'];
-  const productoDetectado = marcas.find(m => copy.includes(m) || titulo.includes(m)) || '';
-
-  // Mapear ciudad del calendario al valor del Agente 1
-  let ciudadParam = 'General Creditek';
-  if (ciudadSel.startsWith('Toda la red')) ciudadParam = 'General Creditek';
-  else {
-    const partes = ciudadSel.split(' — ');
-    if (partes.length > 1) ciudadParam = partes[0]; // ciudad
-  }
-
-  return {
-    copy: copy.substring(0, 500),
-    tipo: tipo,
-    producto: productoDetectado,
-    ciudad: ciudadParam,
-    titulo: titulo.substring(0, 100),
-    piezaId: card.dataset.piezaId || '',
-  };
-}
-
-// ── Abrir Agente 1 con datos precargados (una sola pieza) ────────
-function abrirDiseno(idx) {
-  const item = construirItemPieza(idx);
-  if (!item) return;
-  const params = new URLSearchParams(item);
-  window.open('../agentes/creditek-agente-redes.html?' + params.toString(), '_blank');
-}
-
-// ── Generar todas las piezas: envía el calendario completo como cola
-//    (queue) al Agente 1, para generarlas una por una sin volver aquí ──
-function generarTodasLasPiezas() {
-  const cards = document.querySelectorAll('.dcard');
-  if (!cards.length) { showToast('Genera primero el calendario', '#ef4444'); return; }
-
-  const items = [...cards].map((_, i) => construirItemPieza(i)).filter(Boolean);
-  if (!items.length) { showToast('No hay posts para enviar', '#ef4444'); return; }
-
-  localStorage.setItem('ck_batch_queue', JSON.stringify({ items, idx: 0, ts: Date.now() }));
-
-  const params = new URLSearchParams(items[0]);
-  params.set('batch', '1');
-  window.open('../agentes/creditek-agente-redes.html?' + params.toString(), '_blank');
-  showToast(`✓ Cola de ${items.length} piezas enviada al Agente 1`);
-}
+// FIX v33, 13-jul-2026 — Problema 1: se quitaron construirItemPieza(),
+// abrirDiseno() y generarTodasLasPiezas() — el mecanismo viejo que abría
+// Agente 1 en otra pestaña (por tarjeta o en lote). Confirmado con Oscar: se
+// elimina por completo, sin dejarlo como respaldo — el flujo de v32 (aprobar
+// y generar imagen inline con GPT) lo reemplaza enteramente.
 
 // ── Guardar cada pieza en Supabase (tabla calendario_piezas) ─────
 // Le asigna a cada objeto de `dias` un `supabaseId` con el id real de la fila,
@@ -1104,6 +1061,29 @@ function guardarCalendario(dias, ciudad, mes, anio) {
   } catch(e) {}
 }
 
+// FIX v33, 13-jul-2026 — Problema 2: botón "+ Nuevo calendario". Solo limpia
+// la vista y el caché local (localStorage) — el calendario ya generado sigue
+// intacto en Supabase (calendario_piezas), esto no lo toca ni lo borra.
+function nuevoCalendario() {
+  localStorage.removeItem('ck_calendario');
+  calendarioActual = null;
+
+  document.getElementById('calGrid').innerHTML = '';
+  document.getElementById('calGrid').style.display = 'none';
+  document.getElementById('emptyState').style.display = '';
+
+  document.getElementById('filtersBar').style.display = 'none';
+  document.getElementById('statsBar').style.display = 'none';
+  document.getElementById('copyAllBtn').style.display = 'none';
+  document.getElementById('nuevoCalBtn').style.display = 'none';
+  document.getElementById('printBtn').style.display = 'none';
+
+  document.getElementById('topTitle').textContent = 'Calendario Mensual de Contenido';
+  document.getElementById('topSub').textContent = 'Configura la tienda y el mes, luego genera';
+
+  showToast('Listo para generar un calendario nuevo — el anterior sigue guardado en Supabase');
+}
+
 function cargarCalendarioGuardado() {
   try {
     const raw = localStorage.getItem('ck_calendario');
@@ -1128,7 +1108,7 @@ function cargarCalendarioGuardado() {
     document.getElementById('filtersBar').style.display = 'flex';
     document.getElementById('statsBar').style.display = 'flex';
     document.getElementById('copyAllBtn').style.display = '';
-    document.getElementById('batchBtn').style.display = '';
+    document.getElementById('nuevoCalBtn').style.display = '';
     document.getElementById('printBtn').style.display = '';
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('calGrid').style.display = 'grid';
