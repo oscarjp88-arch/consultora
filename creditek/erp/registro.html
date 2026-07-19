@@ -128,6 +128,11 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
     </div>
 
     <div class="field">
+      <label>Correo <span class="opt">(opcional, si tiene)</span></label>
+      <input type="email" id="email" placeholder="correo@ejemplo.com" autocomplete="off">
+    </div>
+
+    <div class="field">
       <label>Ciudad <span class="req">*</span></label>
       <input type="text" id="ciudad" placeholder="Ciudad donde vive" autocomplete="off">
     </div>
@@ -256,6 +261,18 @@ let origenValido = false;
 let otpVerificado = false;
 let celularVerificado = null; // guarda el celular exacto que quedó verificado
 let ultimoEnvioOtp = 0;
+
+// ─── Pre-llenar vendedor desde ?v=luis-alex ─────────────────────────────
+function initVendedor() {
+  const params = new URLSearchParams(location.search);
+  const v = params.get('v');
+  if (!v) return;
+  const input = document.getElementById('vendedorNombre');
+  input.value = v;
+  input.readOnly = true;
+  input.style.background = '#F1F5F9';
+  evaluarSubmit();
+}
 
 // ─── Resolver origen desde ?origen=CK-01 ───────────────────────────────
 async function initOrigen() {
@@ -520,6 +537,7 @@ form.addEventListener('submit', async (e) => {
     ciudad: document.getElementById('ciudad').value.trim(),
     origen_codigo: origenCodigo,
     vendedor_nombre: document.getElementById('vendedorNombre').value.trim(),
+    email: document.getElementById('email').value.trim() || null,
     producto_interes: document.getElementById('productoInteres').value.trim(),
     financiera: document.getElementById('financiera').value || null,
     referencias: [
@@ -558,6 +576,7 @@ form.addEventListener('submit', async (e) => {
 });
 
 initOrigen();
+initVendedor();
 </script>
 </body>
 </html>
