@@ -94,7 +94,7 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
 <body>
 <div class="wrap">
   <header>
-    <div class="logo-title">Credi<span>tek</span></div>
+    <img src="https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek" style="height:38px;object-fit:contain;">
     <div id="tiendaTag" class="tienda-tag" style="display:none;"></div>
   </header>
 
@@ -149,22 +149,28 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
     </div>
 
     <div class="ref-block">
-      <div class="ref-title">Referencia 1</div>
+      <div class="ref-title">Referencia 1 — Amigo/a o conocido/a</div>
       <div class="field" style="margin-bottom:8px;">
         <input type="text" id="ref1Nombre" placeholder="Nombre completo">
       </div>
-      <div class="field" style="margin-bottom:0;">
+      <div class="field" style="margin-bottom:8px;">
         <input type="tel" id="ref1Telefono" inputmode="numeric" maxlength="10" placeholder="Teléfono">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <input type="text" id="ref1Parentesco" placeholder="Parentesco (ej: amiga, compañero de trabajo)">
       </div>
     </div>
 
     <div class="ref-block">
-      <div class="ref-title">Referencia 2</div>
+      <div class="ref-title">Referencia 2 — Familiar</div>
       <div class="field" style="margin-bottom:8px;">
         <input type="text" id="ref2Nombre" placeholder="Nombre completo">
       </div>
-      <div class="field" style="margin-bottom:0;">
+      <div class="field" style="margin-bottom:8px;">
         <input type="tel" id="ref2Telefono" inputmode="numeric" maxlength="10" placeholder="Teléfono">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <input type="text" id="ref2Parentesco" placeholder="Parentesco (ej: hermano, mamá)">
       </div>
     </div>
 
@@ -174,10 +180,25 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
     </div>
 
     <div class="field">
-      <label>Foto de la cédula <span class="opt">(opcional)</span></label>
+      <label>Cédula — frente <span class="req">*</span></label>
       <div class="file-input-wrap">
-        <input type="file" id="fotoCedula" accept="image/*" capture="environment">
+        <input type="file" id="fotoFrente" accept="image/*" capture="environment">
       </div>
+    </div>
+
+    <div class="field">
+      <label>Cédula — reverso <span class="req">*</span></label>
+      <div class="file-input-wrap">
+        <input type="file" id="fotoReverso" accept="image/*" capture="environment">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Selfie sosteniendo la cédula <span class="req">*</span></label>
+      <div class="file-input-wrap">
+        <input type="file" id="fotoSelfie" accept="image/*" capture="user">
+      </div>
+      <div class="help">Que se vea tu cara y la cédula en la misma foto.</div>
     </div>
 
     <div class="checkbox-row">
@@ -198,6 +219,10 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
     <div class="check">✅</div>
     <h2>¡Registro completo!</h2>
     <p>Gracias, ya quedaste registrado en Creditek. Tu asesor continúa el proceso contigo.</p>
+    <div id="fotoWarning" style="display:none; margin-top:16px;">
+      <p style="color:var(--rojo); font-size:13px; margin-bottom:10px;">El registro ya quedó guardado, pero una o más fotos no se subieron (conexión lenta). Intenta de nuevo sin salir de esta pantalla.</p>
+      <button type="button" class="btn-submit" id="btnReintentarFotos" style="width:auto; padding:10px 20px;">Reintentar subir fotos</button>
+    </div>
   </div>
 </div>
 
@@ -388,33 +413,97 @@ function evaluarSubmit() {
     document.getElementById('ciudad').value.trim().length > 1 &&
     document.getElementById('productoInteres').value.trim().length > 1 &&
     document.getElementById('vendedorNombre').value.trim().length > 1 &&
-    document.getElementById('autDatos').checked;
+    document.getElementById('autDatos').checked &&
+    document.getElementById('fotoFrente').files.length > 0 &&
+    document.getElementById('fotoReverso').files.length > 0 &&
+    document.getElementById('fotoSelfie').files.length > 0;
   btnSubmit.disabled = !ok;
 }
 form.addEventListener('input', evaluarSubmit);
 form.addEventListener('change', evaluarSubmit);
 
-// ─── Subida de foto de cédula (después de un registro exitoso) ─────────
-async function subirFotoCedula(cedula) {
-  const file = document.getElementById('fotoCedula').files[0];
-  if (!file) return;
+// ─── Compresión + subida de las 3 fotos (después de un registro exitoso) ─
+// Las fotos de celular pesan 3-8 MB; se comprimen a JPEG ~0.7 de calidad con
+// lado máximo 1600px antes de subir, para que no mueran en conexiones lentas
+// de tienda (AJUSTES_Registro_v2, Cambio 3).
+async function comprimirImagen(file, maxSide = 1600, quality = 0.7) {
+  let width, height, drawSource;
   try {
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+    const bitmap = await createImageBitmap(file);
+    width = bitmap.width; height = bitmap.height; drawSource = bitmap;
+  } catch (e) {
+    const img = await new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = reject;
+      im.src = URL.createObjectURL(file);
     });
-    await fetch(`${API}/api/subir-cedula`, {
+    width = img.naturalWidth; height = img.naturalHeight; drawSource = img;
+  }
+  const scale = Math.min(1, maxSide / Math.max(width, height));
+  const w = Math.round(width * scale);
+  const h = Math.round(height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(drawSource, 0, 0, w, h);
+  return await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+}
+
+function blobABase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function subirFoto(cedula, file, tipo) {
+  try {
+    const comprimida = await comprimirImagen(file);
+    const base64 = await blobABase64(comprimida);
+    const res = await fetch(`${API}/api/subir-cedula`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cedula, foto_base64: base64, mime: file.type || 'image/jpeg' }),
+      body: JSON.stringify({ cedula, tipo, foto_base64: base64, mime: 'image/jpeg' }),
     });
+    const data = await res.json().catch(() => ({}));
+    return res.ok && data.ok === true;
   } catch (e) {
-    // La foto es opcional en v1 — si falla, no bloquea el registro ya guardado.
-    console.error('Error subiendo foto de cédula:', e);
+    console.error(`Error subiendo foto ${tipo}:`, e);
+    return false;
   }
 }
+
+async function subirTresFotos(cedula) {
+  const frente = document.getElementById('fotoFrente').files[0];
+  const reverso = document.getElementById('fotoReverso').files[0];
+  const selfie = document.getElementById('fotoSelfie').files[0];
+  const resultados = await Promise.all([
+    subirFoto(cedula, frente, 'frente'),
+    subirFoto(cedula, reverso, 'reverso'),
+    subirFoto(cedula, selfie, 'selfie'),
+  ]);
+  return resultados.every(Boolean);
+}
+
+let cedulaRegistrada = null;
+
+async function manejarFotosPostRegistro(cedula) {
+  cedulaRegistrada = cedula;
+  const ok = await subirTresFotos(cedula);
+  document.getElementById('fotoWarning').style.display = ok ? 'none' : 'block';
+}
+
+document.getElementById('btnReintentarFotos').addEventListener('click', async (e) => {
+  const btn = e.target;
+  btn.disabled = true;
+  btn.textContent = 'Subiendo...';
+  const ok = await subirTresFotos(cedulaRegistrada);
+  btn.disabled = false;
+  btn.textContent = 'Reintentar subir fotos';
+  document.getElementById('fotoWarning').style.display = ok ? 'none' : 'block';
+});
 
 // ─── Submit ───────────────────────────────────────────────────────────
 form.addEventListener('submit', async (e) => {
@@ -434,8 +523,8 @@ form.addEventListener('submit', async (e) => {
     producto_interes: document.getElementById('productoInteres').value.trim(),
     financiera: document.getElementById('financiera').value || null,
     referencias: [
-      { nombre: document.getElementById('ref1Nombre').value.trim(), telefono: document.getElementById('ref1Telefono').value, parentesco: null },
-      { nombre: document.getElementById('ref2Nombre').value.trim(), telefono: document.getElementById('ref2Telefono').value, parentesco: null },
+      { nombre: document.getElementById('ref1Nombre').value.trim(), telefono: document.getElementById('ref1Telefono').value, parentesco: document.getElementById('ref1Parentesco').value.trim() || null },
+      { nombre: document.getElementById('ref2Nombre').value.trim(), telefono: document.getElementById('ref2Telefono').value, parentesco: document.getElementById('ref2Parentesco').value.trim() || null },
     ],
     autorizacion_datos: document.getElementById('autDatos').checked,
     autorizacion_comercial: document.getElementById('autComercial').checked,
@@ -451,9 +540,9 @@ form.addEventListener('submit', async (e) => {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.ok) {
-      await subirFotoCedula(payload.cedula);
       form.classList.add('form-hidden');
       document.getElementById('successScreen').classList.add('show');
+      await manejarFotosPostRegistro(payload.cedula);
     } else {
       msgBox.className = 'msg-box err show';
       msgBox.textContent = data.error || 'No se pudo completar el registro. Revisa los datos e intenta de nuevo.';

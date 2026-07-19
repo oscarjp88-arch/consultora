@@ -77,6 +77,10 @@ header.topbar {
 
 .foto-btn { background: #E8F4F8; color: var(--azul); border: none; border-radius: 8px; padding: 7px 12px; font-size: 12px; cursor: pointer; font-weight: 600; }
 .foto-preview { margin-top: 8px; max-width: 220px; border-radius: 8px; border: 1px solid var(--border); display: none; }
+.fotos-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.foto-slot { text-align: center; }
+.foto-slot-label { font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+.foto-slot .foto-preview { max-width: 130px; max-height: 130px; }
 
 .checklist { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 6px; }
 .checklist .item { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 7px; }
@@ -275,6 +279,19 @@ function renderList() {
   solicitudesCache.forEach(sol => list.appendChild(renderCard(sol)));
 }
 
+function renderFotoSlot(label, path) {
+  if (!path) {
+    return `<div class="foto-slot"><div class="foto-slot-label">${label}</div><span style="font-size:12px;color:#94A3B8;">No subida</span></div>`;
+  }
+  return `
+    <div class="foto-slot">
+      <div class="foto-slot-label">${label}</div>
+      <button class="foto-btn" data-path="${escapeHtml(path)}">Ver</button>
+      <br><img class="foto-preview" />
+    </div>
+  `;
+}
+
 function renderCard(sol) {
   const cliente = sol.clientes || {};
   const referencias = cliente.referencias || [];
@@ -304,11 +321,11 @@ function renderCard(sol) {
         <div class="value">${escapeHtml(sol.producto_interes || '—')}</div>
         <div class="label">Financiera</div>
         <div class="value">${escapeHtml(sol.financiera || 'No indicada')}</div>
-        <div class="label">Foto de cédula</div>
-        <div>
-          ${cliente.foto_cedula_path
-            ? `<button class="foto-btn" data-path="${escapeHtml(cliente.foto_cedula_path)}">Ver foto</button><br><img class="foto-preview" />`
-            : '<span style="font-size:12.5px;color:#94A3B8;">No subida</span>'}
+        <div class="label">Fotos del cliente</div>
+        <div class="fotos-row">
+          ${renderFotoSlot('Frente', cliente.foto_cedula_frente_path)}
+          ${renderFotoSlot('Selfie', cliente.selfie_cedula_path)}
+          ${renderFotoSlot('Reverso', cliente.foto_cedula_reverso_path)}
         </div>
       </div>
       <div class="info-block">
@@ -372,20 +389,20 @@ function renderCard(sol) {
     btnRechazar.addEventListener('click', () => resolverSolicitud(sol.id, 'rojo', notaBox.value.trim()));
   }
 
-  // Foto de cédula: signed URL bajo demanda
-  const fotoBtn = div.querySelector('.foto-btn');
-  if (fotoBtn) {
+  // Fotos (frente / selfie / reverso): signed URL bajo demanda, cada botón
+  // trae la suya propia (AJUSTES_Registro_v2, Cambio 3).
+  div.querySelectorAll('.foto-btn').forEach(fotoBtn => {
     fotoBtn.addEventListener('click', async () => {
       const path = fotoBtn.dataset.path;
       fotoBtn.textContent = 'Cargando...';
       const { data, error } = await sb.storage.from('cedulas').createSignedUrl(path, 300);
-      fotoBtn.textContent = 'Ver foto';
+      fotoBtn.textContent = 'Ver';
       if (error || !data) { alert('No se pudo cargar la foto.'); return; }
-      const img = div.querySelector('.foto-preview');
+      const img = fotoBtn.parentElement.querySelector('.foto-preview');
       img.src = data.signedUrl;
       img.style.display = 'block';
     });
-  }
+  });
 
   return div;
 }

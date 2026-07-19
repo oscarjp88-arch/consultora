@@ -334,17 +334,29 @@ async function handleRegistro(request: Request, env: Env): Promise<Response> {
 }
 
 // ─── POST /api/subir-cedula ──────────────────────────────────────────────
+// AJUSTES_Registro_v2, Cambio 3: ahora recibe 3 tipos de foto por cliente
+// (frente / reverso / selfie), cada una a su propia columna. La columna vieja
+// foto_cedula_path queda como legado — no se escribe más desde aquí.
+const COLUMNA_POR_TIPO: Record<string, string> = {
+  frente: 'foto_cedula_frente_path',
+  reverso: 'foto_cedula_reverso_path',
+  selfie: 'selfie_cedula_path',
+};
+
 async function handleSubirCedula(request: Request, env: Env): Promise<Response> {
   const body = (await request.json().catch(() => null)) as any;
   const cedula = body?.cedula;
+  const tipo = body?.tipo;
   const fotoBase64 = body?.foto_base64;
   const mime = body?.mime || 'image/jpeg';
-  if (!cedulaValida(cedula) || typeof fotoBase64 !== 'string' || !fotoBase64) {
-    return json({ ok: false, error: 'Datos inválidos' }, 400);
+
+  const columna = COLUMNA_POR_TIPO[tipo];
+  if (!cedulaValida(cedula) || !columna || typeof fotoBase64 !== 'string' || !fotoBase64) {
+    return json({ ok: false, error: 'Datos inválidos (tipo debe ser frente, reverso o selfie)' }, 400);
   }
 
   const ext = mime.includes('png') ? 'png' : 'jpg';
-  const path = `${cedula}_${Date.now()}.${ext}`;
+  const path = `${cedula}_${tipo}_${Date.now()}.${ext}`;
 
   let binario: Uint8Array;
   try {
@@ -363,17 +375,17 @@ async function handleSubirCedula(request: Request, env: Env): Promise<Response> 
     body: binario,
   });
   if (!rUpload.ok) {
-    console.error('[SUBIR-CEDULA] Error subiendo a Storage:', await rUpload.text());
+    console.error(`[SUBIR-CEDULA] Error subiendo ${tipo} a Storage:`, await rUpload.text());
     return json({ ok: false, error: 'No se pudo subir la foto' }, 500);
   }
 
   const rUpdate = await fetch(`${SUPABASE_URL}/rest/v1/clientes?cedula=eq.${encodeURIComponent(cedula)}`, {
     method: 'PATCH',
     headers: sbHeaders(env, { Prefer: 'return=minimal' }),
-    body: JSON.stringify({ foto_cedula_path: path }),
+    body: JSON.stringify({ [columna]: path }),
   });
   if (!rUpdate.ok) {
-    console.error('[SUBIR-CEDULA] Error vinculando al cliente:', await rUpdate.text());
+    console.error(`[SUBIR-CEDULA] Error vinculando ${tipo} al cliente:`, await rUpdate.text());
     return json({ ok: false, error: 'Foto subida pero no se pudo vincular al cliente' }, 500);
   }
 
