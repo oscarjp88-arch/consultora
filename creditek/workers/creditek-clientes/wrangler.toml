@@ -1,0 +1,13 @@
+name = "creditek-clientes"
+main = "src/index.ts"
+compatibility_date = "2026-01-15"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secretos requeridos (Oscar los pone con `wrangler secret put <NOMBRE>`,
+# nunca en este archivo ni en el chat):
+#   SUPABASE_SERVICE_KEY  — service_role key del proyecto creditek-erp (jfkmiyvcdfbsbwchyvol)
+#   WHATSAPP_TOKEN        — mismo valor ya usado en creditek-bot
+#   PHONE_NUMBER_ID       — mismo valor ya usado en creditek-bot
