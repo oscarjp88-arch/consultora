@@ -22,6 +22,7 @@
       { label: 'Gastos', href: 'gastos.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
       { label: 'Cierre día', href: 'caja.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
       { label: 'Cuenta cte.', href: 'cuenta-corriente.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
+      { label: 'Conciliación', href: 'conciliacion.html', roles: ['gerencia', 'auditoria'] },
     ]},
     { titulo: 'CLIENTES', icono: '👤', items: [
       { label: 'Registro', href: 'registro.html', roles: ['gerencia', 'auditoria', 'admin_tienda', 'asesor'] },
