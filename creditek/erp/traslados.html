@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="sidebar.js"></script>
 <style>
 :root {
   --azul: #0B1E3D; --turquesa: #00C4CC; --bg: #F5F5F7; --surface: #FFFFFF;
@@ -38,7 +39,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; ba
 .sin-perfil-box button { border: 1px solid var(--border); background: var(--bg); border-radius: var(--radius-sm); padding: 10px 18px; font-size: 13px; cursor: pointer; color: var(--azul); font-weight: 600; }
 
 #app { display: none; }
-#app.show { display: block; }
+#app.show { display: flex; }
 .navbar { background: rgba(255,255,255,0.72); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 18px; position: sticky; top: 0; z-index: 10; flex-wrap: wrap; }
 .navbar img.logo { height: 26px; object-fit: contain; flex-shrink: 0; }
 .nav-links { display: flex; gap: 4px; overflow-x: auto; flex: 1; scrollbar-width: none; }
@@ -157,27 +158,10 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 </div>
 
 <div id="app">
-  <nav class="navbar">
-    <img class="logo" src="https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek">
-    <div class="nav-links">
-      <a href="app.html">Inicio</a>
-      <a href="catalogo.html">Catálogo</a>
-      <a href="remisiones.html">Remisiones</a>
-      <a href="inventario.html">Inventario</a>
-      <a href="ventas.html">Ventas</a>
-      <a href="caja.html">Caja</a>
-      <a href="gastos.html">Gastos</a>
-      <a href="traslados.html" class="active">Traslados</a>
-      <a href="ajustes.html">Ajustes</a>
-      <a href="cierre-periodo.html">Cierre periodo</a>
-      <a href="cuenta-corriente.html">Cta. Corriente</a>
-      <a href="validacion.html">Validación</a>
-    </div>
-    <div class="nav-user">
-      <div class="quien"><b id="navNombre">—</b><br><span id="navRolTienda">—</span></div>
-      <button id="btnLogout">Salir</button>
-    </div>
-  </nav>
+  <div style="display:none;" aria-hidden="true">
+    <b id="navNombre"></b><span id="navRolTienda"></span><button id="btnLogout"></button>
+  </div>
+  <div class="main-content">
 
   <div class="banner-ok" id="bannerOk">
     <span id="bannerOkTexto"></span>
@@ -208,6 +192,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
       </table>
       <div class="empty-state" id="emptyState" style="display:none;">Cargando traslados...</div>
     </div>
+  </div>
   </div>
 </div>
 
