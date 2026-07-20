@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creditek · Cierre de Periodo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+:root {
+  --azul: #0B1E3D; --turquesa: #00C4CC; --bg: #F5F5F7; --surface: #FFFFFF;
+  --border: rgba(11,30,61,0.08); --text2: #6E6E76; --verde: #16A34A; --amarillo: #D97706; --rojo: #DC2626;
+  --radius: 18px; --radius-sm: 11px;
+  --shadow-sm: 0 1px 2px rgba(11,30,61,0.04), 0 1px 1px rgba(11,30,61,0.03);
+  --shadow-md: 0 12px 28px -10px rgba(11,30,61,0.16);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--azul); -webkit-font-smoothing: antialiased; }
+
+.login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: radial-gradient(circle at 30% 20%, #EAFBFC 0%, var(--bg) 55%); }
+.login-box { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 40px 32px; width: 100%; max-width: 360px; box-shadow: var(--shadow-md); }
+.login-box img.logo { display: block; height: 40px; margin: 0 auto 22px; object-fit: contain; }
+.login-box input { width: 100%; border: 1px solid transparent; background: var(--bg); border-radius: var(--radius-sm); padding: 13px 14px; font-size: 15px; margin-bottom: 12px; font-family: inherit; transition: all .15s ease; }
+.login-box input:focus { outline: none; background: white; border-color: var(--turquesa); box-shadow: 0 0 0 4px rgba(0,196,204,0.14); }
+.login-box button { width: 100%; background: var(--turquesa); color: white; border: none; border-radius: var(--radius-sm); padding: 13px; font-size: 14.5px; font-weight: 700; cursor: pointer; margin-top: 6px; box-shadow: 0 6px 16px -4px rgba(0,196,204,0.5); transition: transform .12s ease, box-shadow .12s ease; }
+.login-box button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px -4px rgba(0,196,204,0.55); }
+.login-box button:disabled { background: #D2D2D7; box-shadow: none; }
+.login-err { color: var(--rojo); font-size: 12.5px; margin-top: 10px; display: none; }
+.login-err.show { display: block; }
+
+.sin-perfil-screen { min-height: 100vh; display: none; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+.sin-perfil-screen.show { display: flex; }
+.sin-perfil-box { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 40px 32px; max-width: 380px; box-shadow: var(--shadow-md); }
+.sin-perfil-box .icono { font-size: 34px; margin-bottom: 12px; }
+.sin-perfil-box h2 { font-family: 'Montserrat', sans-serif; font-size: 17px; margin-bottom: 8px; }
+.sin-perfil-box p { font-size: 13.5px; color: var(--text2); line-height: 1.5; margin-bottom: 18px; }
+.sin-perfil-box button { border: 1px solid var(--border); background: var(--bg); border-radius: var(--radius-sm); padding: 10px 18px; font-size: 13px; cursor: pointer; color: var(--azul); font-weight: 600; }
+
+#app { display: none; }
+#app.show { display: block; }
+.navbar { background: rgba(255,255,255,0.72); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 18px; position: sticky; top: 0; z-index: 10; flex-wrap: wrap; }
+.navbar img.logo { height: 26px; object-fit: contain; flex-shrink: 0; }
+.nav-links { display: flex; gap: 4px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+.nav-links::-webkit-scrollbar { display: none; }
+.nav-links a { white-space: nowrap; text-decoration: none; color: var(--text2); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; transition: background .15s ease, color .15s ease; }
+.nav-links a:hover { background: rgba(11,30,61,0.05); color: var(--azul); }
+.nav-links a.active { background: var(--azul); color: white; box-shadow: var(--shadow-sm); }
+.nav-user { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text2); flex-shrink: 0; }
+.nav-user .quien { text-align: right; line-height: 1.3; }
+.nav-user .quien b { color: var(--azul); font-size: 12.5px; }
+.nav-user button { background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 7px 14px; font-size: 12px; cursor: pointer; color: var(--text2); font-weight: 600; transition: background .15s ease; }
+.nav-user button:hover { background: #EAEAEC; }
+
+.page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; }
+.page-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.page-top h1 { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.btn-primary { background: var(--turquesa); color: white; border: none; border-radius: 999px; padding: 11px 18px; font-size: 13.5px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px -4px rgba(0,196,204,0.5); transition: transform .12s ease; }
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-primary:disabled { background: #D2D2D7; box-shadow: none; cursor: not-allowed; }
+.btn-secundario { background: var(--bg); color: var(--azul); border: 1px solid var(--border); border-radius: 999px; padding: 11px 18px; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+
+.banner-ok {
+  position: sticky; top: 74px; z-index: 8; margin: 0 auto 18px; max-width: 1100px;
+  background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; border-radius: var(--radius-sm);
+  padding: 13px 18px; font-size: 13.5px; font-weight: 700; display: none; align-items: center; justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+.banner-ok.show { display: flex; }
+.banner-ok button { background: none; border: none; color: #166534; font-weight: 700; cursor: pointer; font-size: 16px; }
+
+.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; align-items: center; }
+.filters select, .filters input { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; font-family: inherit; color: var(--azul); }
+.filters select:focus, .filters input:focus { outline: none; border-color: var(--turquesa); box-shadow: 0 0 0 3px rgba(0,196,204,0.12); }
+
+.cerrado-box { background: #DCFCE7; border: 1px solid #86EFAC; border-radius: var(--radius); padding: 18px 22px; margin-bottom: 22px; color: #166534; font-weight: 700; font-size: 14px; }
+
+.seccion { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 22px; margin-bottom: 20px; }
+.seccion h2 { font-family: 'Montserrat', sans-serif; font-size: 15px; margin-bottom: 4px; }
+.seccion .sub { font-size: 12.5px; color: var(--text2); margin-bottom: 16px; }
+
+.resumen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.resumen-card { background: var(--bg); border-radius: var(--radius-sm); padding: 14px 16px; }
+.resumen-card .label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text2); font-weight: 700; margin-bottom: 5px; }
+.resumen-card .valor { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 800; }
+.resumen-card.destacado { background: #E8FBFC; }
+.resumen-card.destacado .valor { color: var(--turquesa); }
+.resumen-card.negativo .valor { color: var(--rojo); }
+
+.check-lista { list-style: none; }
+.check-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.check-item:last-child { border-bottom: none; }
+.check-item input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--turquesa); flex-shrink: 0; }
+.check-item .nombre { flex: 1; }
+.check-item .imei-txt { color: var(--text2); font-size: 12px; }
+.check-item.no-encontrado { background: #FEF2F2; }
+
+.cantidad-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.cantidad-item:last-child { border-bottom: none; }
+.cantidad-item input { width: 90px; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 7px 9px; font-size: 13px; font-family: inherit; text-align: right; }
+.cantidad-item .meta { font-size: 11.5px; color: var(--text2); }
+
+.estado-lista { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.estado-linea { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.estado-linea .icono { font-size: 15px; width: 20px; text-align: center; }
+.estado-linea.ok { color: var(--verde); }
+.estado-linea.mal { color: var(--rojo); }
+
+.comisiones-tabla { width: 100%; font-size: 13px; margin-top: 6px; }
+.comisiones-tabla th, .comisiones-tabla td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.comisiones-tabla th { font-size: 11px; text-transform: uppercase; color: var(--text2); font-weight: 700; }
+
+.empty-state { text-align: center; color: var(--text2); font-size: 13.5px; padding: 30px 0; }
+
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(11,30,61,0.35); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+.modal-bg.show { display: flex; }
+.modal-box { background: var(--surface); border-radius: 20px; padding: 26px 24px; width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-md); }
+.modal-box h2 { font-family: 'Montserrat', sans-serif; font-size: 17px; margin-bottom: 4px; }
+.modal-sub { font-size: 12.5px; color: var(--text2); margin-bottom: 16px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+.modal-actions button { flex: 1; border: none; border-radius: 999px; padding: 12px; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: transform .12s ease; }
+.modal-actions button:hover:not(:disabled) { transform: translateY(-1px); }
+.modal-actions .btn-cancelar { background: var(--bg); color: var(--text2); flex: 0 0 auto; padding: 12px 20px; }
+.modal-actions .btn-guardar { background: var(--turquesa); color: white; box-shadow: 0 6px 16px -4px rgba(0,196,204,0.5); }
+.modal-err { color: var(--rojo); font-size: 12.5px; margin-top: 8px; display: none; }
+.modal-err.show { display: block; }
+.subtitulo-conteo { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .04em; margin: 14px 0 6px; }
+
+.scanner-overlay { display: none; position: fixed; inset: 0; background: black; z-index: 100; align-items: center; justify-content: center; flex-direction: column; }
+.scanner-overlay.show { display: flex; }
+.scanner-overlay video { width: 100%; max-width: 480px; border-radius: 12px; }
+.scanner-overlay button { margin-top: 16px; background: white; color: var(--azul); border: none; border-radius: 999px; padding: 10px 20px; font-weight: 700; cursor: pointer; }
+.scanner-hint { color: white; font-size: 12.5px; margin-top: 10px; opacity: .8; }
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <img class="logo" src="https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek">
+    <input type="email" id="loginEmail" placeholder="Correo" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password">
+    <button id="btnLogin">Entrar</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div class="sin-perfil-screen" id="sinPerfilScreen">
+  <div class="sin-perfil-box">
+    <div class="icono">🔒</div>
+    <h2>Sin perfil asignado</h2>
+    <p>Tu usuario no tiene perfil asignado. Contacta al administrador.</p>
+    <button id="btnSalirSinPerfil">Cerrar sesión</button>
+  </div>
+</div>
+
+<div id="app">
+  <nav class="navbar">
+    <img class="logo" src="https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek">
+    <div class="nav-links">
+      <a href="app.html">Inicio</a>
+      <a href="catalogo.html">Catálogo</a>
+      <a href="remisiones.html">Remisiones</a>
+      <a href="inventario.html">Inventario</a>
+      <a href="ventas.html">Ventas</a>
+      <a href="caja.html">Caja</a>
+      <a href="gastos.html">Gastos</a>
+      <a href="traslados.html">Traslados</a>
+      <a href="ajustes.html">Ajustes</a>
+      <a href="cierre-periodo.html" class="active">Cierre de periodo</a>
+      <a href="cuenta-corriente.html">Cta. Corriente</a>
+      <a href="validacion.html">Validación</a>
+    </div>
+    <div class="nav-user">
+      <div class="quien"><b id="navNombre">—</b><br><span id="navRolTienda">—</span></div>
+      <button id="btnLogout">Salir</button>
+    </div>
+  </nav>
+
+  <div class="banner-ok" id="bannerOk">
+    <span id="bannerOkTexto"></span>
+    <button id="btnCerrarBanner">✕</button>
+  </div>
+
+  <div class="page">
+    <div class="page-top">
+      <h1>Cierre de periodo</h1>
+    </div>
+
+    <div class="filters">
+      <select id="filtroTienda" style="display:none;"></select>
+      <input type="month" id="filtroMes">
+      <button class="btn-secundario" id="btnActualizar">Actualizar</button>
+    </div>
+
+    <div id="contenidoPeriodo"></div>
+  </div>
+</div>
+
+<!-- Modal: conteo físico -->
+<div class="modal-bg" id="modalConteo">
+  <div class="modal-box">
+    <h2>Conteo físico</h2>
+    <div class="modal-sub">Marca los celulares que SÍ encontraste. Los que queden sin marcar se registrarán como faltantes. Ajusta la cantidad contada de cada accesorio.</div>
+
+    <div class="subtitulo-conteo">Celulares (por IMEI)</div>
+    <ul class="check-lista" id="conteoCelulares"></ul>
+
+    <div class="subtitulo-conteo">Accesorios (por cantidad)</div>
+    <div id="conteoAccesorios"></div>
+
+    <div class="modal-err" id="modalConteoErr"></div>
+    <div class="modal-actions">
+      <button class="btn-cancelar" id="btnCancelarConteo">Cancelar</button>
+      <button class="btn-guardar" id="btnConfirmarConteo">Generar ajustes</button>
+    </div>
+  </div>
+</div>
+
+<div class="scanner-overlay" id="scannerOverlay">
+  <video id="scannerVideo" autoplay playsinline muted></video>
+  <div class="scanner-hint">Escanea el IMEI para marcarlo como presente</div>
+  <button id="btnCerrarScanner">Cancelar</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let currentPerfil = null;
+let tiendasCache = [];
+let resumenActual = null;
+let conteoUnidades = [];
+let conteoStock = [];
+
+function esCentral() { return !!currentPerfil && (currentPerfil.rol === 'gerencia' || currentPerfil.rol === 'auditoria'); }
+function puedeContar(tienda) { return esCentral() || (currentPerfil.rol === 'admin_tienda' && currentPerfil.tienda_codigo === tienda); }
+
+document.getElementById('btnLogin').addEventListener('click', hacerLogin);
+document.getElementById('loginPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') hacerLogin(); });
+
+async function hacerLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const btn = document.getElementById('btnLogin');
+  const err = document.getElementById('loginErr');
+  err.classList.remove('show');
+  if (!email || !password) return;
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if (error) { err.textContent = 'Correo o contraseña incorrectos.'; err.classList.add('show'); return; }
+  entrarApp(data.user);
+}
+
+document.getElementById('btnLogout').addEventListener('click', cerrarSesion);
+document.getElementById('btnSalirSinPerfil').addEventListener('click', cerrarSesion);
+async function cerrarSesion() { await sb.auth.signOut(); location.reload(); }
+
+async function entrarApp(user) {
+  currentUser = user;
+  const { data: perfil, error } = await sb.from('perfiles').select('*').eq('id', user.id).maybeSingle();
+  if (error || !perfil || !perfil.activo) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('sinPerfilScreen').classList.add('show');
+    return;
+  }
+  currentPerfil = perfil;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').classList.add('show');
+  pintarNavUser();
+  initPagina();
+}
+
+function pintarNavUser() {
+  document.getElementById('navNombre').textContent = currentPerfil.nombre || currentUser.email;
+  const rolLabel = { gerencia: 'Gerencia', auditoria: 'Auditoría', admin_tienda: 'Admin tienda', asesor: 'Asesor' }[currentPerfil.rol] || currentPerfil.rol;
+  document.getElementById('navRolTienda').textContent = currentPerfil.tienda_codigo ? `${rolLabel} · ${currentPerfil.tienda_codigo}` : rolLabel;
+}
+
+sb.auth.getSession().then(({ data }) => { if (data.session) entrarApp(data.session.user); });
+
+function fmtCOP(n) { return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0); }
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function mostrarBanner(texto) {
+  document.getElementById('bannerOkTexto').textContent = texto;
+  document.getElementById('bannerOk').classList.add('show');
+}
+document.getElementById('btnCerrarBanner').addEventListener('click', () => document.getElementById('bannerOk').classList.remove('show'));
+
+// ─── Página: Cierre de periodo ─────────────────────────────────────────
+function initPagina() {
+  const hoy = new Date();
+  document.getElementById('filtroMes').value = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+
+  if (esCentral()) {
+    document.getElementById('filtroTienda').style.display = '';
+  }
+
+  document.getElementById('btnActualizar').addEventListener('click', cargarResumen);
+  document.getElementById('btnCancelarConteo').addEventListener('click', () => document.getElementById('modalConteo').classList.remove('show'));
+  document.getElementById('btnConfirmarConteo').addEventListener('click', confirmarConteo);
+  document.getElementById('btnCerrarScanner').addEventListener('click', cerrarScanner);
+
+  cargarTiendas();
+}
+
+async function cargarTiendas() {
+  const { data } = await sb.from('origenes').select('codigo, nombre').eq('tipo', 'propia').eq('activo', true).order('nombre');
+  tiendasCache = data || [];
+  if (esCentral()) {
+    document.getElementById('filtroTienda').innerHTML = tiendasCache.map(t => `<option value="${t.codigo}">${escapeHtml(t.nombre)}</option>`).join('');
+    document.getElementById('filtroTienda').addEventListener('change', cargarResumen);
+  }
+  cargarResumen();
+}
+
+function tiendaSeleccionada() {
+  return esCentral() ? document.getElementById('filtroTienda').value : currentPerfil.tienda_codigo;
+}
+
+function nombreTienda(codigo) {
+  return tiendasCache.find(t => t.codigo === codigo)?.nombre || codigo || '—';
+}
+
+async function cargarResumen() {
+  const cont = document.getElementById('contenidoPeriodo');
+  const tienda = tiendaSeleccionada();
+  const mesVal = document.getElementById('filtroMes').value; // "YYYY-MM"
+  if (!tienda || !mesVal) { cont.innerHTML = '<div class="empty-state">Elige tienda y mes.</div>'; return; }
+  const [anio, mes] = mesVal.split('-').map(Number);
+
+  cont.innerHTML = '<div class="empty-state">Calculando...</div>';
+
+  const { data, error } = await sb.rpc('calcular_resumen_periodo', { p_tienda_codigo: tienda, p_anio: anio, p_mes: mes });
+  if (error) { cont.innerHTML = `<div class="empty-state">Error: ${escapeHtml(error.message)}</div>`; return; }
+  resumenActual = { tienda, anio, mes, ...data };
+  renderResumen();
+}
+
+function renderResumen() {
+  const cont = document.getElementById('contenidoPeriodo');
+  const r = resumenActual;
+  const nombreMes = new Date(r.anio, r.mes - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+
+  let html = '';
+
+  if (r.ya_cerrado) {
+    html += `<div class="cerrado-box">✅ El periodo de ${nombreMes} para ${escapeHtml(nombreTienda(r.tienda))} ya está cerrado. Los números de abajo son los que quedaron registrados oficialmente.</div>`;
+  }
+
+  html += `
+    <div class="seccion">
+      <h2>Resumen de inventario — ${escapeHtml(nombreMes)}</h2>
+      <div class="sub">${escapeHtml(nombreTienda(r.tienda))}</div>
+      <div class="resumen-grid">
+        <div class="resumen-card"><div class="label">Inventario inicial</div><div class="valor">${fmtCOP(r.inventario_inicial)}</div></div>
+        <div class="resumen-card"><div class="label">− Ventas (costo)</div><div class="valor">${fmtCOP(r.costo_vendido)}</div></div>
+        <div class="resumen-card"><div class="label">± Ajustes</div><div class="valor">${fmtCOP(r.ganancias_ajustes - r.perdidas_ajustes)}</div></div>
+        <div class="resumen-card destacado"><div class="label">Inventario final</div><div class="valor">${fmtCOP(r.inventario_final)}</div></div>
+      </div>
+    </div>
+
+    <div class="seccion">
+      <h2>Utilidad del periodo</h2>
+      <div class="resumen-grid">
+        <div class="resumen-card"><div class="label">Ventas totales (precio)</div><div class="valor">${fmtCOP(r.ventas_totales)}</div></div>
+        <div class="resumen-card negativo"><div class="label">− Costo de lo vendido</div><div class="valor">${fmtCOP(r.costo_vendido)}</div></div>
+        <div class="resumen-card negativo"><div class="label">− Gastos aprobados</div><div class="valor">${fmtCOP(r.gastos_totales)}</div></div>
+        <div class="resumen-card negativo"><div class="label">− Pérdidas por ajuste</div><div class="valor">${fmtCOP(r.perdidas_ajustes)}</div></div>
+        <div class="resumen-card destacado"><div class="label">Utilidad neta</div><div class="valor">${fmtCOP(r.utilidad_neta)}</div></div>
+      </div>
+    </div>
+
+    <div class="seccion">
+      <h2>Comisiones ${r.ya_cerrado ? '(oficiales)' : '(proyectadas)'}</h2>
+      <div class="sub">Sobre la utilidad neta después de ajustes.</div>
+      ${r.comisiones && r.comisiones.length ? `
+        <table class="comisiones-tabla">
+          <thead><tr><th>Persona</th><th>Rol</th><th>%</th><th>Base ventas</th><th>Comisión</th></tr></thead>
+          <tbody>
+            ${r.comisiones.map(c => `
+              <tr>
+                <td>${escapeHtml(c.nombre)}</td>
+                <td>${c.rol === 'admin_tienda' ? 'Administrador' : 'Asesor'}</td>
+                <td>${c.porcentaje}%</td>
+                <td>${c.base_ventas !== null ? fmtCOP(c.base_ventas) : '—'}</td>
+                <td><b>${fmtCOP(c.monto)}</b></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      ` : '<div class="empty-state">No hay administrador o asesores con ventas este periodo.</div>'}
+    </div>
+  `;
+
+  if (!r.ya_cerrado) {
+    const cajasOk = r.cajas_abiertas === 0 && r.cajas_faltantes === 0;
+    const ajustesOk = r.ajustes_pendientes === 0;
+    html += `
+      <div class="seccion">
+        <h2>Estado del cierre</h2>
+        <div class="estado-lista">
+          <div class="estado-linea ${r.cajas_abiertas === 0 ? 'ok' : 'mal'}"><span class="icono">${r.cajas_abiertas === 0 ? '✓' : '✕'}</span> ${r.cajas_abiertas === 0 ? 'No hay cajas abiertas' : `${r.cajas_abiertas} caja(s) sin cerrar`}</div>
+          <div class="estado-linea ${r.cajas_faltantes === 0 ? 'ok' : 'mal'}"><span class="icono">${r.cajas_faltantes === 0 ? '✓' : '✕'}</span> ${r.cajas_faltantes === 0 ? 'Todos los días con movimiento tienen caja cerrada' : `${r.cajas_faltantes} día(s) con ventas o gastos sin caja cerrada`}</div>
+          <div class="estado-linea ${ajustesOk ? 'ok' : 'mal'}"><span class="icono">${ajustesOk ? '✓' : '✕'}</span> ${ajustesOk ? 'No hay ajustes pendientes' : `${r.ajustes_pendientes} ajuste(s) pendiente(s) de autorizar`}</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${puedeContar(r.tienda) ? `<button class="btn-secundario" id="btnIniciarConteo">Conteo físico</button>` : ''}
+          ${esCentral() ? `<button class="btn-primary" id="btnCerrarPeriodo" ${(cajasOk && ajustesOk) ? '' : 'disabled'}>Cerrar periodo</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  cont.innerHTML = html;
+
+  const btnConteo = document.getElementById('btnIniciarConteo');
+  if (btnConteo) btnConteo.addEventListener('click', abrirModalConteo);
+  const btnCerrar = document.getElementById('btnCerrarPeriodo');
+  if (btnCerrar) btnCerrar.addEventListener('click', ejecutarCierre);
+}
+
+// ─── Conteo físico ──────────────────────────────────────────────────────
+async function abrirModalConteo() {
+  const tienda = resumenActual.tienda;
+  document.getElementById('modalConteoErr').classList.remove('show');
+
+  const [{ data: unidades }, { data: stock }] = await Promise.all([
+    sb.from('unidades').select('id, imei, producto_id, productos(nombre)').eq('tienda_actual', tienda).eq('estado', 'disponible').order('imei'),
+    sb.from('stock_cantidad').select('producto_id, cantidad, productos(nombre)').eq('tienda_codigo', tienda).order('producto_id'),
+  ]);
+  conteoUnidades = (unidades || []).map(u => ({ ...u, presente: true }));
+  conteoStock = stock || [];
+
+  renderConteoCelulares();
+  renderConteoAccesorios();
+
+  document.getElementById('modalConteo').classList.add('show');
+}
+
+function renderConteoCelulares() {
+  const cont = document.getElementById('conteoCelulares');
+  if (!conteoUnidades.length) { cont.innerHTML = '<div class="empty-state">No hay celulares disponibles en esta tienda.</div>'; return; }
+  cont.innerHTML = conteoUnidades.map((u, idx) => `
+    <li class="check-item ${u.presente ? '' : 'no-encontrado'}" data-idx="${idx}">
+      <input type="checkbox" class="chk-presente" data-idx="${idx}" ${u.presente ? 'checked' : ''}>
+      <span class="nombre">${escapeHtml(u.productos?.nombre || '—')}</span>
+      <span class="imei-txt">${escapeHtml(u.imei)}</span>
+    </li>
+  `).join('');
+  cont.querySelectorAll('.chk-presente').forEach(chk => chk.addEventListener('change', (e) => {
+    const idx = Number(e.target.dataset.idx);
+    conteoUnidades[idx].presente = e.target.checked;
+    e.target.closest('.check-item').classList.toggle('no-encontrado', !e.target.checked);
+  }));
+
+  if ('BarcodeDetector' in window) {
+    const btnScan = document.createElement('button');
+    btnScan.className = 'btn-secundario';
+    btnScan.style.marginBottom = '8px';
+    btnScan.textContent = '📷 Escanear para marcar presente';
+    btnScan.addEventListener('click', abrirScanner);
+    cont.parentElement.insertBefore(btnScan, cont);
+  }
+}
+
+function renderConteoAccesorios() {
+  const cont = document.getElementById('conteoAccesorios');
+  if (!conteoStock.length) { cont.innerHTML = '<div class="empty-state">No hay accesorios con stock en esta tienda.</div>'; return; }
+  cont.innerHTML = conteoStock.map((s, idx) => `
+    <div class="cantidad-item">
+      <div><div>${escapeHtml(s.productos?.nombre || '—')}</div><div class="meta">Sistema dice: ${s.cantidad}</div></div>
+      <input type="number" min="0" class="cantidad-contada" data-idx="${idx}" value="${s.cantidad}">
+    </div>
+  `).join('');
+}
+
+async function confirmarConteo() {
+  const err = document.getElementById('modalConteoErr');
+  err.classList.remove('show');
+
+  const noEncontradas = conteoUnidades.filter(u => !u.presente).map(u => u.id);
+  const conteos = Array.from(document.querySelectorAll('.cantidad-contada')).map(inp => ({
+    producto_id: conteoStock[Number(inp.dataset.idx)].producto_id,
+    cantidad_contada: Number(inp.value || 0),
+  }));
+
+  if (!noEncontradas.length && !conteos.some((c, i) => c.cantidad_contada !== conteoStock[i].cantidad)) {
+    if (!confirm('No se detectaron diferencias. ¿Continuar de todas formas?')) return;
+  }
+
+  const btn = document.getElementById('btnConfirmarConteo');
+  btn.disabled = true; btn.textContent = 'Generando...';
+
+  const { data, error } = await sb.rpc('generar_ajustes_conteo', {
+    p_tienda_codigo: resumenActual.tienda,
+    p_unidades_no_encontradas: noEncontradas,
+    p_conteos: conteos,
+  });
+
+  btn.disabled = false; btn.textContent = 'Generar ajustes';
+
+  if (error) { err.textContent = 'No se pudo generar: ' + error.message; err.classList.add('show'); return; }
+
+  document.getElementById('modalConteo').classList.remove('show');
+  mostrarBanner(data.ajustes_creados > 0
+    ? `✅ Conteo registrado — se generaron ${data.ajustes_creados} ajuste(s) pendiente(s) de autorizar en Ajustes.`
+    : '✅ Conteo registrado — no se encontraron diferencias.');
+  cargarResumen();
+}
+
+// ─── Cierre ──────────────────────────────────────────────────────────────
+async function ejecutarCierre() {
+  const r = resumenActual;
+  const nombreMes = new Date(r.anio, r.mes - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  if (!confirm(`¿Cerrar el periodo de ${nombreMes} para ${nombreTienda(r.tienda)}?\n\nUna vez cerrado, no se puede reabrir ni registrar más ventas, gastos o ajustes con fecha de ese mes.`)) return;
+
+  const btn = document.getElementById('btnCerrarPeriodo');
+  btn.disabled = true; btn.textContent = 'Cerrando...';
+
+  const { data, error } = await sb.rpc('cerrar_periodo', { p_tienda_codigo: r.tienda, p_anio: r.anio, p_mes: r.mes });
+
+  btn.disabled = false; btn.textContent = 'Cerrar periodo';
+
+  if (error) { alert('No se pudo cerrar: ' + error.message); return; }
+
+  mostrarBanner(`✅ Periodo cerrado — Utilidad neta: ${fmtCOP(data.utilidad_neta)}`);
+  cargarResumen();
+}
+
+// ─── Escáner de código de barras (BarcodeDetector nativo) ──────────────
+let scannerStream = null;
+let scannerAnimId = null;
+
+async function abrirScanner() {
+  const overlay = document.getElementById('scannerOverlay');
+  const video = document.getElementById('scannerVideo');
+  overlay.classList.add('show');
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = scannerStream;
+    await video.play();
+    const detector = new window.BarcodeDetector({ formats: ['code_128', 'ean_13', 'code_39', 'qr_code', 'ean_8'] });
+    const loop = async () => {
+      if (!overlay.classList.contains('show')) return;
+      try {
+        const codigos = await detector.detect(video);
+        if (codigos && codigos.length) {
+          const imei = codigos[0].rawValue;
+          const idx = conteoUnidades.findIndex(u => u.imei === imei);
+          if (idx >= 0) { conteoUnidades[idx].presente = true; renderConteoCelulares(); }
+          cerrarScanner();
+          return;
+        }
+      } catch (e) { /* frame no decodificable, sigue intentando */ }
+      scannerAnimId = requestAnimationFrame(loop);
+    };
+    loop();
+  } catch (e) {
+    cerrarScanner();
+    alert('No se pudo acceder a la cámara.');
+  }
+}
+
+function cerrarScanner() {
+  document.getElementById('scannerOverlay').classList.remove('show');
+  if (scannerAnimId) cancelAnimationFrame(scannerAnimId);
+  if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+}
+</script>
+</body>
+</html>

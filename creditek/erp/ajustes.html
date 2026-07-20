@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Creditek · Gastos</title>
+<title>Creditek · Ajustes de inventario</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -74,7 +74,9 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; ba
 .cola-card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .cola-card .concepto { font-weight: 700; font-size: 14px; }
 .cola-card .meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
-.cola-card .monto { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 16px; }
+.cola-card .dif { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 16px; }
+.cola-card .dif.negativo { color: var(--rojo); }
+.cola-card .dif.positivo { color: var(--verde); }
 .cola-card .desc { font-size: 12.5px; margin-top: 8px; color: var(--azul); }
 .cola-card .acciones { display: flex; gap: 8px; margin-top: 12px; }
 .cola-card .acciones button { flex: 1; border: none; border-radius: 999px; padding: 9px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
@@ -92,22 +94,38 @@ th { background: rgba(11,30,61,0.02); font-size: 11px; text-transform: uppercase
 tr:last-child td { border-bottom: none; }
 tbody tr:hover { background: rgba(11,30,61,0.02); }
 .badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: .03em; }
-.badge.registrado { background: #FEF3C7; color: #92400E; }
-.badge.aprobado { background: #DCFCE7; color: #166534; }
+.badge.pendiente { background: #FEF3C7; color: #92400E; }
+.badge.autorizado { background: #DCFCE7; color: #166534; }
 .badge.rechazado { background: #FEE2E2; color: #991B1B; }
+.dif-neg { color: var(--rojo); font-weight: 700; }
+.dif-pos { color: var(--verde); font-weight: 700; }
 .empty-state { text-align: center; color: var(--text2); font-size: 14px; padding: 40px 0; }
 
 .modal-bg { display: none; position: fixed; inset: 0; background: rgba(11,30,61,0.35); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 50; padding: 16px; }
 .modal-bg.show { display: flex; }
-.modal-box { background: var(--surface); border-radius: 20px; padding: 26px 24px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-md); }
+.modal-box { background: var(--surface); border-radius: 20px; padding: 26px 24px; width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto; box-shadow: var(--shadow-md); }
 .modal-box h2 { font-family: 'Montserrat', sans-serif; font-size: 16px; margin-bottom: 4px; }
 .modal-sub { font-size: 12.5px; color: var(--text2); margin-bottom: 16px; }
 .campo { margin-bottom: 13px; }
 .campo label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; font-weight: 600; }
 .campo input, .campo select, .campo textarea { width: 100%; border: 1px solid transparent; background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13.5px; font-family: inherit; transition: all .15s ease; }
 .campo input:focus, .campo select:focus, .campo textarea:focus { outline: none; background: white; border-color: var(--turquesa); box-shadow: 0 0 0 3px rgba(0,196,204,0.12); }
-.aviso-adicional { font-size: 12px; color: var(--amarillo); background: #FEF3C7; border-radius: var(--radius-sm); padding: 9px 12px; margin-bottom: 12px; display: none; }
-.aviso-adicional.show { display: block; }
+
+.tipo-botones { display: flex; gap: 10px; margin-top: 4px; }
+.tipo-botones button {
+  flex: 1; padding: 14px 10px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--bg);
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; color: var(--azul);
+  transition: all .15s ease;
+}
+.tipo-botones button.seleccionado { border-color: var(--turquesa); background: #E8FBFC; color: var(--turquesa); }
+
+.imei-row { display: flex; gap: 6px; }
+.imei-row input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-size: 13px; font-family: inherit; background: white; }
+.imei-row button.btn-scan { border: none; background: var(--azul); color: white; border-radius: 8px; padding: 9px 12px; font-size: 13px; cursor: pointer; flex-shrink: 0; }
+.imei-estado { font-size: 12px; margin-top: 6px; font-weight: 600; }
+.imei-estado.ok { color: var(--verde); }
+.imei-estado.error { color: var(--rojo); }
+
 .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
 .modal-actions button { flex: 1; border: none; border-radius: 999px; padding: 12px; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: transform .12s ease; }
 .modal-actions button:hover { transform: translateY(-1px); }
@@ -115,6 +133,12 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 .modal-actions .btn-guardar { background: var(--turquesa); color: white; box-shadow: 0 6px 16px -4px rgba(0,196,204,0.5); }
 .modal-err { color: var(--rojo); font-size: 12.5px; margin-top: 8px; display: none; }
 .modal-err.show { display: block; }
+
+.scanner-overlay { display: none; position: fixed; inset: 0; background: black; z-index: 100; align-items: center; justify-content: center; flex-direction: column; }
+.scanner-overlay.show { display: flex; }
+.scanner-overlay video { width: 100%; max-width: 480px; border-radius: 12px; }
+.scanner-overlay button { margin-top: 16px; background: white; color: var(--azul); border: none; border-radius: 999px; padding: 10px 20px; font-weight: 700; cursor: pointer; }
+.scanner-hint { color: white; font-size: 12.5px; margin-top: 10px; opacity: .8; }
 </style>
 </head>
 <body>
@@ -148,9 +172,9 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
       <a href="inventario.html">Inventario</a>
       <a href="ventas.html">Ventas</a>
       <a href="caja.html">Caja</a>
-      <a href="gastos.html" class="active">Gastos</a>
+      <a href="gastos.html">Gastos</a>
       <a href="traslados.html">Traslados</a>
-      <a href="ajustes.html">Ajustes</a>
+      <a href="ajustes.html" class="active">Ajustes</a>
       <a href="cierre-periodo.html">Cierre periodo</a>
       <a href="cuenta-corriente.html">Cta. Corriente</a>
       <a href="validacion.html">Validación</a>
@@ -168,8 +192,8 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 
   <div class="page">
     <div class="page-top">
-      <h1>Gastos</h1>
-      <button class="btn-primary" id="btnNuevoGasto" style="display:none;">+ Registrar gasto</button>
+      <h1>Ajustes de inventario</h1>
+      <button class="btn-primary" id="btnNuevoAjuste" style="display:none;">+ Solicitar ajuste</button>
     </div>
 
     <div class="seccion" id="seccionCola" style="display:none;">
@@ -178,22 +202,20 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
     </div>
 
     <div class="seccion">
-      <h2>Gastos registrados</h2>
+      <h2>Ajustes</h2>
       <div class="filters">
         <select id="filtroTienda" style="display:none;"><option value="">Todas las tiendas</option></select>
-        <input type="date" id="filtroFecha">
-        <select id="filtroConcepto"><option value="">Todos los conceptos</option></select>
         <select id="filtroEstado">
           <option value="">Todos los estados</option>
-          <option value="registrado">Registrado</option>
-          <option value="aprobado">Aprobado</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="autorizado">Autorizado</option>
           <option value="rechazado">Rechazado</option>
         </select>
       </div>
       <div class="tabla-wrap">
         <table>
-          <thead><tr><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Descripción</th><th>Estado</th><th>Registrado por</th></tr></thead>
-          <tbody id="tbodyGastos"></tbody>
+          <thead><tr><th>Tienda</th><th>Producto</th><th>IMEI</th><th>Diferencia</th><th>Motivo</th><th>Estado</th><th>Fecha</th></tr></thead>
+          <tbody id="tbodyAjustes"></tbody>
         </table>
         <div class="empty-state" id="emptyState" style="display:none;">Cargando...</div>
       </div>
@@ -201,30 +223,65 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
   </div>
 </div>
 
-<!-- Modal: nuevo gasto -->
-<div class="modal-bg" id="modalGasto">
+<!-- Modal: solicitar ajuste -->
+<div class="modal-bg" id="modalAjuste">
   <div class="modal-box">
-    <h2>Registrar gasto</h2>
-    <div class="modal-sub">La fecha y hora se registran automáticamente.</div>
+    <h2>Solicitar ajuste</h2>
+    <div class="modal-sub">Se usa después de un conteo físico que no cuadra con el sistema.</div>
+
     <div class="campo">
-      <label>Concepto</label>
-      <select id="gastoConcepto"></select>
+      <label>Tipo de ajuste</label>
+      <div class="tipo-botones">
+        <button id="btnTipoFaltante">📉 Faltante</button>
+        <button id="btnTipoSobrante">📈 Sobrante</button>
+      </div>
     </div>
-    <div class="aviso-adicional" id="avisoAdicional">Este concepto no está preautorizado — quedará en cola para que Mayte lo apruebe.</div>
-    <div class="campo"><label>Monto</label><input type="number" id="gastoMonto" min="1" placeholder="0"></div>
-    <div class="campo"><label id="labelDescripcion">Descripción (opcional)</label><textarea id="gastoDescripcion" rows="2" placeholder="Detalle del gasto..."></textarea></div>
-    <div class="modal-err" id="modalGastoErr"></div>
+
+    <div class="campo">
+      <label>Producto</label>
+      <select id="ajusteProducto"></select>
+    </div>
+
+    <!-- Faltante serializado: buscar IMEI existente -->
+    <div class="campo" id="campoImeiFaltante" style="display:none;">
+      <label>IMEI del equipo</label>
+      <div class="imei-row">
+        <input type="text" inputmode="numeric" id="imeiFaltanteInput" placeholder="IMEI">
+        <button class="btn-scan" id="btnScanFaltante" style="display:none;">📷</button>
+      </div>
+      <div class="imei-estado" id="imeiFaltanteEstado"></div>
+    </div>
+
+    <!-- Sobrante serializado: IMEI del equipo encontrado -->
+    <div class="campo" id="campoImeiSobrante" style="display:none;">
+      <label>IMEI del equipo encontrado</label>
+      <div class="imei-row">
+        <input type="text" inputmode="numeric" id="imeiSobranteInput" placeholder="IMEI">
+        <button class="btn-scan" id="btnScanSobrante" style="display:none;">📷</button>
+      </div>
+    </div>
+
+    <!-- Cantidad: diferencia numérica -->
+    <div class="campo" id="campoCantidad" style="display:none;">
+      <label id="labelCantidad">Cantidad</label>
+      <input type="number" id="ajusteCantidad" min="1" placeholder="0">
+      <div class="modal-sub" id="stockHintCantidad" style="margin-bottom:0;"></div>
+    </div>
+
+    <div class="campo"><label>Motivo</label><textarea id="ajusteMotivo" rows="2" placeholder="¿Por qué no cuadra? Ej: se dañó, no se encuentra, sobrante de inventario anterior..."></textarea></div>
+
+    <div class="modal-err" id="modalAjusteErr"></div>
     <div class="modal-actions">
-      <button class="btn-cancelar" id="btnCancelarGasto">Cancelar</button>
-      <button class="btn-guardar" id="btnGuardarGasto">Guardar</button>
+      <button class="btn-cancelar" id="btnCancelarAjuste">Cancelar</button>
+      <button class="btn-guardar" id="btnGuardarAjuste">Enviar a Mayte</button>
     </div>
   </div>
 </div>
 
-<!-- Modal: rechazar gasto -->
+<!-- Modal: rechazar ajuste -->
 <div class="modal-bg" id="modalRechazo">
   <div class="modal-box">
-    <h2>Rechazar gasto</h2>
+    <h2>Rechazar ajuste</h2>
     <div class="modal-sub">La nota es obligatoria.</div>
     <div class="campo"><label>Motivo del rechazo</label><textarea id="rechazoNota" rows="3" placeholder="¿Por qué se rechaza?"></textarea></div>
     <div class="modal-err" id="modalRechazoErr"></div>
@@ -235,6 +292,12 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
   </div>
 </div>
 
+<div class="scanner-overlay" id="scannerOverlay">
+  <video id="scannerVideo" autoplay playsinline muted></video>
+  <div class="scanner-hint">Apunta la cámara al código de barras del IMEI</div>
+  <button id="btnCerrarScanner">Cancelar</button>
+</div>
+
 <script>
 const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
@@ -242,13 +305,15 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 let currentPerfil = null;
-let gastosCache = [];
-let conceptosCache = [];
+let ajustesCache = [];
+let productosCache = [];
 let tiendasCache = [];
-let gastoIdParaRechazar = null;
+let ajusteTipo = null; // 'faltante' | 'sobrante'
+let ajusteUnidadEncontrada = null;
+let ajusteIdParaRechazar = null;
 
 function esCentral() { return !!currentPerfil && (currentPerfil.rol === 'gerencia' || currentPerfil.rol === 'auditoria'); }
-function puedeRegistrarGasto() { return !!currentPerfil && currentPerfil.rol === 'admin_tienda'; }
+function puedeSolicitarAjuste() { return !!currentPerfil && currentPerfil.rol === 'admin_tienda'; }
 
 document.getElementById('btnLogin').addEventListener('click', hacerLogin);
 document.getElementById('loginPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') hacerLogin(); });
@@ -305,93 +370,98 @@ function mostrarBanner(texto) {
 }
 document.getElementById('btnCerrarBanner').addEventListener('click', () => document.getElementById('bannerOk').classList.remove('show'));
 
-// ─── Página: Gastos ─────────────────────────────────────────────────
+// ─── Página: Ajustes ────────────────────────────────────────────────────
 function initPagina() {
-  if (puedeRegistrarGasto()) document.getElementById('btnNuevoGasto').style.display = 'inline-block';
+  if (puedeSolicitarAjuste()) document.getElementById('btnNuevoAjuste').style.display = 'inline-block';
   if (esCentral()) {
     document.getElementById('filtroTienda').style.display = '';
     document.getElementById('seccionCola').style.display = 'block';
   }
 
-  document.getElementById('btnNuevoGasto').addEventListener('click', abrirModalGasto);
-  document.getElementById('btnCancelarGasto').addEventListener('click', () => document.getElementById('modalGasto').classList.remove('show'));
-  document.getElementById('gastoConcepto').addEventListener('change', onConceptoCambiado);
-  document.getElementById('btnGuardarGasto').addEventListener('click', guardarGasto);
+  document.getElementById('btnNuevoAjuste').addEventListener('click', abrirModalAjuste);
+  document.getElementById('btnCancelarAjuste').addEventListener('click', () => document.getElementById('modalAjuste').classList.remove('show'));
+  document.getElementById('btnTipoFaltante').addEventListener('click', () => seleccionarTipoAjuste('faltante'));
+  document.getElementById('btnTipoSobrante').addEventListener('click', () => seleccionarTipoAjuste('sobrante'));
+  document.getElementById('ajusteProducto').addEventListener('change', onProductoAjusteCambiado);
+  document.getElementById('imeiFaltanteInput').addEventListener('change', (e) => validarImeiFaltante(e.target.value.trim()));
+  document.getElementById('ajusteCantidad').addEventListener('input', actualizarStockHintCantidad);
+  document.getElementById('btnGuardarAjuste').addEventListener('click', guardarAjuste);
   document.getElementById('btnCancelarRechazo').addEventListener('click', () => document.getElementById('modalRechazo').classList.remove('show'));
   document.getElementById('btnConfirmarRechazo').addEventListener('click', confirmarRechazo);
+  document.getElementById('btnCerrarScanner').addEventListener('click', cerrarScanner);
+  document.getElementById('btnScanFaltante').addEventListener('click', () => abrirScanner('faltante'));
+  document.getElementById('btnScanSobrante').addEventListener('click', () => abrirScanner('sobrante'));
 
-  document.getElementById('filtroTienda').addEventListener('change', renderTablaGastos);
-  document.getElementById('filtroFecha').addEventListener('change', renderTablaGastos);
-  document.getElementById('filtroConcepto').addEventListener('change', renderTablaGastos);
-  document.getElementById('filtroEstado').addEventListener('change', renderTablaGastos);
+  document.getElementById('filtroTienda').addEventListener('change', renderTablaAjustes);
+  document.getElementById('filtroEstado').addEventListener('change', renderTablaAjustes);
 
   cargarDatosBase();
 }
 
 async function cargarDatosBase() {
-  const [{ data: conceptos }, { data: tiendas }] = await Promise.all([
-    sb.from('conceptos_gasto').select('*').eq('activo', true).order('nombre'),
+  const [{ data: productos }, { data: tiendas }] = await Promise.all([
+    sb.from('productos').select('*').eq('activo', true).order('nombre'),
     sb.from('origenes').select('codigo, nombre').eq('tipo', 'propia').eq('activo', true).order('nombre'),
   ]);
-  conceptosCache = conceptos || [];
+  productosCache = productos || [];
   tiendasCache = tiendas || [];
-
   document.getElementById('filtroTienda').innerHTML = '<option value="">Todas las tiendas</option>' + tiendasCache.map(t => `<option value="${t.codigo}">${escapeHtml(t.nombre)}</option>`).join('');
-  document.getElementById('filtroConcepto').innerHTML = '<option value="">Todos los conceptos</option>' + conceptosCache.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
-  document.getElementById('gastoConcepto').innerHTML = conceptosCache.map(c => `<option value="${c.id}" data-preautorizado="${c.preautorizado}">${escapeHtml(c.nombre)}${c.preautorizado ? '' : ' (requiere aprobación)'}</option>`).join('');
 
-  await cargarGastos();
+  await cargarAjustes();
 }
 
-async function cargarGastos() {
+async function cargarAjustes() {
   const empty = document.getElementById('emptyState');
   empty.style.display = 'block';
   empty.textContent = 'Cargando...';
 
-  const { data, error } = await sb.from('gastos')
-    .select('*, conceptos_gasto(nombre, preautorizado), origenes:tienda_codigo(nombre), registrado:registrado_por(nombre), aprobado:aprobado_por(nombre)')
+  const { data, error } = await sb.from('ajustes_inventario')
+    .select('*, productos(nombre), unidades(imei), origenes:tienda_codigo(nombre), solicitante:solicitado_por(nombre)')
     .order('created_at', { ascending: false });
-  if (error) { empty.textContent = 'Error cargando gastos: ' + error.message; return; }
-  gastosCache = data || [];
+  if (error) { empty.textContent = 'Error cargando ajustes: ' + error.message; return; }
+  ajustesCache = data || [];
   renderColaAprobacion();
-  renderTablaGastos();
+  renderTablaAjustes();
 }
 
 function renderColaAprobacion() {
   if (!esCentral()) return;
-  const pendientes = gastosCache.filter(g => g.estado === 'registrado' && g.conceptos_gasto && !g.conceptos_gasto.preautorizado);
+  const pendientes = ajustesCache.filter(a => a.estado === 'pendiente');
   const cont = document.getElementById('colaAprobacion');
-  if (!pendientes.length) { cont.innerHTML = '<div class="empty-state">No hay gastos pendientes de aprobar.</div>'; return; }
-  cont.innerHTML = pendientes.map(g => `
-    <div class="cola-card" data-id="${g.id}">
+  if (!pendientes.length) { cont.innerHTML = '<div class="empty-state">No hay ajustes pendientes de autorizar.</div>'; return; }
+  cont.innerHTML = pendientes.map(a => {
+    const imei = a.unidades?.imei || a.imei_sobrante || '—';
+    return `
+    <div class="cola-card" data-id="${a.id}">
       <div class="top">
         <div>
-          <div class="concepto">${escapeHtml(g.conceptos_gasto?.nombre || '—')} — ${escapeHtml(g.origenes?.nombre || g.tienda_codigo)}</div>
-          <div class="meta">${new Date(g.created_at).toLocaleString('es-CO')} · Registrado por ${escapeHtml(g.registrado?.nombre || '—')}</div>
+          <div class="concepto">${escapeHtml(a.productos?.nombre || '—')} — ${escapeHtml(a.origenes?.nombre || a.tienda_codigo)}</div>
+          <div class="meta">IMEI: ${escapeHtml(imei)} · ${new Date(a.created_at).toLocaleString('es-CO')} · Solicitado por ${escapeHtml(a.solicitante?.nombre || '—')}</div>
         </div>
-        <div class="monto">${fmtCOP(g.monto)}</div>
+        <div class="dif ${a.diferencia < 0 ? 'negativo' : 'positivo'}">${a.diferencia > 0 ? '+' : ''}${a.diferencia}</div>
       </div>
-      ${g.descripcion ? `<div class="desc">${escapeHtml(g.descripcion)}</div>` : ''}
+      <div class="desc">${escapeHtml(a.motivo)}</div>
       <div class="acciones">
-        <button class="btn-aprobar" data-id="${g.id}">Aprobar</button>
-        <button class="btn-rechazar" data-id="${g.id}">Rechazar</button>
+        <button class="btn-aprobar" data-id="${a.id}">Autorizar</button>
+        <button class="btn-rechazar" data-id="${a.id}">Rechazar</button>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
-  cont.querySelectorAll('.btn-aprobar').forEach(btn => btn.addEventListener('click', () => aprobarGasto(btn.dataset.id)));
+  cont.querySelectorAll('.btn-aprobar').forEach(btn => btn.addEventListener('click', () => autorizarAjuste(btn.dataset.id)));
   cont.querySelectorAll('.btn-rechazar').forEach(btn => btn.addEventListener('click', () => abrirModalRechazo(btn.dataset.id)));
 }
 
-async function aprobarGasto(id) {
-  const { error } = await sb.from('gastos').update({ estado: 'aprobado', aprobado_por: currentUser.id, aprobado_at: new Date().toISOString() }).eq('id', id);
-  if (error) { alert('No se pudo aprobar: ' + error.message); return; }
-  mostrarBanner('✅ Gasto aprobado.');
-  cargarGastos();
+async function autorizarAjuste(id) {
+  const { error } = await sb.rpc('autorizar_ajuste', { p_ajuste_id: id, p_accion: 'autorizar' });
+  if (error) { alert('No se pudo autorizar: ' + error.message); return; }
+  mostrarBanner('✅ Ajuste autorizado.');
+  cargarAjustes();
 }
 
 function abrirModalRechazo(id) {
-  gastoIdParaRechazar = id;
+  ajusteIdParaRechazar = id;
   document.getElementById('rechazoNota').value = '';
   document.getElementById('modalRechazoErr').classList.remove('show');
   document.getElementById('modalRechazo').classList.add('show');
@@ -403,90 +473,200 @@ async function confirmarRechazo() {
   err.classList.remove('show');
   if (!nota) { err.textContent = 'La nota de rechazo es obligatoria.'; err.classList.add('show'); return; }
 
-  const { error } = await sb.from('gastos').update({ estado: 'rechazado', aprobado_por: currentUser.id, aprobado_at: new Date().toISOString(), nota_rechazo: nota }).eq('id', gastoIdParaRechazar);
+  const { error } = await sb.rpc('autorizar_ajuste', { p_ajuste_id: ajusteIdParaRechazar, p_accion: 'rechazar', p_nota_rechazo: nota });
   if (error) { err.textContent = 'No se pudo rechazar: ' + error.message; err.classList.add('show'); return; }
   document.getElementById('modalRechazo').classList.remove('show');
-  mostrarBanner('Gasto rechazado.');
-  cargarGastos();
+  mostrarBanner('Ajuste rechazado.');
+  cargarAjustes();
 }
 
-function renderTablaGastos() {
+function renderTablaAjustes() {
   const tienda = document.getElementById('filtroTienda').value;
-  const fecha = document.getElementById('filtroFecha').value;
-  const concepto = document.getElementById('filtroConcepto').value;
   const estado = document.getElementById('filtroEstado').value;
 
-  const filtrados = gastosCache.filter(g => {
-    if (tienda && g.tienda_codigo !== tienda) return false;
-    if (fecha && g.fecha !== fecha) return false;
-    if (concepto && g.concepto_id !== concepto) return false;
-    if (estado && g.estado !== estado) return false;
+  const filtrados = ajustesCache.filter(a => {
+    if (tienda && a.tienda_codigo !== tienda) return false;
+    if (estado && a.estado !== estado) return false;
     return true;
   });
 
-  const tbody = document.getElementById('tbodyGastos');
+  const tbody = document.getElementById('tbodyAjustes');
   const empty = document.getElementById('emptyState');
-  if (!filtrados.length) { tbody.innerHTML = ''; empty.style.display = 'block'; empty.textContent = 'No hay gastos con estos filtros.'; return; }
+  if (!filtrados.length) { tbody.innerHTML = ''; empty.style.display = 'block'; empty.textContent = 'No hay ajustes con estos filtros.'; return; }
   empty.style.display = 'none';
 
-  tbody.innerHTML = filtrados.map(g => `
+  tbody.innerHTML = filtrados.map(a => {
+    const imei = a.unidades?.imei || a.imei_sobrante || '—';
+    return `
     <tr>
-      <td>${new Date(g.fecha).toLocaleDateString('es-CO')}</td>
-      <td>${escapeHtml(g.conceptos_gasto?.nombre || '—')}</td>
-      <td>${fmtCOP(g.monto)}</td>
-      <td>${escapeHtml(g.descripcion || '—')}${g.estado === 'rechazado' && g.nota_rechazo ? `<br><span style="color:var(--rojo);font-size:11.5px;">Motivo: ${escapeHtml(g.nota_rechazo)}</span>` : ''}</td>
-      <td><span class="badge ${g.estado}">${g.estado}</span></td>
-      <td>${escapeHtml(g.registrado?.nombre || '—')}</td>
+      <td>${escapeHtml(a.origenes?.nombre || a.tienda_codigo)}</td>
+      <td>${escapeHtml(a.productos?.nombre || '—')}</td>
+      <td>${escapeHtml(imei)}</td>
+      <td class="${a.diferencia < 0 ? 'dif-neg' : 'dif-pos'}">${a.diferencia > 0 ? '+' : ''}${a.diferencia}</td>
+      <td>${escapeHtml(a.motivo)}${a.estado === 'rechazado' && a.nota_rechazo ? `<br><span style="color:var(--rojo);font-size:11.5px;">Motivo rechazo: ${escapeHtml(a.nota_rechazo)}</span>` : ''}</td>
+      <td><span class="badge ${a.estado}">${a.estado}</span></td>
+      <td>${new Date(a.created_at).toLocaleDateString('es-CO')}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 }
 
-// ─── Registrar gasto ─────────────────────────────────────────────────
-function abrirModalGasto() {
-  document.getElementById('gastoMonto').value = '';
-  document.getElementById('gastoDescripcion').value = '';
-  document.getElementById('modalGastoErr').classList.remove('show');
-  if (document.getElementById('gastoConcepto').options.length) onConceptoCambiado();
-  document.getElementById('modalGasto').classList.add('show');
+// ─── Solicitar ajuste ────────────────────────────────────────────────────
+function abrirModalAjuste() {
+  ajusteTipo = null;
+  ajusteUnidadEncontrada = null;
+  document.getElementById('btnTipoFaltante').classList.remove('seleccionado');
+  document.getElementById('btnTipoSobrante').classList.remove('seleccionado');
+  document.getElementById('ajusteProducto').innerHTML = productosCache.map(p => `<option value="${p.id}">${escapeHtml(p.codigo)} — ${escapeHtml(p.nombre)}</option>`).join('');
+  document.getElementById('imeiFaltanteInput').value = '';
+  document.getElementById('imeiFaltanteEstado').textContent = '';
+  document.getElementById('imeiSobranteInput').value = '';
+  document.getElementById('ajusteCantidad').value = '';
+  document.getElementById('stockHintCantidad').textContent = '';
+  document.getElementById('ajusteMotivo').value = '';
+  document.getElementById('modalAjusteErr').classList.remove('show');
+  actualizarCamposAjuste();
+  document.getElementById('modalAjuste').classList.add('show');
 }
 
-function onConceptoCambiado() {
-  const sel = document.getElementById('gastoConcepto');
-  const opt = sel.options[sel.selectedIndex];
-  const preautorizado = opt && opt.dataset.preautorizado === 'true';
-  document.getElementById('avisoAdicional').classList.toggle('show', !preautorizado);
-  document.getElementById('labelDescripcion').textContent = preautorizado ? 'Descripción (opcional)' : 'Descripción (obligatoria)';
+function seleccionarTipoAjuste(tipo) {
+  ajusteTipo = tipo;
+  document.getElementById('btnTipoFaltante').classList.toggle('seleccionado', tipo === 'faltante');
+  document.getElementById('btnTipoSobrante').classList.toggle('seleccionado', tipo === 'sobrante');
+  actualizarCamposAjuste();
 }
 
-async function guardarGasto() {
-  const err = document.getElementById('modalGastoErr');
+function onProductoAjusteCambiado() { actualizarCamposAjuste(); }
+
+function actualizarCamposAjuste() {
+  const sel = document.getElementById('ajusteProducto');
+  const prod = productosCache.find(p => p.id === sel.value);
+  const esSerializado = prod && prod.tipo === 'serializado';
+
+  document.getElementById('campoImeiFaltante').style.display = (esSerializado && ajusteTipo === 'faltante') ? 'block' : 'none';
+  document.getElementById('campoImeiSobrante').style.display = (esSerializado && ajusteTipo === 'sobrante') ? 'block' : 'none';
+  document.getElementById('campoCantidad').style.display = (!esSerializado && ajusteTipo) ? 'block' : 'none';
+  document.getElementById('labelCantidad').textContent = ajusteTipo === 'faltante' ? 'Cantidad que falta' : 'Cantidad que sobra';
+
+  if ('BarcodeDetector' in window) {
+    document.getElementById('btnScanFaltante').style.display = 'inline-block';
+    document.getElementById('btnScanSobrante').style.display = 'inline-block';
+  }
+
+  if (!esSerializado && ajusteTipo === 'faltante' && prod) actualizarStockHintCantidad();
+}
+
+async function actualizarStockHintCantidad() {
+  const sel = document.getElementById('ajusteProducto');
+  const prod = productosCache.find(p => p.id === sel.value);
+  const hint = document.getElementById('stockHintCantidad');
+  if (!prod || prod.tipo === 'serializado') { hint.textContent = ''; return; }
+  const { data } = await sb.from('stock_cantidad').select('cantidad').eq('producto_id', prod.id).eq('tienda_codigo', currentPerfil.tienda_codigo).maybeSingle();
+  hint.textContent = `Stock actual en sistema: ${data ? data.cantidad : 0}`;
+}
+
+async function validarImeiFaltante(imei) {
+  const estadoDiv = document.getElementById('imeiFaltanteEstado');
+  ajusteUnidadEncontrada = null;
+  if (!imei) { estadoDiv.textContent = ''; return; }
+  estadoDiv.textContent = 'Verificando...'; estadoDiv.className = 'imei-estado';
+
+  const { data: unidad, error } = await sb.from('unidades').select('*, productos(nombre)').eq('imei', imei).maybeSingle();
+  if (error || !unidad) { estadoDiv.textContent = 'IMEI no registrado en inventario.'; estadoDiv.className = 'imei-estado error'; return; }
+  if (unidad.tienda_actual !== currentPerfil.tienda_codigo) { estadoDiv.textContent = `Este equipo está en otra tienda (${unidad.tienda_actual || 'sin asignar'}).`; estadoDiv.className = 'imei-estado error'; return; }
+  if (unidad.estado !== 'disponible') { estadoDiv.textContent = `Este equipo no está disponible (estado: ${unidad.estado}).`; estadoDiv.className = 'imei-estado error'; return; }
+
+  ajusteUnidadEncontrada = unidad;
+  document.getElementById('ajusteProducto').value = unidad.producto_id;
+  estadoDiv.textContent = `✓ ${unidad.productos?.nombre || 'Producto'} — se marcará como faltante.`;
+  estadoDiv.className = 'imei-estado ok';
+}
+
+async function guardarAjuste() {
+  const err = document.getElementById('modalAjusteErr');
   err.classList.remove('show');
 
-  const concepto_id = document.getElementById('gastoConcepto').value;
-  const monto = Number(document.getElementById('gastoMonto').value || 0);
-  const descripcion = document.getElementById('gastoDescripcion').value.trim();
-  const sel = document.getElementById('gastoConcepto');
-  const preautorizado = sel.options[sel.selectedIndex]?.dataset.preautorizado === 'true';
+  if (!ajusteTipo) { err.textContent = 'Elige si es un faltante o un sobrante.'; err.classList.add('show'); return; }
+  const producto_id = document.getElementById('ajusteProducto').value;
+  const prod = productosCache.find(p => p.id === producto_id);
+  if (!prod) { err.textContent = 'Elige un producto.'; err.classList.add('show'); return; }
+  const motivo = document.getElementById('ajusteMotivo').value.trim();
+  if (!motivo) { err.textContent = 'El motivo es obligatorio.'; err.classList.add('show'); return; }
 
-  if (monto <= 0) { err.textContent = 'Ingresa un monto válido.'; err.classList.add('show'); return; }
-  if (!preautorizado && !descripcion) { err.textContent = 'La descripción es obligatoria para gastos adicionales.'; err.classList.add('show'); return; }
+  const payload = { tienda_codigo: currentPerfil.tienda_codigo, producto_id, motivo, solicitado_por: currentUser.id, estado: 'pendiente' };
 
-  const btn = document.getElementById('btnGuardarGasto');
-  btn.disabled = true; btn.textContent = 'Guardando...';
+  if (prod.tipo === 'serializado') {
+    if (ajusteTipo === 'faltante') {
+      if (!ajusteUnidadEncontrada) { err.textContent = 'Busca y valida el IMEI del equipo faltante.'; err.classList.add('show'); return; }
+      payload.unidad_id = ajusteUnidadEncontrada.id;
+      payload.diferencia = -1;
+    } else {
+      const imei = document.getElementById('imeiSobranteInput').value.trim();
+      if (!imei) { err.textContent = 'Ingresa el IMEI del equipo encontrado.'; err.classList.add('show'); return; }
+      payload.imei_sobrante = imei;
+      payload.diferencia = 1;
+    }
+  } else {
+    const cantidad = Number(document.getElementById('ajusteCantidad').value || 0);
+    if (cantidad <= 0) { err.textContent = 'Ingresa una cantidad válida.'; err.classList.add('show'); return; }
+    payload.diferencia = ajusteTipo === 'faltante' ? -cantidad : cantidad;
+  }
 
-  const { error } = await sb.from('gastos').insert({
-    tienda_codigo: currentPerfil.tienda_codigo,
-    concepto_id, monto, descripcion: descripcion || null,
-    estado: 'registrado', registrado_por: currentUser.id,
-  });
+  const btn = document.getElementById('btnGuardarAjuste');
+  btn.disabled = true; btn.textContent = 'Enviando...';
 
-  btn.disabled = false; btn.textContent = 'Guardar';
+  const { error } = await sb.from('ajustes_inventario').insert(payload);
 
-  if (error) { err.textContent = 'No se pudo registrar: ' + error.message; err.classList.add('show'); return; }
+  btn.disabled = false; btn.textContent = 'Enviar a Mayte';
 
-  document.getElementById('modalGasto').classList.remove('show');
-  mostrarBanner(preautorizado ? '✅ Gasto registrado.' : '✅ Gasto registrado — queda en cola de aprobación.');
-  cargarGastos();
+  if (error) { err.textContent = 'No se pudo enviar: ' + error.message; err.classList.add('show'); return; }
+
+  document.getElementById('modalAjuste').classList.remove('show');
+  mostrarBanner('✅ Ajuste enviado — queda pendiente de autorización.');
+  cargarAjustes();
+}
+
+// ─── Escáner de código de barras (BarcodeDetector nativo) ──────────────
+let scannerStream = null;
+let scannerAnimId = null;
+let scannerModo = null; // 'faltante' | 'sobrante'
+
+async function abrirScanner(modo) {
+  scannerModo = modo;
+  const overlay = document.getElementById('scannerOverlay');
+  const video = document.getElementById('scannerVideo');
+  overlay.classList.add('show');
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = scannerStream;
+    await video.play();
+    const detector = new window.BarcodeDetector({ formats: ['code_128', 'ean_13', 'code_39', 'qr_code', 'ean_8'] });
+    const loop = async () => {
+      if (!overlay.classList.contains('show')) return;
+      try {
+        const codigos = await detector.detect(video);
+        if (codigos && codigos.length) {
+          const valor = codigos[0].rawValue;
+          const modo = scannerModo;
+          cerrarScanner();
+          if (modo === 'faltante') { document.getElementById('imeiFaltanteInput').value = valor; validarImeiFaltante(valor); }
+          else { document.getElementById('imeiSobranteInput').value = valor; }
+          return;
+        }
+      } catch (e) { /* frame no decodificable, sigue intentando */ }
+      scannerAnimId = requestAnimationFrame(loop);
+    };
+    loop();
+  } catch (e) {
+    cerrarScanner();
+    alert('No se pudo acceder a la cámara. Ingresa el IMEI manualmente.');
+  }
+}
+
+function cerrarScanner() {
+  document.getElementById('scannerOverlay').classList.remove('show');
+  if (scannerAnimId) cancelAnimationFrame(scannerAnimId);
+  if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
 }
 </script>
 </body>
