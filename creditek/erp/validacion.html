@@ -299,6 +299,8 @@ function renderCard(sol) {
   const ref2 = referencias[1] || {};
   const checklist = sol.checklist || {};
   const resuelta = sol.estado_validacion !== 'pendiente';
+  // AJUSTES v26, 20-jul-2026 — Paquete 2: no se puede aprobar sin las 3 fotos.
+  const faltanFotos = !cliente.foto_cedula_frente_path || !cliente.foto_cedula_reverso_path || !cliente.selfie_cedula_path;
 
   const div = document.createElement('div');
   div.className = 'card';
@@ -355,8 +357,9 @@ function renderCard(sol) {
       </div>
     ` : `
       <textarea class="nota-box" placeholder="Nota (obligatoria para Dudoso o Rechazar)"></textarea>
+      ${faltanFotos ? '<div style="font-size:12px;color:var(--rojo);margin-top:6px;">Faltan fotos del cliente — no se puede aprobar hasta que las 3 estén subidas.</div>' : ''}
       <div class="actions">
-        <button class="btn-aprobar">🟢 Aprobar</button>
+        <button class="btn-aprobar" ${faltanFotos ? 'disabled title="Faltan fotos del cliente"' : ''}>🟢 Aprobar</button>
         <button class="btn-dudoso" disabled>🟡 Dudoso</button>
         <button class="btn-rechazar" disabled>🔴 Rechazar</button>
       </div>
