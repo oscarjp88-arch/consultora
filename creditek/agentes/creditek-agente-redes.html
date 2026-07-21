@@ -1021,27 +1021,23 @@ function enviarACola() {
   showToast(`→ Pieza ${batchQueue.idx + 1} de ${total} cargada`);
 }
 
-// ── Generar más titulares con Claude ────────────────────────────
-async function generarMasTitulares() {
-  const apiKey = sessionStorage.getItem('ck_api_key') || '';
-  if (!apiKey.startsWith('sk-ant-')) { abrirModal(); return; }
-  const btn = document.getElementById('mas-titulares-btn');
-  btn.disabled = true; btn.textContent = '...';
-  const modo = document.getElementById('modo').value;
-  const nota = document.getElementById('nota').value.trim();
-  const tipoPersonalizado = document.getElementById('tipo-personalizado')?.value.trim() || '';
-  const mensajeSecundario = document.getElementById('img-mensaje')?.value.trim() || '';
-  const estiloBtn = document.querySelector('.estilo-btn.active');
-  const estilo = estiloBtn ? estiloBtn.textContent.trim().replace(/^[^\w]+/,'') : 'Formal';
-  const modoLabel = {credito:'Celular a crédito',promo:'Promoción especial',tienda:'Contenido de tienda',servicio:'Servicio / beneficio',captacion:'Captación de seguidores',jornada:'Jornada de crédito',institucional:'Institucional / Marca'}[modo] || modo;
-  // FIX v15 12-jul-2026 Parte 2: Oscar reportó que la IA repite los ejemplos de
-  // abajo casi literales en vez de generar variantes — porque el ejemplo era
-  // siempre el mismo texto en cada llamada. `pick()` elige una variante al azar
-  // de un pool de 2-3 por patrón en CADA generación, para que el "objetivo a
-  // copiar" cambie cada vez, combinado con la instrucción explícita de no-copia
-  // agregada más abajo en REGLAS.
+// ── FIX v11 09-jul-2026 (aplicado tarde en esta sesión) ──────────────────
+// Los 4 bloques de estilo (alegre costeño, chistoso, formal, minimalista) vivían
+// duplicados: completos dentro de generarMasTitulares(), e incompletos (solo 2
+// de 4, sin REGLA DE ESPECIFICIDAD ni CUMPLIMIENTO META) dentro de
+// generarContenido() — por eso los titulares iniciales (sin usar el botón
+// "✦ Más") salían genéricos. ESTILO_INSTRUCCIONES() centraliza los 4 en un
+// solo lugar, para que ambas funciones usen exactamente el mismo texto.
+//
+// Es una FUNCIÓN (no un objeto/constante fija) a propósito: v15 Parte 2
+// agregó `pick()` para que cada bloque muestre una variante de ejemplo al azar
+// EN CADA GENERACIÓN (evita que la IA copie siempre el mismo ejemplo literal).
+// Si esto fuera un objeto calculado una sola vez al cargar la página, pick()
+// solo se evaluaría una vez y el "azar" quedaría congelado toda la sesión —
+// por eso hay que llamarla como ESTILO_INSTRUCCIONES(), no usarla como valor.
+function ESTILO_INSTRUCCIONES() {
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-  const estiloInstrucciones = {
+  return {
     'alegre costeño': `Tono costeño COMERCIAL — calor humano del Caribe colombiano pero enfocado en la venta.
 Patrones de hook (gancho — la primera frase que para el scroll) que debes usar:
 - Identidad local + alivio: "${pick(['Llave, ese celular sí se puede.', 'Ombe, aquí empiezas tu trámite.', 'Mano, contigo sí hay solución.'])}"
@@ -1121,6 +1117,27 @@ REGLA DE ROTACIÓN (evitar monotonía estructural): de los 6 titulares generados
 
 CUMPLIMIENTO META (obligatorio, no negociable): nunca prometas aprobación garantizada, velocidad de aprobación ("mismo día", "en minutos") ni reversión de un rechazo previo de otra entidad. Incluye siempre, en algún lugar del copy (no necesariamente en el titular principal), la frase: "Sujeto a aprobación de crédito. Aplican términos y condiciones."`,
   };
+}
+
+// ── Generar más titulares con Claude ────────────────────────────
+async function generarMasTitulares() {
+  const apiKey = sessionStorage.getItem('ck_api_key') || '';
+  if (!apiKey.startsWith('sk-ant-')) { abrirModal(); return; }
+  const btn = document.getElementById('mas-titulares-btn');
+  btn.disabled = true; btn.textContent = '...';
+  const modo = document.getElementById('modo').value;
+  const nota = document.getElementById('nota').value.trim();
+  const tipoPersonalizado = document.getElementById('tipo-personalizado')?.value.trim() || '';
+  const mensajeSecundario = document.getElementById('img-mensaje')?.value.trim() || '';
+  const estiloBtn = document.querySelector('.estilo-btn.active');
+  const estilo = estiloBtn ? estiloBtn.textContent.trim().replace(/^[^\w]+/,'') : 'Formal';
+  const modoLabel = {credito:'Celular a crédito',promo:'Promoción especial',tienda:'Contenido de tienda',servicio:'Servicio / beneficio',captacion:'Captación de seguidores',jornada:'Jornada de crédito',institucional:'Institucional / Marca'}[modo] || modo;
+  // FIX v11 09-jul-2026 (aplicado tarde en esta sesión): los 4 bloques de estilo
+  // ahora viven en ESTILO_INSTRUCCIONES() (función compartida a nivel de
+  // archivo, definida arriba de esta función) en vez de estar duplicados aquí —
+  // generarContenido() ya reutiliza la misma función en vez de tener su propia
+  // copia incompleta (antes solo tenía 2 de 4 estilos, sin refuerzo).
+  const estiloInstrucciones = ESTILO_INSTRUCCIONES();
   const estiloKey = Object.keys(estiloInstrucciones).find(k => estilo.toLowerCase().includes(k.split(' ')[0])) || 'formal';
   const prompt = `Eres el mejor copywriter de Colombia especializado en publicidad comercial para el Caribe colombiano. Trabajas para Creditek, empresa de tecnología a crédito (celulares, electrodomésticos, electrónica).
 
@@ -1687,18 +1704,14 @@ El copy debe hacerlo sentir que Creditek es diferente: aquí sí lo atienden bie
 ${culturaCtx ? `CONTEXTO DE CIUDAD — ${ciudadDisplay}:\n${culturaCtx}\n${!esCiudad && getTiendaInfo(ciudad)?.nombre ? `Tienda: ${getTiendaInfo(ciudad).nombre}. Puedes mencionar este nombre cuando aporte autenticidad local (ej: "Visítanos en ${getTiendaInfo(ciudad).nombre}").` : `CTA de ciudad: usa "Visítanos en ${ciudadDisplay}" sin nombrar tienda específica.`}\n\n` : ''}${(()=>{
   const btns = [...document.querySelectorAll('.estilo-btn.active')];
   const estilo = btns.length ? btns[0].textContent.trim().replace(/^[^a-zA-Záéíóúñ]+/,'').toLowerCase().trim() : 'formal';
-  const map = {
-    'alegre costeño': `TONO COSTEÑO OBLIGATORIO — El copy debe sonar como un costeño de verdad hablando con otro costeño:
-- Expresiones del Caribe colombiano: "mano", "llave", "mi amor", "papi", "venga le cuento", "oiga", "qué lo que", "eso sí fue", "ombe", "niña", "mija"
-- Referencias culturales de la Costa: el vallenato, el carnaval de Barranquilla, la cumbia, el sancocho, el calor, la playa, el partido
-- Tono cálido y directo — como un vecino del barrio que te da un buen dato
-- Ejemplo real: "Ombe llave, en Creditek solicitas ese equipo rapidito. Solo la cédula y pa' lante."`,
-    'chistoso': `TONO HUMORÍSTICO OBLIGATORIO — El humor está en el TEXTO, no en imágenes de gente riendo:
-- Usa referencias actuales colombianas: memes virales del momento, fútbol (goles, VAR, el profe), política colombiana, series o canciones que estén sonando
-- Formatos: comparaciones inesperadas, memes de formato conocido ("POV:", "El antes y el después"), giros de humor, referencias pop
-- Ejemplos del nivel correcto: "Tu ex ya rehízo su vida. Tu celular también puede.", "El VAR revisó y confirmó: este precio sí es gol.", "POV: entraste a Creditek sin cupo y saliste con equipo nuevo"
-- CAMBIA el formato de humor cada vez — nunca dos veces el mismo estilo`
-  };
+  // FIX v11 09-jul-2026 (aplicado tarde en esta sesión): este map antes solo
+  // tenía 2 de los 4 estilos (alegre costeño, chistoso) y ninguno tenía REGLA
+  // DE ESPECIFICIDAD ni CUMPLIMIENTO META — por eso los titulares iniciales
+  // (los que salen sin darle a "✦ Más") eran genéricos. Ahora reutiliza los
+  // mismos 4 estilos reforzados de ESTILO_INSTRUCCIONES(), la misma función
+  // que ya usa generarMasTitulares(), para que ambos caminos generen con el
+  // mismo estándar de calidad y cumplimiento.
+  const map = ESTILO_INSTRUCCIONES();
   const key = Object.keys(map).find(k => estilo.includes(k.split(' ')[0]));
   return key ? map[key] + '\n\n' : '';
 })()}LENGUAJE Y TONO OBLIGATORIO:

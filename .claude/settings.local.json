@@ -55,5 +55,21 @@
       "Bash(sips -g pixelWidth -g pixelHeight /tmp/addi_candidate.png)",
       "Bash(grep *)"
     ]
-  }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/block-sensitive-files.py"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }
