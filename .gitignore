@@ -3,3 +3,5 @@ credentials.json
 node_modules/
 token.json
 creditek/workers/gemini-proxy/.claude/
+.mcp.json
+.claude/
