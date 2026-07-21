@@ -563,7 +563,7 @@ hdr.innerHTML = `<span class="cal-title">📅 ${tituloCalendario} — ${mes} ${a
            (contenteditable) — se guarda en Supabase (columna headline) al
            salir del campo (onblur), usando el piezaId de la tarjeta. -->
       <div class="dcard-title" contenteditable="true" spellcheck="false"
-           onblur="guardarEdicion(this,'headline',${i})">${d.titulo || ''}</div>
+           onblur="guardarEdicion(this,'headline',${i})">${limpiarMarkdownTitular(d.titulo || '')}</div>
       <div class="dcard-plats">${platsHtml}</div>
       <div class="dcard-copy">
         <div class="copy-text expanded" id="copy-${i}" contenteditable="true" spellcheck="false"
@@ -606,6 +606,16 @@ function actualizarEstadoBadge(idx, estado) {
 
 function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// FIX v1 09-jul-2026 (mismo bug encontrado y corregido en Agente 1/v13): si la
+// IA devuelve el titular con markdown (** para negrita), el navegador lo
+// muestra literal en pantalla en vez de interpretarlo — se limpia antes de
+// mostrarse y antes de guardarse en Supabase. Este archivo no comparte
+// utilidades con Agente 1 (cada agente es un HTML independiente), por eso se
+// agrega aquí también en vez de reutilizar la de creditek-agente-redes.html.
+function limpiarMarkdownTitular(texto) {
+  return (texto || '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/_{1,2}/g, '').trim();
 }
 
 // ── Generar ─────────────────────────────────────────────────────
@@ -837,7 +847,7 @@ async function guardarPiezasEnSupabase(dias, anio, mesNombre) {
       dia_semana: d.diaSemana || '',
       tipo: d.tipo || '',
       copy: d.copy || '',
-      headline: d.titulo || '',
+      headline: limpiarMarkdownTitular(d.titulo || ''),
       plataformas: (d.plataformas || []).map(p => p.toLowerCase()),
       estado: 'sin_imagen'
     }));
