@@ -132,6 +132,12 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; ba
 .scanner-overlay video { width: 100%; max-width: 480px; border-radius: 12px; }
 .scanner-overlay button { margin-top: 16px; background: white; color: var(--azul); border: none; border-radius: 999px; padding: 10px 20px; font-weight: 700; cursor: pointer; }
 .scanner-hint { color: white; font-size: 12.5px; margin-top: 10px; opacity: .8; }
+
+#tabla-bloques tr.bloque-ok { background: #DCFCE7; }
+#tabla-bloques tr.bloque-warning { background: #FEF9C3; }
+#tabla-bloques tr.bloque-error { background: #FEE2E2; }
+#tabla-bloques input.contado:disabled { background: #F0F0F2; color: var(--text2); }
+#tabla-bloques td.estado { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -168,7 +174,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; ba
 
   <div class="page">
     <div class="page-top">
-      <h1>Cierre de periodo</h1>
+      <h1 id="tituloPagina">Cierre de periodo</h1>
     </div>
 
     <div class="filters">
@@ -284,6 +290,15 @@ let tiendaEnCurso = null;
 let historicoCache = [];
 
 function initPagina() {
+  const sesionParam = new URLSearchParams(location.search).get('sesion');
+  if (sesionParam) {
+    // Modo 2: conteo por bloques (sesión de auditoría cruzada abierta desde auditoria-cruzada.html)
+    document.getElementById('filtroTienda').style.display = 'none';
+    initModoBloques(sesionParam);
+    return;
+  }
+
+  // Modo 1: cierre normal de periodo (comportamiento existente, sin cambios)
   if (puedeSeleccionarTienda()) {
     document.getElementById('filtroTienda').style.display = '';
   }
@@ -293,6 +308,200 @@ function initPagina() {
   document.getElementById('btnCerrarScanner').addEventListener('click', cerrarScanner);
 
   cargarTiendas();
+}
+
+// ─── Modo 2: Conteo por bloques (sesión de auditoría cruzada) ─────────────
+// Conteo a ciegas: este front NUNCA consulta el campo `esperado` de
+// conteos_bloque. Solo pide id/categoria/estado/intentos_conteo. La RPC
+// registrar_conteo_bloque es la única que conoce el esperado y decide si cuadra.
+let bloquesSesion = null;
+let bloquesCache = [];
+let bloquesCountdownId = null;
+
+async function initModoBloques(sesionId) {
+  document.getElementById('tituloPagina').textContent = 'Conteo por bloques';
+  const cont = document.getElementById('contenidoPeriodo');
+  cont.innerHTML = '<div class="empty-state">Cargando sesión...</div>';
+
+  const { data: sesion, error } = await sb.from('sesiones_conteo_cruzado')
+    .select('id, tienda_auditada, admin_autorizado, estado, vigencia_hasta, abierta_en')
+    .eq('id', sesionId)
+    .maybeSingle();
+
+  if (error || !sesion) {
+    cont.innerHTML = '<div class="empty-state">Esta sesión de conteo no existe.</div>';
+    return;
+  }
+
+  const autorizado = esCentral() || currentUser.id === sesion.admin_autorizado;
+  if (!autorizado) {
+    cont.innerHTML = '<div class="empty-state">No tienes acceso a esta sesión de conteo.</div>';
+    return;
+  }
+
+  if (sesion.estado === 'cerrada') {
+    cont.innerHTML = '<div class="empty-state">Esta sesión de conteo ya fue cerrada por central.</div>';
+    return;
+  }
+  if (sesion.estado === 'cancelada') {
+    cont.innerHTML = '<div class="empty-state">Esta sesión de conteo fue cancelada.</div>';
+    return;
+  }
+  if (sesion.estado === 'expirada' || new Date(sesion.vigencia_hasta) < new Date()) {
+    cont.innerHTML = '<div class="empty-state">Esta sesión de conteo expiró. Pide a central que abra una nueva.</div>';
+    return;
+  }
+
+  bloquesSesion = sesion;
+
+  const { data: tienda } = await sb.from('origenes').select('nombre').eq('codigo', sesion.tienda_auditada).maybeSingle();
+  const nombreTiendaAuditada = tienda?.nombre || sesion.tienda_auditada;
+
+  // NO se selecciona `esperado` — conteo a ciegas.
+  const { data: bloques, error: errBloques } = await sb.from('conteos_bloque')
+    .select('id, categoria, estado, intentos_conteo')
+    .eq('sesion_id', sesionId)
+    .order('categoria');
+
+  if (errBloques) {
+    cont.innerHTML = `<div class="empty-state">Error cargando bloques: ${escapeHtml(errBloques.message)}</div>`;
+    return;
+  }
+
+  bloquesCache = bloques || [];
+  renderBloques(nombreTiendaAuditada);
+  iniciarCountdownBloques();
+}
+
+function renderBloques(nombreTiendaAuditada) {
+  const cont = document.getElementById('contenidoPeriodo');
+  cont.innerHTML = `
+    <div class="seccion" style="padding:14px 18px; margin-bottom:14px;">
+      <div style="font-size:12.5px; color: var(--text2); line-height:1.6;">
+        Conteo a ciegas de <b style="color:var(--azul)">${escapeHtml(nombreTiendaAuditada)}</b> — no verás el número esperado por el sistema, solo si tu conteo cuadra o no.
+        <br>⏳ Vigencia hasta: <b id="countdownTexto" style="color:var(--azul)"></b>
+      </div>
+    </div>
+    <div class="seccion">
+      <h2>Bloques por categoría</h2>
+      <div class="sub" id="statsBloques"></div>
+      ${bloquesCache.length ? `
+        <table id="tabla-bloques" class="comisiones-tabla">
+          <thead>
+            <tr><th>Categoría</th><th>Cantidad contada</th><th class="estado">Estado</th><th>Acción</th></tr>
+          </thead>
+          <tbody id="tbodyBloques"></tbody>
+        </table>
+      ` : '<div class="empty-state">Esta sesión no generó bloques (sin stock &gt; 0 en la tienda auditada).</div>'}
+    </div>
+    <div class="seccion" style="display:flex; justify-content:flex-end;">
+      <button class="btn-secundario" id="btnFinalizarConteo">Finalizar mi conteo</button>
+    </div>
+  `;
+  if (bloquesCache.length) renderFilasBloques();
+  actualizarStats();
+  document.getElementById('btnFinalizarConteo').addEventListener('click', finalizarMiConteo);
+}
+
+function renderFilasBloques() {
+  const tbody = document.getElementById('tbodyBloques');
+  tbody.innerHTML = bloquesCache.map(b => {
+    const cerrado = ['cerrado_ok', 'cerrado_con_ajuste', 'escalado_mayte'].includes(b.estado);
+    let estadoTxt = '⏳ Pendiente';
+    let claseFila = '';
+    if (b.estado === 'cerrado_ok' || b.estado === 'cerrado_con_ajuste') { estadoTxt = '✅ Cuadra'; claseFila = 'bloque-ok'; }
+    else if (b.estado === 'no_cuadra_1' || b.estado === 'no_cuadra_2') { estadoTxt = '🟡 No cuadra — recuenta'; claseFila = 'bloque-warning'; }
+    else if (b.estado === 'escalado_mayte') { estadoTxt = '🔴 Escalado a central'; claseFila = 'bloque-error'; }
+
+    return `
+      <tr data-bloque="${b.id}" class="${claseFila}">
+        <td>${escapeHtml(b.categoria)}</td>
+        <td><input type="number" min="0" class="contado" data-bloque="${b.id}" ${cerrado ? 'disabled' : ''} style="width:90px; border:1px solid var(--border); background:var(--surface); border-radius:8px; padding:7px 9px; font-size:13px; font-family:inherit; text-align:right;"></td>
+        <td class="estado">${estadoTxt}</td>
+        <td><button class="btn-secundario enviar" data-bloque="${b.id}" ${cerrado ? 'disabled' : ''}>Enviar</button></td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('button.enviar').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const bloqueId = btn.dataset.bloque;
+      const input = tbody.querySelector(`input.contado[data-bloque="${bloqueId}"]`);
+      const contado = Number(input.value || 0);
+      enviarConteoBloque(bloqueId, contado);
+    });
+  });
+}
+
+async function enviarConteoBloque(bloqueId, contado) {
+  const fila = document.querySelector(`tr[data-bloque="${bloqueId}"]`);
+  const btn = fila.querySelector('button.enviar');
+  const inputEl = fila.querySelector('input.contado');
+  btn.disabled = true;
+
+  const { data, error } = await sb.rpc('registrar_conteo_bloque', {
+    p_bloque_id: bloqueId,
+    p_contado: contado
+  });
+
+  if (error) {
+    alert('Error: ' + error.message);
+    btn.disabled = false;
+    return;
+  }
+
+  const estadoEl = fila.querySelector('.estado');
+  const bloqueCache = bloquesCache.find(b => b.id === bloqueId);
+  if (bloqueCache) {
+    bloqueCache.estado = data.estado;
+    bloqueCache.intentos_conteo = data.intento;
+  }
+
+  if (data.estado === 'cerrado_ok') {
+    fila.classList.add('bloque-ok');
+    estadoEl.innerHTML = '✅ Cuadra';
+    inputEl.disabled = true;
+    btn.disabled = true;
+  } else if (data.estado === 'no_cuadra_1') {
+    fila.classList.add('bloque-warning');
+    estadoEl.innerHTML = '🟡 No cuadra — recuenta';
+    btn.disabled = false;
+  } else if (data.estado === 'escalado_mayte') {
+    fila.classList.add('bloque-error');
+    estadoEl.innerHTML = '🔴 Escalado a central';
+    inputEl.disabled = true;
+    btn.disabled = true;
+  }
+
+  actualizarStats();
+}
+
+function actualizarStats() {
+  const el = document.getElementById('statsBloques');
+  if (!el) return;
+  const pendientes = bloquesCache.filter(b => !['cerrado_ok', 'cerrado_con_ajuste', 'escalado_mayte'].includes(b.estado)).length;
+  const cerrados = bloquesCache.filter(b => b.estado === 'cerrado_ok' || b.estado === 'cerrado_con_ajuste').length;
+  const escalados = bloquesCache.filter(b => b.estado === 'escalado_mayte').length;
+  el.textContent = `⏳ Pendientes: ${pendientes} · ✅ Cerrados: ${cerrados} · ⚠️ Escalados: ${escalados}`;
+}
+
+function iniciarCountdownBloques() {
+  if (bloquesCountdownId) clearInterval(bloquesCountdownId);
+  const actualizar = () => {
+    const el = document.getElementById('countdownTexto');
+    if (!el || !bloquesSesion) { clearInterval(bloquesCountdownId); return; }
+    const restante = new Date(bloquesSesion.vigencia_hasta) - new Date();
+    if (restante <= 0) { el.textContent = 'Expirada'; clearInterval(bloquesCountdownId); return; }
+    const horas = Math.floor(restante / 3600000);
+    const mins = Math.floor((restante % 3600000) / 60000);
+    el.textContent = `${horas}h ${mins}m`;
+  };
+  actualizar();
+  bloquesCountdownId = setInterval(actualizar, 30000);
+}
+
+function finalizarMiConteo() {
+  mostrarBanner('✅ Conteo finalizado de tu parte. Central cerrará la sesión cuando revise los bloques (y los escalados, si hay).');
 }
 
 async function cargarTiendas() {

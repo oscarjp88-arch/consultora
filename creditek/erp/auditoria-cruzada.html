@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creditek · Auditoría cruzada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="sidebar.js"></script>
+<style>
+:root {
+  --azul: #0B1E3D; --turquesa: #00C4CC; --bg: #F5F5F7; --surface: #FFFFFF;
+  --border: rgba(11,30,61,0.08); --text2: #6E6E76; --verde: #16A34A; --amarillo: #D97706; --rojo: #DC2626;
+  --radius: 18px; --radius-sm: 11px;
+  --shadow-sm: 0 1px 2px rgba(11,30,61,0.04), 0 1px 1px rgba(11,30,61,0.03);
+  --shadow-md: 0 12px 28px -10px rgba(11,30,61,0.16);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--azul); -webkit-font-smoothing: antialiased; }
+
+.login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: radial-gradient(circle at 30% 20%, #EAFBFC 0%, var(--bg) 55%); }
+.login-box { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 40px 32px; width: 100%; max-width: 360px; box-shadow: var(--shadow-md); }
+.login-box img.logo { display: block; height: 40px; margin: 0 auto 22px; object-fit: contain; }
+.login-box input { width: 100%; border: 1px solid transparent; background: var(--bg); border-radius: var(--radius-sm); padding: 13px 14px; font-size: 15px; margin-bottom: 12px; font-family: inherit; transition: all .15s ease; }
+.login-box input:focus { outline: none; background: white; border-color: var(--turquesa); box-shadow: 0 0 0 4px rgba(0,196,204,0.14); }
+.login-box button { width: 100%; background: var(--turquesa); color: white; border: none; border-radius: var(--radius-sm); padding: 13px; font-size: 14.5px; font-weight: 700; cursor: pointer; margin-top: 6px; box-shadow: 0 6px 16px -4px rgba(0,196,204,0.5); transition: transform .12s ease, box-shadow .12s ease; }
+.login-box button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px -4px rgba(0,196,204,0.55); }
+.login-box button:disabled { background: #D2D2D7; box-shadow: none; }
+.login-err { color: var(--rojo); font-size: 12.5px; margin-top: 10px; display: none; }
+.login-err.show { display: block; }
+
+.sin-perfil-screen { min-height: 100vh; display: none; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+.sin-perfil-screen.show { display: flex; }
+.sin-perfil-box { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 40px 32px; max-width: 380px; box-shadow: var(--shadow-md); }
+.sin-perfil-box .icono { font-size: 34px; margin-bottom: 12px; }
+.sin-perfil-box h2 { font-family: 'Montserrat', sans-serif; font-size: 17px; margin-bottom: 8px; }
+.sin-perfil-box p { font-size: 13.5px; color: var(--text2); line-height: 1.5; margin-bottom: 18px; }
+.sin-perfil-box button { border: 1px solid var(--border); background: var(--bg); border-radius: var(--radius-sm); padding: 10px 18px; font-size: 13px; cursor: pointer; color: var(--azul); font-weight: 600; }
+
+#app { display: none; }
+#app.show { display: flex; }
+
+.page { max-width: 900px; margin: 0 auto; padding: 32px 24px 60px; }
+.page-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.page-top h1 { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.btn-primary { background: var(--turquesa); color: white; border: none; border-radius: 999px; padding: 11px 18px; font-size: 13.5px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px -4px rgba(0,196,204,0.5); transition: transform .12s ease; }
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-primary:disabled { background: #D2D2D7; box-shadow: none; cursor: not-allowed; }
+.btn-secundario { background: var(--bg); color: var(--azul); border: 1px solid var(--border); border-radius: 999px; padding: 9px 16px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.btn-secundario:hover:not(:disabled) { background: #EAEAEC; }
+.btn-secundario:disabled { opacity: .5; cursor: not-allowed; }
+.btn-peligro { background: #FEF2F2; color: var(--rojo); border: 1px solid #FCA5A5; border-radius: 999px; padding: 9px 16px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.btn-peligro:hover:not(:disabled) { background: #FEE2E2; }
+
+.banner-ok {
+  position: sticky; top: 74px; z-index: 8; margin: 0 auto 18px; max-width: 900px;
+  background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; border-radius: var(--radius-sm);
+  padding: 13px 18px; font-size: 13.5px; font-weight: 700; display: none; align-items: center; justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+.banner-ok.show { display: flex; }
+.banner-ok button { background: none; border: none; color: #166534; font-weight: 700; cursor: pointer; font-size: 16px; }
+
+.seccion { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 22px; margin-bottom: 20px; }
+.seccion h2 { font-family: 'Montserrat', sans-serif; font-size: 15px; margin-bottom: 4px; }
+.seccion .sub { font-size: 12.5px; color: var(--text2); margin-bottom: 16px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo label { font-size: 12px; font-weight: 700; color: var(--text2); }
+.campo select { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13.5px; font-family: inherit; color: var(--azul); }
+.campo select:focus { outline: none; border-color: var(--turquesa); box-shadow: 0 0 0 3px rgba(0,196,204,0.12); }
+.form-err { color: var(--rojo); font-size: 12.5px; margin-top: 8px; display: none; }
+.form-err.show { display: block; }
+
+.link-box { background: #E8FBFC; border: 1px solid rgba(0,196,204,0.35); border-radius: var(--radius-sm); padding: 16px 18px; margin-top: 16px; }
+.link-box .link-texto { font-family: monospace; font-size: 12px; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; word-break: break-all; margin: 10px 0; color: var(--azul); }
+.link-box .aviso { font-size: 12.5px; color: var(--azul); line-height: 1.5; }
+
+.tabla-sesiones { width: 100%; font-size: 13px; border-collapse: collapse; }
+.tabla-sesiones th, .tabla-sesiones td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); }
+.tabla-sesiones th { font-size: 11px; text-transform: uppercase; color: var(--text2); font-weight: 700; }
+.badge-estado { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.badge-estado.abierta { background: #DCFCE7; color: #166534; }
+.badge-estado.expirada { background: #FEF9C3; color: #92400E; }
+.badge-estado.cerrada { background: #F0F0F2; color: var(--text2); }
+.badge-estado.cancelada { background: #FEE2E2; color: var(--rojo); }
+
+.empty-state { text-align: center; color: var(--text2); font-size: 13.5px; padding: 30px 0; }
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <img class="logo" src="https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek">
+    <input type="email" id="loginEmail" placeholder="Correo" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password">
+    <button id="btnLogin">Entrar</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div class="sin-perfil-screen" id="sinPerfilScreen">
+  <div class="sin-perfil-box">
+    <div class="icono">🔒</div>
+    <h2>Sin perfil asignado</h2>
+    <p>Tu usuario no tiene perfil asignado. Contacta al administrador.</p>
+    <button id="btnSalirSinPerfil">Cerrar sesión</button>
+  </div>
+</div>
+
+<div id="app">
+  <div style="display:none;" aria-hidden="true">
+    <b id="navNombre"></b><span id="navRolTienda"></span><button id="btnLogout"></button>
+  </div>
+  <div class="main-content">
+
+  <div class="banner-ok" id="bannerOk">
+    <span id="bannerOkTexto"></span>
+    <button id="btnCerrarBanner">✕</button>
+  </div>
+
+  <div class="page">
+    <div class="page-top">
+      <h1>Auditoría cruzada</h1>
+    </div>
+
+    <div id="sinAccesoAviso" class="seccion" style="display:none;">
+      <div class="empty-state">Esta pantalla es solo para gerencia y auditoría.</div>
+    </div>
+
+    <div id="contenidoAuditoria" style="display:none;">
+      <div class="seccion">
+        <h2>Abrir sesión de conteo cruzado</h2>
+        <div class="sub">El admin autorizado cuenta a ciegas el inventario de la tienda seleccionada — bloques generados automáticamente por categoría.</div>
+
+        <div class="form-grid">
+          <div class="campo">
+            <label>Tienda a auditar</label>
+            <select id="selTiendaAuditar"><option value="">Selecciona una tienda...</option></select>
+          </div>
+          <div class="campo">
+            <label>Admin autorizado</label>
+            <select id="selAdminAutorizado"><option value="">Selecciona un admin...</option></select>
+          </div>
+          <div class="campo">
+            <label>Vigencia</label>
+            <select id="selVigencia">
+              <option value="2">2 horas</option>
+              <option value="4" selected>4 horas</option>
+              <option value="8">8 horas</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="btnAbrirSesion">Abrir sesión</button>
+        <div class="form-err" id="formErr"></div>
+
+        <div class="link-box" id="linkBox" style="display:none;">
+          <div style="font-weight:700; font-size:13.5px;">✅ Sesión abierta</div>
+          <div class="link-texto" id="linkTexto"></div>
+          <button class="btn-secundario" id="btnCopiarLink">📋 Copiar link</button>
+          <div class="aviso" id="avisoLink" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>Sesiones activas</h2>
+        <div class="sub">Sesiones abiertas o vencidas recientemente.</div>
+        <div id="listaSesiones"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let currentPerfil = null;
+
+function esCentral() { return !!currentPerfil && (currentPerfil.rol === 'gerencia' || currentPerfil.rol === 'auditoria'); }
+
+document.getElementById('btnLogin').addEventListener('click', hacerLogin);
+document.getElementById('loginPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') hacerLogin(); });
+
+async function hacerLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const btn = document.getElementById('btnLogin');
+  const err = document.getElementById('loginErr');
+  err.classList.remove('show');
+  if (!email || !password) return;
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if (error) { err.textContent = 'Correo o contraseña incorrectos.'; err.classList.add('show'); return; }
+  entrarApp(data.user);
+}
+
+document.getElementById('btnLogout').addEventListener('click', cerrarSesion);
+document.getElementById('btnSalirSinPerfil').addEventListener('click', cerrarSesion);
+async function cerrarSesion() { await sb.auth.signOut(); location.reload(); }
+
+async function entrarApp(user) {
+  currentUser = user;
+  const { data: perfil, error } = await sb.from('perfiles').select('*').eq('id', user.id).maybeSingle();
+  if (error || !perfil || !perfil.activo) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('sinPerfilScreen').classList.add('show');
+    return;
+  }
+  currentPerfil = perfil;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').classList.add('show');
+  pintarNavUser();
+  initPagina();
+}
+
+function pintarNavUser() {
+  document.getElementById('navNombre').textContent = currentPerfil.nombre || currentUser.email;
+  const rolLabel = { gerencia: 'Gerencia', auditoria: 'Auditoría', admin_tienda: 'Admin tienda', asesor: 'Asesor' }[currentPerfil.rol] || currentPerfil.rol;
+  document.getElementById('navRolTienda').textContent = currentPerfil.tienda_codigo ? `${rolLabel} · ${currentPerfil.tienda_codigo}` : rolLabel;
+}
+
+sb.auth.getSession().then(({ data }) => { if (data.session) entrarApp(data.session.user); });
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function mostrarBanner(texto) {
+  document.getElementById('bannerOkTexto').textContent = texto;
+  document.getElementById('bannerOk').classList.add('show');
+}
+document.getElementById('btnCerrarBanner').addEventListener('click', () => document.getElementById('bannerOk').classList.remove('show'));
+
+// ─── Página: Auditoría cruzada (solo gerencia/auditoria) ──────────────────
+let tiendasCache = [];
+let adminsCache = [];
+
+function initPagina() {
+  if (!esCentral()) {
+    document.getElementById('sinAccesoAviso').style.display = '';
+    return;
+  }
+  document.getElementById('contenidoAuditoria').style.display = '';
+  document.getElementById('btnAbrirSesion').addEventListener('click', abrirSesion);
+  document.getElementById('btnCopiarLink').addEventListener('click', copiarLink);
+
+  cargarSelectores();
+  cargarSesiones();
+}
+
+async function cargarSelectores() {
+  const [{ data: tiendas }, { data: admins }] = await Promise.all([
+    sb.from('origenes').select('codigo, nombre').eq('tipo', 'propia').eq('activo', true).order('nombre'),
+    sb.from('perfiles').select('id, nombre, tienda_codigo').eq('rol', 'admin_tienda').eq('activo', true).order('nombre'),
+  ]);
+  tiendasCache = tiendas || [];
+  adminsCache = admins || [];
+
+  document.getElementById('selTiendaAuditar').innerHTML =
+    '<option value="">Selecciona una tienda...</option>' +
+    tiendasCache.map(t => `<option value="${escapeHtml(t.codigo)}">${escapeHtml(t.nombre)}</option>`).join('');
+
+  document.getElementById('selAdminAutorizado').innerHTML =
+    '<option value="">Selecciona un admin...</option>' +
+    adminsCache.map(a => `<option value="${a.id}">${escapeHtml(a.nombre)} (admin de ${escapeHtml(a.tienda_codigo || '—')})</option>`).join('');
+}
+
+function nombreTienda(codigo) {
+  return tiendasCache.find(t => t.codigo === codigo)?.nombre || codigo || '—';
+}
+function nombreAdmin(id) {
+  return adminsCache.find(a => a.id === id)?.nombre || id;
+}
+
+async function abrirSesion() {
+  const err = document.getElementById('formErr');
+  err.classList.remove('show');
+  document.getElementById('linkBox').style.display = 'none';
+
+  const tienda = document.getElementById('selTiendaAuditar').value;
+  const admin = document.getElementById('selAdminAutorizado').value;
+  const horas = Number(document.getElementById('selVigencia').value);
+
+  if (!tienda || !admin) {
+    err.textContent = 'Selecciona la tienda a auditar y el admin autorizado.';
+    err.classList.add('show');
+    return;
+  }
+
+  const btn = document.getElementById('btnAbrirSesion');
+  btn.disabled = true; btn.textContent = 'Abriendo...';
+
+  const { data: sesionId, error } = await sb.rpc('abrir_sesion_conteo_cruzado', {
+    p_tienda_auditada: tienda,
+    p_admin_autorizado: admin,
+    p_horas_vigencia: horas,
+  });
+
+  btn.disabled = false; btn.textContent = 'Abrir sesión';
+
+  if (error) {
+    err.textContent = 'No se pudo abrir la sesión: ' + error.message;
+    err.classList.add('show');
+    return;
+  }
+
+  const link = `https://oscarjp88-arch.github.io/consultora/creditek/erp/cierre-periodo.html?sesion=${sesionId}`;
+  const horaLimite = new Date(Date.now() + horas * 3600000).toLocaleString('es-CO', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
+
+  document.getElementById('linkTexto').textContent = link;
+  document.getElementById('avisoLink').textContent =
+    `Copia este link y envíaselo por WhatsApp a ${nombreAdmin(admin)}. Solo ese usuario puede usarlo, y solo hasta las ${horaLimite}.`;
+  document.getElementById('linkBox').style.display = '';
+
+  mostrarBanner(`✅ Sesión abierta para ${nombreTienda(tienda)} — ${nombreAdmin(admin)} tiene ${horas}h para contar.`);
+  cargarSesiones();
+}
+
+function copiarLink() {
+  const link = document.getElementById('linkTexto').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.getElementById('btnCopiarLink');
+    const original = btn.textContent;
+    btn.textContent = '✅ Copiado';
+    setTimeout(() => { btn.textContent = original; }, 1800);
+  });
+}
+
+async function cargarSesiones() {
+  const cont = document.getElementById('listaSesiones');
+  cont.innerHTML = '<div class="empty-state">Cargando...</div>';
+
+  const { data, error } = await sb.from('sesiones_conteo_cruzado')
+    .select('id, tienda_auditada, admin_autorizado, estado, abierta_en, vigencia_hasta')
+    .order('abierta_en', { ascending: false })
+    .limit(30);
+
+  if (error) { cont.innerHTML = `<div class="empty-state">Error: ${escapeHtml(error.message)}</div>`; return; }
+
+  if (!data || !data.length) { cont.innerHTML = '<div class="empty-state">No hay sesiones registradas todavía.</div>'; return; }
+
+  cont.innerHTML = `
+    <table class="tabla-sesiones">
+      <thead>
+        <tr><th>Tienda</th><th>Admin</th><th>Estado</th><th>Vigencia hasta</th><th>Acción</th></tr>
+      </thead>
+      <tbody>
+        ${data.map(s => {
+          const vencida = s.estado === 'abierta' && new Date(s.vigencia_hasta) < new Date();
+          const estadoMostrado = vencida ? 'expirada' : s.estado;
+          const vigenciaTxt = new Date(s.vigencia_hasta).toLocaleString('es-CO', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
+          return `
+            <tr>
+              <td>${escapeHtml(nombreTienda(s.tienda_auditada))}</td>
+              <td>${escapeHtml(nombreAdmin(s.admin_autorizado))}</td>
+              <td><span class="badge-estado ${estadoMostrado}">${estadoMostrado}</span></td>
+              <td>${vigenciaTxt}</td>
+              <td>${s.estado === 'abierta' ? `<button class="btn-peligro" data-cerrar="${s.id}">Cerrar sesión</button>` : '—'}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  cont.querySelectorAll('[data-cerrar]').forEach(btn => {
+    btn.addEventListener('click', () => cerrarSesion_(btn.dataset.cerrar, btn));
+  });
+}
+
+async function cerrarSesion_(sesionId, btn) {
+  if (!confirm('¿Cerrar esta sesión de conteo? El admin ya no podrá seguir registrando bloques.')) return;
+  btn.disabled = true; btn.textContent = 'Cerrando...';
+  const { error } = await sb.rpc('cerrar_sesion_conteo_cruzado', { p_sesion_id: sesionId });
+  if (error) { alert('No se pudo cerrar: ' + error.message); btn.disabled = false; btn.textContent = 'Cerrar sesión'; return; }
+  mostrarBanner('✅ Sesión cerrada.');
+  cargarSesiones();
+}
+</script>
+</body>
+</html>
