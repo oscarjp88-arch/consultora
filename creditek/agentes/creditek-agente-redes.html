@@ -1067,6 +1067,8 @@ Patrones de hook que debes usar:
 - Tensión cómica: "${pick(['Tu celular ya dijo adiós. Nosotros le decimos bienvenido al nuevo.', 'Tu pantalla rota ya no aguanta ni un meme más.', 'Ese celular ya jubilado necesita reemplazo urgente.'])}"
 REGLA: el humor debe estar en el texto — NO pedir "persona riendo" ni "cara de sorpresa".
 
+BÚSQUEDA OBLIGATORIA (usa la herramienta de búsqueda web ANTES de escribir los titulares): busca 1 referencia real y verificable de Colombia/Costa Caribe de los últimos 7 días — puede ser un resultado de fútbol, una canción sonando, una noticia viral, un meme real circulando. Usa esa referencia real en AL MENOS 1 de los 6 titulares del "Patrón de comparación colombiana actual". Si la búsqueda no arroja nada útil o falla, usa los ejemplos genéricos de respaldo de abajo — nunca inventes un evento como si fuera real.
+
 REGLA DE ESPECIFICIDAD (specificity check — obligatoria en TODOS los titulares, no solo en los ejemplos):
 Cada titular DEBE incluir al menos UNO de estos elementos concretos, además del chiste:
 1. Una objeción real resuelta (reportado, sin fiador, sin codeudor, sin banco)
@@ -1197,7 +1199,7 @@ Responde ÚNICAMENTE con los 6 titulares numerados, sin explicaciones:
     // así que antes se colaba como si fuera un titular más y desplazaba a los
     // reales. Ahora solo se aceptan líneas que empiezan con "N." (el formato
     // exacto que pide el prompt) — cualquier otra línea de texto se descarta.
-    const titulares = text.split('\n').map(l=>l.trim()).filter(l=>/^\d+\.\s/.test(l)).map(l=>l.replace(/^\d+\.\s*/,'').trim()).filter(Boolean).slice(0,6);
+    const titulares = text.split('\n').map(l=>l.trim()).filter(l=>/^\d+\.\s/.test(l)).map(l=>limpiarMarkdownTitular(l.replace(/^\d+\.\s*/,''))).filter(Boolean).slice(0,6);
     if (titulares.length > 0) { renderTitulares(titulares); showToast('✓ Nuevos titulares generados'); }
     else showToast('No se generaron titulares', '#f59e0b');
   } catch(e) { showToast('Error al generar titulares', '#ef4444'); }
@@ -1925,7 +1927,7 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
   const tm = text.match(/\[TITULARES\]([\s\S]*?)$/i);
   if (tm) {
     const titLines = tm[1].trim().split('\n').filter(l => l.trim());
-    const titulares = titLines.map(l => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean).slice(0, 6);
+    const titulares = titLines.map(l => limpiarMarkdownTitular(l.replace(/^\d+\.\s*/, ''))).filter(Boolean).slice(0, 6);
     renderTitulares(titulares);
   }
 
@@ -1944,6 +1946,14 @@ function renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief) {
 
 function fmt(text){ return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<em>$1</em>').replace(/\*(.+?)\*/g,'<em>$1</em>'); }
 function esc(str){ return str.replace(/`/g,'\\`').replace(/\$/g,'\\$'); }
+// FIX v13 09-jul-2026: los titulares que devuelve Claude van directo a un
+// <input> de texto plano ("Titular principal") y a botones de selección —
+// a diferencia de fmt() (que convierte ** a <em> para HTML), aquí no hay
+// dónde renderizar HTML, así que los asteriscos de markdown deben eliminarse
+// por completo, no convertirse.
+function limpiarMarkdownTitular(texto) {
+  return (texto || '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/_{1,2}/g, '').trim();
+}
 function copiarTexto(btn, texto) {
   const span = btn.querySelector('span');
   const original = span ? span.textContent : btn.textContent;
@@ -2102,7 +2112,7 @@ function renderTitulares(titulares) {
 function selectTitular(btn, text) {
   document.querySelectorAll('.titular-opt').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
-  document.getElementById('img-titular').value = text;
+  document.getElementById('img-titular').value = limpiarMarkdownTitular(text);
   buildImgPrompt();
 }
 
