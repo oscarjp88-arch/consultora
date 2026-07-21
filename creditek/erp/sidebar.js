@@ -22,6 +22,7 @@
       { label: 'Ajustes', href: 'ajustes.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
       { label: 'Cierre mes', href: 'cierre-periodo.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
       { label: 'Auditoría cruzada', href: 'auditoria-cruzada.html', roles: ['gerencia', 'auditoria'] },
+      { label: 'Kardex', href: 'kardex.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
     ]},
     { titulo: 'CAJA', icono: '💰', items: [
       { label: 'Ventas', href: 'ventas.html', roles: ['gerencia', 'auditoria', 'admin_tienda', 'asesor'] },
