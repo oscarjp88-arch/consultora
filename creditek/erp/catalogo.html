@@ -92,6 +92,10 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 .modal-err.show { display: block; }
 .modal-ok { color: var(--verde); font-size: 12.5px; margin-top: 8px; display: none; font-weight: 700; }
 .modal-ok.show { display: block; }
+.foto-cell img, .foto-cell .sin-foto { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; }
+.foto-cell .sin-foto { display: inline-flex; align-items: center; justify-content: center; background: var(--bg); color: var(--text2); font-size: 15px; }
+.campo small { display: block; margin-top: 5px; font-size: 11.5px; color: var(--text2); }
+#preview-foto img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
 </style>
 </head>
 <body>
@@ -140,7 +144,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
     <div class="tabla-wrap">
       <table>
         <thead>
-          <tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th>Precio guía</th><th id="thAcciones" style="display:none;">Acciones</th></tr>
+          <tr><th>Foto</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th>Precio guía</th><th id="thAcciones" style="display:none;">Acciones</th></tr>
         </thead>
         <tbody id="tbodyProductos"></tbody>
       </table>
@@ -154,20 +158,14 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
   <div class="modal-box">
     <h2 id="modalTitulo">Nuevo producto</h2>
     <input type="hidden" id="prodId">
+    <input type="hidden" id="prodFotoActual">
     <div class="campo"><label>Código</label><input type="text" id="prodCodigo" placeholder="Ej. SAM-A17"></div>
     <div class="campo"><label>Nombre</label><input type="text" id="prodNombre" placeholder="Ej. Samsung Galaxy A17 4G"></div>
-    <div class="campo">
-      <label>Categoría</label>
-      <select id="prodCategoria">
-        <option value="celular">celular</option>
-        <option value="accesorio">accesorio</option>
-        <option value="parlante">parlante</option>
-        <option value="protector">protector</option>
-        <option value="cable">cable</option>
-        <option value="cargador">cargador</option>
-        <option value="audifono">audifono</option>
-        <option value="otro">otro</option>
-      </select>
+    <div class="campo solo-central">
+      <label>Categoría *</label>
+      <input list="categorias-existentes" id="prodCategoria" placeholder="Ej: audifonos, vidrio, cargador..." autocomplete="off">
+      <datalist id="categorias-existentes"></datalist>
+      <small>Al escribir se muestra el listado de categorías existentes. Si escribes una nueva, se crea al guardar.</small>
     </div>
     <div class="campo">
       <label>Tipo</label>
@@ -177,6 +175,11 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
       </select>
     </div>
     <div class="campo"><label>Precio guía</label><input type="number" id="prodPrecioGuia" placeholder="0" min="0"></div>
+    <div class="campo solo-central">
+      <label>Foto del producto</label>
+      <input type="file" id="input-foto" accept="image/jpeg,image/png,image/webp">
+      <div id="preview-foto" style="margin-top:.5rem;"></div>
+    </div>
     <div class="modal-err" id="modalErr"></div>
     <div class="modal-ok" id="modalOk">Producto guardado.</div>
     <div class="modal-actions">
@@ -248,15 +251,13 @@ function escapeHtml(str) {
 }
 
 // ─── Página: Catálogo ─────────────────────────────────────────────────
-const CATEGORIAS = ['celular', 'accesorio', 'parlante', 'protector', 'cable', 'cargador', 'audifono', 'otro'];
-
 function initPagina() {
   if (esCentral()) {
     document.getElementById('btnNuevoProducto').style.display = 'inline-block';
     document.getElementById('thAcciones').style.display = '';
+  } else {
+    document.querySelectorAll('.solo-central').forEach(el => el.style.display = 'none');
   }
-  const selCat = document.getElementById('filtroCategoria');
-  selCat.innerHTML = '<option value="">Todas las categorías</option>' + CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('');
 
   document.getElementById('filtroBusqueda').addEventListener('input', renderTabla);
   document.getElementById('filtroCategoria').addEventListener('change', renderTabla);
@@ -266,7 +267,36 @@ function initPagina() {
   document.getElementById('btnCancelarModal').addEventListener('click', cerrarModalProducto);
   document.getElementById('btnGuardarProducto').addEventListener('click', guardarProducto);
 
+  cargarCategoriasExistentes();
   cargarProductos();
+}
+
+async function cargarCategoriasExistentes() {
+  const { data, error } = await sb.from('categorias_activas').select('categoria').order('categoria');
+  if (error) return;
+  const cats = (data || []).map(c => c.categoria);
+
+  const datalist = document.getElementById('categorias-existentes');
+  if (datalist) datalist.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+
+  const selCat = document.getElementById('filtroCategoria');
+  const actual = selCat.value;
+  selCat.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  if (cats.includes(actual)) selCat.value = actual;
+}
+
+async function subirFotoProducto(codigoProducto, archivo) {
+  const ext = archivo.name.split('.').pop().toLowerCase();
+  const nombreArchivo = `${codigoProducto}_${Date.now()}.${ext}`;
+
+  const { error } = await sb.storage
+    .from('productos-fotos')
+    .upload(nombreArchivo, archivo, { cacheControl: '31536000', upsert: false });
+
+  if (error) throw error;
+
+  const { data: { publicUrl } } = sb.storage.from('productos-fotos').getPublicUrl(nombreArchivo);
+  return publicUrl;
 }
 
 async function cargarProductos() {
@@ -304,9 +334,10 @@ function renderTabla() {
   empty.style.display = 'none';
   tbody.innerHTML = filtrados.map(p => `
     <tr>
+      <td class="foto-cell">${p.foto_url ? `<img src="${escapeHtml(p.foto_url)}" alt="${escapeHtml(p.nombre)}">` : `<span class="sin-foto">📷</span>`}</td>
       <td>${escapeHtml(p.codigo)}</td>
       <td>${escapeHtml(p.nombre)}</td>
-      <td>${escapeHtml(p.categoria)}</td>
+      <td><span class="tag">${escapeHtml(p.categoria)}</span></td>
       <td><span class="tag ${p.tipo === 'cantidad' ? 'cantidad' : ''}">${p.tipo}</span></td>
       <td>${fmtCOP(p.precio_guia)}</td>
       ${esCentral() ? `<td><button class="link-edit" data-id="${p.id}">Editar</button></td>` : ''}
@@ -328,9 +359,14 @@ function abrirModalProducto(prod) {
   document.getElementById('prodId').value = prod ? prod.id : '';
   document.getElementById('prodCodigo').value = prod ? prod.codigo : '';
   document.getElementById('prodNombre').value = prod ? prod.nombre : '';
-  document.getElementById('prodCategoria').value = prod ? prod.categoria : 'celular';
+  document.getElementById('prodCategoria').value = prod ? prod.categoria : '';
   document.getElementById('prodTipo').value = prod ? prod.tipo : 'serializado';
   document.getElementById('prodPrecioGuia').value = prod ? prod.precio_guia : '';
+  document.getElementById('prodFotoActual').value = prod && prod.foto_url ? prod.foto_url : '';
+  document.getElementById('input-foto').value = '';
+  document.getElementById('preview-foto').innerHTML = prod && prod.foto_url
+    ? `<img src="${escapeHtml(prod.foto_url)}" alt="foto actual">`
+    : '';
   document.getElementById('modalErr').classList.remove('show');
   document.getElementById('modalOk').classList.remove('show');
   document.getElementById('modalProducto').classList.add('show');
@@ -341,22 +377,35 @@ async function guardarProducto() {
   const id = document.getElementById('prodId').value;
   const codigo = document.getElementById('prodCodigo').value.trim();
   const nombre = document.getElementById('prodNombre').value.trim();
-  const categoria = document.getElementById('prodCategoria').value;
+  const categoria = document.getElementById('prodCategoria').value.trim();
   const tipo = document.getElementById('prodTipo').value;
   const precio_guia = document.getElementById('prodPrecioGuia').value ? Number(document.getElementById('prodPrecioGuia').value) : null;
   const err = document.getElementById('modalErr');
   err.classList.remove('show');
 
-  if (!codigo || !nombre) { err.textContent = 'Código y nombre son obligatorios.'; err.classList.add('show'); return; }
+  if (!codigo || !nombre || !categoria) { err.textContent = 'Código, nombre y categoría son obligatorios.'; err.classList.add('show'); return; }
 
   const btn = document.getElementById('btnGuardarProducto');
   btn.disabled = true; btn.textContent = 'Guardando...';
 
+  let foto_url = document.getElementById('prodFotoActual').value || null;
+  const archivo = document.getElementById('input-foto').files[0];
+  if (archivo) {
+    try {
+      foto_url = await subirFotoProducto(codigo, archivo);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Guardar';
+      err.textContent = 'No se pudo subir la foto: ' + e.message;
+      err.classList.add('show');
+      return;
+    }
+  }
+
   let resultado;
   if (id) {
-    resultado = await sb.from('productos').update({ codigo, nombre, categoria, tipo, precio_guia }).eq('id', id).select().maybeSingle();
+    resultado = await sb.from('productos').update({ codigo, nombre, categoria, tipo, precio_guia, foto_url }).eq('id', id).select().maybeSingle();
   } else {
-    resultado = await sb.from('productos').insert({ codigo, nombre, categoria, tipo, precio_guia }).select().maybeSingle();
+    resultado = await sb.from('productos').insert({ codigo, nombre, categoria, tipo, precio_guia, foto_url }).select().maybeSingle();
   }
 
   btn.disabled = false; btn.textContent = 'Guardar';
@@ -370,6 +419,7 @@ async function guardarProducto() {
   }
 
   document.getElementById('modalOk').classList.add('show');
+  await cargarCategoriasExistentes();
   await cargarProductos();
   setTimeout(cerrarModalProducto, 700);
 }
