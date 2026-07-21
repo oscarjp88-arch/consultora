@@ -669,10 +669,10 @@ async function generar() {
 
   const briefInfo = brief ? `\n\nBRIEF REAL DE LA QUINCENA (esto es lo único autorizado para promociones, precios, productos destacados y eventos — no inventes nada que no esté aquí):\n${brief}` : '';
 
-  const systemPrompt = `Eres el estratega de contenido de Creditek, empresa colombiana que VENDE productos electrónicos y artículos de belleza a crédito, con tiendas aliadas en el Caribe colombiano. Creditek NO es una entidad financiera: quien otorga el crédito es la plataforma financiera aliada (PayJoy, Alo Credit, Krediya o Addi), no Creditek. Esta distinción es obligatoria en todo el contenido — ver regla explícita más abajo.
+  const systemPrompt = `Eres el estratega de contenido de Creditek, empresa colombiana que VENDE tecnología y electrónica a crédito (celulares, parlantes, accesorios y afines), con tiendas aliadas en el Caribe colombiano. Creditek NO es una entidad financiera: quien otorga el crédito es la plataforma financiera aliada (PayJoy, Alo Credit, Krediya o Addi), no Creditek. Esta distinción es obligatoria en todo el contenido — ver regla explícita más abajo.
 
 CONTEXTO DE MARCA:
-- Productos: Celulares (Samsung, Xiaomi, Oppo, Honor, Infinix, Motorola, TCL), parlantes, accesorios, artículos de belleza y más
+- Productos: Celulares (Samsung, Xiaomi, Oppo, Honor, Infinix, Motorola, TCL), parlantes, accesorios y tecnología en general
 - Financiación a través de: PayJoy, Alo Credit, Krediya, Addi
 - Requisitos: Solo cédula. Sin banco. Sin fiador. Sin codeudor.
 - Aprobación: Mismo día, en minutos
@@ -743,7 +743,7 @@ Devuelve entre 8 y 10 objetos JSON (aprox. 4-5 publicaciones por semana, distrib
 
 Elige tú los días exactos (entre el ${diaInicio} y el ${diaFin} de ${mes}) siguiendo una cadencia de 4-5 por semana, nunca 2 días seguidos. Calcula el día de la semana correcto para ${mes} ${anio}.
 CADA COPY DEBE TENER MÁXIMO 3-4 LÍNEAS — esto es publicidad de redes sociales, no un artículo. La gente desliza rápido.
-Varía los productos: Samsung, Xiaomi, Oppo, Honor, Infinix, Motorola, TCL, parlantes, accesorios, artículos de belleza — salvo que el brief indique un producto específico a destacar.
+Varía los productos: Samsung, Xiaomi, Oppo, Honor, Infinix, Motorola, TCL, parlantes, accesorios — salvo que el brief indique un producto específico a destacar. NO generes contenido centrado en artículos de belleza salvo que el brief lo pida explícitamente (es una categoría marginal del negocio, no un producto de rotación regular).
 NUNCA uses "bacano".`;
 
   try {
