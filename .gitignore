@@ -5,3 +5,4 @@ token.json
 creditek/workers/gemini-proxy/.claude/
 .mcp.json
 .claude/
+credenciales_admins_*.csv
