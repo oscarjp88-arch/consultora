@@ -217,6 +217,14 @@ async function entrarApp(user) {
     return;
   }
   currentPerfil = perfil;
+
+  // Primer ingreso: admin_tienda debe cambiar la contraseña temporal antes de usar el ERP.
+  const yaCambioClave = !!(user.user_metadata && user.user_metadata.password_cambiada);
+  if (perfil.rol === 'admin_tienda' && !yaCambioClave) {
+    location.href = 'cambiar-clave.html';
+    return;
+  }
+
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').classList.add('show');
   pintarNavUser();
