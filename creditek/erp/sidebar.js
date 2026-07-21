@@ -9,6 +9,11 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
 
   const MODULOS = [
+    { titulo: 'TABLERO', icono: '📊', items: [
+      { label: 'Dashboard', href: 'tablero.html', roles: ['gerencia', 'auditoria'] },
+      { label: 'Presupuestos', href: 'presupuestos.html', roles: ['gerencia', 'auditoria'] },
+      { label: 'Ejecutivos', href: 'tablero.html#ejecutivos', roles: ['gerencia', 'auditoria'] },
+    ]},
     { titulo: 'INVENTARIO', icono: '📦', items: [
       { label: 'Catálogo', href: 'catalogo.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
       { label: 'Remisiones', href: 'remisiones.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
