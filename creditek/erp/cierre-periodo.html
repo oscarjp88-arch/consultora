@@ -173,8 +173,6 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; ba
 
     <div class="filters">
       <select id="filtroTienda" style="display:none;"></select>
-      <input type="month" id="filtroMes">
-      <button class="btn-secundario" id="btnActualizar">Actualizar</button>
     </div>
 
     <div id="contenidoPeriodo"></div>
@@ -221,7 +219,10 @@ let conteoUnidades = [];
 let conteoStock = [];
 
 function esCentral() { return !!currentPerfil && (currentPerfil.rol === 'gerencia' || currentPerfil.rol === 'auditoria'); }
-function puedeContar(tienda) { return esCentral() || (currentPerfil.rol === 'admin_tienda' && currentPerfil.tienda_codigo === tienda); }
+// Auditoría cruzada (aclaración de Oscar 20-jul-2026): cualquier admin_tienda puede contar
+// el inventario de OTRA tienda, no solo la propia — Mayte supervisa en remoto.
+function puedeSeleccionarTienda() { return esCentral() || (currentPerfil && currentPerfil.rol === 'admin_tienda'); }
+function puedeContar(tienda) { return esCentral() || (currentPerfil && currentPerfil.rol === 'admin_tienda'); }
 
 document.getElementById('btnLogin').addEventListener('click', hacerLogin);
 document.getElementById('loginPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') hacerLogin(); });
@@ -278,16 +279,15 @@ function mostrarBanner(texto) {
 }
 document.getElementById('btnCerrarBanner').addEventListener('click', () => document.getElementById('bannerOk').classList.remove('show'));
 
-// ─── Página: Cierre de periodo ─────────────────────────────────────────
-function initPagina() {
-  const hoy = new Date();
-  document.getElementById('filtroMes').value = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+// ─── Página: Cierre de periodo (periodos móviles — no mes calendario) ──
+let tiendaEnCurso = null;
+let historicoCache = [];
 
-  if (esCentral()) {
+function initPagina() {
+  if (puedeSeleccionarTienda()) {
     document.getElementById('filtroTienda').style.display = '';
   }
 
-  document.getElementById('btnActualizar').addEventListener('click', cargarResumen);
   document.getElementById('btnCancelarConteo').addEventListener('click', () => document.getElementById('modalConteo').classList.remove('show'));
   document.getElementById('btnConfirmarConteo').addEventListener('click', confirmarConteo);
   document.getElementById('btnCerrarScanner').addEventListener('click', cerrarScanner);
@@ -298,51 +298,162 @@ function initPagina() {
 async function cargarTiendas() {
   const { data } = await sb.from('origenes').select('codigo, nombre').eq('tipo', 'propia').eq('activo', true).order('nombre');
   tiendasCache = data || [];
-  if (esCentral()) {
-    document.getElementById('filtroTienda').innerHTML = tiendasCache.map(t => `<option value="${t.codigo}">${escapeHtml(t.nombre)}</option>`).join('');
-    document.getElementById('filtroTienda').addEventListener('change', cargarResumen);
+  if (puedeSeleccionarTienda()) {
+    const sel = document.getElementById('filtroTienda');
+    sel.innerHTML = tiendasCache.map(t => `<option value="${t.codigo}">${escapeHtml(t.nombre)}</option>`).join('');
+    if (currentPerfil.tienda_codigo && tiendasCache.some(t => t.codigo === currentPerfil.tienda_codigo)) {
+      sel.value = currentPerfil.tienda_codigo;
+    }
+    sel.addEventListener('change', cargarPeriodoTienda);
   }
-  cargarResumen();
+  cargarPeriodoTienda();
 }
 
 function tiendaSeleccionada() {
-  return esCentral() ? document.getElementById('filtroTienda').value : currentPerfil.tienda_codigo;
+  return puedeSeleccionarTienda() ? document.getElementById('filtroTienda').value : currentPerfil.tienda_codigo;
 }
 
 function nombreTienda(codigo) {
   return tiendasCache.find(t => t.codigo === codigo)?.nombre || codigo || '—';
 }
 
-async function cargarResumen() {
+function hoyISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function fmtFechaLarga(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// Punto de entrada al seleccionar/cambiar tienda: NO calcula el periodo todavía
+// (eso solo pasa cuando se pulsa "Iniciar conteo — HOY"), solo carga el historial.
+async function cargarPeriodoTienda() {
   const cont = document.getElementById('contenidoPeriodo');
   const tienda = tiendaSeleccionada();
-  const mesVal = document.getElementById('filtroMes').value; // "YYYY-MM"
-  if (!tienda || !mesVal) { cont.innerHTML = '<div class="empty-state">Elige tienda y mes.</div>'; return; }
-  const [anio, mes] = mesVal.split('-').map(Number);
+  tiendaEnCurso = tienda;
+  resumenActual = null;
+  if (!tienda) { cont.innerHTML = '<div class="empty-state">Elige una tienda.</div>'; return; }
+  cont.innerHTML = '<div class="empty-state">Cargando...</div>';
 
-  cont.innerHTML = '<div class="empty-state">Calculando...</div>';
+  const { data: historico } = await sb.from('periodos')
+    .select('id, fecha_inicio, fecha_fin, utilidad_neta')
+    .eq('tienda_codigo', tienda)
+    .order('fecha_fin', { ascending: false });
+  historicoCache = historico || [];
 
-  const { data, error } = await sb.rpc('calcular_resumen_periodo', { p_tienda_codigo: tienda, p_anio: anio, p_mes: mes });
+  renderInicio();
+}
+
+function renderInicio() {
+  const cont = document.getElementById('contenidoPeriodo');
+  const tienda = tiendaEnCurso;
+  cont.innerHTML = `
+    <div class="seccion">
+      <h2>Periodo abierto</h2>
+      <div class="sub">${escapeHtml(nombreTienda(tienda))} — el periodo se cierra por visita física de inventario, no por mes calendario</div>
+      <button class="btn-primary" id="btnIniciarPreview">Iniciar conteo de ${escapeHtml(nombreTienda(tienda))} — HOY</button>
+    </div>
+    ${renderHistorialHtml()}
+  `;
+  document.getElementById('btnIniciarPreview').addEventListener('click', iniciarPreview);
+  wireHistorial();
+}
+
+async function iniciarPreview() {
+  const tienda = tiendaEnCurso;
+  const cont = document.getElementById('contenidoPeriodo');
+  cont.innerHTML = '<div class="empty-state">Calculando rango...</div>';
+  const { data: fechaAuto, error } = await sb.rpc('calcular_fecha_inicio_periodo', { p_tienda_codigo: tienda });
   if (error) { cont.innerHTML = `<div class="empty-state">Error: ${escapeHtml(error.message)}</div>`; return; }
-  resumenActual = { tienda, anio, mes, ...data };
+  if (fechaAuto) {
+    cargarResumenRango(tienda, fechaAuto, hoyISO());
+  } else {
+    renderPrimeraVez(tienda);
+  }
+}
+
+function renderPrimeraVez(tienda) {
+  const cont = document.getElementById('contenidoPeriodo');
+  cont.innerHTML = `
+    <div class="seccion">
+      <h2>Primer periodo de ${escapeHtml(nombreTienda(tienda))}</h2>
+      <div class="sub">Esta tienda todavía no tiene periodos cerrados. Define la fecha desde la que arranca el primer periodo (fecha de inicio de operación, o la que indique Oscar).</div>
+      <input type="date" id="inputFechaInicioManual" style="border:1px solid var(--border); background:var(--surface); border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; font-family: inherit; margin-bottom: 12px; display:block;">
+      <button class="btn-primary" id="btnConfirmarFechaManual">Calcular rango</button>
+    </div>
+    ${renderHistorialHtml()}
+  `;
+  document.getElementById('btnConfirmarFechaManual').addEventListener('click', () => {
+    const v = document.getElementById('inputFechaInicioManual').value;
+    if (!v) return;
+    cargarResumenRango(tienda, v, hoyISO());
+  });
+  wireHistorial();
+}
+
+function renderHistorialHtml() {
+  if (!historicoCache.length) return '';
+  return `
+    <div class="seccion">
+      <h2>Historial de periodos cerrados</h2>
+      <div class="sub">${escapeHtml(nombreTienda(tiendaEnCurso))} — clic para ver el detalle de un periodo ya cerrado</div>
+      <ul class="check-lista">
+        ${historicoCache.map(p => `
+          <li class="check-item historial-item" style="cursor:pointer;" data-fi="${p.fecha_inicio}" data-ff="${p.fecha_fin}">
+            <span class="nombre">${fmtFechaLarga(p.fecha_inicio)} — ${fmtFechaLarga(p.fecha_fin)}</span>
+            <span class="imei-txt">${fmtCOP(p.utilidad_neta)}</span>
+          </li>
+        `).join('')}
+      </ul>
+    </div>
+  `;
+}
+
+function wireHistorial() {
+  document.querySelectorAll('#contenidoPeriodo .historial-item').forEach(li => {
+    li.addEventListener('click', () => cargarResumenRango(tiendaEnCurso, li.dataset.fi, li.dataset.ff));
+  });
+}
+
+async function cargarResumenRango(tienda, fechaInicio, fechaFin) {
+  const cont = document.getElementById('contenidoPeriodo');
+  cont.innerHTML = '<div class="empty-state">Calculando...</div>';
+  const { data, error } = await sb.rpc('calcular_resumen_periodo', { p_tienda_codigo: tienda, p_fecha_inicio: fechaInicio, p_fecha_fin: fechaFin });
+  if (error) { cont.innerHTML = `<div class="empty-state">Error: ${escapeHtml(error.message)}</div>`; return; }
+  resumenActual = { tienda, ...data };
   renderResumen();
 }
 
 function renderResumen() {
   const cont = document.getElementById('contenidoPeriodo');
   const r = resumenActual;
-  const nombreMes = new Date(r.anio, r.mes - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  const rango = `${fmtFechaLarga(r.fecha_inicio)} — ${fmtFechaLarga(r.fecha_fin)} (${r.dias} día${r.dias === 1 ? '' : 's'})`;
+  const esPropia = currentPerfil.tienda_codigo === r.tienda;
 
   let html = '';
 
+  html += `
+    <div class="seccion" style="padding:14px 18px; margin-bottom:14px;">
+      <div style="font-size:12.5px; color: var(--text2); line-height:1.6;">
+        Conteo realizado por: <b style="color:var(--azul)">${escapeHtml(currentPerfil.nombre)}</b> (admin de ${escapeHtml(nombreTienda(currentPerfil.tienda_codigo))})
+        ${esPropia ? '' : `<br>⚠️ Tienda auditada: <b style="color:var(--azul)">${escapeHtml(nombreTienda(r.tienda))}</b> — auditoría cruzada`}
+      </div>
+    </div>
+  `;
+
   if (r.ya_cerrado) {
-    html += `<div class="cerrado-box">✅ El periodo de ${nombreMes} para ${escapeHtml(nombreTienda(r.tienda))} ya está cerrado. Los números de abajo son los que quedaron registrados oficialmente.</div>`;
+    html += `<div class="cerrado-box">✅ Este periodo (${rango}) de ${escapeHtml(nombreTienda(r.tienda))} ya está cerrado. Los números de abajo son los que quedaron registrados oficialmente.</div>`;
+  } else {
+    html += `<div class="cerrado-box" style="background:#E8FBFC; border-color: rgba(0,196,204,0.35); color: var(--azul);">📅 Este cierre cubrirá <b>${rango}</b> — no tiene que coincidir con un mes calendario, es esperado.</div>`;
   }
 
   html += `
     <div class="seccion">
-      <h2>Resumen de inventario — ${escapeHtml(nombreMes)}</h2>
-      <div class="sub">${escapeHtml(nombreTienda(r.tienda))}</div>
+      <h2>Resumen de inventario</h2>
+      <div class="sub">${escapeHtml(nombreTienda(r.tienda))} · ${rango}</div>
       <div class="resumen-grid">
         <div class="resumen-card"><div class="label">Inventario inicial</div><div class="valor">${fmtCOP(r.inventario_inicial)}</div></div>
         <div class="resumen-card"><div class="label">− Ventas (costo)</div><div class="valor">${fmtCOP(r.costo_vendido)}</div></div>
@@ -403,12 +514,15 @@ function renderResumen() {
     `;
   }
 
+  html += renderHistorialHtml();
+
   cont.innerHTML = html;
 
   const btnConteo = document.getElementById('btnIniciarConteo');
   if (btnConteo) btnConteo.addEventListener('click', abrirModalConteo);
   const btnCerrar = document.getElementById('btnCerrarPeriodo');
   if (btnCerrar) btnCerrar.addEventListener('click', ejecutarCierre);
+  wireHistorial();
 }
 
 // ─── Conteo físico ──────────────────────────────────────────────────────
@@ -503,20 +617,20 @@ async function confirmarConteo() {
 // ─── Cierre ──────────────────────────────────────────────────────────────
 async function ejecutarCierre() {
   const r = resumenActual;
-  const nombreMes = new Date(r.anio, r.mes - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
-  if (!confirm(`¿Cerrar el periodo de ${nombreMes} para ${nombreTienda(r.tienda)}?\n\nUna vez cerrado, no se puede reabrir ni registrar más ventas, gastos o ajustes con fecha de ese mes.`)) return;
+  const rango = `${fmtFechaLarga(r.fecha_inicio)} al ${fmtFechaLarga(r.fecha_fin)} (${r.dias} días)`;
+  if (!confirm(`¿Cerrar el periodo del ${rango} para ${nombreTienda(r.tienda)}?\n\nUna vez cerrado, no se puede reabrir ni registrar más ventas, gastos o ajustes con fecha dentro de ese rango.`)) return;
 
   const btn = document.getElementById('btnCerrarPeriodo');
   btn.disabled = true; btn.textContent = 'Cerrando...';
 
-  const { data, error } = await sb.rpc('cerrar_periodo', { p_tienda_codigo: r.tienda, p_anio: r.anio, p_mes: r.mes });
+  const { data, error } = await sb.rpc('cerrar_periodo', { p_tienda_codigo: r.tienda, p_fecha_inicio: r.fecha_inicio, p_fecha_fin: r.fecha_fin });
 
   btn.disabled = false; btn.textContent = 'Cerrar periodo';
 
   if (error) { alert('No se pudo cerrar: ' + error.message); return; }
 
-  mostrarBanner(`✅ Periodo cerrado — Utilidad neta: ${fmtCOP(data.utilidad_neta)}`);
-  cargarResumen();
+  mostrarBanner(`✅ Periodo cerrado (${rango}) — Utilidad neta: ${fmtCOP(data.utilidad_neta)}`);
+  cargarPeriodoTienda();
 }
 
 // ─── Escáner de código de barras (BarcodeDetector nativo) ──────────────
