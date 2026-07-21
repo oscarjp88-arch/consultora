@@ -1175,11 +1175,29 @@ Responde ÚNICAMENTE con los 6 titulares numerados, sin explicaciones:
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:prompt}]})
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:300,
+        messages:[{role:'user',content:prompt}],
+        // FIX v12 09-jul-2026: mismo criterio que en generarContenido() — solo
+        // "Chistoso" pide referencias a la actualidad, solo ahí se activa la
+        // búsqueda (~$0.01 por búsqueda, hasta 2 por generación).
+        ...(estilo.toLowerCase().includes('chistoso') ? { tools: [{ type: 'web_search_20260318', name: 'web_search', max_uses: 2 }] } : {})
+      })
     });
     const data = await res.json();
-    const text = data.content?.find(b=>b.type==='text')?.text || '';
-    const titulares = text.split('\n').filter(l=>l.trim()).map(l=>l.replace(/^\d+\.\s*/,'').trim()).filter(Boolean).slice(0,6);
+    // FIX v12 09-jul-2026: con búsqueda activada la respuesta puede traer
+    // varios bloques de texto separados por bloques de búsqueda — .filter().join()
+    // junta todo el texto real en orden (seguro también sin búsqueda).
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+    // FIX v12 09-jul-2026 (hallazgo adicional durante validación, no estaba en
+    // el documento original): con búsqueda activada, Claude puede narrar su
+    // intención de buscar ("Voy a buscar...") en un bloque de texto separado
+    // ANTES del bloque final con los titulares — ese texto no está numerado,
+    // así que antes se colaba como si fuera un titular más y desplazaba a los
+    // reales. Ahora solo se aceptan líneas que empiezan con "N." (el formato
+    // exacto que pide el prompt) — cualquier otra línea de texto se descarta.
+    const titulares = text.split('\n').map(l=>l.trim()).filter(l=>/^\d+\.\s/.test(l)).map(l=>l.replace(/^\d+\.\s*/,'').trim()).filter(Boolean).slice(0,6);
     if (titulares.length > 0) { renderTitulares(titulares); showToast('✓ Nuevos titulares generados'); }
     else showToast('No se generaron titulares', '#f59e0b');
   } catch(e) { showToast('Error al generar titulares', '#ef4444'); }
@@ -1520,6 +1538,13 @@ async function generarContenido() {
     abrirModal();
     return;
   }
+  // FIX v12 09-jul-2026: variable de estilo activo a nivel de función — antes
+  // "estilo" solo existía dentro del IIFE que arma el bloque de tono del prompt
+  // (más abajo), un scope que se cierra antes de llegar al fetch. Sin esto,
+  // activar la búsqueda condicional solo para "Chistoso" habría lanzado
+  // ReferenceError en cada generación.
+  const estiloBtnActivo = document.querySelector('.estilo-btn.active');
+  const estilo = estiloBtnActivo ? estiloBtnActivo.textContent.trim().replace(/^[^\w]+/,'') : 'Formal';
   const ciudad = document.getElementById('ciudad').value;
   const ciudadDisplay = getCiudadNombre(ciudad);
   const esCiudad = isCiudadCompleta(ciudad);
@@ -1800,7 +1825,13 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 6000,
-        messages: [{ role: 'user', content: prompt }]
+        messages: [{ role: 'user', content: prompt }],
+        // FIX v12 09-jul-2026: el estilo "Chistoso" pide referencias a la
+        // actualidad (memes, fútbol, canciones sonando) que Claude no puede
+        // conocer sin buscar — se activa la herramienta de búsqueda SOLO para
+        // ese estilo (~$0.01 por búsqueda, hasta 2 por generación). Los otros
+        // 3 estilos no la necesitan, no se les activa.
+        ...(estilo.toLowerCase().includes('chistoso') ? { tools: [{ type: 'web_search_20260318', name: 'web_search', max_uses: 2 }] } : {})
       })
     });
     if (!response.ok) {
@@ -1811,7 +1842,12 @@ ${inclBrief ? '\n[BRIEF VISUAL CANVA]\n{brief}' : ''}
       throw new Error(msg);
     }
     const data = await response.json();
-    const text = data.content?.find(b => b.type === 'text')?.text || '';
+    // FIX v12 09-jul-2026: con búsqueda activada, la respuesta puede traer
+    // varios bloques de texto separados por bloques de búsqueda en el medio.
+    // .find() se quedaba solo con el primero — .filter().join() junta todo el
+    // texto real en orden, sin importar cuántas búsquedas haya hecho Claude.
+    // Seguro también para cuando NO hay búsqueda (los otros 3 estilos).
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
     document.getElementById('loading-card').style.display = 'none';
     renderPiezas(text, platforms, tipo, ciudad, inclHashtags, inclBrief);
     const h = { ciudad, modo, tipo: TIPO_META[tipo], producto: producto||'—', timestamp: new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}), raw: text, platforms };
