@@ -2644,7 +2644,7 @@ async function buildImgPrompt() {
   const tipoPersonalizadoVal = document.getElementById('tipo-personalizado')?.value.trim() || '';
   const tipoImgMap = {
     oferta_semana:    `Oferta de la semana: ${producto} protagonista grande y bien iluminado.${precio ? ` Badge de precio "${precio}" muy prominente en turquesa #00C4CC, números grandes y en negrita, posición superior izquierda.` : ''} Titular en Montserrat Bold en la zona izquierda. Jerarquía visual clara: titular → precio → producto → CTA.`,
-    showcase_producto:`Showcase del producto: ${producto} centrado como imagen héroe, flotando con sombra suave, bordes nítidos y fondo limpio. Texto mínimo. El producto ocupa el 60–65% de la composición. Etiquetas de specs flotantes si aplica.`,
+    showcase_producto:`Showcase del producto: ${producto} apoyado o sostenido de forma natural dentro de la escena (en una mano, sobre una mesa/vitrina, o en uso) — NUNCA flotando en el aire ni como recorte pegado. Debe verse como parte física real de la fotografía, con sombra de contacto realista donde toca la superficie. Bordes nítidos, fondo limpio. Texto mínimo. El producto ocupa el 60–65% de la composición. Etiquetas de specs flotantes si aplica (esto sí puede ser un elemento gráfico superpuesto, distinto al producto).`,
     testimonio:       `Testimonio: tono cálido y humano. Gran comilla de apertura en turquesa #00C4CC. Frase testimonial de cliente en texto blanco grande y centrado. Silueta o retrato de persona en un costado. Sin imagen del producto.`,
     educativo:        `Contenido educativo: diseño limpio e informativo. Íconos en turquesa #00C4CC (checks, números, flechas) sobre fondo azul marino. Jerarquía de lectura clara, aspecto de tarjeta útil — no aviso agresivo.`,
     promo_urgencia:   `Promo con urgencia: composición de alta energía. Badge "SOLO HOY" o elemento de cuenta regresiva en turquesa #00C4CC. Producto ${producto} con cinta o elemento diagonal de destaque.${precio ? ` Precio "${precio}" en números muy grandes y en negrita.` : ''} Alto contraste, lectura visual inmediata.`,
@@ -2962,7 +2962,7 @@ RESTRICCIONES ESTRICTAS — NUNCA incluyas en tu salida:
 
 FÓRMULA OBLIGATORIA — escribe en este orden exacto:
 1. ESCENA BASE: tipo de imagen y estética general
-2. SUJETO PRINCIPAL: persona o producto, posición y acción. IMPORTANTE: el sujeto debe ser una persona colombiana de clase media trabajadora, bien vestida, en ambiente comercial digno (local de tecnología surtido, vitrina iluminada, calle comercial). NUNCA pobreza, NUNCA tienda humilde, NUNCA ropa desgastada.
+2. SUJETO PRINCIPAL: persona o producto, posición y acción. IMPORTANTE: el sujeto debe ser una persona colombiana de clase media trabajadora, en ambiente comercial digno (local de tecnología surtido, vitrina iluminada, calle comercial). Vestuario: ropa casual cotidiana contemporánea real de la Costa Caribe colombiana de hoy — camisetas, blusas, jeans, ropa de trabajo o de calle normal, colores naturales sin exceso. NUNCA disfraz folclórico, NUNCA traje típico de carnaval, NUNCA estampados florales excesivos ni pañoletas/turbantes decorativos, NUNCA vestuario que parezca puesta en escena turística o de comedia caribeña — debe verse como una persona real yendo a comprar algo, no como una actuación. NUNCA pobreza, NUNCA tienda humilde, NUNCA ropa desgastada.
 3. ENTORNO: ambiente, colores, accesorios.
 4. TEXTOS: cada texto como objeto físico con ubicación exacta usando la fórmula: "en [ubicación] está escrito el texto [TEXTO ENTRE COMILLAS]"
 5. ILUMINACIÓN: calidad fotográfica, vibrante, profesional
@@ -3040,7 +3040,7 @@ RESTRICCIONES ESTRICTAS — NUNCA incluyas en tu salida:
 
 FÓRMULA OBLIGATORIA — escribe en este orden exacto:
 1. ESCENA BASE: tipo de fotografía y estética general
-2. SUJETO PRINCIPAL: persona o producto, posición y acción. IMPORTANTE: el sujeto debe ser una persona colombiana de clase media trabajadora, bien vestida, en ambiente comercial digno (local de tecnología surtido, vitrina iluminada, calle comercial). NUNCA pobreza, NUNCA tienda humilde, NUNCA ropa desgastada.
+2. SUJETO PRINCIPAL: persona o producto, posición y acción. IMPORTANTE: el sujeto debe ser una persona colombiana de clase media trabajadora, en ambiente comercial digno (local de tecnología surtido, vitrina iluminada, calle comercial). Vestuario: ropa casual cotidiana contemporánea real de la Costa Caribe colombiana de hoy — camisetas, blusas, jeans, ropa de trabajo o de calle normal, colores naturales sin exceso. NUNCA disfraz folclórico, NUNCA traje típico de carnaval, NUNCA estampados florales excesivos ni pañoletas/turbantes decorativos, NUNCA vestuario que parezca puesta en escena turística o de comedia caribeña — debe verse como una persona real yendo a comprar algo, no como una actuación. NUNCA pobreza, NUNCA tienda humilde, NUNCA ropa desgastada.
 3. ENTORNO E ILUMINACIÓN: ambiente, colores, accesorios, calidad fotográfica vibrante y profesional
 
 BRIEF DE LA PIEZA:
