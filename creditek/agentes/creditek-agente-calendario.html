@@ -578,6 +578,9 @@ hdr.innerHTML = `<span class="cal-title">📅 ${tituloCalendario} — ${mes} ${a
       <!-- FIX v32 — Fase 1, Parte B: aprobar y generar imagen con GPT -->
       <div class="dcard-aprobar">
         <button class="approve-btn" id="approve-btn-${i}" onclick="aprobarYGenerarImagen(${i})">✅ Aprobar y generar imagen</button>
+        ${d.estado === 'lista_para_publicar' ? `<button class="approve-btn" id="publish-btn-${i}" onclick="publicarPieza(${i})" style="background:#1877F2">📤 Publicar ahora (Facebook + Instagram)</button>` : ''}
+        ${d.estado === 'publicado' ? `<span style="color:#10B981;font-weight:600">✓ Publicado</span>` : ''}
+        ${d.error_detalle ? `<div style="color:#ef4444;font-size:12px;margin-top:4px">⚠ ${d.error_detalle}</div>` : ''}
       </div>
       <div class="dcard-imagen-wrap" id="imagen-wrap-${i}" style="display:${d.imagen_url ? 'block' : 'none'}">
         ${imagenHtml}
@@ -982,6 +985,107 @@ async function aprobarYGenerarImagen(idx) {
   } finally {
     btn.disabled = false;
     btn.textContent = '✅ Aprobar y generar imagen';
+  }
+}
+
+// FIX_Agente4_publicador_automatico_v1 — publica la pieza ya aprobada en el
+// feed real de Facebook e Instagram vía Meta Graph API.
+// Nota de versión (Cowork, 21-jul-2026): el documento original proponía
+// v21.0. Verificado contra la documentación oficial de Meta
+// (developers.facebook.com/docs/graph-api/guides/versioning): la versión
+// vigente más reciente es v25.0, y v21.0 ya no es la recomendada para código
+// nuevo. Se usa v25.0 aquí. Aparte, y sin relación con este fix: agente3-meta-ads.html
+// usa v19.0 en sus 22 llamadas — esa versión aparenta estar fuera de soporte
+// según fuentes públicas (no confirmado con un caso real de error 400), es un
+// hallazgo urgente que se reporta a Oscar por separado, no se toca en este commit.
+async function publicarPieza(idx) {
+  const card = document.querySelectorAll('.dcard')[idx];
+  if (!card) return;
+  const piezaId = card.dataset.piezaId;
+  const dia = calendarioActual?.dias?.[idx];
+  if (!piezaId || !dia?.imagen_url) {
+    showToast('Esta pieza no tiene imagen lista para publicar', '#f59e0b');
+    return;
+  }
+
+  const confirmado = window.confirm('¿Publicar esta pieza AHORA en el feed real de Facebook e Instagram? Esta acción es pública e inmediata.');
+  if (!confirmado) return;
+
+  let metaToken = localStorage.getItem('ck_meta_token');
+  if (!metaToken) {
+    metaToken = (window.prompt('Ingresa el META_PAGE_ACCESS_TOKEN (el mismo que usas en Agente 3):') || '').trim();
+    if (!metaToken) return;
+    localStorage.setItem('ck_meta_token', metaToken);
+  }
+
+  const copy = document.getElementById('copy-' + idx)?.textContent.trim() || '';
+  const publicUrl = dia.imagen_url;
+  const FB_PAGE_ID = '1191052130747281';
+  const IG_USER_ID = '17841476738628018';
+  const GRAPH_VERSION = 'v25.0';
+
+  const btn = document.getElementById('publish-btn-' + idx);
+  btn.disabled = true;
+  btn.textContent = 'Publicando...';
+
+  try {
+    // Facebook — publicar foto directo al feed de la página
+    const fbRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${FB_PAGE_ID}/photos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: publicUrl, caption: copy, access_token: metaToken })
+    });
+    const fbData = await fbRes.json();
+    if (fbData.error) throw new Error('Facebook: ' + fbData.error.message);
+
+    // Instagram — Paso 1: crear el contenedor de medio
+    const igContainerRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${IG_USER_ID}/media`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_url: publicUrl, caption: copy, access_token: metaToken })
+    });
+    const igContainerData = await igContainerRes.json();
+    if (igContainerData.error) throw new Error('Instagram (crear contenedor): ' + igContainerData.error.message);
+
+    // Instagram — Paso 2: publicar el contenedor ya creado
+    const igPublishRes = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${IG_USER_ID}/media_publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ creation_id: igContainerData.id, access_token: metaToken })
+    });
+    const igPublishData = await igPublishRes.json();
+    if (igPublishData.error) throw new Error('Instagram (publicar): ' + igPublishData.error.message);
+
+    // Guardar éxito en Supabase
+    await fetch(`${SUPABASE_URL}/rest/v1/calendario_piezas?id=eq.${piezaId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        estado: 'publicado', fb_post_id: fbData.id, ig_media_id: igPublishData.id,
+        publicado_en: new Date().toISOString(), error_detalle: null
+      })
+    });
+
+    dia.estado = 'publicado';
+    actualizarEstadoBadge(idx, 'publicado');
+    showToast('✓ Publicado en Facebook e Instagram');
+    renderCalendario(calendarioActual.dias, calendarioActual.ciudad, calendarioActual.mes, calendarioActual.anio);
+  } catch (err) {
+    console.error('Error al publicar pieza:', err);
+    showToast('Error al publicar: ' + err.message, '#ef4444');
+    await fetch(`${SUPABASE_URL}/rest/v1/calendario_piezas?id=eq.${piezaId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ error_detalle: err.message })
+    }).catch(() => {});
+    btn.disabled = false;
+    btn.textContent = '📤 Publicar ahora (Facebook + Instagram)';
   }
 }
 
