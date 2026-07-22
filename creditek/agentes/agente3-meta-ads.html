@@ -480,7 +480,11 @@ tr:hover td{background:#F8FAFC}
       <label>Presupuesto semanal (USD)</label>
       <input type="number" id="inp-budget" placeholder="50" min="1" step="1">
     </div>
-    <div class="field">
+    <!-- FIX v32, 21-jul-2026 — dashboard 100% en COP (account_currency=COP
+         confirmado), ya no se convierte nada. Se oculta el campo en vez de
+         borrar la variable/lógica COP_TO_USD por si se necesita a futuro
+         (ver nota en el bloque "Config" más abajo, en el JS). -->
+    <div class="field" style="display:none">
       <label>Tasa de cambio COP → USD (actualízala cuando cambie el dólar)</label>
       <input type="number" id="inp-tasa" placeholder="3350" min="1000" step="1">
     </div>
@@ -1158,7 +1162,16 @@ const WORKER_API = 'https://creditek-bot.comercial-853.workers.dev';
 const WORKER_SHARED_SECRET = '73ef5474869b234c9d666476271a47fcf82b259d54ca3619';
 
 // ── Config ───────────────────────────────────────────────────────
-let COP_TO_USD = parseFloat(localStorage.getItem('ck_cop_usd')) || 3350; // Tasa COP a USD — editable en ⚙ Configurar (antes fija en 4200, desactualizada)
+// FIX v32, 21-jul-2026: el dashboard de KPIs/tablas/tendencia/IA ya no usa
+// COP_TO_USD (account_currency=COP confirmado — spend/cpm/cpc ya vienen en
+// pesos). Se deja la variable y el input oculto del modal (ver arriba) sin
+// borrar porque SÍ la siguen usando 3 piezas separadas que no se tocaron en
+// este fix (quedan pendientes de una decisión aparte con Oscar sobre
+// ck_weekly_budget, ver reporte): el slider de presupuesto del wizard de
+// campaña nueva (línea ~824), el daily_budget real que se envía a Meta al
+// publicar (línea ~952), y "Tu estado actual"/alertas de sobregasto
+// (renderEstadoActual/refrescarAlertas, ~línea 1271).
+let COP_TO_USD = parseFloat(localStorage.getItem('ck_cop_usd')) || 3350;
 
 // Fix v1 — solo contar acciones que representan intención real (lead/conversación/clic),
 // no cualquier interacción (reacción, guardado, engagement de página, etc.)
@@ -1486,8 +1499,10 @@ async function cargarDatos() {
 // cpm, cpc, ctr, actions), así que la misma función sirve para los 2 casos.
 function computeKPIs(obj) {
   obj = obj || {};
+  // FIX v32 — spendCOP ya es el valor real en pesos (account_currency=COP,
+  // confirmado). Antes se dividía por COP_TO_USD como si spend viniera en
+  // USD, mientras cpm/cpc se dejaban tal cual — esa mezcla era el bug.
   const spendCOP = parseFloat(obj.spend || 0);
-  const spend    = spendCOP / COP_TO_USD;
   const impr     = parseInt(obj.impressions || 0);
   const clicks   = parseInt(obj.clicks || 0);
   const reach    = parseInt(obj.reach || 0);
@@ -1496,9 +1511,9 @@ function computeKPIs(obj) {
   const cpc      = parseFloat(obj.cpc || 0);
   const ctr      = parseFloat(obj.ctr || 0);
   const results  = contarResultadosReales(obj.actions || []);
-  const cpr      = results > 0 ? spend / results : 0;
+  const cpr      = results > 0 ? spendCOP / results : 0;
   const roas     = spendCOP > 0 ? (results * 50000 / spendCOP) : 0;
-  return { spendCOP, spend, impr, clicks, reach, freq, cpm, cpc, ctr, results, cpr, roas };
+  return { spendCOP, impr, clicks, reach, freq, cpm, cpc, ctr, results, cpr, roas };
 }
 
 // FIX v28, 13-jul-2026: construye las opciones del selector de campaña
@@ -1558,19 +1573,19 @@ function renderVista() {
     // período anterior, así que se muestra "Sin comparación" reutilizando
     // la misma lógica que ya tiene setKPI() para prev===0.
     setKPI('kpi-roas',  k.roas > 0 ? k.roas.toFixed(1)+'x' : 'N/A', 0, 1, 'Proyección — no confirma venta real');
-    setKPI('kpi-cpr',   k.cpr > 0 ? '$'+k.cpr.toFixed(2) : 'N/A', 0, 1, 'Por lead/mensaje');
+    setKPI('kpi-cpr',   k.cpr > 0 ? fmtCOP(k.cpr) : 'N/A', 0, 1, 'Por lead/mensaje');
     setKPI('kpi-ctr',   k.ctr.toFixed(2)+'%', 0, 1, 'Solo esta campaña');
     setKPI('kpi-reach', fmtNum(k.reach), 0, 1, 'Solo esta campaña');
     setKPI('kpi-freq',  k.freq.toFixed(2), 0, 1, k.freq >= 3.5 ? '⚠ Saturación' : 'Saludable');
-    setKPI('kpi-spend', '$'+k.spend.toFixed(2), 0, 1, 'USD del periodo');
+    setKPI('kpi-spend', fmtCOP(k.spendCOP), 0, 1, 'COP del periodo');
     setKPI('kpi-impr',  fmtNum(k.impr), 0, 1, 'Solo esta campaña');
-    setKPI('kpi-cpm',   '$'+k.cpm.toFixed(2), 0, 1, 'Por mil impresiones');
+    setKPI('kpi-cpm',   fmtCOP(k.cpm), 0, 1, 'Por mil impresiones');
     setKPI('kpi-conv',  fmtNum(k.results), 0, 1, 'Acciones totales');
-    setKPI('kpi-cpc',   '$'+k.cpc.toFixed(2), 0, 1, 'Por clic');
+    setKPI('kpi-cpc',   fmtCOP(k.cpc), 0, 1, 'Por clic');
   } else {
     const pk = computeKPIs(d.prev);
     setKPI('kpi-roas',  k.roas > 0 ? k.roas.toFixed(1)+'x' : 'N/A', null, null, 'Proyección — no confirma venta real');
-    setKPI('kpi-cpr',   k.cpr > 0 ? '$'+k.cpr.toFixed(2) : 'N/A', pk.cpr, k.cpr, 'Por lead/mensaje');
+    setKPI('kpi-cpr',   k.cpr > 0 ? fmtCOP(k.cpr) : 'N/A', pk.cpr, k.cpr, 'Por lead/mensaje');
     // FIX v31, 13-jul-2026: estas 3 tarjetas pasaban 'vs período anterior'
     // como texto fijo (5° parámetro → .kpi-sub), que setKPI() escribe SIEMPRE
     // — sin importar si la comparación es real o no. Eso duplicaba la fecha
@@ -1584,11 +1599,11 @@ function renderVista() {
     setKPI('kpi-ctr',   k.ctr.toFixed(2)+'%', pk.ctr, k.ctr, 'Tasa de clics');
     setKPI('kpi-reach', fmtNum(k.reach), pk.reach, k.reach, 'Personas únicas');
     setKPI('kpi-freq',  k.freq.toFixed(2), pk.freq, k.freq, k.freq >= 3.5 ? '⚠ Saturación' : 'Saludable');
-    setKPI('kpi-spend', '$'+k.spend.toFixed(2), pk.spend, k.spend, 'USD del periodo');
+    setKPI('kpi-spend', fmtCOP(k.spendCOP), pk.spendCOP, k.spendCOP, 'COP del periodo');
     setKPI('kpi-impr',  fmtNum(k.impr), pk.impr, k.impr, 'Total de veces visto');
-    setKPI('kpi-cpm',   '$'+k.cpm.toFixed(2), pk.cpm, k.cpm, 'Por mil impresiones');
+    setKPI('kpi-cpm',   fmtCOP(k.cpm), pk.cpm, k.cpm, 'Por mil impresiones');
     setKPI('kpi-conv',  fmtNum(k.results), pk.results, k.results, 'Acciones totales');
-    setKPI('kpi-cpc',   '$'+k.cpc.toFixed(2), pk.cpc, k.cpc, 'Por clic');
+    setKPI('kpi-cpc',   fmtCOP(k.cpc), pk.cpc, k.cpc, 'Por clic');
   }
 
   // Alerta frecuencia (barra bajo la tarjeta de Frecuencia)
@@ -1606,12 +1621,12 @@ function renderVista() {
   // vez del gasto del rango prorrateado (causa raíz de la confusión que
   // reportó Oscar: "esta semana" cambiaba solo por tocar 7/14/30 días).
   if (modoIndividual) {
-    document.getElementById('budget-title').textContent = `💰 Gasto de esta campaña en este rango (${currentDays} días) — $${k.spend.toFixed(2)} USD`;
+    document.getElementById('budget-title').textContent = `💰 Gasto de esta campaña en este rango (${currentDays} días) — ${fmtCOP(k.spendCOP)}`;
     document.getElementById('budget-pct').textContent = '';
     const bar = document.getElementById('budget-bar');
     bar.style.width = '100%';
     bar.className = 'budget-bar-fill';
-    document.getElementById('budget-spent').textContent = `Gastado: $${k.spend.toFixed(2)}`;
+    document.getElementById('budget-spent').textContent = `Gastado: ${fmtCOP(k.spendCOP)}`;
     document.getElementById('budget-remain').textContent = '';
     document.getElementById('budget-section').style.display = 'block';
   } else {
@@ -1695,6 +1710,14 @@ function fmtNum(n) {
   return n.toString();
 }
 
+// FIX v32, 21-jul-2026 — dashboard 100% en COP. account_currency de la cuenta
+// confirmado como COP (act_27446180201684830); spend/cpm/cpc ya vienen en
+// pesos desde Meta, no hay que convertir nada. Formato colombiano estándar,
+// sin decimales (igual convención que fmtCOP() en el resto del ERP Creditek).
+function fmtCOP(n) {
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(n || 0);
+}
+
 function renderStatusBadge(status) {
   const map = {
     ACTIVE:          { label: 'Activa',      cls: 'active' },
@@ -1774,7 +1797,7 @@ async function cargarCostoHistorico() {
           <td style="font-weight:700;color:var(--text3)">${i+1}</td>
           <td class="camp-name" title="${f.nombre}">${acortarNombreCampaña(f.nombre)}</td>
           <td><span class="status-badge ${f.estado.cls}">● ${f.estado.label}</span></td>
-          <td style="font-weight:600">$${(f.spendCOP / COP_TO_USD).toFixed(2)}</td>
+          <td style="font-weight:600">${fmtCOP(f.spendCOP)}</td>
           <td>${f.inicio || '—'}</td>
           <td>${f.fin || (f.estado.label === 'Activa' ? 'En curso' : '—')}</td>
         </tr>`).join('')}
@@ -1804,7 +1827,7 @@ function renderCampañas(camps, ventasPorCampaña, pctSinAtribucion) {
 
   // Ordenar por gasto descendente
   const sorted = [...camps].sort((a, b) => parseFloat(b.spend||0) - parseFloat(a.spend||0));
-  const maxSpend = parseFloat(sorted[0]?.spend || 1) / COP_TO_USD; // fix v2 — antes comparaba USD contra COP sin convertir, la barra quedaba casi invisible
+  const maxSpend = parseFloat(sorted[0]?.spend || 1); // FIX v32 — ya no se divide, spend viene directo en COP (account_currency=COP)
 
   const notaAtribucion = pctSinAtribucion !== null
     ? `<p style="font-size:11px;color:var(--text3);margin-top:6px">ℹ️ ${pctSinAtribucion}% de los clientes no tienen anuncio de origen identificado (ej. llegaron por canal orgánico) — el costo real por venta no los incluye.</p>`
@@ -1820,7 +1843,7 @@ function renderCampañas(camps, ventasPorCampaña, pctSinAtribucion) {
     </tr></thead>
     <tbody>
     ${sorted.map((c, i) => {
-      const spend   = parseFloat(c.spend || 0) / COP_TO_USD;
+      const spend   = parseFloat(c.spend || 0); // FIX v32 — ya en COP, sin dividir
       const ctr     = parseFloat(c.ctr || 0);
       const cpc     = parseFloat(c.cpc || 0);
       const reach   = parseInt(c.reach || 0);
@@ -1832,16 +1855,16 @@ function renderCampañas(camps, ventasPorCampaña, pctSinAtribucion) {
       // Hallazgo 4 de v23 con el ROAS).
       const ventas = ventasPorCampaña[c.campaign_id] || 0;
       const costoVenta = ventas > 0
-        ? `$${(spend / ventas).toFixed(2)} <span style="font-size:10px;color:var(--text3)">(${ventas} venta${ventas===1?'':'s'})</span>`
+        ? `${fmtCOP(spend / ventas)} <span style="font-size:10px;color:var(--text3)">(${ventas} venta${ventas===1?'':'s'})</span>`
         : `<span style="color:var(--text3);font-size:11px">Sin ventas confirmadas</span>`;
       return `<tr>
         <td style="font-weight:700;color:var(--text3)">${i+1}</td>
         <td class="camp-name" title="${c.campaign_name || ''}">${acortarNombreCampaña(c.campaign_name)}</td>
         <td>${renderStatusBadge(c.effective_status)}</td>
-        <td style="font-weight:600">$${spend.toFixed(2)}</td>
+        <td style="font-weight:600">${fmtCOP(spend)}</td>
         <td>${fmtNum(reach)}</td>
         <td>${ctr.toFixed(2)}%</td>
-        <td>$${cpc.toFixed(2)}</td>
+        <td>${fmtCOP(cpc)}</td>
         <td style="font-weight:600;color:var(--turq2)">${fmtNum(actions)}</td>
         <td>${costoVenta}</td>
         <td><div class="perf-bar"><div class="perf-fill" style="width:${perfPct}%"></div></div></td>
@@ -1869,19 +1892,19 @@ function renderVariantes(ads) {
     const columnas = ['A', 'B'].map(v => {
       const a = g[v];
       if (!a) return `<div class="ab-col"><div class="ab-var">Variante ${v}</div><div style="color:var(--text3);font-size:12px">Sin datos aún</div></div>`;
-      const spend   = parseFloat(a.spend || 0) / COP_TO_USD;
+      const spend   = parseFloat(a.spend || 0); // FIX v32 — ya en COP, sin dividir
       const ctr     = parseFloat(a.ctr || 0);
       const cpc     = parseFloat(a.cpc || 0);
       const results = contarResultadosReales(a.actions);
-      const cpr     = results > 0 ? (spend / results).toFixed(2) : 'N/A';
+      const cpr     = results > 0 ? fmtCOP(spend / results) : 'N/A';
       const activo  = a.effective_status === 'ACTIVE';
       return `<div class="ab-col">
         <div class="ab-var">Variante ${v} ${activo ? '<span class="status-badge active">● Activa</span>' : '<span class="status-badge paused">● Pausada</span>'}</div>
-        <div class="ab-metric">Gasto: <b>$${spend.toFixed(2)}</b></div>
+        <div class="ab-metric">Gasto: <b>${fmtCOP(spend)}</b></div>
         <div class="ab-metric">CTR: <b>${ctr.toFixed(2)}%</b></div>
-        <div class="ab-metric">CPC: <b>$${cpc.toFixed(2)}</b></div>
+        <div class="ab-metric">CPC: <b>${fmtCOP(cpc)}</b></div>
         <div class="ab-metric">Resultados: <b>${results}</b></div>
-        <div class="ab-metric">CPR: <b>$${cpr}</b></div>
+        <div class="ab-metric">CPR: <b>${cpr}</b></div>
         ${activo ? `<button class="btn-secondary" style="margin-top:8px;font-size:11px;padding:6px 10px" onclick="pausarAd('${a.ad_id}', this)">⏸ Pausar esta variante</button>` : ''}
       </div>`;
     }).join('');
@@ -1943,7 +1966,7 @@ function dibujarTendencia() {
   const labels = trendModo === 'mes'
     ? trend.map(t => t.mesLabel)
     : trend.map(t => t.week === 0 ? 'Esta semana' : `Hace ${t.week} sem`);
-  const spendSerie = trend.map(t => parseFloat(t.data?.spend || 0) / COP_TO_USD);
+  const spendSerie = trend.map(t => parseFloat(t.data?.spend || 0)); // FIX v32 — ya en COP, sin dividir
   const ctrSerie   = trend.map(t => parseFloat(t.data?.ctr || 0));
   document.getElementById('trend-title').textContent = trendModo === 'mes' ? '📈 Tendencia — últimos 6 meses' : '📈 Tendencia — últimas 8 semanas';
 
@@ -1956,7 +1979,7 @@ function dibujarTendencia() {
       labels,
       datasets: [
         {
-          label: 'Gasto (USD)',
+          label: 'Gasto (COP)',
           data: spendSerie,
           borderColor: '#00C4CC',
           backgroundColor: 'rgba(0,196,204,.1)',
@@ -1979,7 +2002,7 @@ function dibujarTendencia() {
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       scales: {
-        y:  { type: 'linear', position: 'left',  title: { display: true, text: 'Gasto (USD)' } },
+        y:  { type: 'linear', position: 'left',  title: { display: true, text: 'Gasto (COP)' } },
         y1: { type: 'linear', position: 'right', title: { display: true, text: 'CTR (%)' }, grid: { drawOnChartArea: false } },
       },
     },
@@ -2019,12 +2042,12 @@ async function analizarConIA(data, campañaIndividual) {
 
 CAMPAÑA: ${nombreCorto}
 DATOS DEL PERÍODO (${currentDays} días):
-- Gasto: $${k.spend.toFixed(2)} USD
+- Gasto: ${fmtCOP(k.spendCOP)}
 - CTR: ${k.ctr.toFixed(2)}%
 - Frecuencia: ${k.freq.toFixed(2)}
-- CPM: $${k.cpm.toFixed(2)}
+- CPM: ${fmtCOP(k.cpm)}
 - Resultados: ${k.results}
-- Costo por resultado: $${k.cpr > 0 ? k.cpr.toFixed(2) : 'N/A'}
+- Costo por resultado: ${k.cpr > 0 ? fmtCOP(k.cpr) : 'N/A'}
 
 DA UN ANÁLISIS BREVE (3-4 oraciones) sobre ESTA campaña únicamente, que incluya:
 1. Evaluación del rendimiento de esta campaña específica
@@ -2034,13 +2057,12 @@ DA UN ANÁLISIS BREVE (3-4 oraciones) sobre ESTA campaña únicamente, que inclu
 ${SEPARADOR_INSTRUCCION}`;
   } else {
     const m = data.main;
-    const spendCOP = parseFloat(m.spend || 0);
-    const spend   = spendCOP / COP_TO_USD; // Convertir COP a USD
+    const spendCOP = parseFloat(m.spend || 0); // FIX v32 — ya en COP (account_currency=COP), sin conversión
     const ctr     = parseFloat(m.ctr || 0);
     const freq    = parseFloat(m.frequency || 0);
     const cpm     = parseFloat(m.cpm || 0);
     const results = contarResultadosReales(m.actions);
-    const cpr     = results > 0 ? (spend / results).toFixed(2) : 'N/A';
+    const cpr     = results > 0 ? fmtCOP(spendCOP / results) : 'N/A';
 
     // FIX v25, 13-jul-2026 — Fase 2, Mejora 7: antes Claude solo recibía el
     // agregado total (nunca el detalle por campaña), así que su "recomendación"
@@ -2050,11 +2072,11 @@ ${SEPARADOR_INSTRUCCION}`;
     // usando el mismo nombre corto de la Mejora 1 para que sea legible.
     const campsOrdenadas = [...(data.camps || [])].sort((a, b) => parseFloat(b.spend||0) - parseFloat(a.spend||0)).slice(0, 8);
     const campsResumen = campsOrdenadas.map(c => {
-      const cSpend   = parseFloat(c.spend || 0) / COP_TO_USD;
+      const cSpend   = parseFloat(c.spend || 0); // FIX v32 — ya en COP, sin dividir
       const cCtr     = parseFloat(c.ctr || 0);
       const cResults = contarResultadosReales(c.actions);
-      const cCpr     = cResults > 0 ? (cSpend / cResults).toFixed(2) : 'N/A';
-      return `- ${acortarNombreCampaña(c.campaign_name)}: gasto $${cSpend.toFixed(2)}, CTR ${cCtr.toFixed(2)}%, resultados ${cResults}, costo/resultado $${cCpr}`;
+      const cCpr     = cResults > 0 ? fmtCOP(cSpend / cResults) : 'N/A';
+      return `- ${acortarNombreCampaña(c.campaign_name)}: gasto ${fmtCOP(cSpend)}, CTR ${cCtr.toFixed(2)}%, resultados ${cResults}, costo/resultado ${cCpr}`;
     }).join('\n') || 'Sin datos de campañas individuales.';
 
     // FIX v30, 13-jul-2026 — Hallazgo 1 (crítico): antes esta línea comparaba
@@ -2075,12 +2097,12 @@ ${SEPARADOR_INSTRUCCION}`;
     prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza estos datos de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
 
 ${lineaGastoSemana}
-- Gasto TOTAL en el período analizado abajo (${currentDays} días, rango seleccionado en el tablero — esto es DISTINTO al gasto semanal de arriba, no lo compares contra el presupuesto semanal): $${spend.toFixed(2)} USD (convertido de ${spendCOP.toFixed(0)} COP)
+- Gasto TOTAL en el período analizado abajo (${currentDays} días, rango seleccionado en el tablero — esto es DISTINTO al gasto semanal de arriba, no lo compares contra el presupuesto semanal): ${fmtCOP(spendCOP)}
 - CTR: ${ctr.toFixed(2)}%
 - Frecuencia: ${freq.toFixed(2)}
-- CPM: $${cpm.toFixed(2)}
+- CPM: ${fmtCOP(cpm)}
 - Resultados totales: ${results}
-- Costo por resultado: $${cpr}
+- Costo por resultado: ${cpr}
 
 Campañas activas: ${data.camps?.length || 0}
 
