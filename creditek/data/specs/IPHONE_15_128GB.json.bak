@@ -1,0 +1,13 @@
+{
+  "referencia": "IPHONE 15 128GB",
+  "marca": "APPLE",
+  "pantalla": "Super Retina XDR de 6.1 pulgadas",
+  "ram_almacenamiento": "6GB RAM, 128GB almacenamiento",
+  "camara": "Sistema de cámara dual: Principal de 48MP, Ultra Gran Angular de 12MP; Cámara frontal TrueDepth de 12MP",
+  "bateria": "Batería de iones de litio recargable integrada (hasta 20 horas de reproducción de vídeo)",
+  "red": "5G (sub-6 GHz y mmWave), Gigabit LTE, Wi-Fi 6E",
+  "sistema": "iOS 17",
+  "fuente": "Gemini API",
+  "confianza": "alta",
+  "fecha_extraccion": "2026-06-21"
+}

@@ -1,0 +1,13 @@
+{
+  "referencia": "TV HYUNDAI 50",
+  "marca": "HYUNDAI",
+  "pantalla": "50 pulgadas, 4K UHD (3840 x 2160 píxeles)",
+  "ram_almacenamiento": "2GB RAM, 8GB almacenamiento interno",
+  "camara": "",
+  "bateria": "",
+  "red": "Wi-Fi, Ethernet",
+  "sistema": "Android TV",
+  "fuente": "Gemini API (genérica)",
+  "confianza": "media",
+  "fecha_extraccion": "2026-06-21"
+}

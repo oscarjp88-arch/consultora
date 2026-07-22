@@ -1,0 +1,13 @@
+{
+  "referencia": "XIAOMI NOTE 15 PRO 5G 8/512GB",
+  "marca": "XIAOMI",
+  "pantalla": "6.83  Pulgadas POLED",
+  "ram_almacenamiento": "8GB RAM / 512GB Almacenamiento",
+  "camara": "200  Megapixeles posterior, 20  Megapixeles frontal",
+  "bateria": "",
+  "red": "5G",
+  "sistema": "15",
+  "fuente": "Gemini API",
+  "confianza": "baja",
+  "fecha_extraccion": "2026-06-21"
+}

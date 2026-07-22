@@ -3516,7 +3516,7 @@ async function generarConGemini(key, prompt, soloFoto = false, imagenRefDataUrl 
   // Banana 2 / Imagen 4-3) no soporta imagen de referencia.
   const reqBaseGemini3Pro = { ...reqBase };
   if (!soloFoto) {
-    reqBaseGemini3Pro.imageUrl = 'https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png';
+    reqBaseGemini3Pro.imageUrl = '/creditek/agentes/logos/creditek_logo_corregido_alta.png';
     reqBaseGemini3Pro.prompt = `${prompt} Reference brand logo provided — integrate it naturally into the composition.`;
   }
 

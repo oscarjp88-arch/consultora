@@ -1,0 +1,13 @@
+{
+  "referencia": "FLY 200",
+  "marca": "FLY",
+  "pantalla": "Pantalla básica (monocromo o color)",
+  "ram_almacenamiento": "Memoria interna muy limitada para contactos y SMS",
+  "camara": "",
+  "bateria": "Batería extraíble",
+  "red": "GSM (2G)",
+  "sistema": "Sistema operativo propietario (feature phone)",
+  "fuente": "Gemini API (genérica)",
+  "confianza": "baja",
+  "fecha_extraccion": "2026-06-21"
+}

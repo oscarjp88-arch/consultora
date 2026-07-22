@@ -1,0 +1,13 @@
+{
+  "referencia": "INFINIX NOTE 50 PRO 5G 8/256GB",
+  "marca": "INFINIX",
+  "pantalla": "",
+  "ram_almacenamiento": "8GB RAM, 256GB almacenamiento interno",
+  "camara": "50 MP posterior",
+  "bateria": "5200mAh",
+  "red": "5G",
+  "sistema": "Android 15",
+  "fuente": "Gemini API",
+  "confianza": "baja",
+  "fecha_extraccion": "2026-06-21"
+}

@@ -1,0 +1,13 @@
+{
+  "referencia": "IPHONE 14 128GB",
+  "marca": "APPLE",
+  "pantalla": "Super Retina XDR de 6.1 pulgadas, OLED, resolución de 2532 x 1170 píxeles a 460 ppi",
+  "ram_almacenamiento": "6GB RAM, 128GB almacenamiento interno",
+  "camara": "Sistema de cámara dual avanzado: Principal de 12 MP (apertura de ƒ/1.5) y Ultra gran angular de 12 MP (apertura de ƒ/2.4). Cámara frontal TrueDepth de 12 MP (apertura de ƒ/1.9).",
+  "bateria": "Hasta 20 horas de reproducción de vídeo, hasta 80 horas de reproducción de audio. Batería de iones de litio recargable integrada.",
+  "red": "5G (sub-6 GHz y mmWave), Gigabit LTE con 4x4 MIMO, Wi-Fi 6 (802.11ax) con 2x2 MIMO, Bluetooth 5.3, NFC con modo de lectura.",
+  "sistema": "iOS 16 (actualizable)",
+  "fuente": "Gemini API",
+  "confianza": "alta",
+  "fecha_extraccion": "2026-06-21"
+}

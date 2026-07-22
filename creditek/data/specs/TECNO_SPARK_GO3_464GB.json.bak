@@ -1,0 +1,13 @@
+{
+  "referencia": "TECNO SPARK GO3 4/64GB",
+  "marca": "TECNO",
+  "pantalla": "IPS LCD de 6.56 pulgadas, resolución HD+ (720 x 1612 píxeles)",
+  "ram_almacenamiento": "4GB RAM, 64GB almacenamiento interno",
+  "camara": "Trasera: 13 MP + Lente AI; Frontal: 5 MP",
+  "bateria": "5000 mAh, carga de 10W",
+  "red": "4G LTE, Dual SIM, Wi-Fi, Bluetooth",
+  "sistema": "Android 12 (Go Edition), HiOS 12",
+  "fuente": "Gemini API",
+  "confianza": "alta",
+  "fecha_extraccion": "2026-06-21"
+}

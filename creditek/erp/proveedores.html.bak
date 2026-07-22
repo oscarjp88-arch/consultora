@@ -1,0 +1,475 @@
+<!doctype html>
+<!--
+  proveedores.html · Creditek ERP · R1 pantalla 1/5
+  Ubicación sugerida en repo: creditek/erp/pages/proveedores.html
+  Acceso: gerencia / auditoria
+
+  INTEGRACIÓN — 3 puntos que Oscar ajusta al copiar al repo:
+    1. Endpoint Supabase: si en tu repo ya tienes /js/config.js o similar
+       exponiendo window.SB (cliente Supabase) o window.CREDITEK_ENV con
+       SUPABASE_URL + SUPABASE_ANON_KEY, este archivo lo detecta solo.
+       Si no, edita el bloque marcado "CONFIG FALLBACK" abajo.
+    2. Sidebar: si tienes /js/sidebar.js, descomenta la línea marcada
+       "SIDEBAR OPCIONAL" al final.
+    3. Estilo: usa Tailwind por CDN. Si el repo ya carga una hoja de
+       estilos común, borra el <link> de tailwind y no rompes nada.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Proveedores · Creditek</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .fade-in { animation: fadeIn 0.15s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    .semaforo-verde { background-color: #10b981; }
+    .semaforo-rojo  { background-color: #ef4444; }
+    .semaforo-gris  { background-color: #9ca3af; }
+    tbody tr:hover { background-color: #f9fafb; cursor: pointer; }
+    tbody tr.seleccionado { background-color: #eff6ff; border-left: 3px solid #3b82f6; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- ============================================================ HEADER -->
+<header class="bg-white border-b border-gray-200 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-blue-600 hover:text-blue-800 text-sm">&larr; Volver</a>
+      <h1 class="text-xl font-bold text-gray-800">Proveedores</h1>
+      <span class="text-xs text-gray-500">Master data (datos maestros) de la cadena de compra</span>
+    </div>
+    <div id="usuario-info" class="text-sm text-gray-600"></div>
+  </div>
+</header>
+
+<!-- ============================================================ ALERTA DE AUTORIZACIÓN -->
+<div id="auth-guard" class="hidden max-w-7xl mx-auto mt-6 p-4 bg-red-50 border border-red-200 rounded">
+  <p class="text-red-800 font-semibold">No autorizado.</p>
+  <p class="text-red-700 text-sm">Esta pantalla es solo para roles <b>gerencia</b> o <b>auditoría</b>. Contacta al administrador.</p>
+</div>
+
+<!-- ============================================================ CONTENIDO -->
+<main id="app" class="hidden max-w-7xl mx-auto px-4 py-6">
+
+  <!-- Toast de notificación -->
+  <div id="toast" class="hidden fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in"></div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- ---------- COLUMNA 1: FORMULARIO ---------- -->
+    <section class="lg:col-span-1 bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <h2 id="form-titulo" class="text-lg font-semibold mb-4 text-gray-800">Nuevo proveedor</h2>
+      <form id="form-proveedor" class="space-y-3">
+        <input type="hidden" id="prov-id" />
+
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Nombre <span class="text-red-500">*</span></span>
+          <input id="prov-nombre" type="text" required maxlength="120"
+                 class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="Ej. Distribuidora Móvil S.A.S." />
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">NIT <span class="text-xs text-gray-500">(Número de Identificación Tributaria)</span></span>
+          <input id="prov-nit" type="text" maxlength="30"
+                 class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="900123456-7" />
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Contacto</span>
+          <input id="prov-contacto" type="text" maxlength="120"
+                 class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="Nombre del ejecutivo comercial" />
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Teléfono</span>
+          <input id="prov-telefono" type="tel" maxlength="30"
+                 class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="3001234567" />
+        </label>
+
+        <label class="flex items-center gap-2 pt-1">
+          <input id="prov-activo" type="checkbox" checked class="rounded" />
+          <span class="text-sm text-gray-700">Activo <span class="text-xs text-gray-500">(disponible para nuevas compras)</span></span>
+        </label>
+
+        <div class="flex gap-2 pt-2">
+          <button type="submit" id="btn-guardar"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition">
+            Guardar
+          </button>
+          <button type="button" id="btn-cancelar"
+                  class="hidden px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 rounded transition">
+            Cancelar
+          </button>
+        </div>
+      </form>
+
+      <div class="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
+        <p><b>Tip:</b> el proveedor debe existir antes de registrar la primera compra (factura de proveedor).</p>
+      </div>
+    </section>
+
+    <!-- ---------- COLUMNA 2-3: LISTADO + FACTURAS ---------- -->
+    <section class="lg:col-span-2 space-y-6">
+
+      <!-- Filtros -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-3">
+        <input id="filtro-texto" type="text" placeholder="Buscar por nombre o NIT..."
+               class="flex-1 min-w-[200px] border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <select id="filtro-estado" class="border border-gray-300 rounded px-3 py-2 text-sm">
+          <option value="todos">Todos</option>
+          <option value="activos" selected>Solo activos</option>
+          <option value="inactivos">Solo inactivos</option>
+        </select>
+        <span id="contador" class="text-xs text-gray-500 ml-auto"></span>
+      </div>
+
+      <!-- Tabla de proveedores -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-100 text-gray-700 text-left">
+            <tr>
+              <th class="px-4 py-3 font-semibold">Nombre</th>
+              <th class="px-4 py-3 font-semibold">NIT</th>
+              <th class="px-4 py-3 font-semibold">Contacto</th>
+              <th class="px-4 py-3 font-semibold">Teléfono</th>
+              <th class="px-4 py-3 font-semibold text-right">Saldo pendiente</th>
+              <th class="px-4 py-3 font-semibold text-center">Estado</th>
+              <th class="px-4 py-3 font-semibold text-center w-20">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-proveedores">
+            <tr><td colspan="7" class="text-center py-8 text-gray-400">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Facturas del proveedor seleccionado -->
+      <div id="panel-facturas" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 p-5 fade-in">
+        <h2 class="text-lg font-semibold text-gray-800 mb-1">
+          Facturas de <span id="facturas-prov-nombre" class="text-blue-700"></span>
+        </h2>
+        <p class="text-xs text-gray-500 mb-4">Historial de compras registradas y saldo pendiente por documento.</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-600 text-left">
+              <tr>
+                <th class="px-3 py-2 font-medium">Número</th>
+                <th class="px-3 py-2 font-medium">Fecha</th>
+                <th class="px-3 py-2 font-medium text-right">Total</th>
+                <th class="px-3 py-2 font-medium text-right">Saldo</th>
+                <th class="px-3 py-2 font-medium text-center">Estado</th>
+                <th class="px-3 py-2 font-medium">Nota</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-facturas"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<!-- ============================================================ SCRIPT -->
+<script>
+// ============================================================
+// CONFIG FALLBACK — solo aplica si no tienes /js/config.js
+// ============================================================
+const SB = (function () {
+  if (window.SB) return window.SB;
+  const env = window.CREDITEK_ENV || {
+    // ⚠️ Reemplaza estos dos valores en tu repo (o usa tu config.js compartido)
+    SUPABASE_URL: 'https://jfkmiyvcdfbsbwchyvol.supabase.co',
+    SUPABASE_ANON_KEY: 'REEMPLAZAR_CON_ANON_KEY'
+  };
+  return window.supabase.createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+})();
+
+// ============================================================
+// HELPERS DE FORMATO — Colombia
+// ============================================================
+const fmtMoney = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+const fmtFecha = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+
+function money(n) { return n == null ? '—' : fmtMoney.format(Number(n)); }
+function fecha(iso) { return iso ? fmtFecha.format(new Date(iso)) : '—'; }
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg, tipo = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in ' +
+    (tipo === 'error' ? 'bg-red-600' : tipo === 'warn' ? 'bg-orange-500' : 'bg-emerald-600');
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 3200);
+}
+
+// ============================================================
+// AUTH GATE — verifica rol gerencia/auditoría
+// ============================================================
+let usuarioActual = null;
+let rolActual = null;
+
+async function verificarAuth() {
+  const { data: { session }, error } = await SB.auth.getSession();
+  if (error || !session) {
+    location.href = 'login.html';
+    return false;
+  }
+  usuarioActual = session.user;
+
+  const { data: rol, error: rolErr } = await SB.rpc('rol_actual');
+  if (rolErr) { toast('Error verificando permisos', 'error'); return false; }
+  rolActual = rol;
+
+  document.getElementById('usuario-info').textContent =
+    (usuarioActual.email || '') + ' · ' + (rolActual || 'sin rol');
+
+  if (rolActual !== 'gerencia' && rolActual !== 'auditoria') {
+    document.getElementById('auth-guard').classList.remove('hidden');
+    return false;
+  }
+  document.getElementById('app').classList.remove('hidden');
+  return true;
+}
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+let proveedores = [];
+let saldoPorProveedor = {};   // id -> saldo pendiente agregado
+let proveedorSeleccionado = null;
+
+// ============================================================
+// CARGA DE DATOS
+// ============================================================
+async function cargarProveedores() {
+  const { data, error } = await SB
+    .from('proveedores')
+    .select('id, nombre, nit, telefono, contacto, activo')
+    .order('nombre', { ascending: true });
+  if (error) { toast('Error cargando proveedores: ' + error.message, 'error'); return; }
+  proveedores = data || [];
+
+  // Saldos pendientes agregados
+  const { data: fact, error: fErr } = await SB
+    .from('facturas_proveedor')
+    .select('proveedor_id, saldo');
+  if (fErr) { toast('Error cargando facturas: ' + fErr.message, 'error'); return; }
+  saldoPorProveedor = {};
+  (fact || []).forEach(f => {
+    saldoPorProveedor[f.proveedor_id] = (saldoPorProveedor[f.proveedor_id] || 0) + Number(f.saldo || 0);
+  });
+
+  render();
+}
+
+// ============================================================
+// RENDER — tabla principal
+// ============================================================
+function render() {
+  const filtro = document.getElementById('filtro-texto').value.trim().toLowerCase();
+  const estado = document.getElementById('filtro-estado').value;
+  const tbody = document.getElementById('tbody-proveedores');
+
+  const filtrados = proveedores.filter(p => {
+    if (estado === 'activos' && !p.activo) return false;
+    if (estado === 'inactivos' && p.activo) return false;
+    if (filtro) {
+      const hay = (p.nombre + ' ' + (p.nit || '')).toLowerCase();
+      if (!hay.includes(filtro)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('contador').textContent =
+    filtrados.length + ' de ' + proveedores.length + ' proveedores';
+
+  if (filtrados.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Sin resultados</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtrados.map(p => {
+    const saldo = saldoPorProveedor[p.id] || 0;
+    const semaforo = p.activo ? 'semaforo-verde' : 'semaforo-gris';
+    const seleccionado = proveedorSeleccionado === p.id ? 'seleccionado' : '';
+    return `
+      <tr class="${seleccionado}" data-id="${p.id}">
+        <td class="px-4 py-3 font-medium text-gray-800">${esc(p.nombre)}</td>
+        <td class="px-4 py-3 text-gray-600">${esc(p.nit) || '—'}</td>
+        <td class="px-4 py-3 text-gray-600">${esc(p.contacto) || '—'}</td>
+        <td class="px-4 py-3 text-gray-600">${esc(p.telefono) || '—'}</td>
+        <td class="px-4 py-3 text-right font-mono ${saldo > 0 ? 'text-orange-600 font-semibold' : 'text-gray-400'}">
+          ${saldo > 0 ? money(saldo) : '—'}
+        </td>
+        <td class="px-4 py-3 text-center">
+          <span class="inline-block w-3 h-3 rounded-full ${semaforo}" title="${p.activo ? 'Activo' : 'Inactivo'}"></span>
+        </td>
+        <td class="px-4 py-3 text-center">
+          <button data-editar="${p.id}" class="text-blue-600 hover:text-blue-800 text-xs">Editar</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// FACTURAS DEL PROVEEDOR SELECCIONADO
+// ============================================================
+async function mostrarFacturas(provId) {
+  proveedorSeleccionado = provId;
+  render();
+
+  const prov = proveedores.find(p => p.id === provId);
+  document.getElementById('facturas-prov-nombre').textContent = prov ? prov.nombre : '';
+
+  const { data, error } = await SB
+    .from('facturas_proveedor')
+    .select('id, numero, fecha, total, saldo, nota')
+    .eq('proveedor_id', provId)
+    .order('fecha', { ascending: false });
+
+  const tbody = document.getElementById('tbody-facturas');
+  if (error) {
+    tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-red-600">Error: ' + esc(error.message) + '</td></tr>';
+  } else if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-gray-400 text-center">Este proveedor no tiene facturas registradas.</td></tr>';
+  } else {
+    tbody.innerHTML = data.map(f => {
+      const estado = Number(f.saldo) > 0 ? 'pendiente' : 'pagada';
+      const badge = estado === 'pendiente'
+        ? '<span class="px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-800">Pendiente</span>'
+        : '<span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800">Pagada</span>';
+      return `
+        <tr>
+          <td class="px-3 py-2 font-mono text-xs">${esc(f.numero) || '—'}</td>
+          <td class="px-3 py-2">${fecha(f.fecha)}</td>
+          <td class="px-3 py-2 text-right font-mono">${money(f.total)}</td>
+          <td class="px-3 py-2 text-right font-mono ${Number(f.saldo) > 0 ? 'text-orange-600' : 'text-gray-400'}">${money(f.saldo)}</td>
+          <td class="px-3 py-2 text-center">${badge}</td>
+          <td class="px-3 py-2 text-gray-500 text-xs">${esc(f.nota) || '—'}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('panel-facturas').classList.remove('hidden');
+}
+
+// ============================================================
+// FORMULARIO — crear / editar / cancelar
+// ============================================================
+function resetForm() {
+  document.getElementById('form-titulo').textContent = 'Nuevo proveedor';
+  document.getElementById('prov-id').value = '';
+  document.getElementById('prov-nombre').value = '';
+  document.getElementById('prov-nit').value = '';
+  document.getElementById('prov-contacto').value = '';
+  document.getElementById('prov-telefono').value = '';
+  document.getElementById('prov-activo').checked = true;
+  document.getElementById('btn-cancelar').classList.add('hidden');
+}
+
+function cargarEnForm(p) {
+  document.getElementById('form-titulo').textContent = 'Editar proveedor';
+  document.getElementById('prov-id').value = p.id;
+  document.getElementById('prov-nombre').value = p.nombre || '';
+  document.getElementById('prov-nit').value = p.nit || '';
+  document.getElementById('prov-contacto').value = p.contacto || '';
+  document.getElementById('prov-telefono').value = p.telefono || '';
+  document.getElementById('prov-activo').checked = !!p.activo;
+  document.getElementById('btn-cancelar').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function guardar(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  const id = document.getElementById('prov-id').value || null;
+  const payload = {
+    nombre: document.getElementById('prov-nombre').value.trim(),
+    nit: document.getElementById('prov-nit').value.trim() || null,
+    contacto: document.getElementById('prov-contacto').value.trim() || null,
+    telefono: document.getElementById('prov-telefono').value.trim() || null,
+    activo: document.getElementById('prov-activo').checked
+  };
+
+  if (!payload.nombre) {
+    toast('El nombre es requerido', 'error');
+    btn.disabled = false; btn.textContent = 'Guardar';
+    return;
+  }
+
+  let error;
+  if (id) {
+    ({ error } = await SB.from('proveedores').update(payload).eq('id', id));
+  } else {
+    ({ error } = await SB.from('proveedores').insert(payload));
+  }
+
+  btn.disabled = false; btn.textContent = 'Guardar';
+
+  if (error) {
+    toast('Error: ' + error.message, 'error');
+    return;
+  }
+  toast(id ? 'Proveedor actualizado' : 'Proveedor creado');
+  resetForm();
+  await cargarProveedores();
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+document.getElementById('form-proveedor').addEventListener('submit', guardar);
+document.getElementById('btn-cancelar').addEventListener('click', resetForm);
+document.getElementById('filtro-texto').addEventListener('input', render);
+document.getElementById('filtro-estado').addEventListener('change', render);
+
+document.getElementById('tbody-proveedores').addEventListener('click', e => {
+  const btnEditar = e.target.closest('[data-editar]');
+  if (btnEditar) {
+    const id = btnEditar.getAttribute('data-editar');
+    const p = proveedores.find(x => x.id === id);
+    if (p) cargarEnForm(p);
+    return;
+  }
+  const tr = e.target.closest('tr[data-id]');
+  if (tr) {
+    const id = tr.getAttribute('data-id');
+    mostrarFacturas(id);
+  }
+});
+
+// ============================================================
+// BOOT
+// ============================================================
+(async function () {
+  const ok = await verificarAuth();
+  if (!ok) return;
+  await cargarProveedores();
+
+  // SIDEBAR OPCIONAL — descomenta si tienes /js/sidebar.js:
+  // if (window.renderSidebar) window.renderSidebar('proveedores');
+})();
+</script>
+
+</body>
+</html>

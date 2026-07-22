@@ -1,0 +1,522 @@
+<!doctype html>
+<!--
+  bodega-central.html · Creditek ERP · R2 pantalla 3/5
+  Ubicación sugerida en repo: creditek/erp/pages/bodega-central.html
+  Acceso: gerencia / auditoria
+
+  Objetivo:
+    Monitor visual del stock de Bodega Central.
+    Idealmente CENTRAL siempre debe terminar en 0 (todo lo comprado se despacha).
+    Si hay stock > 0 en CENTRAL, es un descuadre → destacar visualmente + drill-down.
+
+  Data source:
+    - Vista `alerta_bodega_central` (R2.3 del paquete)
+    - `movimientos` filtrado por tienda_codigo='CENTRAL' (para el detalle)
+    - `unidades` con tienda_actual='CENTRAL' (para inventario serializado detallado)
+
+  INTEGRACIÓN — idéntico patrón que las anteriores:
+    1. Cliente Supabase: window.SB o CREDITEK_ENV.
+    2. Sidebar: descomenta al final si aplica.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bodega Central · Creditek</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .fade-in { animation: fadeIn 0.15s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    .badge-serial   { background-color: #ede9fe; color: #6d28d9; }
+    .badge-cantidad { background-color: #dbeafe; color: #1e40af; }
+    tbody tr:hover { background-color: #f9fafb; cursor: pointer; }
+    tbody tr.expandida { background-color: #fff7ed; }
+    .card-verde { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-color: #10b981; }
+    .card-rojo  { background: linear-gradient(135deg, #fef2f2, #fecaca); border-color: #ef4444; }
+    .card-azul  { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #3b82f6; }
+    .pulse-red { animation: pulseRed 2s infinite; }
+    @keyframes pulseRed {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+      50%      { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- ============================================================ HEADER -->
+<header class="bg-white border-b border-gray-200 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-blue-600 hover:text-blue-800 text-sm">&larr; Volver</a>
+      <h1 class="text-xl font-bold text-gray-800">Bodega Central</h1>
+      <span class="text-xs text-gray-500">Monitor de descuadres · stock en tránsito hacia tiendas</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="ultima-actualizacion" class="text-xs text-gray-500"></span>
+      <button id="btn-refresh"
+              class="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 flex items-center gap-1">
+        <span>↻</span> Actualizar
+      </button>
+      <div id="usuario-info" class="text-sm text-gray-600"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================ AUTH GUARD -->
+<div id="auth-guard" class="hidden max-w-7xl mx-auto mt-6 p-4 bg-red-50 border border-red-200 rounded">
+  <p class="text-red-800 font-semibold">No autorizado.</p>
+  <p class="text-red-700 text-sm">Esta pantalla es solo para roles <b>gerencia</b> o <b>auditoría</b>.</p>
+</div>
+
+<!-- ============================================================ CONTENIDO -->
+<main id="app" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-5">
+
+  <div id="toast" class="hidden fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in"></div>
+
+  <!-- =========================== KPIs =========================== -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div id="card-estado" class="border-2 rounded-lg p-5 card-verde">
+      <div class="text-xs uppercase tracking-wider text-gray-600 mb-1">Estado de la bodega</div>
+      <div class="flex items-baseline gap-2">
+        <span id="estado-icono" class="text-3xl">✅</span>
+        <span id="estado-titulo" class="text-2xl font-bold text-gray-800">Cuadrada</span>
+      </div>
+      <p id="estado-detalle" class="text-sm text-gray-700 mt-2">Todo lo comprado ha sido despachado.</p>
+    </div>
+
+    <div class="border-2 border-gray-200 rounded-lg p-5 card-azul">
+      <div class="text-xs uppercase tracking-wider text-gray-600 mb-1">Productos descuadrados</div>
+      <div class="flex items-baseline gap-2">
+        <span id="kpi-descuadrados" class="text-4xl font-bold text-gray-800">0</span>
+        <span class="text-sm text-gray-500">de <span id="kpi-total-productos">0</span> monitoreados</span>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">Productos con stock &gt; 0 en CENTRAL.</p>
+    </div>
+
+    <div class="border-2 border-gray-200 rounded-lg p-5 card-azul">
+      <div class="text-xs uppercase tracking-wider text-gray-600 mb-1">Unidades pendientes de despacho</div>
+      <div class="flex items-baseline gap-2">
+        <span id="kpi-unidades" class="text-4xl font-bold text-gray-800">0</span>
+        <span class="text-sm text-gray-500">unidades físicas</span>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">Suma total de todo el inventario en CENTRAL.</p>
+    </div>
+  </section>
+
+  <!-- =========================== FILTROS =========================== -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-3">
+    <input id="filtro-texto" type="text" placeholder="Buscar por producto o categoría..."
+           class="flex-1 min-w-[240px] border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    <select id="filtro-descuadre" class="border border-gray-300 rounded px-3 py-2 text-sm">
+      <option value="descuadrados" selected>Solo descuadrados</option>
+      <option value="todos">Todos</option>
+      <option value="cuadrados">Solo cuadrados (stock 0)</option>
+    </select>
+    <select id="filtro-tipo" class="border border-gray-300 rounded px-3 py-2 text-sm">
+      <option value="todos">Todos los tipos</option>
+      <option value="cantidad">Solo tipo cantidad</option>
+      <option value="serializado">Solo tipo serializado</option>
+    </select>
+    <span id="contador" class="text-xs text-gray-500 ml-auto"></span>
+  </section>
+
+  <!-- =========================== TABLA =========================== -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-100 text-gray-700 text-left">
+        <tr>
+          <th class="px-4 py-3 font-semibold w-8"></th>
+          <th class="px-4 py-3 font-semibold">Producto</th>
+          <th class="px-4 py-3 font-semibold">Categoría</th>
+          <th class="px-4 py-3 font-semibold text-center">Tipo</th>
+          <th class="px-4 py-3 font-semibold text-right">Stock en CENTRAL</th>
+          <th class="px-4 py-3 font-semibold text-center">Estado</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-alerta">
+        <tr><td colspan="6" class="text-center py-8 text-gray-400">Cargando...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+<!-- ============================================================ MODAL DE DETALLE -->
+<div id="modal-detalle" class="hidden fixed inset-0 bg-black bg-opacity-40 z-40 flex items-start justify-center pt-10 px-4 pb-10 overflow-y-auto">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+    <div class="p-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white rounded-t-lg">
+      <div>
+        <h3 id="detalle-titulo" class="font-semibold text-gray-800"></h3>
+        <p id="detalle-sub" class="text-xs text-gray-500"></p>
+      </div>
+      <button id="cerrar-detalle" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    </div>
+    <div class="p-4 space-y-5">
+
+      <!-- Resumen -->
+      <div id="detalle-resumen" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"></div>
+
+      <!-- Movimientos -->
+      <div>
+        <h4 class="font-semibold text-gray-800 mb-2">Movimientos recientes en CENTRAL</h4>
+        <p class="text-xs text-gray-500 mb-2">Últimas 20 entradas y salidas registradas.</p>
+        <div class="overflow-x-auto border border-gray-200 rounded">
+          <table class="w-full text-xs">
+            <thead class="bg-gray-50 text-gray-600">
+              <tr>
+                <th class="px-2 py-2 text-left font-medium">Fecha</th>
+                <th class="px-2 py-2 text-left font-medium">Tipo</th>
+                <th class="px-2 py-2 text-right font-medium">Cantidad</th>
+                <th class="px-2 py-2 text-right font-medium">Costo unit.</th>
+                <th class="px-2 py-2 text-left font-medium">Referencia</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-movimientos"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Unidades pendientes (solo serializado) -->
+      <div id="unidades-panel" class="hidden">
+        <h4 class="font-semibold text-gray-800 mb-2">Unidades en CENTRAL (serializado)</h4>
+        <p class="text-xs text-gray-500 mb-2">
+          Filas con <b>imei=NULL</b> están pendientes de recibirse en tienda. Filas con IMEI ya fueron recibidas y trazan el histórico.
+        </p>
+        <div class="overflow-x-auto border border-gray-200 rounded">
+          <table class="w-full text-xs">
+            <thead class="bg-gray-50 text-gray-600">
+              <tr>
+                <th class="px-2 py-2 text-left font-medium">Estado</th>
+                <th class="px-2 py-2 text-left font-medium">IMEI</th>
+                <th class="px-2 py-2 text-right font-medium">Costo real</th>
+                <th class="px-2 py-2 text-left font-medium">Factura proveedor</th>
+                <th class="px-2 py-2 text-left font-medium">Creada</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-unidades"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ SCRIPT -->
+<script>
+const SB = (function () {
+  if (window.SB) return window.SB;
+  const env = window.CREDITEK_ENV || {
+    SUPABASE_URL: 'https://jfkmiyvcdfbsbwchyvol.supabase.co',
+    SUPABASE_ANON_KEY: 'REEMPLAZAR_CON_ANON_KEY'
+  };
+  return window.supabase.createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+})();
+
+// ============================================================
+// HELPERS
+// ============================================================
+const fmtMoney = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+const fmtFecha = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+const fmtDateTime = new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+});
+function money(n) { return n == null ? '—' : fmtMoney.format(Number(n)); }
+function fechaCorta(iso) { return iso ? fmtFecha.format(new Date(iso)) : '—'; }
+function fechaHora(iso) { return iso ? fmtDateTime.format(new Date(iso)) : '—'; }
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function toast(msg, tipo = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in ' +
+    (tipo === 'error' ? 'bg-red-600' : 'bg-emerald-600');
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 3200);
+}
+
+// ============================================================
+// AUTH GATE
+// ============================================================
+let rolActual = null;
+async function verificarAuth() {
+  const { data: { session } } = await SB.auth.getSession();
+  if (!session) { location.href = 'login.html'; return false; }
+
+  const { data: rol, error } = await SB.rpc('rol_actual');
+  if (error) { toast('Error verificando permisos', 'error'); return false; }
+  rolActual = rol;
+
+  document.getElementById('usuario-info').textContent =
+    (session.user.email || '') + ' · ' + (rolActual || 'sin rol');
+
+  if (rolActual !== 'gerencia' && rolActual !== 'auditoria') {
+    document.getElementById('auth-guard').classList.remove('hidden');
+    return false;
+  }
+  document.getElementById('app').classList.remove('hidden');
+  return true;
+}
+
+// ============================================================
+// ESTADO
+// ============================================================
+let alertaData = [];
+
+// ============================================================
+// CARGA DE ALERTA_BODEGA_CENTRAL
+// ============================================================
+async function cargarAlerta() {
+  const { data, error } = await SB
+    .from('alerta_bodega_central')
+    .select('producto_id, nombre, categoria, tipo, stock_actual_central, descuadrado');
+  if (error) { toast('Error cargando alerta: ' + error.message, 'error'); return; }
+
+  alertaData = data || [];
+  // Ordenar: descuadrados primero, luego por stock desc, luego nombre
+  alertaData.sort((a, b) => {
+    if (a.descuadrado !== b.descuadrado) return b.descuadrado - a.descuadrado;
+    if (a.stock_actual_central !== b.stock_actual_central) return b.stock_actual_central - a.stock_actual_central;
+    return a.nombre.localeCompare(b.nombre, 'es');
+  });
+
+  actualizarKPIs();
+  render();
+  document.getElementById('ultima-actualizacion').textContent = 'Actualizado ' + fechaHora(new Date().toISOString());
+}
+
+// ============================================================
+// KPIs
+// ============================================================
+function actualizarKPIs() {
+  const descuadrados = alertaData.filter(a => a.descuadrado);
+  const totalUnidades = alertaData.reduce((s, a) => s + (a.stock_actual_central || 0), 0);
+
+  document.getElementById('kpi-descuadrados').textContent = descuadrados.length;
+  document.getElementById('kpi-total-productos').textContent = alertaData.length;
+  document.getElementById('kpi-unidades').textContent = totalUnidades;
+
+  const card = document.getElementById('card-estado');
+  const icono = document.getElementById('estado-icono');
+  const titulo = document.getElementById('estado-titulo');
+  const detalle = document.getElementById('estado-detalle');
+
+  if (descuadrados.length === 0) {
+    card.className = 'border-2 rounded-lg p-5 card-verde';
+    icono.textContent = '✅';
+    titulo.textContent = 'Cuadrada';
+    detalle.textContent = 'Todo lo comprado ha sido despachado. Stock CENTRAL = 0 en todos los productos.';
+  } else {
+    card.className = 'border-2 rounded-lg p-5 card-rojo pulse-red';
+    icono.textContent = '⚠️';
+    titulo.textContent = descuadrados.length + ' descuadrados';
+    const worst = descuadrados[0];
+    detalle.innerHTML = 'Producto con más stock: <b>' + esc(worst.nombre) + '</b> · ' + worst.stock_actual_central + ' unidades.';
+  }
+}
+
+// ============================================================
+// TABLA
+// ============================================================
+function render() {
+  const q = document.getElementById('filtro-texto').value.trim().toLowerCase();
+  const descuadre = document.getElementById('filtro-descuadre').value;
+  const tipo = document.getElementById('filtro-tipo').value;
+
+  const filtrados = alertaData.filter(a => {
+    if (descuadre === 'descuadrados' && !a.descuadrado) return false;
+    if (descuadre === 'cuadrados' && a.descuadrado) return false;
+    if (tipo !== 'todos' && a.tipo !== tipo) return false;
+    if (q) {
+      const hay = (a.nombre + ' ' + a.categoria).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('contador').textContent = filtrados.length + ' de ' + alertaData.length + ' productos';
+
+  const tbody = document.getElementById('tbody-alerta');
+  if (filtrados.length === 0) {
+    const msg = descuadre === 'descuadrados' && alertaData.length > 0
+      ? '🎉 No hay descuadres. La bodega está cuadrada.'
+      : 'Sin resultados';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">' + msg + '</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtrados.map(a => {
+    const semaforo = a.descuadrado
+      ? '<span class="inline-flex items-center gap-1 text-red-700 font-semibold"><span class="w-2 h-2 bg-red-500 rounded-full"></span>Descuadrado</span>'
+      : '<span class="inline-flex items-center gap-1 text-emerald-700"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span>OK</span>';
+    const badgeTipo = a.tipo === 'serializado'
+      ? '<span class="px-2 py-0.5 rounded text-xs badge-serial">serializado</span>'
+      : '<span class="px-2 py-0.5 rounded text-xs badge-cantidad">cantidad</span>';
+    const stockClass = a.descuadrado ? 'text-red-700 font-bold' : 'text-gray-400';
+    return `
+      <tr data-producto="${esc(a.producto_id)}" data-nombre="${esc(a.nombre)}" data-tipo="${esc(a.tipo)}">
+        <td class="px-4 py-3 text-gray-400">›</td>
+        <td class="px-4 py-3 font-medium text-gray-800">${esc(a.nombre)}</td>
+        <td class="px-4 py-3 text-gray-600">${esc(a.categoria)}</td>
+        <td class="px-4 py-3 text-center">${badgeTipo}</td>
+        <td class="px-4 py-3 text-right font-mono ${stockClass}">${a.stock_actual_central}</td>
+        <td class="px-4 py-3 text-center">${semaforo}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// DETALLE — modal con movimientos + unidades
+// ============================================================
+async function abrirDetalle(prodId, nombre, tipo) {
+  document.getElementById('detalle-titulo').textContent = nombre;
+  document.getElementById('detalle-sub').textContent = 'Tipo: ' + tipo + ' · trazabilidad en Bodega Central';
+  document.getElementById('modal-detalle').classList.remove('hidden');
+  document.getElementById('tbody-movimientos').innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Cargando...</td></tr>';
+  document.getElementById('detalle-resumen').innerHTML = '';
+  document.getElementById('unidades-panel').classList.add('hidden');
+
+  // Movimientos
+  const { data: mov, error: mErr } = await SB
+    .from('movimientos')
+    .select('created_at, tipo, cantidad, costo, precio, referencia_tipo, referencia_id')
+    .eq('tienda_codigo', 'CENTRAL')
+    .eq('producto_id', prodId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  const tbodyMov = document.getElementById('tbody-movimientos');
+  if (mErr) {
+    tbodyMov.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-600">Error: ' + esc(mErr.message) + '</td></tr>';
+  } else if (!mov || mov.length === 0) {
+    tbodyMov.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin movimientos registrados.</td></tr>';
+  } else {
+    let totalEntrada = 0, totalSalida = 0;
+    mov.forEach(m => {
+      if (m.tipo === 'compra_entrada') totalEntrada += m.cantidad;
+      else if (m.tipo === 'remision_salida_central') totalSalida += m.cantidad;
+    });
+    document.getElementById('detalle-resumen').innerHTML = `
+      <div class="border rounded p-2 bg-blue-50"><div class="text-xs text-gray-500">Compras (últimas 20)</div><div class="font-bold text-lg">+${totalEntrada}</div></div>
+      <div class="border rounded p-2 bg-orange-50"><div class="text-xs text-gray-500">Despachos (últimas 20)</div><div class="font-bold text-lg">-${totalSalida}</div></div>
+      <div class="border rounded p-2 bg-gray-50"><div class="text-xs text-gray-500">Diferencia parcial</div><div class="font-bold text-lg">${totalEntrada - totalSalida}</div></div>
+      <div class="border rounded p-2 bg-gray-50"><div class="text-xs text-gray-500">Nº movimientos</div><div class="font-bold text-lg">${mov.length}</div></div>
+    `;
+    tbodyMov.innerHTML = mov.map(m => {
+      const tipoLabel = ({
+        compra_entrada: '<span class="text-emerald-700">↓ Compra entrada</span>',
+        remision_salida_central: '<span class="text-orange-700">↑ Despacho</span>'
+      })[m.tipo] || esc(m.tipo);
+      return `
+        <tr class="border-t border-gray-100">
+          <td class="px-2 py-2 whitespace-nowrap">${fechaHora(m.created_at)}</td>
+          <td class="px-2 py-2">${tipoLabel}</td>
+          <td class="px-2 py-2 text-right font-mono">${m.cantidad}</td>
+          <td class="px-2 py-2 text-right font-mono">${money(m.costo)}</td>
+          <td class="px-2 py-2 text-gray-500 text-xs">${esc(m.referencia_tipo) || '—'}${m.referencia_id ? ' · ' + esc(m.referencia_id.substring(0, 8)) : ''}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Unidades serializadas
+  if (tipo === 'serializado') {
+    document.getElementById('unidades-panel').classList.remove('hidden');
+    const { data: uns, error: uErr } = await SB
+      .from('unidades')
+      .select('id, imei, estado, costo_remision, factura_proveedor_id, created_at')
+      .eq('producto_id', prodId)
+      .eq('tienda_actual', 'CENTRAL')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    const tbodyU = document.getElementById('tbody-unidades');
+    if (uErr) {
+      tbodyU.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-600">Error: ' + esc(uErr.message) + '</td></tr>';
+    } else if (!uns || uns.length === 0) {
+      tbodyU.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin unidades en CENTRAL.</td></tr>';
+    } else {
+      // Enriquecer con número de factura
+      const facturaIds = [...new Set(uns.map(u => u.factura_proveedor_id).filter(Boolean))];
+      let facturaMap = {};
+      if (facturaIds.length > 0) {
+        const { data: fac } = await SB
+          .from('facturas_proveedor')
+          .select('id, numero, fecha')
+          .in('id', facturaIds);
+        (fac || []).forEach(f => { facturaMap[f.id] = f; });
+      }
+      tbodyU.innerHTML = uns.map(u => {
+        const estadoBadge = ({
+          disponible: '<span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800">disponible</span>',
+          en_traslado: '<span class="px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-800">en_traslado</span>',
+          en_oscar: '<span class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">en_oscar</span>'
+        })[u.estado] || esc(u.estado);
+        const imeiTxt = u.imei
+          ? '<span class="font-mono">' + esc(u.imei) + '</span>'
+          : '<span class="text-gray-400 italic">(pendiente de recepción)</span>';
+        const fact = u.factura_proveedor_id ? facturaMap[u.factura_proveedor_id] : null;
+        const factTxt = fact
+          ? esc(fact.numero) + ' · ' + fechaCorta(fact.fecha)
+          : '<span class="text-gray-400">—</span>';
+        return `
+          <tr class="border-t border-gray-100">
+            <td class="px-2 py-2">${estadoBadge}</td>
+            <td class="px-2 py-2">${imeiTxt}</td>
+            <td class="px-2 py-2 text-right font-mono">${money(u.costo_remision)}</td>
+            <td class="px-2 py-2">${factTxt}</td>
+            <td class="px-2 py-2 text-gray-500 text-xs">${fechaCorta(u.created_at)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+}
+
+function cerrarDetalle() {
+  document.getElementById('modal-detalle').classList.add('hidden');
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+document.getElementById('btn-refresh').addEventListener('click', cargarAlerta);
+document.getElementById('filtro-texto').addEventListener('input', render);
+document.getElementById('filtro-descuadre').addEventListener('change', render);
+document.getElementById('filtro-tipo').addEventListener('change', render);
+document.getElementById('cerrar-detalle').addEventListener('click', cerrarDetalle);
+document.getElementById('modal-detalle').addEventListener('click', e => {
+  if (e.target.id === 'modal-detalle') cerrarDetalle();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarDetalle(); });
+
+document.getElementById('tbody-alerta').addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-producto]');
+  if (!tr) return;
+  abrirDetalle(
+    tr.getAttribute('data-producto'),
+    tr.getAttribute('data-nombre'),
+    tr.getAttribute('data-tipo')
+  );
+});
+
+// ============================================================
+// BOOT
+// ============================================================
+(async function () {
+  const ok = await verificarAuth();
+  if (!ok) return;
+  await cargarAlerta();
+
+  // SIDEBAR OPCIONAL:
+  // if (window.renderSidebar) window.renderSidebar('bodega-central');
+})();
+</script>
+
+</body>
+</html>

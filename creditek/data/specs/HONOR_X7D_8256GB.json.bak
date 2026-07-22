@@ -1,0 +1,13 @@
+{
+  "referencia": "HONOR X7D 8/256GB",
+  "marca": "HONOR",
+  "pantalla": "LCD de 6.74 pulgadas, resolución HD+ (1600 x 720 píxeles), tasa de refresco de 90Hz",
+  "ram_almacenamiento": "8GB RAM, 256GB almacenamiento",
+  "camara": "Principal de 50MP (f/1.8), profundidad de 2MP (f/2.4), macro de 2MP (f/2.4). Frontal de 8MP (f/2.0).",
+  "bateria": "5330 mAh, carga rápida de 22.5W",
+  "red": "4G LTE, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.1",
+  "sistema": "Android 13 con MagicOS 7.1",
+  "fuente": "Gemini API",
+  "confianza": "alta",
+  "fecha_extraccion": "2026-06-21"
+}

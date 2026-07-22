@@ -1,0 +1,13 @@
+{
+  "referencia": "ZTE A56 PRO 4/128GB",
+  "marca": "ZTE",
+  "pantalla": "6.52\" IPS LCD HD+ (720x1600)",
+  "ram_almacenamiento": "4GB RAM, 128GB almacenamiento interno",
+  "camara": "Trasera triple: 13MP (principal) + 2MP (macro) + 2MP (profundidad). Frontal: 5MP.",
+  "bateria": "5000 mAh",
+  "red": "4G LTE, Wi-Fi 802.11 b/g/n, Bluetooth 4.2, GPS",
+  "sistema": "Android 11 Go Edition",
+  "fuente": "Gemini API",
+  "confianza": "alta",
+  "fecha_extraccion": "2026-06-21"
+}

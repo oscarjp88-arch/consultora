@@ -94,7 +94,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; ba
 
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
-    <img class="logo" src="https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek">
+    <img class="logo" src="/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek">
     <input type="email" id="loginEmail" placeholder="Correo" autocomplete="username">
     <input type="password" id="loginPass" placeholder="Contraseña" autocomplete="current-password">
     <button id="btnLogin">Entrar</button>
@@ -313,7 +313,7 @@ async function abrirSesion() {
     return;
   }
 
-  const link = `https://oscarjp88-arch.github.io/consultora/creditek/erp/cierre-periodo.html?sesion=${sesionId}`;
+  const link = `${location.origin}/creditek/erp/cierre-periodo.html?sesion=${sesionId}`;
   const horaLimite = new Date(Date.now() + horas * 3600000).toLocaleString('es-CO', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
 
   document.getElementById('linkTexto').textContent = link;

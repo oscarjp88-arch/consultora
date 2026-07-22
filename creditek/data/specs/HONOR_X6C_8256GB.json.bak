@@ -1,0 +1,13 @@
+{
+  "referencia": "HONOR X6C 8/256GB",
+  "marca": "HONOR",
+  "pantalla": "6.56 pulgadas TFT LCD, 720 x 1612 píxeles, 90Hz",
+  "ram_almacenamiento": "8GB RAM, 256GB almacenamiento interno",
+  "camara": "Trasera doble: 50 MP (principal) + 2 MP (profundidad/macro). Frontal: 5 MP.",
+  "bateria": "5200 mAh, carga rápida 22.5W",
+  "red": "4G LTE, Wi-Fi 802.11 a/b/g/n/ac, Bluetooth 5.1, Dual SIM",
+  "sistema": "Android 13 con MagicOS 7.1",
+  "fuente": "Gemini API",
+  "confianza": "alta",
+  "fecha_extraccion": "2026-06-21"
+}

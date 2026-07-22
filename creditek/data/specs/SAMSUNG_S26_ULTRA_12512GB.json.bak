@@ -1,0 +1,13 @@
+{
+  "referencia": "SAMSUNG S26 ULTRA 12/512GB",
+  "marca": "SAMSUNG",
+  "pantalla": "",
+  "ram_almacenamiento": "12GB RAM, 512GB almacenamiento",
+  "camara": "200 MP posterior",
+  "bateria": "5000 mAh",
+  "red": "5G",
+  "sistema": "Android 16",
+  "fuente": "Gemini API",
+  "confianza": "baja",
+  "fecha_extraccion": "2026-06-21"
+}

@@ -37,7 +37,7 @@
     ]},
   ];
 
-  const LOGO = 'https://oscarjp88-arch.github.io/consultora/creditek/agentes/logos/creditek_logo_corregido_alta.png';
+  const LOGO = '/creditek/agentes/logos/creditek_logo_corregido_alta.png';
   const ROL_LABEL = { gerencia: 'Gerencia', auditoria: 'Auditoría', admin_tienda: 'Admin tienda', asesor: 'Asesor' };
 
   function escapeHtml(str) {
