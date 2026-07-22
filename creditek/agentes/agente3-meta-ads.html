@@ -1176,6 +1176,26 @@ const WORKER_SHARED_SECRET = '73ef5474869b234c9d666476271a47fcf82b259d54ca3619';
 // necesita a futuro, pero no la lee ni la usa ningún cálculo del tablero.
 let COP_TO_USD = parseFloat(localStorage.getItem('ck_cop_usd')) || 3350;
 
+// FIX v34, 21-jul-2026 — migración de valor legado en USD. ck_weekly_budget
+// se guardaba en dólares hasta v32 (rango típico 15-200). El código nuevo
+// (v33, 100% COP) ya no lo multiplica por ninguna tasa — un valor viejo tipo
+// "30" o "50" se toma literal como si ya fueran pesos, produciendo
+// sobregastos absurdos (caso real de Oscar: presupuesto "$30", gasto real
+// $54.647 → 182.057%). ck_weekly_budget se lee en 4 lugares del archivo
+// (abrirConfig, renderEstadoActual, refrescarAlertas, analizarConIA) — no en
+// uno solo — así que la migración vive en un único helper compartido y los
+// 4 sitios lo usan, en vez de duplicar la lógica o depender de cuál corre
+// primero al cargar la página.
+function getWeeklyBudgetCOP() {
+  let budget = parseFloat(localStorage.getItem('ck_weekly_budget'));
+  if (!budget || budget < 1000) {
+    budget = 160000;
+    localStorage.setItem('ck_weekly_budget', budget);
+    showToast('Tu presupuesto semanal se reinició a $160.000 COP (el valor anterior estaba en dólares). Ajústalo en ⚙ Configurar si quieres otro monto.', '#F59E0B');
+  }
+  return budget;
+}
+
 // Fix v1 — solo contar acciones que representan intención real (lead/conversación/clic),
 // no cualquier interacción (reacción, guardado, engagement de página, etc.)
 const RESULT_ACTION_TYPES = [
@@ -1194,7 +1214,7 @@ function abrirConfig() {
   document.getElementById('inp-token').value   = localStorage.getItem('ck_meta_token') || '';
   document.getElementById('inp-account').value = localStorage.getItem('ck_meta_account') || '';
   document.getElementById('inp-claude').value  = localStorage.getItem('ck_claude_key') || '';
-  document.getElementById('inp-budget').value  = localStorage.getItem('ck_weekly_budget') || '160000';
+  document.getElementById('inp-budget').value  = getWeeklyBudgetCOP();
   document.getElementById('inp-tasa').value    = localStorage.getItem('ck_cop_usd') || COP_TO_USD;
   document.getElementById('modal').classList.add('open');
 }
@@ -1289,7 +1309,7 @@ function renderEstadoActual() {
   // FIX v33, 21-jul-2026 — ck_weekly_budget ya está en COP (antes "USD"),
   // spendSemana/spendMes ya venían en COP de Meta — se comparan directo,
   // sin pasar por COP_TO_USD en ningún lado de esta función.
-  const weeklyBudget  = parseFloat(localStorage.getItem('ck_weekly_budget') || '160000');
+  const weeklyBudget  = getWeeklyBudgetCOP();
   const spendSemana   = estadoReal.semanaSpendCOP;
   const spendMes      = estadoReal.mesSpendCOP;
 
@@ -1323,7 +1343,7 @@ function renderEstadoActual() {
 // real) y desde renderVista() (cuando cambia la selección de campaña).
 function refrescarAlertas(camps) {
   // FIX v33 — weeklyBudget y semanaSpendCOP ya están en la misma unidad (COP)
-  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '160000');
+  const weeklyBudget = getWeeklyBudgetCOP();
   const pctReal      = estadoReal.semanaSpendCOP !== null ? (estadoReal.semanaSpendCOP / weeklyBudget) * 100 : null;
   const spendSemana  = estadoReal.semanaSpendCOP !== null ? estadoReal.semanaSpendCOP : 0;
   renderAlertas(pctReal, weeklyBudget, spendSemana, camps || lastData?.camps || []);
@@ -2038,7 +2058,7 @@ async function analizarConIA(data, campañaIndividual) {
   if (!key) return;
   if (!campañaIndividual && !data.main) return;
 
-  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '160000'); // FIX v33 — ya en COP
+  const weeklyBudget = getWeeklyBudgetCOP(); // FIX v33/v34 — ya en COP, con migración de valor legado
   let prompt;
 
   if (campañaIndividual) {
