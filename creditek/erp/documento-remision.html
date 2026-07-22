@@ -1,0 +1,598 @@
+<!doctype html>
+<!--
+  documento-remision.html · Creditek ERP · R3 pantalla 4/5
+  Ubicación sugerida en repo: creditek/erp/pages/documento-remision.html
+  Acceso: cualquier autenticado (con RLS aplicando quién ve qué)
+
+  URL: documento-remision.html?remision_id=<uuid>
+
+  MODOS:
+    a) LECTURA — recibo visual, botones de WhatsApp y Print. Todos ven esto.
+    b) ACEPTACIÓN — solo si:
+       - estado remisión = 'despachada'  Y
+       - rol usuario = 'admin_tienda' de la tienda destino, o
+       - rol usuario ∈ ('gerencia','auditoria')
+
+  IMPORTANTE — regla del negocio (Oscar, 21 jul 2026):
+    Este documento se comparte con la tienda. Nunca muestra factura de
+    proveedor ni costo de Oscar — solo cantidad y precio de remisión
+    (lo que la tienda paga). El margen vive solo en la vista central.
+
+  INTEGRACIÓN:
+    1. Cliente Supabase: window.SB o CREDITEK_ENV (mismo patrón).
+    2. Fotos de producto: intenta cargar '/storage/v1/object/public/productos-fotos/<id>.jpg'.
+       Si tu esquema guarda la ruta en productos.foto_url, edita fotoUrl() abajo.
+    3. Sidebar: descomenta al final si aplica.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Remisión · Creditek</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .fade-in { animation: fadeIn 0.15s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+    .thumb {
+      width: 44px; height: 44px; object-fit: cover; border-radius: 6px;
+      background: #f3f4f6; display: flex; align-items: center; justify-content: center;
+      font-size: 20px; color: #9ca3af; flex-shrink: 0;
+    }
+    .imei-ok input   { border-color: #10b981; background: #ecfdf5; }
+    .imei-bad input  { border-color: #ef4444; background: #fef2f2; }
+    .imei-check-ok   { color: #10b981; }
+    .imei-check-bad  { color: #ef4444; }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; }
+      .print-full { max-width: none !important; }
+      .print-shadow { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<!-- ============================================================ HEADER (no imprime) -->
+<header class="no-print bg-white border-b border-gray-200 shadow-sm">
+  <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <a href="remisiones.html" class="text-blue-600 hover:text-blue-800 text-sm">&larr; Volver</a>
+      <h1 class="text-xl font-bold text-gray-800">Documento de remisión</h1>
+    </div>
+    <div id="usuario-info" class="text-sm text-gray-600"></div>
+  </div>
+</header>
+
+<!-- ============================================================ MENSAJES DE ERROR -->
+<div id="error-banner" class="hidden max-w-4xl mx-auto mt-6 p-4 bg-red-50 border border-red-200 rounded">
+  <p id="error-msg" class="text-red-800"></p>
+</div>
+
+<!-- ============================================================ DOCUMENTO -->
+<main id="app" class="hidden max-w-4xl mx-auto py-6 px-4 print-full">
+  <div id="toast" class="hidden fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in"></div>
+
+  <div class="bg-white rounded-lg shadow-md print-shadow overflow-hidden">
+
+    <!-- Encabezado del documento -->
+    <div class="p-6 border-b-2 border-gray-200 flex justify-between items-start">
+      <div>
+        <div class="text-xs text-gray-500 uppercase tracking-wider">Creditek SAS</div>
+        <h2 class="text-2xl font-bold text-gray-800 mt-1">
+          Remisión #<span id="doc-consecutivo">—</span>
+        </h2>
+        <p class="text-xs text-gray-500 mt-1">Documento interno de traslado de mercancía</p>
+      </div>
+      <div class="text-right">
+        <div id="doc-estado" class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">Cargando...</div>
+        <div id="doc-fecha" class="text-xs text-gray-500 mt-2">—</div>
+      </div>
+    </div>
+
+    <!-- Info destino -->
+    <div class="p-6 border-b border-gray-200 grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Origen</div>
+        <div class="font-medium text-gray-800">Bodega Central Creditek</div>
+      </div>
+      <div>
+        <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Destino</div>
+        <div class="font-medium text-gray-800" id="doc-tienda">—</div>
+      </div>
+      <div class="col-span-2" id="doc-nota-container" style="display:none">
+        <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Nota</div>
+        <div class="text-gray-700 text-sm" id="doc-nota">—</div>
+      </div>
+    </div>
+
+    <!-- Ítems -->
+    <div class="p-6 border-b border-gray-200">
+      <h3 class="text-sm font-semibold text-gray-800 mb-3">Productos incluidos</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="text-left text-gray-600 border-b border-gray-200">
+            <tr>
+              <th class="pb-2 pr-2"></th>
+              <th class="pb-2 pr-2 font-medium">Producto</th>
+              <th class="pb-2 pr-2 text-center font-medium">Tipo</th>
+              <th class="pb-2 pr-2 text-right font-medium">Cantidad</th>
+              <th class="pb-2 pr-2 text-right font-medium">Precio unitario</th>
+              <th class="pb-2 text-right font-medium">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-items">
+            <tr><td colspan="6" class="py-6 text-center text-gray-400">Cargando ítems...</td></tr>
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-gray-300">
+              <td colspan="5" class="pt-3 text-right font-semibold text-gray-700">TOTAL</td>
+              <td class="pt-3 text-right font-bold text-lg font-mono text-gray-900" id="doc-total">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Acciones (no imprime) -->
+    <div class="no-print p-6 flex flex-wrap gap-2 justify-end">
+      <button id="btn-print" class="px-4 py-2 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">
+        🖨️ Imprimir
+      </button>
+      <button id="btn-whatsapp" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium">
+        Compartir por WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ PANEL DE ACEPTACIÓN -->
+  <section id="panel-aceptar" class="no-print hidden mt-6 bg-white rounded-lg shadow-md p-6 fade-in">
+    <div class="flex justify-between items-start mb-4">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800">Aceptar recepción</h3>
+        <p class="text-xs text-gray-500 mt-1">
+          Verifica lo que llegó físicamente. Los IMEIs se digitan uno por uno.
+          Si llegan menos unidades de las esperadas se genera un ajuste automático (auto-adjustment) pendiente de autorización.
+        </p>
+      </div>
+      <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Pendiente de aceptar</span>
+    </div>
+
+    <div id="items-aceptacion" class="space-y-5"></div>
+
+    <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-2">
+      <button id="btn-aceptar" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded font-semibold">
+        Confirmar recepción
+      </button>
+    </div>
+  </section>
+
+  <!-- Panel de éxito post-aceptación -->
+  <div id="panel-recibida" class="no-print hidden mt-6 bg-emerald-50 border border-emerald-200 rounded-lg p-5 fade-in">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl">🟢</span>
+      <div>
+        <p class="font-semibold text-emerald-900">Remisión recibida</p>
+        <p class="text-sm text-emerald-800">
+          La mercancía quedó en tu tienda. Total facturado: <b id="recibida-total"></b>.
+          Cualquier faltante generó un ajuste pendiente de autorización por gerencia.
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============================================================ SCRIPT -->
+<script>
+const SB = (function () {
+  if (window.SB) return window.SB;
+  const env = window.CREDITEK_ENV || {
+    SUPABASE_URL: 'https://jfkmiyvcdfbsbwchyvol.supabase.co',
+    SUPABASE_ANON_KEY: 'REEMPLAZAR_CON_ANON_KEY'
+  };
+  return window.supabase.createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+})();
+
+const SUPABASE_STORAGE_URL = (window.CREDITEK_ENV?.SUPABASE_URL || 'https://jfkmiyvcdfbsbwchyvol.supabase.co') + '/storage/v1/object/public';
+
+// ============================================================
+// HELPERS
+// ============================================================
+const fmtMoney = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+const fmtFecha = new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+const fmtFechaHora = new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+});
+function money(n) { return n == null ? '—' : fmtMoney.format(Number(n)); }
+function fecha(iso) { return iso ? fmtFecha.format(new Date(iso)) : '—'; }
+function fechaHora(iso) { return iso ? fmtFechaHora.format(new Date(iso)) : '—'; }
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function toast(msg, tipo = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in ' +
+    (tipo === 'error' ? 'bg-red-600' : 'bg-emerald-600');
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 3500);
+}
+function showError(msg) {
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('error-banner').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+function fotoUrl(producto) {
+  // Ajusta si tu esquema guarda ruta explícita en productos.foto_url
+  if (producto.foto_url) return producto.foto_url;
+  return SUPABASE_STORAGE_URL + '/productos-fotos/' + producto.id + '.jpg';
+}
+
+// ============================================================
+// URL & AUTH
+// ============================================================
+const params = new URLSearchParams(location.search);
+const REMISION_ID = params.get('remision_id');
+
+let usuario = null;
+let rolActual = null;
+let tiendaActual = null;
+
+async function verificarAuth() {
+  const { data: { session } } = await SB.auth.getSession();
+  if (!session) { location.href = 'login.html'; return false; }
+  usuario = session.user;
+
+  const [{ data: rol }, { data: tienda }] = await Promise.all([
+    SB.rpc('rol_actual'),
+    SB.rpc('tienda_actual')
+  ]);
+  rolActual = rol;
+  tiendaActual = tienda;
+
+  document.getElementById('usuario-info').textContent =
+    (usuario.email || '') + ' · ' + (rolActual || 'sin rol') + (tiendaActual ? ' · ' + tiendaActual : '');
+  return true;
+}
+
+// ============================================================
+// ESTADO
+// ============================================================
+let remision = null;
+let items = [];       // remision_items enriquecidos con producto
+let tiendaNombre = null;
+let imeisEscaneados = {};   // { item_id: [imeis], ... }
+
+// ============================================================
+// CARGAR REMISIÓN
+// ============================================================
+async function cargarRemision() {
+  if (!REMISION_ID) { showError('Falta el parámetro remision_id en la URL.'); return; }
+
+  const { data: rem, error: rErr } = await SB
+    .from('remisiones')
+    .select('id, consecutivo, tienda_codigo, estado, nota, despachada_at, recibida_at, created_at')
+    .eq('id', REMISION_ID).maybeSingle();
+
+  if (rErr) { showError('Error cargando remisión: ' + rErr.message); return; }
+  if (!rem) { showError('Remisión no encontrada.'); return; }
+  remision = rem;
+
+  const [{ data: rItems, error: iErr }, { data: origen }] = await Promise.all([
+    SB.from('remision_items')
+      .select('id, producto_id, cantidad, precio_remision, productos(id, nombre, tipo, categoria)')
+      .eq('remision_id', REMISION_ID),
+    SB.from('origenes').select('codigo, nombre').eq('codigo', rem.tienda_codigo).maybeSingle()
+  ]);
+
+  if (iErr) { showError('Error cargando ítems: ' + iErr.message); return; }
+  items = rItems || [];
+  tiendaNombre = origen ? origen.nombre : rem.tienda_codigo;
+
+  document.getElementById('app').classList.remove('hidden');
+  renderDocumento();
+  renderPanelAceptacion();
+}
+
+// ============================================================
+// RENDER DOCUMENTO
+// ============================================================
+function renderDocumento() {
+  document.getElementById('doc-consecutivo').textContent = remision.consecutivo;
+  document.getElementById('doc-tienda').textContent = tiendaNombre + ' (' + remision.tienda_codigo + ')';
+  document.getElementById('doc-fecha').textContent =
+    'Despachada: ' + fechaHora(remision.despachada_at || remision.created_at);
+
+  // Estado visual
+  const badge = document.getElementById('doc-estado');
+  const map = {
+    borrador:   ['bg-gray-100 text-gray-700', '📝 Borrador'],
+    despachada: ['bg-yellow-100 text-yellow-800', '🟡 Pendiente de aceptar'],
+    recibida:   ['bg-emerald-100 text-emerald-800', '🟢 Recibida ' + fechaHora(remision.recibida_at)],
+    anulada:    ['bg-red-100 text-red-800', '⛔ Anulada']
+  };
+  const [cls, txt] = map[remision.estado] || ['bg-gray-100 text-gray-700', remision.estado];
+  badge.className = 'inline-block px-3 py-1 rounded-full text-sm font-medium ' + cls;
+  badge.textContent = txt;
+
+  // Nota
+  if (remision.nota) {
+    document.getElementById('doc-nota').textContent = remision.nota;
+    document.getElementById('doc-nota-container').style.display = 'block';
+  }
+
+  // Ítems
+  const tbody = document.getElementById('tbody-items');
+  if (items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-gray-400">Sin ítems.</td></tr>';
+  } else {
+    let total = 0;
+    tbody.innerHTML = items.map(it => {
+      const sub = Number(it.cantidad) * Number(it.precio_remision);
+      total += sub;
+      const p = it.productos || { id: it.producto_id, nombre: '(producto)', tipo: '', categoria: '' };
+      const badgeTipo = p.tipo === 'serializado'
+        ? '<span class="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-700">serializado</span>'
+        : '<span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700">cantidad</span>';
+      const url = fotoUrl(p);
+      return `
+        <tr class="border-b border-gray-100">
+          <td class="py-3 pr-2">
+            <div class="thumb"><img src="${esc(url)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'📦'}))" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" /></div>
+          </td>
+          <td class="py-3 pr-2">
+            <div class="font-medium text-gray-800">${esc(p.nombre)}</div>
+            <div class="text-xs text-gray-500">${esc(p.categoria)}</div>
+          </td>
+          <td class="py-3 pr-2 text-center">${badgeTipo}</td>
+          <td class="py-3 pr-2 text-right font-mono">${it.cantidad}</td>
+          <td class="py-3 pr-2 text-right font-mono">${money(it.precio_remision)}</td>
+          <td class="py-3 text-right font-mono font-semibold">${money(sub)}</td>
+        </tr>
+      `;
+    }).join('');
+    document.getElementById('doc-total').textContent = money(total);
+  }
+}
+
+// ============================================================
+// PANEL DE ACEPTACIÓN
+// ============================================================
+function puedeAceptar() {
+  if (remision.estado !== 'despachada') return false;
+  if (rolActual === 'gerencia' || rolActual === 'auditoria') return true;
+  if (rolActual === 'admin_tienda' && tiendaActual === remision.tienda_codigo) return true;
+  return false;
+}
+
+function renderPanelAceptacion() {
+  const panel = document.getElementById('panel-aceptar');
+  if (remision.estado === 'recibida') {
+    document.getElementById('panel-recibida').classList.remove('hidden');
+    document.getElementById('recibida-total').textContent =
+      money(items.reduce((s, it) => s + Number(it.cantidad) * Number(it.precio_remision), 0));
+    return;
+  }
+  if (!puedeAceptar()) return;
+  panel.classList.remove('hidden');
+
+  const cont = document.getElementById('items-aceptacion');
+  imeisEscaneados = {};
+
+  cont.innerHTML = items.map(it => {
+    const p = it.productos || {};
+    const esSerial = p.tipo === 'serializado';
+    if (esSerial) {
+      imeisEscaneados[it.id] = new Array(it.cantidad).fill('');
+      const inputs = Array.from({ length: it.cantidad }, (_, i) => `
+        <div class="flex items-center gap-2" data-imei-row="${it.id}-${i}">
+          <span class="text-xs text-gray-500 w-6">#${i + 1}</span>
+          <input type="text" inputmode="numeric" autocomplete="off"
+                 data-item="${it.id}" data-idx="${i}"
+                 placeholder="Escanea o digita el IMEI"
+                 class="flex-1 border border-gray-300 rounded px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <span class="w-6 text-lg text-gray-400" id="check-${it.id}-${i}"></span>
+        </div>
+      `).join('');
+      return `
+        <div class="border border-gray-200 rounded p-4">
+          <div class="flex justify-between items-baseline mb-3">
+            <div>
+              <div class="font-medium text-gray-800">${esc(p.nombre)}</div>
+              <div class="text-xs text-gray-500">Serializado · ${it.cantidad} unidad(es) esperada(s)</div>
+            </div>
+            <div class="text-xs text-gray-500">
+              Puedes recibir menos si algo faltó — el sistema generará el ajuste automático.
+            </div>
+          </div>
+          <div class="space-y-2">${inputs}</div>
+        </div>
+      `;
+    }
+    // Tipo cantidad
+    return `
+      <div class="border border-gray-200 rounded p-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="font-medium text-gray-800">${esc(p.nombre)}</div>
+            <div class="text-xs text-gray-500">Cantidad · ${it.cantidad} unidad(es) esperada(s)</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-700">Recibido:</label>
+            <input type="number" min="0" step="1" value="${it.cantidad}"
+                   data-item="${it.id}" data-cantidad-recibida="1"
+                   class="w-24 border border-gray-300 rounded px-2 py-1 text-right font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================
+// VALIDACIÓN EN VIVO DE IMEI
+// ============================================================
+async function validarImei(itemId, idx, valor) {
+  const check = document.getElementById(`check-${itemId}-${idx}`);
+  const row = document.querySelector(`[data-imei-row="${itemId}-${idx}"]`);
+  row.classList.remove('imei-ok', 'imei-bad');
+  check.textContent = '';
+
+  const v = valor.trim();
+  imeisEscaneados[itemId][idx] = v;
+  if (!v) return;
+
+  // 1. Duplicado dentro del formulario
+  const listaLocal = imeisEscaneados[itemId];
+  const dupLocal = listaLocal.filter((x, i) => i !== idx && x.trim() === v).length > 0;
+  if (dupLocal) {
+    row.classList.add('imei-bad');
+    check.textContent = '⚠️';
+    check.title = 'IMEI duplicado en esta lista';
+    return;
+  }
+
+  // 2. Duplicado global (existe en unidades)
+  const { data, error } = await SB
+    .from('unidades').select('id, tienda_actual, estado').eq('imei', v).maybeSingle();
+
+  if (error) {
+    check.textContent = '?';
+    check.title = 'Error validando: ' + error.message;
+    return;
+  }
+  if (data) {
+    row.classList.add('imei-bad');
+    check.textContent = '✗';
+    check.title = 'IMEI ya registrado en el sistema';
+  } else {
+    row.classList.add('imei-ok');
+    check.textContent = '✓';
+    check.title = 'IMEI disponible';
+  }
+}
+
+// ============================================================
+// SUBMIT — confirmar_recepcion_remision
+// ============================================================
+async function aceptarRecepcion() {
+  const btn = document.getElementById('btn-aceptar');
+  btn.disabled = true; const txt = btn.textContent; btn.textContent = 'Procesando...';
+
+  try {
+    const payload = [];
+    for (const it of items) {
+      const p = it.productos || {};
+      if (p.tipo === 'serializado') {
+        const inputs = document.querySelectorAll(`[data-item="${it.id}"][data-idx]`);
+        const imeis = [];
+        for (const inp of inputs) {
+          const v = inp.value.trim();
+          if (v) imeis.push(v);
+        }
+        // duplicados dentro del mismo item
+        const setLocal = new Set(imeis);
+        if (setLocal.size !== imeis.length) {
+          throw new Error('Hay IMEIs duplicados en "' + p.nombre + '"');
+        }
+        payload.push({ remision_item_id: it.id, imeis });
+      } else {
+        const inp = document.querySelector(`[data-item="${it.id}"][data-cantidad-recibida]`);
+        const n = parseInt(inp.value, 10);
+        if (isNaN(n) || n < 0) throw new Error('Cantidad inválida en "' + p.nombre + '"');
+        payload.push({ remision_item_id: it.id, cantidad_recibida: n });
+      }
+    }
+
+    const { data, error } = await SB.rpc('confirmar_recepcion_remision', {
+      p_remision_id: REMISION_ID,
+      p_items: payload
+    });
+    if (error) throw new Error(error.message);
+    if (!data || data.ok !== true) throw new Error('Respuesta inválida del servidor');
+
+    toast('Recepción confirmada');
+    // Recargar estado
+    remision.estado = 'recibida';
+    remision.recibida_at = new Date().toISOString();
+    document.getElementById('panel-aceptar').classList.add('hidden');
+    document.getElementById('panel-recibida').classList.remove('hidden');
+    document.getElementById('recibida-total').textContent = money(data.total);
+    renderDocumento();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = txt;
+  }
+}
+
+// ============================================================
+// WHATSAPP
+// ============================================================
+function compartirWhatsApp() {
+  let total = 0;
+  const lineas = items.map(it => {
+    const sub = Number(it.cantidad) * Number(it.precio_remision);
+    total += sub;
+    const p = it.productos || {};
+    return `- ${p.nombre}: ${it.cantidad} und × ${money(it.precio_remision)}`;
+  });
+  const estado = remision.estado === 'recibida' ? '🟢 Recibida' : '🟡 Pendiente de aceptar';
+  const texto = [
+    `*REMISIÓN #${remision.consecutivo}* — Creditek SAS`,
+    `Fecha: ${fechaHora(remision.despachada_at || remision.created_at)}`,
+    `Destino: ${tiendaNombre} (${remision.tienda_codigo})`,
+    `Estado: ${estado}`,
+    ``,
+    ...lineas,
+    ``,
+    `TOTAL: ${money(total)}`,
+    ``,
+    `Ver documento: ${location.href}`
+  ].join('\n');
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+document.getElementById('btn-print').addEventListener('click', () => window.print());
+document.getElementById('btn-whatsapp').addEventListener('click', compartirWhatsApp);
+document.getElementById('btn-aceptar').addEventListener('click', aceptarRecepcion);
+
+document.getElementById('items-aceptacion').addEventListener('blur', e => {
+  const inp = e.target.closest('[data-item][data-idx]');
+  if (!inp) return;
+  validarImei(inp.getAttribute('data-item'), parseInt(inp.getAttribute('data-idx'), 10), inp.value);
+}, true);
+
+document.getElementById('items-aceptacion').addEventListener('input', e => {
+  const inp = e.target.closest('[data-item][data-idx]');
+  if (!inp) return;
+  // limpia estado hasta validar en blur
+  const row = inp.closest('[data-imei-row]');
+  if (row) row.classList.remove('imei-ok', 'imei-bad');
+  imeisEscaneados[inp.getAttribute('data-item')][parseInt(inp.getAttribute('data-idx'), 10)] = inp.value;
+});
+
+// ============================================================
+// BOOT
+// ============================================================
+(async function () {
+  const ok = await verificarAuth();
+  if (!ok) return;
+  await cargarRemision();
+
+  // SIDEBAR OPCIONAL:
+  // if (window.renderSidebar) window.renderSidebar('remisiones');
+})();
+</script>
+
+</body>
+</html>
