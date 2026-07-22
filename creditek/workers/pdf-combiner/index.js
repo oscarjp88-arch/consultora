@@ -25,7 +25,7 @@ import { PDFDocument } from 'pdf-lib';
 // Origen exacto de GitHub Pages del repo "consultora" (sin CNAME configurado
 // — ver `git remote -v` → oscarjp88-arch/consultora). Ajustar si Oscar
 // configura un dominio propio (CNAME) más adelante.
-const ALLOWED_ORIGIN = 'https://oscarjp88-arch.github.io';
+const ALLOWED_ORIGIN = 'https://registro.crediteksas.com';
 
 function corsHeaders(origin) {
   const allow = origin === ALLOWED_ORIGIN ? origin : 'null';
