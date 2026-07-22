@@ -477,8 +477,8 @@ tr:hover td{background:#F8FAFC}
       <input type="password" id="inp-claude" placeholder="sk-ant-api03-xxx">
     </div>
     <div class="field">
-      <label>Presupuesto semanal (USD)</label>
-      <input type="number" id="inp-budget" placeholder="50" min="1" step="1">
+      <label>Presupuesto semanal (COP)</label>
+      <input type="number" id="inp-budget" placeholder="160000" min="1" step="1">
     </div>
     <!-- FIX v32, 21-jul-2026 — dashboard 100% en COP (account_currency=COP
          confirmado), ya no se convierte nada. Se oculta el campo en vez de
@@ -538,10 +538,14 @@ tr:hover td{background:#F8FAFC}
       <div class="field">
         <label>Presupuesto semanal</label>
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-          <span style="font-size:20px;font-weight:700" id="wiz-budget-out">$50 USD</span>
-          <span style="font-size:12px;color:var(--text3)" id="wiz-budget-cop">≈ $210.000 COP</span>
+          <span style="font-size:20px;font-weight:700" id="wiz-budget-out">$160.000 COP</span>
+          <span style="font-size:12px;color:var(--text3)" id="wiz-budget-cop">≈ $22.857 COP/día</span>
         </div>
-        <input type="range" id="wiz-budget-slider" min="15" max="200" step="5" value="50" style="width:100%">
+        <!-- FIX v33, 21-jul-2026 — slider redenominado directo a pesos (antes
+             15-200 "USD" × COP_TO_USD). Rango equivalente con la tasa actual
+             (~3200): min ~48.000→50.000, max ~640.000→650.000, default
+             50×3200=160.000. -->
+        <input type="range" id="wiz-budget-slider" min="50000" max="650000" step="10000" value="160000" style="width:100%">
       </div>
       <div class="field">
         <label>Duración</label>
@@ -824,8 +828,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (slider) {
     slider.addEventListener('input', e => {
       const v = parseInt(e.target.value);
-      document.getElementById('wiz-budget-out').textContent = '$' + v + ' USD';
-      document.getElementById('wiz-budget-cop').textContent = '≈ $' + (v * COP_TO_USD).toLocaleString('es-CO') + ' COP';
+      // FIX v33 — slider ya está en COP, se muestra directo (sin multiplicar)
+      document.getElementById('wiz-budget-out').textContent = fmtCOP(v);
+      document.getElementById('wiz-budget-cop').textContent = '≈ ' + fmtCOP(Math.round(v / 7)) + '/día';
     });
   }
   const fileInput = document.getElementById('wiz-file-input');
@@ -929,7 +934,7 @@ function wizGoStep(n) {
     const zoneNames = [...wizSelectedZones].map(id => wizAllZones()[id].name).join(', ');
     const budgetVal = document.getElementById('wiz-budget-slider').value;
     document.getElementById('wiz-rev-zone').textContent = zoneNames;
-    document.getElementById('wiz-rev-budget').textContent = '$' + budgetVal + ' USD/semana';
+    document.getElementById('wiz-rev-budget').textContent = fmtCOP(budgetVal) + '/semana';
     document.getElementById('wiz-rev-duration').textContent = wizDuration + ' días';
     document.getElementById('wiz-rev-objective').textContent = document.getElementById('wiz-objective').selectedOptions[0].textContent.replace(' ✓ probado', '');
 
@@ -952,8 +957,8 @@ async function publicarCampana() {
   btn.disabled = true;
 
   try {
-    const budgetUsd = parseInt(document.getElementById('wiz-budget-slider').value);
-    const dailyBudgetCop = Math.round((budgetUsd * COP_TO_USD) / 7);
+    const budgetCop = parseInt(document.getElementById('wiz-budget-slider').value); // FIX v33 — ya en COP, sin multiplicar
+    const dailyBudgetCop = Math.round(budgetCop / 7);
     const adText = document.getElementById('wiz-ad-text').value.trim();
     const headlineText = document.getElementById('wiz-headline').value.trim();
     const activarYa = document.getElementById('wiz-activar-ya').checked;
@@ -1162,15 +1167,13 @@ const WORKER_API = 'https://creditek-bot.comercial-853.workers.dev';
 const WORKER_SHARED_SECRET = '73ef5474869b234c9d666476271a47fcf82b259d54ca3619';
 
 // ── Config ───────────────────────────────────────────────────────
-// FIX v32, 21-jul-2026: el dashboard de KPIs/tablas/tendencia/IA ya no usa
-// COP_TO_USD (account_currency=COP confirmado — spend/cpm/cpc ya vienen en
-// pesos). Se deja la variable y el input oculto del modal (ver arriba) sin
-// borrar porque SÍ la siguen usando 3 piezas separadas que no se tocaron en
-// este fix (quedan pendientes de una decisión aparte con Oscar sobre
-// ck_weekly_budget, ver reporte): el slider de presupuesto del wizard de
-// campaña nueva (línea ~824), el daily_budget real que se envía a Meta al
-// publicar (línea ~952), y "Tu estado actual"/alertas de sobregasto
-// (renderEstadoActual/refrescarAlertas, ~línea 1271).
+// FIX v32/v33, 21-jul-2026: dashboard 100% en COP (account_currency=COP
+// confirmado). COP_TO_USD ya no tiene NINGÚN uso activo en el código — ni en
+// KPIs/tablas/tendencia/IA (v32), ni en el presupuesto semanal, el wizard de
+// campaña nueva, ni el daily_budget real enviado a Meta al publicar (v33,
+// ver ck_weekly_budget más abajo, ahora también en COP). Se deja la
+// variable y el input oculto del modal (ver arriba) sin borrar por si se
+// necesita a futuro, pero no la lee ni la usa ningún cálculo del tablero.
 let COP_TO_USD = parseFloat(localStorage.getItem('ck_cop_usd')) || 3350;
 
 // Fix v1 — solo contar acciones que representan intención real (lead/conversación/clic),
@@ -1191,7 +1194,7 @@ function abrirConfig() {
   document.getElementById('inp-token').value   = localStorage.getItem('ck_meta_token') || '';
   document.getElementById('inp-account').value = localStorage.getItem('ck_meta_account') || '';
   document.getElementById('inp-claude').value  = localStorage.getItem('ck_claude_key') || '';
-  document.getElementById('inp-budget').value  = localStorage.getItem('ck_weekly_budget') || '50';
+  document.getElementById('inp-budget').value  = localStorage.getItem('ck_weekly_budget') || '160000';
   document.getElementById('inp-tasa').value    = localStorage.getItem('ck_cop_usd') || COP_TO_USD;
   document.getElementById('modal').classList.add('open');
 }
@@ -1283,9 +1286,12 @@ async function cargarEstadoActual() {
 
 function renderEstadoActual() {
   if (estadoReal.semanaSpendCOP === null) return;
-  const weeklyBudget  = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
-  const spendSemana   = estadoReal.semanaSpendCOP / COP_TO_USD;
-  const spendMes      = estadoReal.mesSpendCOP / COP_TO_USD;
+  // FIX v33, 21-jul-2026 — ck_weekly_budget ya está en COP (antes "USD"),
+  // spendSemana/spendMes ya venían en COP de Meta — se comparan directo,
+  // sin pasar por COP_TO_USD en ningún lado de esta función.
+  const weeklyBudget  = parseFloat(localStorage.getItem('ck_weekly_budget') || '160000');
+  const spendSemana   = estadoReal.semanaSpendCOP;
+  const spendMes      = estadoReal.mesSpendCOP;
 
   // Misma lógica de v23 (sin capear el sobregasto real), solo que ahora
   // alimentada con el gasto real de la semana en curso, no con el rango
@@ -1296,15 +1302,14 @@ function renderEstadoActual() {
   const bar = document.getElementById('estado-semana-bar');
   bar.style.width = pctBar + '%';
   bar.className = 'budget-bar-fill' + (pctReal >= 100 ? ' over' : pctReal >= 80 ? ' warn' : '');
-  document.getElementById('estado-semana-spent').textContent  = 'Gastado: $' + spendSemana.toFixed(2);
+  document.getElementById('estado-semana-spent').textContent  = 'Gastado: ' + fmtCOP(spendSemana);
   document.getElementById('estado-semana-remain').textContent = pctReal > 100
-    ? 'Sobregasto: $' + (spendSemana - weeklyBudget).toFixed(2)
-    : 'Restante: $' + (weeklyBudget - spendSemana).toFixed(2);
-  const copEquivSemana = (weeklyBudget * COP_TO_USD).toLocaleString('es-CO');
-  document.getElementById('estado-semana-title').textContent = `💰 Gasto real de esta semana (lun—hoy) — presupuesto $${weeklyBudget} USD (~$${copEquivSemana} COP)`;
+    ? 'Sobregasto: ' + fmtCOP(spendSemana - weeklyBudget)
+    : 'Restante: ' + fmtCOP(weeklyBudget - spendSemana);
+  document.getElementById('estado-semana-title').textContent = `💰 Gasto real de esta semana (lun—hoy) — presupuesto ${fmtCOP(weeklyBudget)}`;
 
-  document.getElementById('estado-mes-valor').textContent = '$' + spendMes.toFixed(2) + ' USD';
-  document.getElementById('estado-mes-sub').textContent = `~$${Math.round(spendMes * COP_TO_USD).toLocaleString('es-CO')} COP · desde el 1° del mes hasta hoy`;
+  document.getElementById('estado-mes-valor').textContent = fmtCOP(spendMes);
+  document.getElementById('estado-mes-sub').textContent = 'Desde el 1° del mes hasta hoy';
 
   // La alerta de sobregasto (v26) ahora se alimenta de este dato real, no
   // del gasto prorrateado de la Sección B — ver refrescarAlertas().
@@ -1317,9 +1322,10 @@ function renderEstadoActual() {
 // campaña). Se llama desde renderEstadoActual() (cuando cambia el gasto
 // real) y desde renderVista() (cuando cambia la selección de campaña).
 function refrescarAlertas(camps) {
-  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
-  const pctReal      = estadoReal.semanaSpendCOP !== null ? ((estadoReal.semanaSpendCOP / COP_TO_USD) / weeklyBudget) * 100 : null;
-  const spendSemana  = estadoReal.semanaSpendCOP !== null ? estadoReal.semanaSpendCOP / COP_TO_USD : 0;
+  // FIX v33 — weeklyBudget y semanaSpendCOP ya están en la misma unidad (COP)
+  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '160000');
+  const pctReal      = estadoReal.semanaSpendCOP !== null ? (estadoReal.semanaSpendCOP / weeklyBudget) * 100 : null;
+  const spendSemana  = estadoReal.semanaSpendCOP !== null ? estadoReal.semanaSpendCOP : 0;
   renderAlertas(pctReal, weeklyBudget, spendSemana, camps || lastData?.camps || []);
 }
 
@@ -1659,7 +1665,7 @@ function renderAlertas(pctReal, weeklyBudget, spendWeekly, camps) {
     alertas.push({
       sev: 'red',
       icon: '🚨',
-      html: `<b>Sobregasto de ${exceso.toFixed(0)}%</b> esta semana — llevas gastado $${spendWeekly.toFixed(2)} de un presupuesto de $${weeklyBudget.toFixed(2)} USD.`
+      html: `<b>Sobregasto de ${exceso.toFixed(0)}%</b> esta semana — llevas gastado ${fmtCOP(spendWeekly)} de un presupuesto de ${fmtCOP(weeklyBudget)}.`
     });
   }
 
@@ -2032,7 +2038,7 @@ async function analizarConIA(data, campañaIndividual) {
   if (!key) return;
   if (!campañaIndividual && !data.main) return;
 
-  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '50');
+  const weeklyBudget = parseFloat(localStorage.getItem('ck_weekly_budget') || '160000'); // FIX v33 — ya en COP
   let prompt;
 
   if (campañaIndividual) {
@@ -2089,10 +2095,11 @@ ${SEPARADOR_INSTRUCCION}`;
     // alimenta la Sección A, calculado en v29/cargarEstadoActual()), y AL
     // MISMO TIEMPO el gasto del período seleccionado, cada uno etiquetado
     // por separado para que Claude no los mezcle.
-    const gastoSemanaReal = estadoReal.semanaSpendCOP !== null ? (estadoReal.semanaSpendCOP / COP_TO_USD) : null;
+    // FIX v33 — gastoSemanaReal y weeklyBudget ya están en la misma unidad (COP), sin conversión
+    const gastoSemanaReal = estadoReal.semanaSpendCOP !== null ? estadoReal.semanaSpendCOP : null;
     const lineaGastoSemana = gastoSemanaReal !== null
-      ? `- Gasto REAL de esta semana (lunes a hoy, dato fijo de la Sección "Tu estado actual"): $${gastoSemanaReal.toFixed(2)} USD de $${weeklyBudget} USD presupuestados. Este es el único número que debes usar si vas a hablar de sobregasto o cumplimiento del presupuesto semanal.`
-      : `- Presupuesto semanal configurado: $${weeklyBudget} USD (el gasto real de la semana en curso no cargó aún — no asumas ni inventes ese número).`;
+      ? `- Gasto REAL de esta semana (lunes a hoy, dato fijo de la Sección "Tu estado actual"): ${fmtCOP(gastoSemanaReal)} de ${fmtCOP(weeklyBudget)} presupuestados. Este es el único número que debes usar si vas a hablar de sobregasto o cumplimiento del presupuesto semanal.`
+      : `- Presupuesto semanal configurado: ${fmtCOP(weeklyBudget)} (el gasto real de la semana en curso no cargó aún — no asumas ni inventes ese número).`;
 
     prompt = `Eres un experto en performance marketing digital para negocios de retail en Colombia. Analiza estos datos de Meta Ads de Creditek (empresa de venta de celulares y tecnología a crédito en el Caribe colombiano) y da un análisis ejecutivo en español.
 
