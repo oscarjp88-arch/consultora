@@ -286,7 +286,7 @@ async function cargarRemision() {
     SB.from('remision_items')
       .select('id, producto_id, cantidad, precio_remision, productos(id, nombre, tipo, categoria)')
       .eq('remision_id', REMISION_ID),
-    SB.from('origenes').select('codigo, nombre').eq('codigo', rem.tienda_codigo).maybeSingle()
+    SB.from('origenes').select('codigo, nombre').eq('codigo', rem.tienda_codigo).neq('tipo', 'central').maybeSingle()
   ]);
 
   if (iErr) { showError('Error cargando ítems: ' + iErr.message); return; }
