@@ -215,7 +215,7 @@ document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
 });
 
 async function cargarOrigenes() {
-  const { data, error } = await sb.from('origenes').select('codigo, nombre').eq('activo', true).order('codigo');
+  const { data, error } = await sb.from('origenes').select('codigo, nombre').eq('activo', true).eq('tipo', 'propia').order('codigo');
   if (error || !data) return;
   const select = document.getElementById('filtroOrigen');
   select.innerHTML = '<option value="">Todos los orígenes</option>' +
