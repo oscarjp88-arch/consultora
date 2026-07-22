@@ -1384,11 +1384,26 @@ async function cargarDatos() {
     campsData = campsData.map(c => ({ ...c, effective_status: statusMap[c.campaign_id] || 'DESCONOCIDO' }));
 
     // A/B testing — traer datos a nivel de anuncio (ad) para comparar variantes
-    const urlAds = `https://graph.facebook.com/v25.0/act_${account}/insights?fields=ad_id,ad_name,campaign_id,spend,reach,ctr,cpc,actions,effective_status&time_range={"since":"${since}","until":"${until}"}&level=ad&access_token=${token}`;
+    // FIX v30 — effective_status removido de aquí: /insights no acepta ese campo
+    // (error real de Meta: "(#100) effective_status is not valid for fields param").
+    // El estado del anuncio se pide aparte, igual que ya se hacía para campañas arriba.
+    const urlAds = `https://graph.facebook.com/v25.0/act_${account}/insights?fields=ad_id,ad_name,campaign_id,spend,reach,ctr,cpc,actions&time_range={"since":"${since}","until":"${until}"}&level=ad&access_token=${token}`;
     const resAds = await fetch(urlAds);
     const dataAds = await resAds.json();
     const todosLosAds = dataAds.data || []; // FIX v26 — sin filtrar, para el mapeo anuncio→campaña de Mejora 5
-    const adsData = todosLosAds.filter(a => a.ad_name && a.ad_name.includes(' - Variante '));
+
+    // FIX v30 — estado real de cada anuncio en A/B testing (insights no lo tiene, /?ids= sí)
+    const adIdsVariantes = todosLosAds.filter(a => a.ad_name && a.ad_name.includes(' - Variante ')).map(a => a.ad_id).filter(Boolean);
+    let adStatusMap = {};
+    if (adIdsVariantes.length > 0) {
+      const urlAdStatus = `https://graph.facebook.com/v25.0/?ids=${adIdsVariantes.join(',')}&fields=effective_status&access_token=${token}`;
+      const resAdStatus = await fetch(urlAdStatus);
+      const dataAdStatus = await resAdStatus.json();
+      adIdsVariantes.forEach(id => { adStatusMap[id] = dataAdStatus[id]?.effective_status || 'DESCONOCIDO'; });
+    }
+    const adsData = todosLosAds
+      .filter(a => a.ad_name && a.ad_name.includes(' - Variante '))
+      .map(a => ({ ...a, effective_status: adStatusMap[a.ad_id] || 'DESCONOCIDO' }));
 
     // FIX v26, 13-jul-2026 — Fase 3, Mejora 5: costo real por venta.
     // anuncio_id (guardado en Supabase por Sofía, viene del referral de Meta)
