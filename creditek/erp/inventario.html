@@ -141,9 +141,11 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
     <div id="vistaCelulares">
       <div class="filters">
         <select id="filtroTiendaCel" style="display:none;"><option value="">Todas las tiendas</option></select>
+        <!-- FIX 23-jul-2026 · "Inventario en vivo" default a solo disponibles — los vendidos
+             ya se convirtieron en caja/efectivo y no forman parte del inventario físico. -->
         <select id="filtroEstadoCel">
+          <option value="disponible" selected>Disponible (en vivo)</option>
           <option value="">Todos los estados</option>
-          <option value="disponible">Disponible</option>
           <option value="vendido">Vendido</option>
           <option value="en_traslado">En traslado</option>
           <option value="garantia_proveedor">Garantía proveedor</option>
@@ -302,8 +304,13 @@ async function cargarTodo() {
 }
 
 async function cargarCelulares() {
+  // FIX 23-jul-2026 · quitamos el join anidado remision_items(remision_margenes(costo_oscar))
+  // que retornaba null porque en SPEC v2 el costo_oscar vive en remision_margenes
+  // (accesible solo con RLS es_central) y el path no siempre resolvía. El costo
+  // real de Oscar ya está en unidades.costo_remision (guardado al momento de la
+  // compra), que se trae con el * y funciona sin joins extra.
   const { data, error } = await sb.from('unidades')
-    .select('*, productos(nombre, categoria), tiendas:tienda_actual(nombre), remision_items(remision_margenes(costo_oscar))')
+    .select('*, productos(nombre, categoria), tiendas:tienda_actual(nombre)')
     .order('created_at', { ascending: false });
   if (error) { document.getElementById('emptyCelulares').style.display = 'block'; document.getElementById('emptyCelulares').textContent = 'Error: ' + error.message; return; }
   unidadesCache = data || [];
@@ -320,10 +327,18 @@ async function cargarAccesorios() {
 }
 
 function renderResumen() {
+  // FIX 23-jul-2026 · "Inventario en vivo" = solo lo físicamente presente
+  // (estado='disponible'). Vendidos, en_traslado, garantia_proveedor y otros
+  // ya no cuentan como inventario: se convirtieron en caja o dejaron el sistema.
   const disponibles = unidadesCache.filter(u => u.estado === 'disponible');
   const totalUnidadesDisponibles = disponibles.length;
-  const valorRemisionSerializados = disponibles.reduce((s, u) => s + Number(u.costo_remision || 0), 0);
-  const valorAccesorios = stockCache.reduce((s, r) => s + Number(r.cantidad || 0) * Number(r.costo_promedio || 0), 0);
+
+  // Valor visto por la TIENDA: precio_tienda (lo que le costó la remisión).
+  // Fallback a costo_remision para unidades legacy sin precio_tienda seteado.
+  const valorRemisionSerializados = disponibles.reduce(
+    (s, u) => s + Number(u.precio_tienda ?? u.costo_remision ?? 0), 0);
+  const valorAccesorios = stockCache.reduce(
+    (s, r) => s + Number(r.cantidad || 0) * Number(r.precio_tienda ?? r.costo_promedio ?? 0), 0);
   const valorTotalRemision = valorRemisionSerializados + valorAccesorios;
 
   let cards = `
@@ -331,11 +346,16 @@ function renderResumen() {
     <div class="resumen-card"><div class="label">Valor inventario (costo tienda)</div><div class="valor">${fmtCOP(valorTotalRemision)}</div></div>
   `;
   if (esCentral()) {
-    const valorOscarSerializados = disponibles.reduce((s, u) => {
-      const costo = u.remision_items?.remision_margenes?.costo_oscar;
-      return s + Number(costo || 0);
-    }, 0);
-    cards += `<div class="resumen-card"><div class="label">Valor a costo Oscar (solo celulares)</div><div class="valor">${fmtCOP(valorOscarSerializados)}</div></div>`;
+    // FIX 23-jul-2026 · costo Oscar directo desde u.costo_remision (que ya
+    // es el costo real que Oscar pagó al proveedor, guardado en la unidad
+    // al momento de la compra). Antes se leía vía join anidado
+    // remision_items→remision_margenes que retornaba null en muchos casos.
+    const valorOscarSerializados = disponibles.reduce(
+      (s, u) => s + Number(u.costo_remision || 0), 0);
+    const valorOscarAccesorios = stockCache.reduce(
+      (s, r) => s + Number(r.cantidad || 0) * Number(r.costo_promedio || 0), 0);
+    const valorOscarTotal = valorOscarSerializados + valorOscarAccesorios;
+    cards += `<div class="resumen-card"><div class="label">Valor a costo Oscar (inventario total)</div><div class="valor">${fmtCOP(valorOscarTotal)}</div></div>`;
   }
   document.getElementById('resumenCards').innerHTML = cards;
 }
