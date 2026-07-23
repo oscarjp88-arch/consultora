@@ -149,7 +149,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="top-stat"><div class="top-stat-val" id="s-clientes">-</div><div class="top-stat-label">Clientes</div></div>
     <div class="top-stat"><div class="top-stat-val" id="s-convs">-</div><div class="top-stat-label">Hoy</div></div>
     <div class="top-stat"><div class="top-stat-val" id="s-optins">-</div><div class="top-stat-label">Opt-ins</div></div>
-    <div class="top-stat"><div class="top-stat-val" id="s-leads">-</div><div class="top-stat-label">Leads</div></div>
+    <div class="top-stat"><div class="top-stat-val" id="s-leads">-</div><div class="top-stat-label">Leads pendientes</div></div>
+    <div class="top-stat"><div class="top-stat-val" id="s-transferidos">-</div><div class="top-stat-label">Transferidos a asesor</div></div>
   </div>
   <div class="topbar-actions">
     <button class="btn btn-outline" onclick="logoutPanel()">Salir</button>
@@ -296,7 +297,8 @@ async function loadStats(){
     document.getElementById('s-clientes').textContent=d.total_clientes||0;
     document.getElementById('s-convs').textContent=d.hoy||0;
     document.getElementById('s-optins').textContent=d.optins||0;
-    document.getElementById('s-leads').textContent=d.leads||0;
+    document.getElementById('s-leads').textContent=d.leads_pendientes??d.leads??0;
+    document.getElementById('s-transferidos').textContent=d.transferidos??0;
   }catch(e){console.error(e)}
 }
 
