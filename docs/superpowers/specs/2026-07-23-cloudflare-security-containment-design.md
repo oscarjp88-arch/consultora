@@ -25,8 +25,13 @@ have separate specifications and implementation plans.
   GitHub repository.
 - An internal Portal B2B Apps Script source file is included in the static
   deployment and is publicly retrievable.
-- A credential found in public source must be treated as compromised and
-  rotated after its replacement is installed and verified.
+- A private key used by the Gemini proxy is tracked in the public repository
+  and must be treated as compromised.
+- Credentials found in public source must be treated as compromised and
+  rotated after their replacements are installed and verified.
+- Some legacy browser applications still contain shared credentials required
+  by their current architecture. Removing those values safely requires the
+  dedicated Worker migrations that are explicitly deferred from this phase.
 
 ## Non-Negotiable Constraints
 
@@ -36,6 +41,8 @@ have separate specifications and implementation plans.
 - Do not stop or edit existing Cloudflare Cron Triggers.
 - Do not revoke the existing exposed credential before its replacement works.
 - Do not expose secret values in logs, documentation, commits, or chat.
+- Do not remove a legacy browser credential until its server-side replacement
+  exists and has passed an end-to-end test.
 - Stop at the first failed validation and restore the last verified state.
 
 ## Chosen Repository and Hosting Model
@@ -85,7 +92,10 @@ Build the exact static artifact locally and enforce automated assertions:
 
 - Required public files are present.
 - Internal backend source files are absent.
-- Known secret patterns are absent from the artifact.
+- Private keys, backend source files, and server-only credential patterns are
+  absent from the artifact.
+- Known legacy browser credentials are reported as accepted unresolved
+  findings rather than silently treated as secure.
 - Existing relative links resolve inside the artifact.
 - The Cloudflare deployment configuration passes validation.
 
@@ -118,23 +128,32 @@ that Cloudflare can still fetch and build the private repository.
 If the private build fails, keep production on the last verified Cloudflare
 version and repair only the Git integration permissions.
 
-### 6. Rotate the Exposed Credential Safely
+### 6. Rotate the Exposed Credentials Safely
 
-Create a replacement credential with the minimum required permissions.
+Create replacement credentials with the minimum required permissions.
 
-Install it first in the active Portal B2B backend using a server-side secret
-store or script property rather than source code. Execute a non-destructive
-backend health check and one explicitly approved end-to-end test.
+For Portal B2B, install the replacement first in the active backend using a
+server-side secret store or script property rather than source code. Execute a
+non-destructive backend health check and one explicitly approved end-to-end
+test.
+
+For the Gemini proxy, introduce a dual-public-key transition, verify that the
+new key can obtain a Google federated token and generate a test image, then
+remove the compromised key from the Worker JWKS and repository.
 
 Only after the replacement is proven operational:
 
-- Revoke the exposed credential.
-- Confirm the old credential no longer works.
-- Confirm the new credential continues to work.
+- Revoke the corresponding exposed credential.
+- Confirm the old credential or key no longer works.
+- Confirm the new credential or key continues to work.
 - Record the rotation date without recording either credential value.
 
 Historical Git commits must be treated as permanently exposed even after the
 repository becomes private.
+
+Legacy shared credentials embedded in the browser agents are documented but
+not removed during this phase because doing so before their replacement
+Workers exist would break production behavior.
 
 ## Validation Matrix
 
@@ -173,8 +192,8 @@ The containment phase is complete only when:
 4. Cloudflare can deploy from the private repository.
 5. Existing Workers, Cron Triggers, Google Apps Scripts, ERP, and Sofía remain
    operational and behaviorally unchanged.
-6. The exposed credential has been replaced and revoked without an
-   interruption.
+6. The exposed Portal backend credential and Gemini private key have been
+   replaced and revoked without an interruption.
 7. Fresh verification evidence is recorded for every completion claim.
 
 ## Deferred Work
@@ -186,5 +205,6 @@ The following work is intentionally excluded and requires separate designs:
 - Convenios migration to Workers, D1, and R2.
 - Cloudflare Access and role-based authorization.
 - Migration of browser-side AI provider keys into Workers Secrets.
+- Removal and rotation of legacy browser-shared Worker credentials.
 - New CREDITEK subdomains or DNS changes.
 - Transfer to a CREDITEK-owned GitHub organization.
