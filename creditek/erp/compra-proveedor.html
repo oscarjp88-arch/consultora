@@ -565,6 +565,10 @@ async function guardarCompra() {
         cantidad: it.cantidad,
         costo_unitario: it.costo_unitario,
         precio_remision: it.precio_remision,
+        // FIX 23-jul-2026 · el RPC persiste este margen en productos.margen_tipo/valor
+        // para que la próxima compra del mismo producto lo recuerde (paquete FIX_Margen_Payload_v1).
+        margen_tipo: it.margen_tipo,
+        margen_valor: it.margen_valor,
       });
     }
 
