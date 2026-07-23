@@ -105,6 +105,84 @@
     </div>
   </section>
 
+  <!-- =========================== SPEC v2 · SECCIÓN DE DESPACHO =========================== -->
+  <section class="bg-white rounded-lg shadow-sm border-2 border-blue-200 p-5">
+    <div class="flex justify-between items-start mb-3">
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800">🚚 Nuevo despacho</h2>
+        <p class="text-xs text-gray-500">Selecciona la tienda destino y agrega productos. El precio de remisión se lee de la unidad/stock (definido al comprar). Botón ✏️ permite modificarlo para este despacho puntual.</p>
+      </div>
+      <button id="btn-toggle-despacho" class="text-xs text-blue-600 hover:text-blue-800">Ocultar ▲</button>
+    </div>
+
+    <div id="panel-despacho">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <label class="block md:col-span-2">
+          <span class="text-sm font-medium text-gray-700">Tienda destino <span class="text-red-500">*</span></span>
+          <select id="despacho-tienda" class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">— Selecciona una tienda —</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Nota (opcional)</span>
+          <input id="despacho-nota" type="text" maxlength="200"
+                 class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="Ej. Reparto factura FV-0123 · lote 1 de 3" />
+        </label>
+      </div>
+
+      <div class="flex justify-between items-center mb-2">
+        <p class="text-xs text-gray-500">Ítems a despachar</p>
+        <button id="btn-agregar-despacho-item" type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-medium">+ Agregar producto</button>
+      </div>
+
+      <div class="overflow-x-auto border border-gray-200 rounded">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-700 text-left">
+            <tr>
+              <th class="px-3 py-2 font-semibold w-[35%]">Producto</th>
+              <th class="px-3 py-2 font-semibold text-right w-24">Cantidad</th>
+              <th class="px-3 py-2 font-semibold text-right w-40">Precio remisión</th>
+              <th class="px-3 py-2 font-semibold text-right w-40">Subtotal</th>
+              <th class="px-3 py-2 font-semibold text-center w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-despacho">
+            <tr><td colspan="5" class="text-center py-6 text-gray-400 text-xs">Aún no agregas productos. Presiona <b>+ Agregar producto</b>.</td></tr>
+          </tbody>
+          <tfoot>
+            <tr class="border-t border-gray-200 bg-gray-50">
+              <td colspan="3" class="px-3 py-2 text-right font-semibold text-gray-700">Total remisión</td>
+              <td class="px-3 py-2 text-right font-bold font-mono text-blue-800" id="despacho-total">$ 0</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button id="btn-despacho-limpiar" type="button" class="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm">Limpiar</button>
+        <button id="btn-despachar" type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded font-semibold text-sm">Despachar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal buscador de productos disponibles para despacho -->
+  <div id="modal-despacho-buscar" class="hidden fixed inset-0 bg-black bg-opacity-40 z-40 flex items-start justify-center pt-20 px-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-xl">
+      <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="font-semibold text-gray-800">Buscar producto con stock en CENTRAL</h3>
+        <button id="cerrar-despacho-modal" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+      <div class="p-4">
+        <input id="despacho-input-buscar" type="text" autofocus
+               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+               placeholder="Nombre, categoría o SKU..." />
+        <div id="despacho-search-results" style="max-height:260px; overflow-y:auto" class="mt-3 border border-gray-100 rounded"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- =========================== FILTROS =========================== -->
   <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-3">
     <input id="filtro-texto" type="text" placeholder="Buscar por producto o categoría..."
@@ -552,12 +630,313 @@ document.getElementById('tbody-alerta').addEventListener('click', e => {
 });
 
 // ============================================================
+// SPEC v2 · SECCIÓN DE DESPACHO ACTIVO
+// ============================================================
+let tiendasDestino = [];       // [{codigo, nombre}] — tiendas propias activas
+let productosDisponibles = []; // [{id, nombre, categoria, tipo, disponible, precio_tienda}]
+let despachoItems = [];        // [{tempId, producto_id, producto_nombre, tipo, cantidad, precio_remision, precio_override, stock_disponible}]
+
+async function cargarDataDespacho() {
+  const [tRes, uRes, sRes, pRes] = await Promise.all([
+    SB.from('tiendas_operativas').select('codigo, nombre').order('codigo'),
+    // Unidades disponibles serializadas: agrupar por producto
+    SB.from('unidades')
+      .select('producto_id, precio_tienda, factura_proveedor_id')
+      .eq('tienda_actual', 'CENTRAL')
+      .eq('estado', 'disponible')
+      .is('imei', null),
+    // Stock cantidad en CENTRAL
+    SB.from('stock_cantidad')
+      .select('producto_id, cantidad, precio_tienda')
+      .eq('tienda_codigo', 'CENTRAL')
+      .gt('cantidad', 0),
+    SB.from('productos').select('id, nombre, categoria, tipo').eq('activo', true),
+  ]);
+  if (tRes.error) { toast('Error tiendas: ' + tRes.error.message, 'error'); return; }
+  if (uRes.error) { toast('Error unidades: ' + uRes.error.message, 'error'); return; }
+  if (sRes.error) { toast('Error stock: ' + sRes.error.message, 'error'); return; }
+  if (pRes.error) { toast('Error productos: ' + pRes.error.message, 'error'); return; }
+
+  tiendasDestino = tRes.data || [];
+  const sel = document.getElementById('despacho-tienda');
+  sel.innerHTML = '<option value="">— Selecciona una tienda —</option>' +
+    tiendasDestino.map(t => `<option value="${esc(t.codigo)}">${esc(t.codigo)} · ${esc(t.nombre)}</option>`).join('');
+
+  // Consolidar disponibilidad por producto (respetando filtro de factura si aplica).
+  const facturaFiltro = document.getElementById('filtro-factura').value;
+  const productoMap = {};
+  (pRes.data || []).forEach(p => {
+    productoMap[p.id] = { ...p, disponible: 0, precio_tienda: null };
+  });
+  // Serializados
+  (uRes.data || []).forEach(u => {
+    if (facturaFiltro && u.factura_proveedor_id !== facturaFiltro) return;
+    const p = productoMap[u.producto_id];
+    if (!p || p.tipo !== 'serializado') return;
+    p.disponible += 1;
+    // Usar el precio_tienda de la primera unidad disponible como referencia (FIFO real lo decide el RPC).
+    if (p.precio_tienda == null) p.precio_tienda = u.precio_tienda;
+  });
+  // Cantidad
+  (sRes.data || []).forEach(s => {
+    const p = productoMap[s.producto_id];
+    if (!p || p.tipo !== 'cantidad') return;
+    p.disponible += Number(s.cantidad || 0);
+    p.precio_tienda = s.precio_tienda;
+  });
+
+  productosDisponibles = Object.values(productoMap)
+    .filter(p => p.disponible > 0)
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+}
+
+function despachoNuevoTempId() { return crypto.randomUUID(); }
+
+function despachoActualizarTotal() {
+  let total = 0;
+  despachoItems.forEach(i => {
+    const sub = (Number(i.cantidad) || 0) * (Number(i.precio_remision) || 0);
+    total += sub;
+    const el = document.getElementById('desp-sub-' + i.tempId);
+    if (el) el.textContent = money(sub);
+  });
+  document.getElementById('despacho-total').textContent = money(total);
+}
+
+function despachoRender() {
+  const tbody = document.getElementById('tbody-despacho');
+  if (despachoItems.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-400 text-xs">Aún no agregas productos. Presiona <b>+ Agregar producto</b>.</td></tr>';
+    despachoActualizarTotal();
+    return;
+  }
+  tbody.innerHTML = despachoItems.map(i => {
+    const sub = (Number(i.cantidad) || 0) * (Number(i.precio_remision) || 0);
+    const precioDisabled = !i.precio_override_active;
+    const badgeTipo = i.tipo === 'serializado'
+      ? '<span class="ml-2 px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-700">serializado</span>'
+      : '<span class="ml-2 px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700">cantidad</span>';
+    const lapiz = i.precio_override_active
+      ? `<button type="button" data-desp-lock="${i.tempId}" class="text-xs text-orange-600 hover:text-orange-800" title="Volver al precio automático">🔒</button>`
+      : `<button type="button" data-desp-unlock="${i.tempId}" class="text-xs text-gray-500 hover:text-gray-800" title="Modificar precio (override)">✏️</button>`;
+    return `
+      <tr>
+        <td class="px-3 py-2">
+          <div class="font-medium text-gray-800">${esc(i.producto_nombre)}</div>
+          <div class="text-xs text-gray-500">Disponible: ${i.stock_disponible}${badgeTipo}</div>
+        </td>
+        <td class="px-3 py-2">
+          <input type="number" min="1" max="${i.stock_disponible}" step="1" value="${i.cantidad ?? ''}"
+                 data-desp-cant="${i.tempId}"
+                 class="w-full border border-gray-300 rounded px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </td>
+        <td class="px-3 py-2">
+          <div class="flex items-center gap-1">
+            <span class="text-gray-500 text-xs">$</span>
+            <input type="number" min="0" step="1" value="${i.precio_remision ?? ''}"
+                   data-desp-precio="${i.tempId}" ${precioDisabled ? 'disabled' : ''}
+                   class="w-full border border-gray-300 rounded px-2 py-1 text-right ${precioDisabled ? 'bg-gray-100 text-gray-600' : 'bg-yellow-50 font-semibold'} focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            ${lapiz}
+          </div>
+        </td>
+        <td class="px-3 py-2 text-right font-mono" id="desp-sub-${i.tempId}">${money(sub)}</td>
+        <td class="px-3 py-2 text-center">
+          <button type="button" data-desp-rm="${i.tempId}" class="text-red-500 hover:text-red-700" title="Quitar">×</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  despachoActualizarTotal();
+}
+
+function despachoAgregarProducto(prodId) {
+  const p = productosDisponibles.find(x => x.id === prodId);
+  if (!p) return;
+  // Si ya está en la lista, no duplicar — enfocar.
+  if (despachoItems.some(i => i.producto_id === prodId)) {
+    toast('Ese producto ya está en la lista', 'warn');
+    return;
+  }
+  despachoItems.push({
+    tempId: despachoNuevoTempId(),
+    producto_id: p.id,
+    producto_nombre: p.nombre,
+    tipo: p.tipo,
+    stock_disponible: p.disponible,
+    cantidad: 1,
+    precio_remision: p.precio_tienda ?? 0,
+    precio_override_active: false,
+  });
+  despachoRender();
+}
+
+document.getElementById('btn-toggle-despacho').addEventListener('click', () => {
+  const panel = document.getElementById('panel-despacho');
+  const btn = document.getElementById('btn-toggle-despacho');
+  const hidden = panel.classList.toggle('hidden');
+  btn.textContent = hidden ? 'Mostrar ▼' : 'Ocultar ▲';
+});
+
+document.getElementById('btn-agregar-despacho-item').addEventListener('click', () => {
+  document.getElementById('despacho-input-buscar').value = '';
+  document.getElementById('modal-despacho-buscar').classList.remove('hidden');
+  renderDespachoBusqueda('');
+  setTimeout(() => document.getElementById('despacho-input-buscar').focus(), 50);
+});
+
+document.getElementById('cerrar-despacho-modal').addEventListener('click', () => {
+  document.getElementById('modal-despacho-buscar').classList.add('hidden');
+});
+document.getElementById('modal-despacho-buscar').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-despacho-buscar') document.getElementById('modal-despacho-buscar').classList.add('hidden');
+});
+document.getElementById('despacho-input-buscar').addEventListener('input', (e) => renderDespachoBusqueda(e.target.value));
+
+function renderDespachoBusqueda(q) {
+  const filtro = q.trim().toLowerCase();
+  const res = document.getElementById('despacho-search-results');
+  const hits = productosDisponibles.filter(p => {
+    if (!filtro) return true;
+    return (p.nombre + ' ' + p.categoria).toLowerCase().includes(filtro);
+  }).slice(0, 50);
+  if (hits.length === 0) {
+    res.innerHTML = '<p class="p-3 text-sm text-gray-400 text-center">Sin resultados o sin stock en CENTRAL.</p>';
+    return;
+  }
+  res.innerHTML = hits.map(p => `
+    <button type="button" data-desp-prod="${esc(p.id)}" class="w-full text-left px-3 py-2 border-b border-gray-100 last:border-0 hover:bg-blue-50">
+      <div class="flex items-center justify-between">
+        <span class="font-medium text-gray-800">${esc(p.nombre)}</span>
+        <span class="text-xs text-gray-500">Disp: <b>${p.disponible}</b> · ${money(p.precio_tienda)}</span>
+      </div>
+      <div class="text-xs text-gray-500">${esc(p.categoria)} · ${p.tipo}</div>
+    </button>
+  `).join('');
+}
+
+document.getElementById('despacho-search-results').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-desp-prod]');
+  if (!btn) return;
+  despachoAgregarProducto(btn.getAttribute('data-desp-prod'));
+  document.getElementById('modal-despacho-buscar').classList.add('hidden');
+});
+
+document.getElementById('tbody-despacho').addEventListener('click', (e) => {
+  const rm = e.target.closest('[data-desp-rm]');
+  if (rm) {
+    despachoItems = despachoItems.filter(i => i.tempId !== rm.getAttribute('data-desp-rm'));
+    despachoRender();
+    return;
+  }
+  const unlock = e.target.closest('[data-desp-unlock]');
+  if (unlock) {
+    // Verificar que el usuario es gerencia/auditoría (defensa; el input ya está deshabilitado)
+    if (rolActual !== 'gerencia' && rolActual !== 'auditoria') {
+      toast('Solo gerencia/auditoría puede modificar el precio.', 'error'); return;
+    }
+    const it = despachoItems.find(i => i.tempId === unlock.getAttribute('data-desp-unlock'));
+    if (it) { it.precio_override_active = true; despachoRender(); }
+    return;
+  }
+  const lock = e.target.closest('[data-desp-lock]');
+  if (lock) {
+    const it = despachoItems.find(i => i.tempId === lock.getAttribute('data-desp-lock'));
+    if (it) {
+      it.precio_override_active = false;
+      // Restablecer el precio original desde productosDisponibles
+      const orig = productosDisponibles.find(p => p.id === it.producto_id);
+      if (orig) it.precio_remision = orig.precio_tienda ?? 0;
+      despachoRender();
+    }
+    return;
+  }
+});
+
+document.getElementById('tbody-despacho').addEventListener('input', (e) => {
+  const inpCant = e.target.closest('[data-desp-cant]');
+  if (inpCant) {
+    const it = despachoItems.find(i => i.tempId === inpCant.getAttribute('data-desp-cant'));
+    if (!it) return;
+    let v = parseInt(inpCant.value, 10);
+    if (isNaN(v) || v < 1) v = 1;
+    if (v > it.stock_disponible) { v = it.stock_disponible; inpCant.value = v; }
+    it.cantidad = v;
+    despachoActualizarTotal();
+    return;
+  }
+  const inpPrec = e.target.closest('[data-desp-precio]');
+  if (inpPrec) {
+    const it = despachoItems.find(i => i.tempId === inpPrec.getAttribute('data-desp-precio'));
+    if (!it || !it.precio_override_active) return;
+    it.precio_remision = inpPrec.value === '' ? 0 : Math.max(0, parseFloat(inpPrec.value) || 0);
+    despachoActualizarTotal();
+  }
+});
+
+document.getElementById('btn-despacho-limpiar').addEventListener('click', () => {
+  if (despachoItems.length > 0 && !confirm('¿Descartar el despacho en curso?')) return;
+  despachoItems = [];
+  document.getElementById('despacho-tienda').value = '';
+  document.getElementById('despacho-nota').value = '';
+  despachoRender();
+});
+
+document.getElementById('btn-despachar').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-despachar');
+  btn.disabled = true; const txt = btn.textContent; btn.textContent = 'Despachando...';
+  try {
+    const tienda = document.getElementById('despacho-tienda').value;
+    const nota = document.getElementById('despacho-nota').value.trim();
+    if (!tienda) throw new Error('Selecciona la tienda destino');
+    if (despachoItems.length === 0) throw new Error('Agrega al menos un producto');
+
+    const payload = [];
+    for (const it of despachoItems) {
+      if (!it.cantidad || it.cantidad <= 0) throw new Error(`Cantidad inválida en "${it.producto_nombre}"`);
+      if (it.cantidad > it.stock_disponible) throw new Error(`No hay suficiente stock de "${it.producto_nombre}" (disp: ${it.stock_disponible})`);
+      const item = { producto_id: it.producto_id, cantidad: it.cantidad };
+      if (it.precio_override_active) item.precio_override = it.precio_remision;
+      payload.push(item);
+    }
+
+    const { data, error } = await SB.rpc('despachar_remision_desde_central', {
+      p_tienda_codigo: tienda,
+      p_items: payload,
+      p_nota: nota || null,
+    });
+    if (error) throw new Error(error.message);
+    if (!data || data.ok !== true) throw new Error('Respuesta inesperada del RPC');
+
+    toast(`Remisión #${data.consecutivo} despachada`);
+    despachoItems = [];
+    document.getElementById('despacho-tienda').value = '';
+    document.getElementById('despacho-nota').value = '';
+    despachoRender();
+    // Recargar monitor (stock cambió) y catálogo de disponibles
+    await cargarAlerta();
+    await cargarDataDespacho();
+    // Ofrecer ir al documento
+    if (confirm(`Remisión #${data.consecutivo} creada. ¿Abrir el documento para revisar/compartir?`)) {
+      location.href = `documento-remision.html?remision_id=${data.remision_id}`;
+    }
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = txt;
+  }
+});
+
+// Re-cargar productos disponibles cada vez que cambia el filtro-factura
+document.getElementById('filtro-factura').addEventListener('change', () => { cargarDataDespacho(); });
+
+// ============================================================
 // BOOT
 // ============================================================
 (async function () {
   const ok = await verificarAuth();
   if (!ok) return;
   await cargarAlerta();
+  await cargarDataDespacho();
 
   // SIDEBAR OPCIONAL:
   // if (window.renderSidebar) window.renderSidebar('bodega-central');
