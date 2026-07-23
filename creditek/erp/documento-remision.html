@@ -13,10 +13,13 @@
        - rol usuario = 'admin_tienda' de la tienda destino, o
        - rol usuario ∈ ('gerencia','auditoria')
 
-  IMPORTANTE — regla del negocio (Oscar, 21 jul 2026):
-    Este documento se comparte con la tienda. Nunca muestra factura de
-    proveedor ni costo de Oscar — solo cantidad y precio de remisión
-    (lo que la tienda paga). El margen vive solo en la vista central.
+  IMPORTANTE — regla del negocio actualizada (FIX_Remision_Visual_v1, 23-jul-2026):
+    Este documento se comparte con la tienda. Muestra proveedor +
+    número de factura + fecha de compra (para trazabilidad de garantía).
+    NO muestra el costo de Creditek (costo_oscar) — ese campo vive solo
+    en las vistas internas (compra-proveedor, utilidad-creditek,
+    bodega-central). Solo cantidad y precio de remisión (lo que la
+    tienda paga).
 
   INTEGRACIÓN:
     1. Cliente Supabase: window.SB o CREDITEK_ENV (mismo patrón).
@@ -46,11 +49,19 @@
     .imei-check-ok   { color: #10b981; }
     .imei-check-bad  { color: #ef4444; }
 
+    /* FIX 23-jul-2026 · impresión limpia para Ctrl+P.
+       Oculta header, botones y elementos UI; deja solo el documento. */
     @media print {
       .no-print { display: none !important; }
-      body { background: white; }
-      .print-full { max-width: none !important; }
-      .print-shadow { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+      body { background: white !important; margin: 0; padding: 0; }
+      main#app { padding: 0 !important; margin: 0 auto !important; max-width: 100% !important; }
+      .print-full { max-width: none !important; padding: 0 !important; }
+      .print-shadow { box-shadow: none !important; border: none !important; }
+      /* Evitar cortes feos en la tabla de items */
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+      thead { display: table-header-group; }
+      tfoot { display: table-footer-group; }
     }
   </style>
 </head>
@@ -78,14 +89,19 @@
 
   <div class="bg-white rounded-lg shadow-md print-shadow overflow-hidden">
 
-    <!-- Encabezado del documento -->
+    <!-- FIX 23-jul-2026 · Encabezado con logo corporativo -->
     <div class="p-6 border-b-2 border-gray-200 flex justify-between items-start">
-      <div>
-        <div class="text-xs text-gray-500 uppercase tracking-wider">Creditek SAS</div>
-        <h2 class="text-2xl font-bold text-gray-800 mt-1">
-          Remisión #<span id="doc-consecutivo">—</span>
-        </h2>
-        <p class="text-xs text-gray-500 mt-1">Documento interno de traslado de mercancía</p>
+      <div class="flex items-center gap-4">
+        <img src="/creditek/agentes/logos/creditek_logo_corregido_alta.png" alt="Creditek"
+             onerror="this.style.display='none'"
+             style="height:52px;object-fit:contain;">
+        <div>
+          <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Creditek SAS</div>
+          <h2 class="text-3xl font-bold text-gray-800 mt-1">
+            REMISIÓN #<span id="doc-consecutivo">—</span>
+          </h2>
+          <p class="text-xs text-gray-500 mt-1">Documento de traslado de mercancía</p>
+        </div>
       </div>
       <div class="text-right">
         <div id="doc-estado" class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">Cargando...</div>
@@ -112,39 +128,58 @@
     <!-- Ítems -->
     <div class="p-6 border-b border-gray-200">
       <h3 class="text-sm font-semibold text-gray-800 mb-3">Productos incluidos</h3>
+      <!-- FIX 23-jul-2026 · agregar columna # (fila) y Categoría, quitar Costo Oscar (ya no venía, verificado). -->
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
-          <thead class="text-left text-gray-600 border-b border-gray-200">
+          <thead class="text-left text-gray-600 border-b border-gray-300 bg-gray-50">
             <tr>
-              <th class="pb-2 pr-2"></th>
-              <th class="pb-2 pr-2 font-medium">Producto</th>
-              <th class="pb-2 pr-2 text-center font-medium">Tipo</th>
-              <th class="pb-2 pr-2 text-right font-medium">Cantidad</th>
-              <th class="pb-2 pr-2 text-right font-medium">Precio unitario</th>
-              <th class="pb-2 text-right font-medium">Subtotal</th>
+              <th class="py-2 pr-2 pl-2 text-center font-medium w-8">#</th>
+              <th class="py-2 pr-2"></th>
+              <th class="py-2 pr-2 font-medium">Producto</th>
+              <th class="py-2 pr-2 font-medium">Categoría</th>
+              <th class="py-2 pr-2 text-right font-medium">Cantidad</th>
+              <th class="py-2 pr-2 text-right font-medium">Precio unitario</th>
+              <th class="py-2 text-right font-medium">Subtotal</th>
             </tr>
           </thead>
           <tbody id="tbody-items">
-            <tr><td colspan="6" class="py-6 text-center text-gray-400">Cargando ítems...</td></tr>
+            <tr><td colspan="7" class="py-6 text-center text-gray-400">Cargando ítems...</td></tr>
           </tbody>
           <tfoot>
-            <tr class="border-t-2 border-gray-300">
-              <td colspan="5" class="pt-3 text-right font-semibold text-gray-700">TOTAL</td>
-              <td class="pt-3 text-right font-bold text-lg font-mono text-gray-900" id="doc-total">—</td>
+            <tr class="border-t-2 border-gray-400 bg-gray-50">
+              <td colspan="6" class="pt-3 pb-2 pl-2 text-right font-semibold text-gray-700 text-base">TOTAL</td>
+              <td class="pt-3 pb-2 text-right font-bold text-xl font-mono text-gray-900" id="doc-total">—</td>
             </tr>
           </tfoot>
         </table>
       </div>
     </div>
 
+    <!-- FIX 23-jul-2026 · Trazabilidad de origen (proveedor + factura + fecha compra).
+         Para garantía de la tienda. Solo aparece si hay al menos una factura ligada
+         a los ítems. Ítems tipo cantidad (stock agregado) pueden no tener factura
+         específica — se marcan como "múltiples facturas". -->
+    <div id="doc-trazabilidad-container" class="hidden p-6 border-t border-gray-200 bg-gray-50 text-xs">
+      <div class="text-xs uppercase tracking-wider text-gray-500 mb-2 font-semibold">
+        Origen de la mercancía (para garantía)
+      </div>
+      <div id="doc-trazabilidad" class="text-gray-700"></div>
+    </div>
+
     <!-- Acciones (no imprime) -->
-    <div class="no-print p-6 flex flex-wrap gap-2 justify-end">
+    <div class="no-print p-6 flex flex-wrap gap-2 justify-end border-t border-gray-100">
       <button id="btn-print" class="px-4 py-2 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">
         🖨️ Imprimir
       </button>
       <button id="btn-whatsapp" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium">
         Compartir por WhatsApp
       </button>
+    </div>
+
+    <!-- FIX 23-jul-2026 · Pie legal — se imprime con el documento -->
+    <div class="p-4 border-t border-gray-200 bg-white text-center text-xs text-gray-500">
+      <div class="font-semibold text-gray-700">Creditek SAS · NIT 901.259.859-0</div>
+      <div>Documento generado electrónicamente por Creditek OS</div>
     </div>
   </div>
 
@@ -266,6 +301,75 @@ let remision = null;
 let items = [];       // remision_items enriquecidos con producto
 let tiendaNombre = null;
 let imeisEscaneados = {};   // { item_id: [imeis], ... }
+// FIX 23-jul-2026 · trazabilidad: mapa factura_id → {numero, fecha, proveedor}
+let trazabilidadFacturas = {};   // {facturaId: {numero, fecha, proveedor}}
+let trazabilidadItemFacturas = {}; // {remision_item_id: [facturaId, ...]}
+
+// FIX 23-jul-2026 · resolver info de proveedor/factura para cada remision_item.
+// Los items de tipo cantidad no tienen factura_proveedor_id (stock agregado);
+// para esos se marca 'múltiples facturas' en el pie. Los serializados sí traen
+// factura por unidad. Sin acceso RLS a remision_margenes (admin_tienda),
+// simplemente no se dibuja el bloque de trazabilidad — no es un error.
+async function cargarTrazabilidad(margenes) {
+  trazabilidadFacturas = {};
+  trazabilidadItemFacturas = {};
+  if (!margenes || margenes.length === 0) return;
+
+  const facturaIds = [...new Set(margenes.map(m => m.factura_proveedor_id).filter(Boolean))];
+  margenes.forEach(m => {
+    if (!m.factura_proveedor_id) return;
+    if (!trazabilidadItemFacturas[m.remision_item_id]) trazabilidadItemFacturas[m.remision_item_id] = new Set();
+    trazabilidadItemFacturas[m.remision_item_id].add(m.factura_proveedor_id);
+  });
+
+  if (facturaIds.length === 0) return;
+  const { data: facts } = await SB.from('facturas_proveedor')
+    .select('id, numero, fecha, proveedor:proveedor_id(nombre)')
+    .in('id', facturaIds);
+  (facts || []).forEach(f => {
+    trazabilidadFacturas[f.id] = {
+      numero: f.numero,
+      fecha: f.fecha,
+      proveedor: f.proveedor?.nombre || '—'
+    };
+  });
+}
+
+function renderTrazabilidad() {
+  const cont = document.getElementById('doc-trazabilidad-container');
+  const div = document.getElementById('doc-trazabilidad');
+  const totalFacturas = Object.keys(trazabilidadFacturas).length;
+  if (totalFacturas === 0) {
+    cont.classList.add('hidden');
+    return;
+  }
+  cont.classList.remove('hidden');
+
+  // Caso 1 sola factura para todo → resumen limpio arriba.
+  if (totalFacturas === 1) {
+    const f = Object.values(trazabilidadFacturas)[0];
+    div.innerHTML = `
+      <div><b>Proveedor:</b> ${esc(f.proveedor)}</div>
+      <div><b>Factura:</b> ${esc(f.numero)} · <b>Fecha de compra:</b> ${fecha(f.fecha)}</div>
+    `;
+    return;
+  }
+
+  // Caso multi-factura → listar cada factura con los productos que le corresponden.
+  const facturaAItems = {};
+  items.forEach(it => {
+    const setF = trazabilidadItemFacturas[it.id];
+    if (!setF) return;
+    setF.forEach(fid => {
+      if (!facturaAItems[fid]) facturaAItems[fid] = new Set();
+      facturaAItems[fid].add(it.productos?.nombre || it.producto_id);
+    });
+  });
+  div.innerHTML = Object.entries(trazabilidadFacturas).map(([fid, f]) => {
+    const prods = facturaAItems[fid] ? [...facturaAItems[fid]] : [];
+    return `<div class="mb-1"><b>${esc(f.proveedor)}</b> · Factura ${esc(f.numero)} · ${fecha(f.fecha)} — <span class="text-gray-500">${prods.map(esc).join(', ')}</span></div>`;
+  }).join('');
+}
 
 // ============================================================
 // CARGAR REMISIÓN
@@ -286,15 +390,29 @@ async function cargarRemision() {
     SB.from('remision_items')
       .select('id, producto_id, cantidad, precio_remision, productos(id, nombre, tipo, categoria, foto_url)')
       .eq('remision_id', REMISION_ID),
-    SB.from('origenes').select('codigo, nombre').eq('codigo', rem.tienda_codigo).neq('tipo', 'central').maybeSingle()
+    SB.from('origenes').select('codigo, nombre').eq('codigo', rem.tienda_codigo).neq('tipo', 'central').maybeSingle(),
   ]);
 
   if (iErr) { showError('Error cargando ítems: ' + iErr.message); return; }
   items = rItems || [];
   tiendaNombre = origen ? origen.nombre : rem.tienda_codigo;
 
+  // FIX 23-jul-2026 · trazabilidad de factura por ítem (via remision_margenes).
+  // Los admin_tienda NO pueden leer remision_margenes (RLS es_central); en ese
+  // caso el bloque de trazabilidad queda oculto silenciosamente — el resto del
+  // documento sigue funcionando. No es un error.
+  let margenesData = [];
+  if (items.length > 0) {
+    const { data: m } = await SB.from('remision_margenes')
+      .select('remision_item_id, factura_proveedor_id')
+      .in('remision_item_id', items.map(it => it.id));
+    margenesData = m || [];
+  }
+  await cargarTrazabilidad(margenesData);
+
   document.getElementById('app').classList.remove('hidden');
   renderDocumento();
+  renderTrazabilidad();
   renderPanelAceptacion();
 }
 
@@ -331,28 +449,26 @@ function renderDocumento() {
     tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-gray-400">Sin ítems.</td></tr>';
   } else {
     let total = 0;
-    tbody.innerHTML = items.map(it => {
+    tbody.innerHTML = items.map((it, idx) => {
       const sub = Number(it.cantidad) * Number(it.precio_remision);
       total += sub;
       const p = it.productos || { id: it.producto_id, nombre: '(producto)', tipo: '', categoria: '', foto_url: null };
-      const badgeTipo = p.tipo === 'serializado'
-        ? '<span class="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-700">serializado</span>'
-        : '<span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700">cantidad</span>';
       // SPEC v2 · si el producto no tiene foto_url, mostrar botón "Subir foto" (global — se guarda en productos.foto_url).
       const tieneFoto = !!p.foto_url;
       const thumbHtml = tieneFoto
         ? `<div class="thumb"><img src="${esc(p.foto_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" /></div>`
-        : `<button type="button" class="btn-subir-foto thumb" data-prod-id="${esc(p.id)}"
+        : `<button type="button" class="btn-subir-foto thumb no-print" data-prod-id="${esc(p.id)}"
               style="cursor:pointer; border:2px dashed #d1d5db; background:#f9fafb;"
               title="Subir foto (queda global para todas las tiendas)">📷</button>`;
       return `
         <tr class="border-b border-gray-100" data-prod-id="${esc(p.id)}">
+          <td class="py-3 pl-2 pr-2 text-center text-gray-500 font-mono text-xs">${idx + 1}</td>
           <td class="py-3 pr-2">${thumbHtml}</td>
           <td class="py-3 pr-2">
             <div class="font-medium text-gray-800">${esc(p.nombre)}</div>
-            <div class="text-xs text-gray-500">${esc(p.categoria)}</div>
+            <div class="text-xs text-gray-500">${p.tipo === 'serializado' ? 'Con IMEI' : 'Stock por cantidad'}</div>
           </td>
-          <td class="py-3 pr-2 text-center">${badgeTipo}</td>
+          <td class="py-3 pr-2 text-xs text-gray-600 uppercase">${esc(p.categoria)}</td>
           <td class="py-3 pr-2 text-right font-mono">${it.cantidad}</td>
           <td class="py-3 pr-2 text-right font-mono">${money(it.precio_remision)}</td>
           <td class="py-3 text-right font-mono font-semibold">${money(sub)}</td>

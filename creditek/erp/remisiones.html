@@ -502,7 +502,11 @@ function abrirModalRemision(rem) {
 }
 
 async function cargarItemsRemision(remisionId, soloLectura) {
-  const { data, error } = await sb.from('remision_items').select('*, remision_margenes(costo_oscar)').eq('remision_id', remisionId);
+  // FIX 23-jul-2026 · FIX_Remision_Visual_v1: quitar costo_oscar del SELECT.
+  // El campo sigue disponible en bodega-central.html y utilidad-creditek.html
+  // (donde solo gerencia/auditoría pueden verlo) — este modal legacy ya no lo
+  // pide ni lo muestra, para que un inspector de DevTools no lo lea del payload.
+  const { data, error } = await sb.from('remision_items').select('*').eq('remision_id', remisionId);
   if (error) { document.getElementById('modalRemisionErr').textContent = 'Error cargando items: ' + error.message; document.getElementById('modalRemisionErr').classList.add('show'); return; }
   document.getElementById('itemsContainer').innerHTML = '';
   (data || []).forEach(it => agregarItemRow(it, soloLectura));
@@ -516,11 +520,11 @@ function agregarItemRow(item, soloLectura) {
   div.className = 'item-row' + (esCentral() ? '' : ' sin-central');
   div.id = rowId;
   const opcionesProducto = productosCache.map(p => `<option value="${p.id}" ${item && item.producto_id === p.id ? 'selected' : ''}>${escapeHtml(p.codigo)} — ${escapeHtml(p.nombre)}</option>`).join('');
+  // FIX 23-jul-2026 · columna Costo Oscar eliminada del render.
   div.innerHTML = `
     <div><label>Producto</label><select class="it-producto" ${soloLectura ? 'disabled' : ''}>${opcionesProducto}</select></div>
     <div><label>Cant.</label><input type="number" min="1" class="it-cantidad" value="${item ? item.cantidad : 1}" ${soloLectura ? 'disabled' : ''}></div>
     <div><label>Precio remisión</label><input type="number" min="0" class="it-precio" value="${item ? item.precio_remision : ''}" ${soloLectura ? 'disabled' : ''}></div>
-    ${esCentral() ? `<div><label>Costo Oscar</label><input type="number" min="0" class="it-costo-oscar" value="${item && item.remision_margenes ? (item.remision_margenes.costo_oscar ?? '') : ''}" ${soloLectura ? 'disabled' : ''}></div>` : ''}
     ${!soloLectura ? `<button class="btn-quitar" title="Quitar">✕</button>` : '<div></div>'}
   `;
   document.getElementById('itemsContainer').appendChild(div);
@@ -553,10 +557,8 @@ async function guardarRemision() {
     const producto_id = row.querySelector('.it-producto').value;
     const cantidad = Number(row.querySelector('.it-cantidad').value || 0);
     const precio_remision = Number(row.querySelector('.it-precio').value || 0);
-    const costoInput = row.querySelector('.it-costo-oscar');
-    const costo_oscar = costoInput && costoInput.value !== '' ? Number(costoInput.value) : null;
     if (!producto_id || cantidad <= 0 || precio_remision < 0) { err.textContent = 'Revisa cantidad y precio en cada producto.'; err.classList.add('show'); return; }
-    items.push({ producto_id, cantidad, precio_remision, costo_oscar });
+    items.push({ producto_id, cantidad, precio_remision });
   }
 
   const btn = document.getElementById('btnGuardarRemision');
@@ -577,16 +579,15 @@ async function guardarRemision() {
     }
   }
 
-  const { data: itemsNuevos, error: errItems } = await sb.from('remision_items')
-    .insert(items.map(it => ({ remision_id: remisionId, producto_id: it.producto_id, cantidad: it.cantidad, precio_remision: it.precio_remision })))
-    .select();
+  const { error: errItems } = await sb.from('remision_items')
+    .insert(items.map(it => ({ remision_id: remisionId, producto_id: it.producto_id, cantidad: it.cantidad, precio_remision: it.precio_remision })));
 
   if (errItems) { btn.disabled = false; btn.textContent = 'Guardar borrador'; err.textContent = 'No se pudo guardar productos: ' + errItems.message; err.classList.add('show'); return; }
 
-  if (esCentral()) {
-    const margenes = itemsNuevos.map((it, idx) => ({ remision_item_id: it.id, costo_oscar: items[idx].costo_oscar })).filter(m => m.costo_oscar !== null);
-    if (margenes.length) await sb.from('remision_margenes').insert(margenes);
-  }
+  // FIX 23-jul-2026 · costo_oscar ya no se maneja desde este modal legacy.
+  // El flujo canónico de compras+margen vive en compra-proveedor.html →
+  // registrar_compra_proveedor RPC. Este modal solo edita metadata de
+  // remisiones antiguas (pre-SPEC v2) sin tocar el margen.
 
   btn.disabled = false; btn.textContent = 'Guardar borrador';
   document.getElementById('modalRemisionOk').classList.add('show');
