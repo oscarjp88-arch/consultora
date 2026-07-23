@@ -87,7 +87,7 @@
     </div>
     <div class="border-2 rounded-lg p-5 kpi-utilidad">
       <div class="text-xs uppercase tracking-wider text-gray-600 mb-1">Utilidad mes actual</div>
-      <div id="kpi-utilidad-mes" class="text-2xl font-bold text-emerald-800 font-mono">—</div>
+      <div id="kpi-utilidad-mes" class="text-2xl font-bold text-green-800 font-mono">—</div>
       <div id="kpi-utilidad-ytd" class="text-xs mt-1 text-gray-500">YTD: —</div>
     </div>
     <div class="border-2 rounded-lg p-5 kpi-margen">
@@ -213,7 +213,7 @@ function toast(msg, tipo = 'ok') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in ' +
-    (tipo === 'error' ? 'bg-red-600' : 'bg-emerald-600');
+    (tipo === 'error' ? 'bg-red-600' : 'bg-green-600');
   t.classList.remove('hidden');
   setTimeout(() => t.classList.add('hidden'), 3200);
 }
@@ -314,7 +314,7 @@ function actualizarKPIs() {
     const delta = mesActual.total_facturado_tiendas - mesPrev.total_facturado_tiendas;
     const pctDelta = mesPrev.total_facturado_tiendas ? (100 * delta / mesPrev.total_facturado_tiendas) : 0;
     const flecha = delta >= 0 ? '↑' : '↓';
-    const clase = delta >= 0 ? 'text-emerald-700' : 'text-red-700';
+    const clase = delta >= 0 ? 'text-green-700' : 'text-red-700';
     deltaEl.innerHTML = `<span class="${clase}">${flecha} ${pctDelta.toFixed(1)}%</span> vs mes anterior`;
   } else {
     deltaEl.textContent = 'Sin mes anterior para comparar';
@@ -390,7 +390,7 @@ function renderTablaMensual() {
         <td class="px-4 py-2 text-gray-800 capitalize">${nombreMesCompleto(r.periodo)}</td>
         <td class="px-4 py-2 text-right font-mono">${money(r.total_facturado_tiendas)}</td>
         <td class="px-4 py-2 text-right font-mono text-orange-700">${money(r.total_costo_real)}</td>
-        <td class="px-4 py-2 text-right font-mono font-semibold text-emerald-700">${money(r.utilidad_creditek)}</td>
+        <td class="px-4 py-2 text-right font-mono font-semibold text-green-700">${money(r.utilidad_creditek)}</td>
         <td class="px-4 py-2 text-right font-mono text-purple-700">${pct(r.utilidad_creditek, r.total_facturado_tiendas)}</td>
         <td class="px-4 py-2 text-right text-gray-600">${num(r.n_remisiones)}</td>
       </tr>
@@ -435,7 +435,7 @@ function renderDrill() {
       <td class="px-4 py-2 text-right">${num(r.cantidad)}</td>
       <td class="px-4 py-2 text-right font-mono">${money(r.facturado)}</td>
       <td class="px-4 py-2 text-right font-mono text-orange-700">${money(r.costo)}</td>
-      <td class="px-4 py-2 text-right font-mono font-semibold text-emerald-700">${money(r.utilidad)}</td>
+      <td class="px-4 py-2 text-right font-mono font-semibold text-green-700">${money(r.utilidad)}</td>
       <td class="px-4 py-2 text-right font-mono text-purple-700">${pct(r.utilidad, r.facturado)}</td>
     </tr>
   `).join('');

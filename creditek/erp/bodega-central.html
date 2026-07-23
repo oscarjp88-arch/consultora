@@ -234,7 +234,7 @@ function toast(msg, tipo = 'ok') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in ' +
-    (tipo === 'error' ? 'bg-red-600' : 'bg-emerald-600');
+    (tipo === 'error' ? 'bg-red-600' : 'bg-green-600');
   t.classList.remove('hidden');
   setTimeout(() => t.classList.add('hidden'), 3200);
 }
@@ -352,7 +352,7 @@ function render() {
   tbody.innerHTML = filtrados.map(a => {
     const semaforo = a.descuadrado
       ? '<span class="inline-flex items-center gap-1 text-red-700 font-semibold"><span class="w-2 h-2 bg-red-500 rounded-full"></span>Descuadrado</span>'
-      : '<span class="inline-flex items-center gap-1 text-emerald-700"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span>OK</span>';
+      : '<span class="inline-flex items-center gap-1 text-green-700"><span class="w-2 h-2 bg-green-500 rounded-full"></span>OK</span>';
     const badgeTipo = a.tipo === 'serializado'
       ? '<span class="px-2 py-0.5 rounded text-xs badge-serial">serializado</span>'
       : '<span class="px-2 py-0.5 rounded text-xs badge-cantidad">cantidad</span>';
@@ -409,7 +409,7 @@ async function abrirDetalle(prodId, nombre, tipo) {
     `;
     tbodyMov.innerHTML = mov.map(m => {
       const tipoLabel = ({
-        compra_entrada: '<span class="text-emerald-700">↓ Compra entrada</span>',
+        compra_entrada: '<span class="text-green-700">↓ Compra entrada</span>',
         remision_salida_central: '<span class="text-orange-700">↑ Despacho</span>'
       })[m.tipo] || esc(m.tipo);
       return `
@@ -453,7 +453,7 @@ async function abrirDetalle(prodId, nombre, tipo) {
       }
       tbodyU.innerHTML = uns.map(u => {
         const estadoBadge = ({
-          disponible: '<span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800">disponible</span>',
+          disponible: '<span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">disponible</span>',
           en_traslado: '<span class="px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-800">en_traslado</span>',
           en_oscar: '<span class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">en_oscar</span>'
         })[u.estado] || esc(u.estado);

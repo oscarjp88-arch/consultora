@@ -164,19 +164,19 @@
     <div id="items-aceptacion" class="space-y-5"></div>
 
     <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-2">
-      <button id="btn-aceptar" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded font-semibold">
+      <button id="btn-aceptar" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold">
         Confirmar recepción
       </button>
     </div>
   </section>
 
   <!-- Panel de éxito post-aceptación -->
-  <div id="panel-recibida" class="no-print hidden mt-6 bg-emerald-50 border border-emerald-200 rounded-lg p-5 fade-in">
+  <div id="panel-recibida" class="no-print hidden mt-6 bg-green-50 border border-green-200 rounded-lg p-5 fade-in">
     <div class="flex items-center gap-3">
       <span class="text-3xl">🟢</span>
       <div>
-        <p class="font-semibold text-emerald-900">Remisión recibida</p>
-        <p class="text-sm text-emerald-800">
+        <p class="font-semibold text-green-900">Remisión recibida</p>
+        <p class="text-sm text-green-800">
           La mercancía quedó en tu tienda. Total facturado: <b id="recibida-total"></b>.
           Cualquier faltante generó un ajuste pendiente de autorización por gerencia.
         </p>
@@ -217,7 +217,7 @@ function toast(msg, tipo = 'ok') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in ' +
-    (tipo === 'error' ? 'bg-red-600' : 'bg-emerald-600');
+    (tipo === 'error' ? 'bg-red-600' : 'bg-green-600');
   t.classList.remove('hidden');
   setTimeout(() => t.classList.add('hidden'), 3500);
 }
@@ -312,7 +312,7 @@ function renderDocumento() {
   const map = {
     borrador:   ['bg-gray-100 text-gray-700', '📝 Borrador'],
     despachada: ['bg-yellow-100 text-yellow-800', '🟡 Pendiente de aceptar'],
-    recibida:   ['bg-emerald-100 text-emerald-800', '🟢 Recibida ' + fechaHora(remision.recibida_at)],
+    recibida:   ['bg-green-100 text-green-800', '🟢 Recibida ' + fechaHora(remision.recibida_at)],
     anulada:    ['bg-red-100 text-red-800', '⛔ Anulada']
   };
   const [cls, txt] = map[remision.estado] || ['bg-gray-100 text-gray-700', remision.estado];

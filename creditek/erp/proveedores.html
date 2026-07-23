@@ -213,7 +213,7 @@ function toast(msg, tipo = 'ok') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in ' +
-    (tipo === 'error' ? 'bg-red-600' : tipo === 'warn' ? 'bg-orange-500' : 'bg-emerald-600');
+    (tipo === 'error' ? 'bg-red-600' : tipo === 'warn' ? 'bg-orange-500' : 'bg-green-600');
   t.classList.remove('hidden');
   setTimeout(() => t.classList.add('hidden'), 3200);
 }
@@ -354,7 +354,7 @@ async function mostrarFacturas(provId) {
       const estado = Number(f.saldo) > 0 ? 'pendiente' : 'pagada';
       const badge = estado === 'pendiente'
         ? '<span class="px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-800">Pendiente</span>'
-        : '<span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800">Pagada</span>';
+        : '<span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">Pagada</span>';
       return `
         <tr>
           <td class="px-3 py-2 font-mono text-xs">${esc(f.numero) || '—'}</td>
