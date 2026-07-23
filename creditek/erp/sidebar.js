@@ -35,6 +35,18 @@
       { label: 'Registro', href: 'registro.html', roles: ['gerencia', 'auditoria', 'admin_tienda', 'asesor'] },
       { label: 'Validación', href: 'validacion.html', roles: ['gerencia', 'auditoria'] },
     ]},
+    // FIX 23-jul-2026 · pantallas de Bodega Central (R1-R4 del paquete
+    // PAQUETE_Cowork_BodegaCentral_Margenes_v1). Solo visible para
+    // gerencia/auditoría — el flujo entero de compra→despacho→margen
+    // no aplica a admins de tienda ni asesores.
+    // documento-remision.html se abre por URL con ?remision_id=<uuid>
+    // desde remisiones.html, por eso no va como item de menú aquí.
+    { titulo: 'PROVEEDORES', icono: '🏭', items: [
+      { label: 'Proveedores', href: 'proveedores.html', roles: ['gerencia', 'auditoria'] },
+      { label: 'Registrar compra', href: 'compra-proveedor.html', roles: ['gerencia', 'auditoria'] },
+      { label: 'Bodega Central', href: 'bodega-central.html', roles: ['gerencia', 'auditoria'] },
+      { label: 'Utilidad Creditek', href: 'utilidad-creditek.html', roles: ['gerencia', 'auditoria'] },
+    ]},
   ];
 
   const LOGO = '/creditek/agentes/logos/creditek_logo_corregido_alta.png';
