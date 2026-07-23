@@ -11,3 +11,13 @@ ENVIRONMENT = "production"
 #   SUPABASE_SERVICE_KEY  — service_role key del proyecto creditek-erp (jfkmiyvcdfbsbwchyvol)
 #   WHATSAPP_TOKEN        — mismo valor ya usado en creditek-bot
 #   PHONE_NUMBER_ID       — mismo valor ya usado en creditek-bot
+
+# FEATURE 22-jul-2026 · Reportes diarios por WhatsApp a Oscar y Mayte.
+# Cron cada 5 min entre 11am y 7pm hora Colombia (UTC-5), traducido a UTC.
+# 11:00-19:55 Colombia = 16:00-00:55 UTC. Se expresa como dos rangos para
+# no cruzar medianoche UTC dentro de una misma expresión cron.
+[triggers]
+crons = [
+  "*/5 16-23 * * *",  # 11:00 a.m. — 6:55 p.m. Colombia
+  "*/5 0 * * *"       # 7:00 — 7:55 p.m. Colombia (cierra ventana hasta 19:55 COT)
+]

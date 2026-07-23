@@ -85,6 +85,14 @@ export default {
       return json({ ok: false, error: 'Error interno' }, 500);
     }
   },
+
+  // FEATURE 22-jul-2026 · Reportes diarios por WhatsApp.
+  // Ver bloque grande al final del archivo para toda la lógica.
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(ejecutarReportesDiarios(env).catch((e) => {
+      console.error('[REPORTES-DIARIOS] excepción no atrapada:', e);
+    }));
+  },
 };
 
 // ─── GET /api/origenes ──────────────────────────────────────────────────
@@ -397,4 +405,326 @@ function base64ToUint8Array(base64: string): Uint8Array {
   const bytes = new Uint8Array(binaryStr.length);
   for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
   return bytes;
+}
+
+// ============================================================================
+// FEATURE 22-jul-2026 · Reportes diarios por WhatsApp
+// Documento: FEATURE_ReportesDiarios_WhatsApp_22jul2026.md
+//
+// Cron cada 5 min (11am–7pm Colombia). En cada corrida:
+//   1) Si ya se envió el reporte hoy → sale (idempotencia via reportes_diarios_enviados).
+//   2) Calcula si todas las tiendas propias activas cerraron caja.
+//   3) Si aún no todas Y no ha pasado el límite (15:00 en dom/festivo, 19:00 el resto) → espera.
+//   4) Si sí todas O ya pasó el límite → reserva atómicamente el envío del día
+//      (INSERT en reportes_diarios_enviados; si colisiona por PK, otra corrida ya reservó).
+//   5) Compone y envía 3 mensajes (gastos, ventas, caja) con 120s de separación
+//      a Oscar (573002024083) y Mayte (573005516040).
+//
+// Reglas del CLAUDE.md respetadas:
+//   - Uses service_role (bypass RLS) — el Worker no tiene sesión de usuario Supabase.
+//   - Zona horaria Colombia (UTC-5) calculada con Intl.DateTimeFormat (America/Bogota),
+//     no offset manual — respeta cualquier ajuste eventual de la TZ.
+// ============================================================================
+
+const DESTINATARIOS_REPORTES = ['573002024083', '573005516040']; // Oscar, Mayte
+const TZ_COL = 'America/Bogota';
+const SEPARACION_REPORTES_MS = 120_000; // 2 minutos entre reporte y reporte
+
+// ─── Helpers de tiempo Colombia ────────────────────────────────────────
+
+function fechaColombiaHoy(): string {
+  // Intl con locale en-CA da formato YYYY-MM-DD, perfecto para columna date de Supabase.
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ_COL, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
+}
+
+function horaColombiaAhora(): { hh: number; mm: number; hhmm: string } {
+  const partes = new Intl.DateTimeFormat('en-US', {
+    timeZone: TZ_COL, hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(new Date());
+  const hh = Number(partes.find((p) => p.type === 'hour')?.value ?? '0');
+  const mm = Number(partes.find((p) => p.type === 'minute')?.value ?? '0');
+  // Cloudflare a veces devuelve "24" a medianoche — normalizar a "00".
+  const hhNorm = hh === 24 ? 0 : hh;
+  const hhmm = `${String(hhNorm).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  return { hh: hhNorm, mm, hhmm };
+}
+
+function fechaFormateadaLarga(fechaISO: string): string {
+  // "2026-07-22" → "martes 22 de julio de 2026"
+  const [y, m, d] = fechaISO.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d, 12)); // mediodía UTC para evitar deriva
+  return new Intl.DateTimeFormat('es-CO', {
+    timeZone: TZ_COL, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  }).format(dt);
+}
+
+async function esDomingoOFestivo(fechaISO: string, env: Env): Promise<boolean> {
+  // Domingo: Intl devuelve "Sunday"/"domingo" — usar getUTCDay sobre fecha normalizada.
+  const [y, m, d] = fechaISO.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d, 17)); // 12pm Colombia = 5pm UTC
+  if (dt.getUTCDay() === 0) return true;
+  // Festivo: consulta a festivos_colombia.
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/festivos_colombia?fecha=eq.${fechaISO}&select=fecha&limit=1`,
+    { headers: sbHeaders(env) }
+  );
+  if (!r.ok) {
+    console.error('[REPORTES-DIARIOS] Error consultando festivos:', await r.text());
+    return false; // en duda, tratar como día normal (más conservador con el envío)
+  }
+  const arr = (await r.json()) as any[];
+  return arr.length > 0;
+}
+
+// ─── Query helpers (todo lee de creditek-erp con service_role) ───────────
+
+async function obtenerTiendasPropiasActivas(env: Env): Promise<Array<{ codigo: string; nombre: string }>> {
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/origenes?tipo=eq.propia&activo=eq.true&select=codigo,nombre&order=codigo`,
+    { headers: sbHeaders(env) }
+  );
+  if (!r.ok) throw new Error('No se pudieron cargar las tiendas: ' + (await r.text()));
+  return (await r.json()) as any[];
+}
+
+async function obtenerCerradasHoy(fechaISO: string, env: Env): Promise<string[]> {
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/caja_diaria?fecha=eq.${fechaISO}&estado=eq.cerrada&select=tienda_codigo`,
+    { headers: sbHeaders(env) }
+  );
+  if (!r.ok) throw new Error('No se pudieron cargar cierres de caja: ' + (await r.text()));
+  const arr = (await r.json()) as any[];
+  return arr.map((x) => x.tienda_codigo);
+}
+
+async function obtenerGastosHoy(fechaISO: string, env: Env): Promise<Array<any>> {
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/gastos?fecha=eq.${fechaISO}&estado=eq.aprobado` +
+      `&select=monto,descripcion,tienda_codigo,concepto:concepto_id(nombre),origen:tienda_codigo(nombre)` +
+      `&order=tienda_codigo`,
+    { headers: sbHeaders(env) }
+  );
+  if (!r.ok) throw new Error('No se pudieron cargar gastos: ' + (await r.text()));
+  return (await r.json()) as any[];
+}
+
+async function obtenerVentasHoy(fechaISO: string, env: Env): Promise<Array<any>> {
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/ventas?fecha=eq.${fechaISO}&anulada=not.is.true` +
+      `&select=total,tienda_codigo,origen:tienda_codigo(nombre)`,
+    { headers: sbHeaders(env) }
+  );
+  if (!r.ok) throw new Error('No se pudieron cargar ventas: ' + (await r.text()));
+  return (await r.json()) as any[];
+}
+
+async function obtenerCajaHoy(fechaISO: string, env: Env): Promise<Array<any>> {
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/caja_diaria?fecha=eq.${fechaISO}&estado=eq.cerrada` +
+      `&select=efectivo_contado,efectivo_esperado,diferencia,tienda_codigo,origen:tienda_codigo(nombre)` +
+      `&order=tienda_codigo`,
+    { headers: sbHeaders(env) }
+  );
+  if (!r.ok) throw new Error('No se pudieron cargar cierres: ' + (await r.text()));
+  return (await r.json()) as any[];
+}
+
+// Devuelve true si logró reservar (fila insertada), false si ya existía la del día.
+async function reservarEnvioDelDia(
+  fechaISO: string, completo: boolean, tiendasFaltantes: string[], env: Env
+): Promise<boolean> {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/reportes_diarios_enviados`, {
+    method: 'POST',
+    headers: sbHeaders(env, { Prefer: 'return=minimal' }),
+    body: JSON.stringify({ fecha: fechaISO, completo, tiendas_faltantes: tiendasFaltantes }),
+  });
+  if (r.status === 201) return true; // creado ok
+  if (r.status === 409) return false; // duplicate key — otro cron reservó primero
+  console.error('[REPORTES-DIARIOS] Error inesperado reservando:', r.status, await r.text());
+  return false;
+}
+
+async function yaSeEnvioHoy(fechaISO: string, env: Env): Promise<boolean> {
+  const r = await fetch(
+    `${SUPABASE_URL}/rest/v1/reportes_diarios_enviados?fecha=eq.${fechaISO}&select=fecha&limit=1`,
+    { headers: sbHeaders(env) }
+  );
+  if (!r.ok) return false;
+  const arr = (await r.json()) as any[];
+  return arr.length > 0;
+}
+
+// ─── Formato de mensajes (WhatsApp texto plano) ──────────────────────────
+
+function fmtCOP(n: number): string {
+  return '$' + new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(n || 0);
+}
+
+function encabezadoEstado(
+  completo: boolean, nombresFaltantes: string[], hhmm: string
+): string {
+  return completo
+    ? '✅ Las tiendas cerraron caja'
+    : `⚠️ Falta cerrar caja: ${nombresFaltantes.join(', ')} (enviado a las ${hhmm})`;
+}
+
+function formatearGastos(
+  gastos: any[], fechaLarga: string, encabezado: string
+): string {
+  const lineas = gastos.map((g) => {
+    const tienda = g.origen?.nombre || g.tienda_codigo;
+    const concepto = g.concepto?.nombre || '—';
+    const desc = g.descripcion ? ` — ${g.descripcion}` : '';
+    return `• ${tienda}: ${fmtCOP(Number(g.monto))} — ${concepto}${desc}`;
+  });
+  const total = gastos.reduce((s, g) => s + Number(g.monto || 0), 0);
+  const body = lineas.length ? lineas.join('\n') : '_Sin gastos aprobados el día de hoy._';
+  return [
+    `📊 *GASTOS DE HOY* — ${fechaLarga}`,
+    encabezado,
+    '',
+    body,
+    '',
+    `*Total del día:* ${fmtCOP(total)}`,
+  ].join('\n');
+}
+
+function formatearVentas(ventas: any[], fechaLarga: string): string {
+  // Agrupar por tienda
+  const porTienda: Record<string, { nombre: string; num: number; total: number }> = {};
+  for (const v of ventas) {
+    const cod = v.tienda_codigo;
+    if (!porTienda[cod]) porTienda[cod] = { nombre: v.origen?.nombre || cod, num: 0, total: 0 };
+    porTienda[cod].num += 1;
+    porTienda[cod].total += Number(v.total || 0);
+  }
+  const filas = Object.values(porTienda)
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    .map((t) => `• ${t.nombre}: ${t.num} ventas — ${fmtCOP(t.total)}`);
+  const totalOps = ventas.length;
+  const totalVal = ventas.reduce((s, v) => s + Number(v.total || 0), 0);
+  const body = filas.length ? filas.join('\n') : '_Sin ventas registradas el día de hoy._';
+  return [
+    `💰 *VENTAS DE HOY* — ${fechaLarga}`,
+    '',
+    body,
+    '',
+    `*Total vendido:* ${fmtCOP(totalVal)}  ·  *Operaciones:* ${totalOps}`,
+  ].join('\n');
+}
+
+function formatearCaja(cierres: any[], fechaLarga: string): string {
+  const lineas = cierres.map((c) => {
+    const nombre = c.origen?.nombre || c.tienda_codigo;
+    const efectivo = fmtCOP(Number(c.efectivo_contado || 0));
+    const diff = Number(c.diferencia || 0);
+    const marca = diff === 0
+      ? ''
+      : ` ⚠️ Diferencia: ${diff > 0 ? '+' : ''}${fmtCOP(diff)}`;
+    return `• ${nombre}: ${efectivo} disponible${marca}`;
+  });
+  const total = cierres.reduce((s, c) => s + Number(c.efectivo_contado || 0), 0);
+  const body = lineas.length ? lineas.join('\n') : '_Ninguna caja cerrada aún._';
+  return [
+    `💵 *CIERRE DE CAJA* — ${fechaLarga}`,
+    '',
+    body,
+    '',
+    `*Total efectivo en tiendas:* ${fmtCOP(total)}`,
+  ].join('\n');
+}
+
+// ─── WhatsApp text send (mismo patrón que meta.ts del creditek-bot) ─────
+
+async function enviarWhatsAppTexto(telefono: string, mensaje: string, env: Env): Promise<void> {
+  const r = await fetch(`https://graph.facebook.com/v21.0/${env.PHONE_NUMBER_ID}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to: telefono.replace('+', ''),
+      type: 'text',
+      text: { body: mensaje, preview_url: false },
+    }),
+  });
+  if (!r.ok) {
+    // 24h window cerrado → Meta responde 403/400. Log claro para poder migrar a plantilla si se vuelve recurrente.
+    console.error(`[REPORTES-WA] Error enviando a ${telefono}:`, r.status, await r.text());
+  }
+}
+
+async function enviarReporteATodos(mensaje: string, env: Env): Promise<void> {
+  for (const dest of DESTINATARIOS_REPORTES) {
+    await enviarWhatsAppTexto(dest, mensaje, env);
+  }
+}
+
+function esperar(ms: number): Promise<void> {
+  return new Promise((res) => setTimeout(res, ms));
+}
+
+// ─── Entry point del scheduled ──────────────────────────────────────────
+
+async function ejecutarReportesDiarios(env: Env): Promise<void> {
+  const hoy = fechaColombiaHoy();
+  const { hh, mm, hhmm } = horaColombiaAhora();
+
+  // Ventana operativa (11:00–19:55 Col). El cron sí corre otras horas por el rango UTC de wrangler.toml,
+  // pero afuera de esta ventana no hay nada que reportar y salimos rápido para no gastar CPU.
+  const minutosDelDia = hh * 60 + mm;
+  if (minutosDelDia < 11 * 60 || minutosDelDia > 19 * 60 + 55) return;
+
+  // Idempotencia rápida por consulta (chequeo optimista; la reserva atómica es la definitiva).
+  if (await yaSeEnvioHoy(hoy, env)) return;
+
+  let tiendas: Array<{ codigo: string; nombre: string }>;
+  let cerradas: string[];
+  try {
+    [tiendas, cerradas] = await Promise.all([
+      obtenerTiendasPropiasActivas(env),
+      obtenerCerradasHoy(hoy, env),
+    ]);
+  } catch (e) {
+    console.error('[REPORTES-DIARIOS] error en carga inicial:', e);
+    return;
+  }
+  const codigos = tiendas.map((t) => t.codigo);
+  const faltantes = codigos.filter((c) => !cerradas.includes(c));
+  const nombresFaltantes = tiendas.filter((t) => faltantes.includes(t.codigo)).map((t) => t.nombre);
+
+  // Decidir si es hora de enviar
+  const domingoOFestivo = await esDomingoOFestivo(hoy, env);
+  const limiteHora = domingoOFestivo ? 15 : 19;
+  const debeMandarCompleto = faltantes.length === 0;
+  const debeMandarIncompleto = !debeMandarCompleto && hh >= limiteHora;
+  if (!debeMandarCompleto && !debeMandarIncompleto) return;
+
+  // Reserva ATÓMICA — evita duplicados si dos crons corren muy juntos.
+  const reservado = await reservarEnvioDelDia(hoy, debeMandarCompleto, faltantes, env);
+  if (!reservado) return;
+
+  // Componer mensajes
+  const [gastos, ventas, cajas] = await Promise.all([
+    obtenerGastosHoy(hoy, env),
+    obtenerVentasHoy(hoy, env),
+    obtenerCajaHoy(hoy, env),
+  ]);
+  const fechaLarga = fechaFormateadaLarga(hoy);
+  const encabezado = encabezadoEstado(debeMandarCompleto, nombresFaltantes, hhmm);
+
+  const msg1 = formatearGastos(gastos, fechaLarga, encabezado);
+  const msg2 = formatearVentas(ventas, fechaLarga);
+  const msg3 = formatearCaja(cajas, fechaLarga);
+
+  // Enviar con separación de 2 min. El scheduled event de Cloudflare permite
+  // wall time > CPU time; los 4 minutos de esperas son sleep, no CPU.
+  console.log('[REPORTES-DIARIOS] Enviando reporte del', hoy, 'completo=', debeMandarCompleto);
+  await enviarReporteATodos(msg1, env);
+  await esperar(SEPARACION_REPORTES_MS);
+  await enviarReporteATodos(msg2, env);
+  await esperar(SEPARACION_REPORTES_MS);
+  await enviarReporteATodos(msg3, env);
+  console.log('[REPORTES-DIARIOS] Reporte del', hoy, 'enviado a los 2 destinatarios.');
 }

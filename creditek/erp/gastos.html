@@ -191,6 +191,14 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
   <div class="modal-box">
     <h2>Registrar gasto</h2>
     <div class="modal-sub">La fecha y hora se registran automáticamente.</div>
+    <!-- FIX 22-jul-2026 · FEATURE_ReportesDiarios: gerencia/auditoria puede
+         registrar gastos "generales" contra CENTRAL (ej. pago volanteo,
+         insumos que no son de ninguna tienda). Admins de tienda no ven este
+         selector y siguen registrando contra su propia tienda. -->
+    <div class="campo" id="campoTiendaGasto" style="display:none">
+      <label>Tienda</label>
+      <select id="gastoTienda"></select>
+    </div>
     <div class="campo">
       <label>Concepto</label>
       <select id="gastoConcepto"></select>
@@ -325,6 +333,19 @@ async function cargarDatosBase() {
   document.getElementById('filtroConcepto').innerHTML = '<option value="">Todos los conceptos</option>' + conceptosCache.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
   document.getElementById('gastoConcepto').innerHTML = conceptosCache.map(c => `<option value="${c.id}" data-preautorizado="${c.preautorizado}">${escapeHtml(c.nombre)}${c.preautorizado ? '' : ' (requiere aprobación)'}</option>`).join('');
 
+  // FIX 22-jul-2026 · FEATURE_ReportesDiarios: dropdown de tienda del modal
+  // solo para es_central() — incluye las tiendas propias + CREDITEK (CENTRAL)
+  // como opción de "gastos generales". Los admins de tienda no ven este
+  // dropdown y su tienda_codigo se toma de currentPerfil como siempre.
+  if (esCentral()) {
+    const opciones = [
+      ...tiendasCache.map(t => `<option value="${t.codigo}">${escapeHtml(t.nombre)}</option>`),
+      `<option value="CENTRAL">CREDITEK (gastos generales)</option>`,
+    ];
+    document.getElementById('gastoTienda').innerHTML = opciones.join('');
+    document.getElementById('campoTiendaGasto').style.display = '';
+  }
+
   await cargarGastos();
 }
 
@@ -456,11 +477,20 @@ async function guardarGasto() {
   if (monto <= 0) { err.textContent = 'Ingresa un monto válido.'; err.classList.add('show'); return; }
   if (!preautorizado && !descripcion) { err.textContent = 'La descripción es obligatoria para gastos adicionales.'; err.classList.add('show'); return; }
 
+  // FIX 22-jul-2026 · FEATURE_ReportesDiarios: si es_central, usar la
+  // tienda seleccionada en el modal (incluye CENTRAL). Si no, la tienda
+  // del perfil. Esto permite a Oscar/Mayte registrar gastos generales
+  // contra CENTRAL (tipo='central' en origenes).
+  const tiendaSeleccionada = esCentral()
+    ? document.getElementById('gastoTienda').value
+    : currentPerfil.tienda_codigo;
+  if (!tiendaSeleccionada) { err.textContent = 'Selecciona una tienda.'; err.classList.add('show'); return; }
+
   const btn = document.getElementById('btnGuardarGasto');
   btn.disabled = true; btn.textContent = 'Guardando...';
 
   const { error } = await sb.from('gastos').insert({
-    tienda_codigo: currentPerfil.tienda_codigo,
+    tienda_codigo: tiendaSeleccionada,
     concepto_id, monto, descripcion: descripcion || null,
     estado: 'registrado', registrado_por: currentUser.id,
   });
