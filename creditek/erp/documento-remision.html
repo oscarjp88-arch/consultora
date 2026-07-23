@@ -191,7 +191,7 @@ const SB = (function () {
   if (window.SB) return window.SB;
   const env = window.CREDITEK_ENV || {
     SUPABASE_URL: 'https://jfkmiyvcdfbsbwchyvol.supabase.co',
-    SUPABASE_ANON_KEY: 'REEMPLAZAR_CON_ANON_KEY'
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ'
   };
   return window.supabase.createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
 })();
@@ -244,7 +244,7 @@ let tiendaActual = null;
 
 async function verificarAuth() {
   const { data: { session } } = await SB.auth.getSession();
-  if (!session) { location.href = 'login.html'; return false; }
+  if (!session) { location.href = 'app.html'; return false; }
   usuario = session.user;
 
   const [{ data: rol }, { data: tienda }] = await Promise.all([

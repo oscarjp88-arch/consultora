@@ -188,7 +188,7 @@ const SB = (function () {
   const env = window.CREDITEK_ENV || {
     // ⚠️ Reemplaza estos dos valores en tu repo (o usa tu config.js compartido)
     SUPABASE_URL: 'https://jfkmiyvcdfbsbwchyvol.supabase.co',
-    SUPABASE_ANON_KEY: 'REEMPLAZAR_CON_ANON_KEY'
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ'
   };
   return window.supabase.createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
 })();
@@ -227,7 +227,7 @@ let rolActual = null;
 async function verificarAuth() {
   const { data: { session }, error } = await SB.auth.getSession();
   if (error || !session) {
-    location.href = 'login.html';
+    location.href = 'app.html';
     return false;
   }
   usuarioActual = session.user;
