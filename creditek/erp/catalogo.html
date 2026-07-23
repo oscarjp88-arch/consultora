@@ -144,7 +144,10 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
     <div class="tabla-wrap">
       <table>
         <thead>
-          <tr><th>Foto</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th>Margen</th><th>Precio guía</th><th id="thAcciones" style="display:none;">Acciones</th></tr>
+          <!-- FIX 23-jul-2026 · "Margen" solo para gerencia/auditoria (clase solo-central).
+               "Precio guía" se renombra a "Mi costo" — para tienda muestra precio_tienda
+               (el precio de remisión que recibió); para central muestra precio_guia (referencial). -->
+          <tr><th>Foto</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th class="solo-central">Margen</th><th id="thPrecio">Mi costo</th><th id="thAcciones" style="display:none;">Acciones</th></tr>
         </thead>
         <tbody id="tbodyProductos"></tbody>
       </table>
@@ -355,6 +358,33 @@ async function cargarProductos() {
     return;
   }
   productosCache = data || [];
+
+  // FIX 23-jul-2026 · para admin_tienda, mostrar el precio_tienda del stock de
+  // SU tienda (lo que Andrea le paga a Creditek al recibir la remisión), no el
+  // precio_guia del catálogo (que es solo referencial interno). Para gerencia/
+  // auditoría, se conserva precio_guia. El header dice "Mi costo" para tienda
+  // y "Precio guía" para central (se re-etiqueta abajo).
+  if (!esCentral() && currentPerfil?.tienda_codigo) {
+    const [stocks, unidades] = await Promise.all([
+      sb.from('stock_cantidad').select('producto_id, precio_tienda')
+        .eq('tienda_codigo', currentPerfil.tienda_codigo).not('precio_tienda', 'is', null),
+      sb.from('unidades').select('producto_id, precio_tienda')
+        .eq('tienda_actual', currentPerfil.tienda_codigo)
+        .eq('estado', 'disponible').not('precio_tienda', 'is', null),
+    ]);
+    const stockMap = {};
+    (stocks.data || []).forEach(s => { stockMap[s.producto_id] = s.precio_tienda; });
+    (unidades.data || []).forEach(u => {
+      if (!stockMap[u.producto_id]) stockMap[u.producto_id] = u.precio_tienda;
+    });
+    productosCache.forEach(p => { p._precio_mostrar = stockMap[p.id] || p.precio_guia || null; });
+  } else {
+    productosCache.forEach(p => { p._precio_mostrar = p.precio_guia; });
+    // Central ve el label original.
+    const th = document.getElementById('thPrecio');
+    if (th) th.textContent = 'Precio guía';
+  }
+
   renderTabla();
 }
 
@@ -386,8 +416,8 @@ function renderTabla() {
       <td>${escapeHtml(p.nombre)}</td>
       <td><span class="tag">${escapeHtml(nombreCategoria(p.categoria))}</span></td>
       <td><span class="tag ${p.tipo === 'cantidad' ? 'cantidad' : ''}">${p.tipo}</span></td>
-      <td>${fmtMargen(p.margen_tipo, p.margen_valor)}</td>
-      <td>${fmtCOP(p.precio_guia)}</td>
+      <td class="solo-central">${fmtMargen(p.margen_tipo, p.margen_valor)}</td>
+      <td>${fmtCOP(p._precio_mostrar)}</td>
       ${esCentral() ? `<td><button class="link-edit" data-id="${p.id}">Editar</button></td>` : ''}
     </tr>
   `).join('');
