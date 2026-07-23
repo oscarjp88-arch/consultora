@@ -507,6 +507,14 @@ function avanzarPaso() {
     for (const it of venta.items) {
       if (it.tipoProducto === 'serializado' && !it.unidad_id) { err.textContent = 'Falta validar el IMEI de un celular.'; err.classList.add('show'); return; }
       if (!it.precio_venta || it.precio_venta <= 0) { err.textContent = 'Revisa el precio de venta de todos los productos.'; err.classList.add('show'); return; }
+      // FIX 23-jul-2026 · piso de venta = precio de remisión definido al comprar.
+      // La tienda nunca puede vender por debajo del costo con el que se le entregó.
+      if (it.precio_minimo && Number(it.precio_venta) < Number(it.precio_minimo)) {
+        const min = Number(it.precio_minimo).toLocaleString('es-CO');
+        const actual = Number(it.precio_venta).toLocaleString('es-CO');
+        err.textContent = `El precio de "${it.nombreProducto}" ($${actual}) no puede ser menor al precio de remisión ($${min}).`;
+        err.classList.add('show'); return;
+      }
     }
     mostrarPaso(venta.tipo === 'credito' ? 4 : 5);
     return;
@@ -611,10 +619,22 @@ function agregarItemAccesorio() {
       ? `<div class="buscador-resultados">${encontrados.map(p => `<button data-id="${p.id}">${escapeHtml(p.codigo)} — ${escapeHtml(p.nombre)}</button>`).join('')}</div>`
       : '<div class="buscador-resultados"><button disabled>Sin resultados</button></div>';
     resultadosCont.querySelectorAll('button[data-id]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const prod = productosCache.find(p => p.id === btn.dataset.id);
         div.remove();
-        venta.items.push({ tipoProducto: 'cantidad', producto_id: prod.id, unidad_id: null, cantidad: 1, precio_venta: prod.precio_guia || null, nombreProducto: prod.nombre });
+        // FIX 23-jul-2026 · leer precio_tienda del stock de ESTA tienda (definido
+        // al recibir la remisión). Fallback a precio_guia del catálogo.
+        const { data: stockTienda } = await sb.from('stock_cantidad')
+          .select('precio_tienda')
+          .eq('producto_id', prod.id)
+          .eq('tienda_codigo', currentPerfil.tienda_codigo)
+          .maybeSingle();
+        const precioAcc = stockTienda?.precio_tienda || prod.precio_guia || null;
+        venta.items.push({
+          tipoProducto: 'cantidad', producto_id: prod.id, unidad_id: null,
+          cantidad: 1, precio_venta: precioAcc, nombreProducto: prod.nombre,
+          precio_minimo: stockTienda?.precio_tienda || 0,
+        });
         renderItemsVenta();
       });
     });
@@ -659,7 +679,22 @@ async function renderItemsVenta() {
       const imeiInput = div.querySelector('.imei-input');
       imeiInput.addEventListener('change', () => validarImei(idx, imeiInput.value.trim()));
       if (it.unidad_id) {
-        div.querySelector('.precio-input').addEventListener('input', (e) => { venta.items[idx].precio_venta = Number(e.target.value || 0); actualizarTotalParcial(); });
+        div.querySelector('.precio-input').addEventListener('input', (e) => {
+          const v = Number(e.target.value || 0);
+          venta.items[idx].precio_venta = v;
+          // FIX 23-jul-2026 · feedback visual: borde rojo si el precio está debajo del piso de remisión.
+          const min = Number(venta.items[idx].precio_minimo || 0);
+          if (min && v && v < min) {
+            e.target.style.borderColor = '#ef4444';
+            e.target.style.background = '#fef2f2';
+            e.target.title = `Mínimo: $${min.toLocaleString('es-CO')} (precio de remisión)`;
+          } else {
+            e.target.style.borderColor = '';
+            e.target.style.background = '';
+            e.target.title = '';
+          }
+          actualizarTotalParcial();
+        });
       }
       if ('BarcodeDetector' in window) {
         const btnScan = div.querySelector('.btn-scan');
@@ -714,7 +749,12 @@ async function validarImei(idx, imei, silencioso) {
   venta.items[idx].unidad_id = unidad.id;
   venta.items[idx].producto_id = unidad.producto_id;
   venta.items[idx].nombreProducto = unidad.productos?.nombre || null;
-  if (!venta.items[idx].precio_venta) venta.items[idx].precio_venta = unidad.productos?.precio_guia || null;
+  // FIX 23-jul-2026 · precio sugerido = precio_tienda (remisión) por defecto,
+  // precio_guia como fallback si la unidad viejo no tiene precio_tienda seteado.
+  // Se guarda precio_minimo para bloquear ventas por debajo del piso de remisión.
+  const precioSugerido = unidad.precio_tienda || unidad.productos?.precio_guia || null;
+  if (!venta.items[idx].precio_venta) venta.items[idx].precio_venta = precioSugerido;
+  venta.items[idx].precio_minimo = unidad.precio_tienda || 0;
   if (estadoDiv) { estadoDiv.textContent = `✓ ${unidad.productos?.nombre || 'Producto'} — disponible`; estadoDiv.className = 'imei-estado ok'; }
   if (!silencioso) renderItemsVenta();
   else actualizarTotalParcial();
