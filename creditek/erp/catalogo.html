@@ -144,7 +144,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
     <div class="tabla-wrap">
       <table>
         <thead>
-          <tr><th>Foto</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th>Precio guía</th><th id="thAcciones" style="display:none;">Acciones</th></tr>
+          <tr><th>Foto</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th>Margen</th><th>Precio guía</th><th id="thAcciones" style="display:none;">Acciones</th></tr>
         </thead>
         <tbody id="tbodyProductos"></tbody>
       </table>
@@ -163,9 +163,8 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
     <div class="campo"><label>Nombre</label><input type="text" id="prodNombre" placeholder="Ej. Samsung Galaxy A17 4G"></div>
     <div class="campo solo-central">
       <label>Categoría *</label>
-      <input list="categorias-existentes" id="prodCategoria" placeholder="Ej: audifonos, vidrio, cargador..." autocomplete="off">
-      <datalist id="categorias-existentes"></datalist>
-      <small>Al escribir se muestra el listado de categorías existentes. Si escribes una nueva, se crea al guardar.</small>
+      <select id="prodCategoria"></select>
+      <small>Determina el margen por defecto para nuevas compras. Se puede ajustar por producto abajo.</small>
     </div>
     <div class="campo">
       <label>Tipo</label>
@@ -173,6 +172,20 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
         <option value="serializado">serializado (tiene IMEI, ej. celulares)</option>
         <option value="cantidad">cantidad (stock agregado, ej. accesorios)</option>
       </select>
+    </div>
+    <!-- SPEC v2 23-jul-2026: margen por producto — se pre-llena desde la categoría al elegirla. Mayte puede cambiarlo. -->
+    <div class="campo solo-central" style="display:flex; gap:8px; align-items:end">
+      <div style="flex:0 0 90px">
+        <label>Margen</label>
+        <select id="prodMargenTipo">
+          <option value="porcentaje">%</option>
+          <option value="valor_fijo">$</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label id="prodMargenLabel">Valor (%)</label>
+        <input type="number" id="prodMargenValor" min="0" step="0.01" placeholder="0">
+      </div>
     </div>
     <div class="campo"><label>Precio guía</label><input type="number" id="prodPrecioGuia" placeholder="0" min="0"></div>
     <div class="campo solo-central">
@@ -197,8 +210,25 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let currentPerfil = null;
 let productosCache = [];
+let categoriasCache = []; // SPEC v2 — 7 categorías fijas con margen default
 
 function esCentral() { return !!currentPerfil && (currentPerfil.rol === 'gerencia' || currentPerfil.rol === 'auditoria'); }
+
+// SPEC v2 — helper para pintar la etiqueta del margen según el tipo.
+function actualizarLabelMargen() {
+  const tipo = document.getElementById('prodMargenTipo').value;
+  document.getElementById('prodMargenLabel').textContent = tipo === 'porcentaje' ? 'Valor (%)' : 'Valor ($)';
+}
+
+// SPEC v2 — al cambiar categoría, pre-llenar margen_tipo/margen_valor.
+function onCategoriaCambiada() {
+  const cod = document.getElementById('prodCategoria').value;
+  const cat = categoriasCache.find(c => c.codigo === cod);
+  if (!cat) return;
+  document.getElementById('prodMargenTipo').value = cat.margen_tipo;
+  document.getElementById('prodMargenValor').value = cat.margen_valor;
+  actualizarLabelMargen();
+}
 
 document.getElementById('btnLogin').addEventListener('click', hacerLogin);
 document.getElementById('loginPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') hacerLogin(); });
@@ -266,23 +296,40 @@ function initPagina() {
   document.getElementById('btnNuevoProducto').addEventListener('click', () => abrirModalProducto(null));
   document.getElementById('btnCancelarModal').addEventListener('click', cerrarModalProducto);
   document.getElementById('btnGuardarProducto').addEventListener('click', guardarProducto);
+  document.getElementById('prodCategoria').addEventListener('change', onCategoriaCambiada);
+  document.getElementById('prodMargenTipo').addEventListener('change', actualizarLabelMargen);
 
-  cargarCategoriasExistentes();
+  cargarCategorias();
   cargarProductos();
 }
 
-async function cargarCategoriasExistentes() {
-  const { data, error } = await sb.from('categorias_activas').select('categoria').order('categoria');
-  if (error) return;
-  const cats = (data || []).map(c => c.categoria);
+// SPEC v2 · 23-jul-2026 — se reemplaza el datalist libre + view categorias_activas
+// (legacy) por la tabla categorias_producto (7 fijas con margen default).
+async function cargarCategorias() {
+  const { data, error } = await sb.from('categorias_producto')
+    .select('codigo, nombre, margen_tipo, margen_valor, orden')
+    .order('orden');
+  if (error) { console.error('categorias:', error); return; }
+  categoriasCache = data || [];
 
-  const datalist = document.getElementById('categorias-existentes');
-  if (datalist) datalist.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+  const selForm = document.getElementById('prodCategoria');
+  selForm.innerHTML = categoriasCache.map(c => `<option value="${escapeHtml(c.codigo)}">${escapeHtml(c.nombre)}</option>`).join('');
 
-  const selCat = document.getElementById('filtroCategoria');
-  const actual = selCat.value;
-  selCat.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-  if (cats.includes(actual)) selCat.value = actual;
+  const selFiltro = document.getElementById('filtroCategoria');
+  const actual = selFiltro.value;
+  selFiltro.innerHTML = '<option value="">Todas las categorías</option>' +
+    categoriasCache.map(c => `<option value="${escapeHtml(c.codigo)}">${escapeHtml(c.nombre)}</option>`).join('');
+  if (categoriasCache.some(c => c.codigo === actual)) selFiltro.value = actual;
+}
+
+function nombreCategoria(codigo) {
+  const c = categoriasCache.find(x => x.codigo === codigo);
+  return c ? c.nombre : (codigo || '—');
+}
+
+function fmtMargen(tipo, valor) {
+  if (valor == null) return '—';
+  return tipo === 'porcentaje' ? `${valor}%` : `+${fmtCOP(valor)}`;
 }
 
 async function subirFotoProducto(codigoProducto, archivo) {
@@ -337,8 +384,9 @@ function renderTabla() {
       <td class="foto-cell">${p.foto_url ? `<img src="${escapeHtml(p.foto_url)}" alt="${escapeHtml(p.nombre)}">` : `<span class="sin-foto">📷</span>`}</td>
       <td>${escapeHtml(p.codigo)}</td>
       <td>${escapeHtml(p.nombre)}</td>
-      <td><span class="tag">${escapeHtml(p.categoria)}</span></td>
+      <td><span class="tag">${escapeHtml(nombreCategoria(p.categoria))}</span></td>
       <td><span class="tag ${p.tipo === 'cantidad' ? 'cantidad' : ''}">${p.tipo}</span></td>
+      <td>${fmtMargen(p.margen_tipo, p.margen_valor)}</td>
       <td>${fmtCOP(p.precio_guia)}</td>
       ${esCentral() ? `<td><button class="link-edit" data-id="${p.id}">Editar</button></td>` : ''}
     </tr>
@@ -359,9 +407,18 @@ function abrirModalProducto(prod) {
   document.getElementById('prodId').value = prod ? prod.id : '';
   document.getElementById('prodCodigo').value = prod ? prod.codigo : '';
   document.getElementById('prodNombre').value = prod ? prod.nombre : '';
-  document.getElementById('prodCategoria').value = prod ? prod.categoria : '';
+  // Categoría default: la del producto si estamos editando, si no la primera del listado.
+  document.getElementById('prodCategoria').value = prod ? prod.categoria : (categoriasCache[0]?.codigo || '');
   document.getElementById('prodTipo').value = prod ? prod.tipo : 'serializado';
   document.getElementById('prodPrecioGuia').value = prod ? prod.precio_guia : '';
+  // SPEC v2 — margen: si es edición usar los del producto; si es nuevo tomar los de la categoría.
+  if (prod) {
+    document.getElementById('prodMargenTipo').value = prod.margen_tipo || 'porcentaje';
+    document.getElementById('prodMargenValor').value = prod.margen_valor != null ? prod.margen_valor : '';
+  } else {
+    onCategoriaCambiada(); // pre-llena desde la categoría default
+  }
+  actualizarLabelMargen();
   document.getElementById('prodFotoActual').value = prod && prod.foto_url ? prod.foto_url : '';
   document.getElementById('input-foto').value = '';
   document.getElementById('preview-foto').innerHTML = prod && prod.foto_url
@@ -380,10 +437,15 @@ async function guardarProducto() {
   const categoria = document.getElementById('prodCategoria').value.trim();
   const tipo = document.getElementById('prodTipo').value;
   const precio_guia = document.getElementById('prodPrecioGuia').value ? Number(document.getElementById('prodPrecioGuia').value) : null;
+  // SPEC v2 — margen por producto
+  const margen_tipo = document.getElementById('prodMargenTipo').value;
+  const margenRaw = document.getElementById('prodMargenValor').value;
+  const margen_valor = margenRaw === '' ? 0 : Number(margenRaw);
   const err = document.getElementById('modalErr');
   err.classList.remove('show');
 
   if (!codigo || !nombre || !categoria) { err.textContent = 'Código, nombre y categoría son obligatorios.'; err.classList.add('show'); return; }
+  if (margen_valor < 0) { err.textContent = 'El margen no puede ser negativo.'; err.classList.add('show'); return; }
 
   const btn = document.getElementById('btnGuardarProducto');
   btn.disabled = true; btn.textContent = 'Guardando...';
@@ -402,10 +464,11 @@ async function guardarProducto() {
   }
 
   let resultado;
+  const payload = { codigo, nombre, categoria, tipo, precio_guia, foto_url, margen_tipo, margen_valor };
   if (id) {
-    resultado = await sb.from('productos').update({ codigo, nombre, categoria, tipo, precio_guia, foto_url }).eq('id', id).select().maybeSingle();
+    resultado = await sb.from('productos').update(payload).eq('id', id).select().maybeSingle();
   } else {
-    resultado = await sb.from('productos').insert({ codigo, nombre, categoria, tipo, precio_guia, foto_url }).select().maybeSingle();
+    resultado = await sb.from('productos').insert(payload).select().maybeSingle();
   }
 
   btn.disabled = false; btn.textContent = 'Guardar';

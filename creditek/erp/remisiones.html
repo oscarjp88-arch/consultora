@@ -363,7 +363,13 @@ function initPagina() {
   document.getElementById('filtroEstado').addEventListener('change', cargarRemisiones);
   document.getElementById('filtroFecha').addEventListener('change', cargarRemisiones);
 
-  document.getElementById('btnNuevaRemision').addEventListener('click', () => abrirModalRemision(null));
+  // SPEC v2 · 23-jul-2026: las remisiones se crean desde bodega-central.html
+  // (donde vive el flujo de despacho con filtro por factura + precio_tienda).
+  // El modal viejo se conserva por si alguna remisión legacy necesita edición,
+  // pero el botón "+ Nueva remisión" redirige directo.
+  document.getElementById('btnNuevaRemision').addEventListener('click', () => {
+    location.href = 'bodega-central.html';
+  });
   document.getElementById('btnCerrarModalRemision').addEventListener('click', () => document.getElementById('modalRemision').classList.remove('show'));
   document.getElementById('btnAgregarItem').addEventListener('click', () => agregarItemRow(null));
   document.getElementById('btnGuardarRemision').addEventListener('click', guardarRemision);

@@ -119,6 +119,10 @@
       <option value="cantidad">Solo tipo cantidad</option>
       <option value="serializado">Solo tipo serializado</option>
     </select>
+    <!-- SPEC v2 · filtro por factura del proveedor. Se popula con las facturas que tengan stock aún en CENTRAL. -->
+    <select id="filtro-factura" class="border border-gray-300 rounded px-3 py-2 text-sm">
+      <option value="">Todas las facturas</option>
+    </select>
     <span id="contador" class="text-xs text-gray-500 ml-auto"></span>
   </section>
 
@@ -191,6 +195,7 @@
                 <th class="px-2 py-2 text-left font-medium">Estado</th>
                 <th class="px-2 py-2 text-left font-medium">IMEI</th>
                 <th class="px-2 py-2 text-right font-medium">Costo real</th>
+                <th class="px-2 py-2 text-right font-medium">Precio remisión</th>
                 <th class="px-2 py-2 text-left font-medium">Factura proveedor</th>
                 <th class="px-2 py-2 text-left font-medium">Creada</th>
               </tr>
@@ -270,19 +275,52 @@ let alertaData = [];
 // ============================================================
 // CARGA DE ALERTA_BODEGA_CENTRAL
 // ============================================================
-async function cargarAlerta() {
-  const { data, error } = await SB
-    .from('alerta_bodega_central')
-    .select('producto_id, nombre, categoria, tipo, stock_actual_central, descuadrado');
-  if (error) { toast('Error cargando alerta: ' + error.message, 'error'); return; }
+// SPEC v2 · mapa producto_id → [factura_ids con unidades en CENTRAL]
+// Se calcula en cargarAlerta y lo usa el filtro por factura.
+let facturasPorProducto = {};
+let facturasIndex = [];  // [{id, numero, fecha, proveedor_nombre}]
 
-  alertaData = data || [];
-  // Ordenar: descuadrados primero, luego por stock desc, luego nombre
+async function cargarAlerta() {
+  const [alertaResp, unidadesFacturas, facturasResp] = await Promise.all([
+    SB.from('alerta_bodega_central')
+      .select('producto_id, nombre, categoria, tipo, stock_actual_central, descuadrado'),
+    // Solo unidades que aún están en CENTRAL — para poblar el filtro con facturas relevantes.
+    SB.from('unidades')
+      .select('producto_id, factura_proveedor_id')
+      .eq('tienda_actual', 'CENTRAL')
+      .not('factura_proveedor_id', 'is', null),
+    SB.from('facturas_proveedor')
+      .select('id, numero, fecha, proveedor:proveedor_id(nombre)')
+      .order('fecha', { ascending: false }),
+  ]);
+  if (alertaResp.error) { toast('Error cargando alerta: ' + alertaResp.error.message, 'error'); return; }
+
+  alertaData = alertaResp.data || [];
   alertaData.sort((a, b) => {
     if (a.descuadrado !== b.descuadrado) return b.descuadrado - a.descuadrado;
     if (a.stock_actual_central !== b.stock_actual_central) return b.stock_actual_central - a.stock_actual_central;
     return a.nombre.localeCompare(b.nombre, 'es');
   });
+
+  // Mapa producto → set(facturas)
+  facturasPorProducto = {};
+  const facturaIdsConStock = new Set();
+  (unidadesFacturas.data || []).forEach(u => {
+    if (!facturasPorProducto[u.producto_id]) facturasPorProducto[u.producto_id] = new Set();
+    facturasPorProducto[u.producto_id].add(u.factura_proveedor_id);
+    facturaIdsConStock.add(u.factura_proveedor_id);
+  });
+
+  // Popular dropdown filtro-factura con solo las que tienen unidades vivas.
+  facturasIndex = (facturasResp.data || []).filter(f => facturaIdsConStock.has(f.id));
+  const selFactura = document.getElementById('filtro-factura');
+  const actual = selFactura.value;
+  selFactura.innerHTML = '<option value="">Todas las facturas</option>' +
+    facturasIndex.map(f => {
+      const prov = f.proveedor?.nombre ? f.proveedor.nombre + ' · ' : '';
+      return `<option value="${esc(f.id)}">${prov}${esc(f.numero)} · ${fechaCorta(f.fecha)}</option>`;
+    }).join('');
+  if (facturasIndex.some(f => f.id === actual)) selFactura.value = actual;
 
   actualizarKPIs();
   render();
@@ -326,11 +364,17 @@ function render() {
   const q = document.getElementById('filtro-texto').value.trim().toLowerCase();
   const descuadre = document.getElementById('filtro-descuadre').value;
   const tipo = document.getElementById('filtro-tipo').value;
+  const factura = document.getElementById('filtro-factura').value;
 
   const filtrados = alertaData.filter(a => {
     if (descuadre === 'descuadrados' && !a.descuadrado) return false;
     if (descuadre === 'cuadrados' && a.descuadrado) return false;
     if (tipo !== 'todos' && a.tipo !== tipo) return false;
+    // SPEC v2 · filtro por factura — solo aplica a productos serializados (unidades tienen factura_proveedor_id).
+    if (factura) {
+      const facts = facturasPorProducto[a.producto_id];
+      if (!facts || !facts.has(factura)) return false;
+    }
     if (q) {
       const hay = (a.nombre + ' ' + a.categoria).toLowerCase();
       if (!hay.includes(q)) return false;
@@ -429,7 +473,7 @@ async function abrirDetalle(prodId, nombre, tipo) {
     document.getElementById('unidades-panel').classList.remove('hidden');
     const { data: uns, error: uErr } = await SB
       .from('unidades')
-      .select('id, imei, estado, costo_remision, factura_proveedor_id, created_at')
+      .select('id, imei, estado, costo_remision, precio_tienda, factura_proveedor_id, created_at')
       .eq('producto_id', prodId)
       .eq('tienda_actual', 'CENTRAL')
       .order('created_at', { ascending: false })
@@ -437,9 +481,9 @@ async function abrirDetalle(prodId, nombre, tipo) {
 
     const tbodyU = document.getElementById('tbody-unidades');
     if (uErr) {
-      tbodyU.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-600">Error: ' + esc(uErr.message) + '</td></tr>';
+      tbodyU.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-600">Error: ' + esc(uErr.message) + '</td></tr>';
     } else if (!uns || uns.length === 0) {
-      tbodyU.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin unidades en CENTRAL.</td></tr>';
+      tbodyU.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">Sin unidades en CENTRAL.</td></tr>';
     } else {
       // Enriquecer con número de factura
       const facturaIds = [...new Set(uns.map(u => u.factura_proveedor_id).filter(Boolean))];
@@ -469,6 +513,7 @@ async function abrirDetalle(prodId, nombre, tipo) {
             <td class="px-2 py-2">${estadoBadge}</td>
             <td class="px-2 py-2">${imeiTxt}</td>
             <td class="px-2 py-2 text-right font-mono">${money(u.costo_remision)}</td>
+            <td class="px-2 py-2 text-right font-mono text-blue-800">${u.precio_tienda != null ? money(u.precio_tienda) : '<span class=\"text-gray-400\">—</span>'}</td>
             <td class="px-2 py-2">${factTxt}</td>
             <td class="px-2 py-2 text-gray-500 text-xs">${fechaCorta(u.created_at)}</td>
           </tr>
@@ -489,6 +534,7 @@ document.getElementById('btn-refresh').addEventListener('click', cargarAlerta);
 document.getElementById('filtro-texto').addEventListener('input', render);
 document.getElementById('filtro-descuadre').addEventListener('change', render);
 document.getElementById('filtro-tipo').addEventListener('change', render);
+document.getElementById('filtro-factura').addEventListener('change', render);
 document.getElementById('cerrar-detalle').addEventListener('click', cerrarDetalle);
 document.getElementById('modal-detalle').addEventListener('click', e => {
   if (e.target.id === 'modal-detalle') cerrarDetalle();

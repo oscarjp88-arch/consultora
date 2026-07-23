@@ -128,7 +128,7 @@
     <div class="flex justify-between items-start mb-1">
       <div>
         <h2 class="text-lg font-semibold text-gray-800">2. Productos comprados</h2>
-        <p class="text-xs text-gray-500">Solo cantidad y costo unitario. Los IMEIs se digitan cuando la tienda reciba el equipo.</p>
+        <p class="text-xs text-gray-500">Cantidad, costo real y precio remisión (lo que la tienda ve como su costo). El margen se pre-llena desde la categoría del producto — Mayte lo puede ajustar. Los IMEIs se digitan cuando la tienda reciba el equipo.</p>
       </div>
       <button id="btn-agregar-item" type="button"
               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">
@@ -140,11 +140,14 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-100 text-gray-700 text-left">
           <tr>
-            <th class="px-3 py-2 font-semibold w-[45%]">Producto</th>
-            <th class="px-3 py-2 font-semibold text-right w-24">Cantidad</th>
-            <th class="px-3 py-2 font-semibold text-right w-40">Costo unitario</th>
-            <th class="px-3 py-2 font-semibold text-right w-40">Subtotal</th>
-            <th class="px-3 py-2 font-semibold text-center w-12"></th>
+            <th class="px-3 py-2 font-semibold w-[26%]">Producto</th>
+            <th class="px-3 py-2 font-semibold text-right w-20">Cant.</th>
+            <th class="px-3 py-2 font-semibold text-right w-32">Costo unit.</th>
+            <th class="px-3 py-2 font-semibold text-right w-32">Margen</th>
+            <th class="px-3 py-2 font-semibold text-right w-32">Precio remisión</th>
+            <th class="px-3 py-2 font-semibold text-right w-32">Sub. costo</th>
+            <th class="px-3 py-2 font-semibold text-right w-32">Sub. remisión</th>
+            <th class="px-3 py-2 font-semibold text-center w-10"></th>
           </tr>
         </thead>
         <tbody id="tbody-items">
@@ -152,8 +155,18 @@
         </tbody>
         <tfoot>
           <tr class="border-t-2 border-gray-300 bg-gray-50">
-            <td colspan="3" class="px-3 py-3 text-right font-semibold text-gray-700">TOTAL DE LA FACTURA</td>
-            <td class="px-3 py-3 text-right font-bold text-lg text-gray-900 font-mono" id="total-factura">$ 0</td>
+            <td colspan="5" class="px-3 py-2 text-right font-semibold text-gray-700">Total factura (costo Creditek)</td>
+            <td colspan="2" class="px-3 py-2 text-right font-bold font-mono text-gray-900" id="total-factura">$ 0</td>
+            <td></td>
+          </tr>
+          <tr class="bg-gray-50">
+            <td colspan="5" class="px-3 py-2 text-right font-semibold text-gray-700">Total remisión (precio tiendas)</td>
+            <td colspan="2" class="px-3 py-2 text-right font-bold font-mono text-blue-800" id="total-remision">$ 0</td>
+            <td></td>
+          </tr>
+          <tr class="bg-emerald-50 border-t border-gray-300">
+            <td colspan="5" class="px-3 py-2 text-right font-semibold text-emerald-900">Margen bruto</td>
+            <td colspan="2" class="px-3 py-2 text-right font-bold text-lg font-mono text-emerald-900" id="total-margen">$ 0</td>
             <td></td>
           </tr>
         </tfoot>
@@ -262,8 +275,9 @@ async function verificarAuth() {
 // ESTADO
 // ============================================================
 let proveedores = [];   // [{id, nombre, nit}]
-let productos = [];     // [{id, nombre, categoria, tipo}]
-let items = [];         // [{tempId, producto_id, producto_nombre, producto_tipo, cantidad, costo_unitario}]
+let productos = [];     // [{id, nombre, categoria, tipo, margen_tipo, margen_valor}]
+// SPEC v2 · items ahora incluye margen y precio_remision
+let items = [];         // [{tempId, producto_id, producto_nombre, producto_tipo, cantidad, costo_unitario, margen_tipo, margen_valor, precio_remision, precio_manual}]
 let indiceItemActivo = null;   // para el modal de búsqueda
 
 // ============================================================
@@ -272,7 +286,8 @@ let indiceItemActivo = null;   // para el modal de búsqueda
 async function cargarCatalogos() {
   const [pv, pr] = await Promise.all([
     SB.from('proveedores').select('id, nombre, nit').eq('activo', true).order('nombre'),
-    SB.from('productos').select('id, nombre, categoria, tipo').order('categoria').order('nombre')
+    // SPEC v2 · traer margen_tipo, margen_valor por producto (default de la ficha).
+    SB.from('productos').select('id, nombre, categoria, tipo, margen_tipo, margen_valor').eq('activo', true).order('categoria').order('nombre')
   ]);
 
   if (pv.error) { toast('Error cargando proveedores: ' + pv.error.message, 'error'); return; }
@@ -300,7 +315,12 @@ function nuevoItem() {
     producto_nombre: '',
     producto_tipo: null,
     cantidad: null,
-    costo_unitario: null
+    costo_unitario: null,
+    // SPEC v2 · margen + precio remisión
+    margen_tipo: 'porcentaje',
+    margen_valor: 0,
+    precio_remision: null,   // se calcula desde costo+margen; Mayte puede escribir directo (precio_manual=true)
+    precio_manual: false,
   });
   renderItems();
 }
@@ -310,23 +330,58 @@ function removerItem(tempId) {
   renderItems();
 }
 
+// SPEC v2 · calcula precio_remision desde costo + margen. NO se llama si el usuario editó el precio directo.
+function calcularPrecioRemision(it) {
+  const costo = Number(it.costo_unitario || 0);
+  const val = Number(it.margen_valor || 0);
+  if (!costo) return 0;
+  return it.margen_tipo === 'porcentaje'
+    ? Math.round(costo * (1 + val / 100))
+    : Math.round(costo + val);
+}
+
 function actualizarItem(tempId, campo, valor) {
   const it = items.find(i => i.tempId === tempId);
   if (!it) return;
-  if (campo === 'cantidad') it.cantidad = valor === '' ? null : Math.max(1, parseInt(valor, 10) || 0);
-  else if (campo === 'costo_unitario') it.costo_unitario = valor === '' ? null : Math.max(0, parseFloat(valor) || 0);
+  if (campo === 'cantidad') {
+    it.cantidad = valor === '' ? null : Math.max(1, parseInt(valor, 10) || 0);
+  } else if (campo === 'costo_unitario') {
+    it.costo_unitario = valor === '' ? null : Math.max(0, parseFloat(valor) || 0);
+    if (!it.precio_manual) it.precio_remision = calcularPrecioRemision(it);
+  } else if (campo === 'margen_tipo') {
+    it.margen_tipo = valor;
+    if (!it.precio_manual) it.precio_remision = calcularPrecioRemision(it);
+  } else if (campo === 'margen_valor') {
+    it.margen_valor = valor === '' ? 0 : Math.max(0, parseFloat(valor) || 0);
+    if (!it.precio_manual) it.precio_remision = calcularPrecioRemision(it);
+  } else if (campo === 'precio_remision') {
+    it.precio_remision = valor === '' ? null : Math.max(0, parseFloat(valor) || 0);
+    it.precio_manual = true;  // Mayte lo escribió a mano; ya no auto-calculo hasta que reset margen
+  }
   actualizarTotal();
+  // Re-pintar la fila para reflejar cambios cruzados (ej. precio_remision al cambiar costo)
+  const inputPrecio = document.querySelector(`[data-item="${tempId}"][data-campo="precio_remision"]`);
+  if (inputPrecio && document.activeElement !== inputPrecio) {
+    inputPrecio.value = it.precio_remision ?? '';
+  }
 }
 
 function actualizarTotal() {
-  let total = 0;
+  let totalCosto = 0, totalRemision = 0;
   items.forEach(i => {
-    const sub = (i.cantidad || 0) * (i.costo_unitario || 0);
-    total += sub;
-    const el = document.getElementById('sub-' + i.tempId);
-    if (el) el.textContent = money(sub);
+    const q = i.cantidad || 0;
+    const subCosto = q * (i.costo_unitario || 0);
+    const subRemi = q * (i.precio_remision || 0);
+    totalCosto += subCosto;
+    totalRemision += subRemi;
+    const elC = document.getElementById('sub-costo-' + i.tempId);
+    const elR = document.getElementById('sub-remi-' + i.tempId);
+    if (elC) elC.textContent = money(subCosto);
+    if (elR) elR.textContent = money(subRemi);
   });
-  document.getElementById('total-factura').textContent = money(total);
+  document.getElementById('total-factura').textContent = money(totalCosto);
+  document.getElementById('total-remision').textContent = money(totalRemision);
+  document.getElementById('total-margen').textContent = money(totalRemision - totalCosto);
 }
 
 function renderItems() {
@@ -348,6 +403,10 @@ function renderItems() {
         : `<button type="button" data-buscar-idx="${idx}" class="text-blue-600 hover:text-blue-800 text-sm underline">
              Buscar producto...
            </button>`;
+      // SPEC v2 · celdas de margen (tipo + valor) y precio remisión (editable).
+      const margenSufijo = i.margen_tipo === 'porcentaje' ? '%' : '$';
+      const subCosto = (i.cantidad || 0) * (i.costo_unitario || 0);
+      const subRemi = (i.cantidad || 0) * (i.precio_remision || 0);
       return `
         <tr>
           <td class="px-3 py-2">${productoBtn}</td>
@@ -364,9 +423,30 @@ function renderItems() {
                      class="w-full border border-gray-300 rounded px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </td>
-          <td class="px-3 py-2 text-right font-mono" id="sub-${i.tempId}">
-            ${money((i.cantidad || 0) * (i.costo_unitario || 0))}
+          <td class="px-3 py-2">
+            <div class="flex items-center gap-1">
+              <select data-item="${i.tempId}" data-campo="margen_tipo"
+                      class="border border-gray-300 rounded px-1 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="porcentaje" ${i.margen_tipo === 'porcentaje' ? 'selected' : ''}>%</option>
+                <option value="valor_fijo" ${i.margen_tipo === 'valor_fijo' ? 'selected' : ''}>$</option>
+              </select>
+              <input type="number" min="0" step="0.01" data-item="${i.tempId}" data-campo="margen_valor"
+                     value="${i.margen_valor ?? ''}"
+                     class="w-full border border-gray-300 rounded px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     title="${margenSufijo === '%' ? 'Porcentaje sobre el costo' : 'Valor fijo a sumar sobre el costo'}" />
+            </div>
           </td>
+          <td class="px-3 py-2">
+            <div class="flex items-center gap-1">
+              <span class="text-gray-500">$</span>
+              <input type="number" min="0" step="1" data-item="${i.tempId}" data-campo="precio_remision"
+                     value="${i.precio_remision ?? ''}"
+                     class="w-full border border-gray-300 rounded px-2 py-1 text-right focus:outline-none focus:ring-2 focus:ring-blue-500 ${i.precio_manual ? 'bg-yellow-50' : ''}"
+                     title="${i.precio_manual ? 'Editado manualmente — ya no se recalcula automáticamente' : 'Auto-calculado desde costo + margen. Puedes escribirlo directo si prefieres.'}" />
+            </div>
+          </td>
+          <td class="px-3 py-2 text-right font-mono text-gray-600" id="sub-costo-${i.tempId}">${money(subCosto)}</td>
+          <td class="px-3 py-2 text-right font-mono font-medium text-blue-800" id="sub-remi-${i.tempId}">${money(subRemi)}</td>
           <td class="px-3 py-2 text-center">
             <button type="button" data-remover="${i.tempId}"
                     class="text-red-500 hover:text-red-700 text-lg" title="Eliminar línea">×</button>
@@ -422,6 +502,11 @@ function seleccionarProducto(prodId) {
   it.producto_id = p.id;
   it.producto_nombre = p.nombre;
   it.producto_tipo = p.tipo;
+  // SPEC v2 · pre-llenar margen desde la ficha del producto (que a su vez viene de la categoría).
+  it.margen_tipo = p.margen_tipo || 'porcentaje';
+  it.margen_valor = p.margen_valor != null ? p.margen_valor : 0;
+  it.precio_manual = false;
+  it.precio_remision = calcularPrecioRemision(it);
   cerrarBuscador();
   renderItems();
 }
@@ -473,10 +558,13 @@ async function guardarCompra() {
       if (!it.producto_id) throw new Error('Hay una línea sin producto seleccionado');
       if (!it.cantidad || it.cantidad <= 0) throw new Error(`Cantidad inválida en "${it.producto_nombre}"`);
       if (it.costo_unitario == null || it.costo_unitario < 0) throw new Error(`Costo inválido en "${it.producto_nombre}"`);
+      // SPEC v2 · precio_remision es obligatorio (lo pide el RPC).
+      if (it.precio_remision == null || it.precio_remision < 0) throw new Error(`Precio remisión inválido en "${it.producto_nombre}"`);
       payload.push({
         producto_id: it.producto_id,
         cantidad: it.cantidad,
-        costo_unitario: it.costo_unitario
+        costo_unitario: it.costo_unitario,
+        precio_remision: it.precio_remision,
       });
     }
 
@@ -557,6 +645,11 @@ document.getElementById('tbody-items').addEventListener('click', e => {
 document.getElementById('tbody-items').addEventListener('input', e => {
   const inp = e.target.closest('[data-item]');
   if (inp) actualizarItem(inp.getAttribute('data-item'), inp.getAttribute('data-campo'), inp.value);
+});
+// SPEC v2 · <select> no dispara 'input' de forma consistente entre navegadores; escuchamos 'change' también.
+document.getElementById('tbody-items').addEventListener('change', e => {
+  const inp = e.target.closest('[data-item]');
+  if (inp && inp.tagName === 'SELECT') actualizarItem(inp.getAttribute('data-item'), inp.getAttribute('data-campo'), inp.value);
 });
 
 document.addEventListener('keydown', e => {

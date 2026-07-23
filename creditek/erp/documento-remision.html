@@ -284,7 +284,7 @@ async function cargarRemision() {
 
   const [{ data: rItems, error: iErr }, { data: origen }] = await Promise.all([
     SB.from('remision_items')
-      .select('id, producto_id, cantidad, precio_remision, productos(id, nombre, tipo, categoria)')
+      .select('id, producto_id, cantidad, precio_remision, productos(id, nombre, tipo, categoria, foto_url)')
       .eq('remision_id', REMISION_ID),
     SB.from('origenes').select('codigo, nombre').eq('codigo', rem.tienda_codigo).neq('tipo', 'central').maybeSingle()
   ]);
@@ -334,16 +334,20 @@ function renderDocumento() {
     tbody.innerHTML = items.map(it => {
       const sub = Number(it.cantidad) * Number(it.precio_remision);
       total += sub;
-      const p = it.productos || { id: it.producto_id, nombre: '(producto)', tipo: '', categoria: '' };
+      const p = it.productos || { id: it.producto_id, nombre: '(producto)', tipo: '', categoria: '', foto_url: null };
       const badgeTipo = p.tipo === 'serializado'
         ? '<span class="px-2 py-0.5 rounded text-xs bg-purple-100 text-purple-700">serializado</span>'
         : '<span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700">cantidad</span>';
-      const url = fotoUrl(p);
+      // SPEC v2 · si el producto no tiene foto_url, mostrar botón "Subir foto" (global — se guarda en productos.foto_url).
+      const tieneFoto = !!p.foto_url;
+      const thumbHtml = tieneFoto
+        ? `<div class="thumb"><img src="${esc(p.foto_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" /></div>`
+        : `<button type="button" class="btn-subir-foto thumb" data-prod-id="${esc(p.id)}"
+              style="cursor:pointer; border:2px dashed #d1d5db; background:#f9fafb;"
+              title="Subir foto (queda global para todas las tiendas)">📷</button>`;
       return `
-        <tr class="border-b border-gray-100">
-          <td class="py-3 pr-2">
-            <div class="thumb"><img src="${esc(url)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'📦'}))" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" /></div>
-          </td>
+        <tr class="border-b border-gray-100" data-prod-id="${esc(p.id)}">
+          <td class="py-3 pr-2">${thumbHtml}</td>
           <td class="py-3 pr-2">
             <div class="font-medium text-gray-800">${esc(p.nombre)}</div>
             <div class="text-xs text-gray-500">${esc(p.categoria)}</div>
@@ -579,6 +583,56 @@ document.getElementById('items-aceptacion').addEventListener('input', e => {
   const row = inp.closest('[data-imei-row]');
   if (row) row.classList.remove('imei-ok', 'imei-bad');
   imeisEscaneados[inp.getAttribute('data-item')][parseInt(inp.getAttribute('data-idx'), 10)] = inp.value;
+});
+
+// ============================================================
+// SPEC v2 · UPLOAD DE FOTO DE PRODUCTO
+// La foto es global: una por producto, se guarda en productos.foto_url
+// y todas las tiendas la ven. Solo aparece si el producto NO tiene foto.
+// ============================================================
+const inputFotoHidden = document.createElement('input');
+inputFotoHidden.type = 'file';
+inputFotoHidden.accept = 'image/jpeg,image/png,image/webp';
+inputFotoHidden.style.display = 'none';
+document.body.appendChild(inputFotoHidden);
+let productoIdSubiendo = null;
+
+document.getElementById('tbody-items').addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-subir-foto');
+  if (!btn) return;
+  productoIdSubiendo = btn.getAttribute('data-prod-id');
+  inputFotoHidden.value = '';
+  inputFotoHidden.click();
+});
+
+inputFotoHidden.addEventListener('change', async () => {
+  if (!productoIdSubiendo) return;
+  const file = inputFotoHidden.files && inputFotoHidden.files[0];
+  const prodId = productoIdSubiendo;
+  productoIdSubiendo = null;
+  if (!file) return;
+
+  const btn = document.querySelector(`.btn-subir-foto[data-prod-id="${prodId}"]`);
+  if (btn) btn.textContent = '⏳';
+
+  try {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `producto_${prodId}_${Date.now()}.${ext}`;
+    const { error: upErr } = await SB.storage.from('productos-fotos').upload(path, file, { cacheControl: '31536000', upsert: false });
+    if (upErr) throw new Error(upErr.message);
+    const { data: pub } = SB.storage.from('productos-fotos').getPublicUrl(path);
+    const publicUrl = pub.publicUrl;
+    const { error: dbErr } = await SB.from('productos').update({ foto_url: publicUrl }).eq('id', prodId);
+    if (dbErr) throw new Error(dbErr.message);
+
+    // Actualiza en memoria y re-renderiza la tabla.
+    items.forEach(it => { if (it.producto_id === prodId && it.productos) it.productos.foto_url = publicUrl; });
+    renderDocumento();
+    toast('Foto guardada — todas las tiendas la ven ahora.');
+  } catch (e) {
+    toast('Error subiendo foto: ' + e.message, 'error');
+    if (btn) btn.textContent = '📷';
+  }
 });
 
 // ============================================================
