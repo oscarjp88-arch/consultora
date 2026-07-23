@@ -31,21 +31,21 @@
       { label: 'Cuenta cte.', href: 'cuenta-corriente.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
       { label: 'Conciliación', href: 'conciliacion.html', roles: ['gerencia', 'auditoria'] },
     ]},
+    // FIX 23-jul-2026 v2 (paquete FIX_Sidebar_BodegaCentral_v1_23jul2026.md):
+    // renombrar 'PROVEEDORES' → 'BODEGA CENTRAL', mover antes de CLIENTES,
+    // renombrar item 'Registrar compra' → 'Compra proveedor', y agregar
+    // 'Doc. remisión' visible también para admin_tienda (la tienda que
+    // recibe una remisión necesita abrir el documento para aceptarla).
+    { titulo: 'BODEGA CENTRAL', icono: '🏭', items: [
+      { label: 'Proveedores', href: 'proveedores.html', roles: ['gerencia', 'auditoria'] },
+      { label: 'Compra proveedor', href: 'compra-proveedor.html', roles: ['gerencia', 'auditoria'] },
+      { label: 'Bodega Central', href: 'bodega-central.html', roles: ['gerencia', 'auditoria'] },
+      { label: 'Doc. remisión', href: 'documento-remision.html', roles: ['gerencia', 'auditoria', 'admin_tienda'] },
+      { label: 'Utilidad Creditek', href: 'utilidad-creditek.html', roles: ['gerencia', 'auditoria'] },
+    ]},
     { titulo: 'CLIENTES', icono: '👤', items: [
       { label: 'Registro', href: 'registro.html', roles: ['gerencia', 'auditoria', 'admin_tienda', 'asesor'] },
       { label: 'Validación', href: 'validacion.html', roles: ['gerencia', 'auditoria'] },
-    ]},
-    // FIX 23-jul-2026 · pantallas de Bodega Central (R1-R4 del paquete
-    // PAQUETE_Cowork_BodegaCentral_Margenes_v1). Solo visible para
-    // gerencia/auditoría — el flujo entero de compra→despacho→margen
-    // no aplica a admins de tienda ni asesores.
-    // documento-remision.html se abre por URL con ?remision_id=<uuid>
-    // desde remisiones.html, por eso no va como item de menú aquí.
-    { titulo: 'PROVEEDORES', icono: '🏭', items: [
-      { label: 'Proveedores', href: 'proveedores.html', roles: ['gerencia', 'auditoria'] },
-      { label: 'Registrar compra', href: 'compra-proveedor.html', roles: ['gerencia', 'auditoria'] },
-      { label: 'Bodega Central', href: 'bodega-central.html', roles: ['gerencia', 'auditoria'] },
-      { label: 'Utilidad Creditek', href: 'utilidad-creditek.html', roles: ['gerencia', 'auditoria'] },
     ]},
   ];
 
