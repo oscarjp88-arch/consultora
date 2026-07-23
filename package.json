@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node scripts/build-public.mjs && node scripts/verify-public-artifact.mjs",
+    "test": "node --test tests/security/*.test.mjs",
+    "test:live": "node --test tests/security/live-smoke.test.mjs",
+    "preview:upload": "npm run build && wrangler versions upload",
+    "deploy": "npm run build && wrangler deploy"
   },
   "keywords": [],
   "author": "",
@@ -16,5 +20,8 @@
     "dotenv": "^17.4.2",
     "googleapis": "^171.4.0",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "wrangler": "4.114.0"
   }
 }
