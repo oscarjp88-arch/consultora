@@ -28,7 +28,7 @@ test('server context uses safe DOM rendering and represents every captator state
   assert.match(registro, /captadorSelect\.disabled\s*=\s*true/);
   assert.match(registro, /captadorSelect\.disabled\s*=\s*false/);
   assert.match(registro, /captadores\.length\s*===\s*0/);
-  assert.match(registro, /No hay captadores activos/);
+  assert.match(registro, /No hay vendedores activos/);
 });
 
 test('registration uses address, Turnstile, and memory-only secure sessions', () => {
