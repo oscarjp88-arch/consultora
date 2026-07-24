@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="sidebar.js"></script>
+<script src="traslados-domain.js"></script>
 <style>
 :root {
   --azul: #0B1E3D; --turquesa: #00C4CC; --bg: #F5F5F7; --surface: #FFFFFF;
@@ -56,6 +57,12 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; ba
 .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; }
 .page-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
 .page-top h1 { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.flujo-info {
+  margin: -6px 0 18px; padding: 13px 16px; border-radius: var(--radius-sm);
+  border: 1px solid #BAE6FD; background: #F0F9FF; color: #0C4A6E;
+  font-size: 13px; line-height: 1.45;
+}
+.flujo-info b { color: #075985; }
 .btn-primary { background: var(--turquesa); color: white; border: none; border-radius: 999px; padding: 11px 18px; font-size: 13.5px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px -4px rgba(0,196,204,0.5); transition: transform .12s ease; }
 .btn-primary:hover { transform: translateY(-1px); }
 
@@ -174,6 +181,11 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
       <button class="btn-primary" id="btnNuevoTraslado" style="display:none;">+ Nuevo traslado</button>
     </div>
 
+    <div class="flujo-info">
+      <b>¿Qué significa “Despachado”?</b> La mercancía queda “En traslado” y no se puede vender.
+      Solo vuelve a estar disponible cuando la tienda de destino confirma que la recibió.
+    </div>
+
     <div class="filters">
       <select id="filtroEstado">
         <option value="">Todos los estados</option>
@@ -249,6 +261,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const trasladosDomain = window.CreditekTrasladosDomain;
 
 let currentUser = null;
 let currentPerfil = null;
@@ -382,7 +395,7 @@ function renderTablaTraslados() {
     const items = (t.traslado_items || []).map(it => `${escapeHtml(it.productos?.nombre || '—')} ×${it.cantidad}`).join(', ');
     const fecha = t.created_at ? new Date(t.created_at).toLocaleDateString('es-CO') : '—';
     let acciones = `<button class="btn-ver" data-id="${t.id}">Ver</button>`;
-    const puedeRecibir = t.estado === 'despachado' && (esCentral() || currentPerfil.tienda_codigo === t.tienda_destino);
+    const puedeRecibir = trasladosDomain.puedeRecibir(currentPerfil, t);
     const puedeAnular = t.estado === 'despachado' && esCentral();
     if (puedeRecibir) acciones = `<button class="accion-recibir btn-recibir" data-id="${t.id}">Recibir</button>` + acciones;
     if (puedeAnular) acciones += `<button class="accion-anular btn-anular" data-id="${t.id}">Anular</button>`;
@@ -595,7 +608,11 @@ async function abrirModalVerTraslado(t) {
   if (error) { alert('No se pudieron cargar los productos: ' + error.message); return; }
 
   document.getElementById('verTrasladoTitulo').textContent = `Traslado #${t.consecutivo}`;
-  document.getElementById('verTrasladoSub').textContent = `${t.origen?.nombre || t.tienda_origen} → ${t.destino?.nombre || t.tienda_destino} · ${etiquetaEstado(t.estado)}`;
+  const destino = t.destino?.nombre || t.tienda_destino;
+  const pendienteDestino = t.estado === 'despachado'
+    ? ` · Pendiente de aceptación en ${destino}`
+    : '';
+  document.getElementById('verTrasladoSub').textContent = `${t.origen?.nombre || t.tienda_origen} → ${destino} · ${etiquetaEstado(t.estado)}${pendienteDestino}`;
   document.getElementById('modalVerTrasladoErr').classList.remove('show');
 
   document.getElementById('verTrasladoItems').innerHTML = (items || []).map(it => `
@@ -605,7 +622,7 @@ async function abrirModalVerTraslado(t) {
     </div>
   `).join('') || '<div class="empty-state">Sin productos.</div>';
 
-  const puedeRecibir = t.estado === 'despachado' && (esCentral() || currentPerfil.tienda_codigo === t.tienda_destino);
+  const puedeRecibir = trasladosDomain.puedeRecibir(currentPerfil, t);
   document.getElementById('btnConfirmarRecepcionTra').style.display = puedeRecibir ? 'inline-block' : 'none';
 
   document.getElementById('modalVerTraslado').classList.add('show');

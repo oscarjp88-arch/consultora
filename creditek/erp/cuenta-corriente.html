@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="sidebar.js"></script>
+<script src="cuenta-corriente-domain.js"></script>
 <style>
 :root {
   --azul: #0B1E3D; --turquesa: #00C4CC; --bg: #F5F5F7; --surface: #FFFFFF;
@@ -89,7 +90,16 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 .detalle-tabla .cargo { color: var(--rojo); }
 .detalle-tabla .abono { color: var(--verde); }
 .tag-verificado { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #DCFCE7; color: #166534; margin-left: 6px; }
+.tag-pendiente { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #FEF3C7; color: #92400E; margin-left: 6px; }
+.tag-legacy { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #FFEDD5; color: #9A3412; margin-left: 6px; }
 .link-chico { color: var(--turquesa); font-weight: 700; font-size: 11.5px; cursor: pointer; background: none; border: none; padding: 0; margin-left: 6px; }
+.pendientes-panel { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; }
+.pendientes-panel h3 { font-family: 'Montserrat', sans-serif; font-size: 13px; margin-bottom: 8px; }
+.pendientes-panel table { font-size: 11.5px; }
+.pendientes-panel th, .pendientes-panel td { padding: 7px 6px; white-space: normal; }
+.historial-controles { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 12px 0 8px; }
+.historial-controles label { font-size: 12px; color: var(--text2); font-weight: 600; }
+.historial-controles select { border: 1px solid var(--border); background: var(--bg); border-radius: 8px; padding: 7px 9px; font-family: inherit; }
 
 .campo { margin-bottom: 13px; }
 .campo label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; font-weight: 600; }
@@ -159,6 +169,21 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
     <div class="modal-sub">Saldo actual</div>
     <div class="saldo-grande" id="detalleSaldo">$0</div>
     <button class="btn-primary" id="btnAbrirAbono" style="margin-bottom:16px;">+ Registrar abono</button>
+    <div class="pendientes-panel" id="panelAbonosPendientes" style="display:none;">
+      <h3>Abonos pendientes de verificación</h3>
+      <table>
+        <thead><tr><th>Fecha</th><th>Monto</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="tbodyAbonosPendientes"></tbody>
+      </table>
+    </div>
+    <div class="historial-controles">
+      <label for="historialDias">Historial de movimientos</label>
+      <select id="historialDias">
+        <option value="10" selected>Últimos 10 días</option>
+        <option value="30">Últimos 30 días</option>
+        <option value="0">Todo el historial</option>
+      </select>
+    </div>
     <table class="detalle-tabla">
       <thead><tr><th>Fecha</th><th>Concepto</th><th>Cargo</th><th>Abono</th><th>Saldo</th></tr></thead>
       <tbody id="tbodyDetalle"></tbody>
@@ -190,15 +215,18 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const cuentaDomain = window.CreditekCuentaCorrienteDomain;
 
 let currentUser = null;
 let currentPerfil = null;
 let movimientosCC = [];
+let abonosCache = [];
 let tiendasCache = [];
 let tiendaDetalleActual = null;
 let fotoAbonoBlob = null;
 
 function esCentral() { return !!currentPerfil && (currentPerfil.rol === 'gerencia' || currentPerfil.rol === 'auditoria'); }
+function esGerencia() { return !!currentPerfil && currentPerfil.rol === 'gerencia'; }
 
 document.getElementById('btnLogin').addEventListener('click', hacerLogin);
 document.getElementById('loginPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') hacerLogin(); });
@@ -285,6 +313,9 @@ function initPagina() {
   document.getElementById('btnCancelarAbono').addEventListener('click', () => document.getElementById('modalAbono').classList.remove('show'));
   document.getElementById('abonoFoto').addEventListener('change', onFotoAbonoSeleccionada);
   document.getElementById('btnGuardarAbono').addEventListener('click', guardarAbono);
+  document.getElementById('historialDias').addEventListener('change', () => {
+    if (tiendaDetalleActual) abrirDetalleTienda(tiendaDetalleActual.codigo, tiendaDetalleActual.nombre);
+  });
 
   cargarTodo();
 }
@@ -300,21 +331,26 @@ async function cargarMovimientosCC() {
   empty.style.display = 'block';
   empty.textContent = 'Cargando...';
 
-  const { data, error } = await sb.from('cuenta_corriente').select('*').order('created_at', { ascending: true });
-  if (error) { empty.textContent = 'Error cargando cuenta corriente: ' + error.message; return; }
-  movimientosCC = data || [];
+  const [resultadoMovimientos, resultadoAbonos] = await Promise.all([
+    sb.from('cuenta_corriente')
+      .select(cuentaDomain.columnasMovimientos())
+      .order('created_at', { ascending: true }),
+    sb.from('abonos')
+      .select(cuentaDomain.columnasAbonos())
+      .order('created_at', { ascending: false }),
+  ]);
+  if (resultadoMovimientos.error || resultadoAbonos.error) {
+    empty.textContent = 'Error cargando cuenta corriente: ' +
+      (resultadoMovimientos.error?.message || resultadoAbonos.error?.message);
+    return;
+  }
+  movimientosCC = resultadoMovimientos.data || [];
+  abonosCache = resultadoAbonos.data || [];
   renderTablaTiendas();
 }
 
 function calcularResumenPorTienda() {
-  const mapa = {};
-  movimientosCC.forEach(m => {
-    if (!mapa[m.tienda_codigo]) mapa[m.tienda_codigo] = { saldo: 0, ultimoCargo: null, ultimoAbono: null };
-    const r = mapa[m.tienda_codigo];
-    if (m.tipo === 'cargo') { r.saldo += Number(m.monto); r.ultimoCargo = m; }
-    else { r.saldo -= Number(m.monto); r.ultimoAbono = m; }
-  });
-  return mapa;
+  return cuentaDomain.calcularResumenPorTienda(movimientosCC);
 }
 
 function renderTablaTiendas() {
@@ -346,28 +382,72 @@ function renderTablaTiendas() {
 function abrirDetalleTienda(codigo, nombre) {
   tiendaDetalleActual = { codigo, nombre };
   document.getElementById('detalleTitulo').textContent = nombre || codigo;
-  document.getElementById('btnAbrirAbono').style.display = (esCentral() || currentPerfil.tienda_codigo === codigo) ? 'inline-block' : 'none';
+  const puedeRegistrar = esGerencia() ||
+    (currentPerfil.rol === 'admin_tienda' && currentPerfil.tienda_codigo === codigo);
+  document.getElementById('btnAbrirAbono').style.display = puedeRegistrar ? 'inline-block' : 'none';
 
-  const movs = movimientosCC.filter(m => m.tienda_codigo === codigo).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  let saldoAcumulado = 0;
-  const filas = movs.map(m => {
-    saldoAcumulado += m.tipo === 'cargo' ? Number(m.monto) : -Number(m.monto);
-    return { ...m, saldoAcumulado };
-  }).reverse();
+  const movs = movimientosCC.filter(m => m.tienda_codigo === codigo);
+  const historial = cuentaDomain.prepararHistorial({
+    movimientos: movs,
+    dias: Number(document.getElementById('historialDias').value),
+    ahora: new Date(),
+  });
 
-  document.getElementById('detalleSaldo').textContent = fmtCOP(saldoAcumulado);
-  document.getElementById('tbodyDetalle').innerHTML = filas.map(m => `
+  document.getElementById('detalleSaldo').textContent = fmtCOP(historial.saldoActual);
+  document.getElementById('tbodyDetalle').innerHTML = historial.filas.map(m => {
+    const abono = m.tipo === 'abono'
+      ? abonosCache.find(registro => registro.id === m.referencia_id)
+      : null;
+    const estado = m.tipo === 'abono' && abono
+      ? cuentaDomain.estadoAbono(abono, true)
+      : null;
+    const estadoHtml = estado === 'verificado'
+      ? '<span class="tag-verificado">Verificado</span>'
+      : estado === 'legacy_pendiente'
+        ? `<span class="tag-legacy">Aplicado antes del control</span>${esGerencia() ? `<button class="link-chico btn-verificar-abono" data-abono="${abono.id}">Verificar</button>` : ''}`
+        : '';
+    return `
     <tr>
       <td>${new Date(m.created_at).toLocaleDateString('es-CO')}</td>
-      <td>${escapeHtml(m.concepto)}${m.tipo === 'abono' && m.verificado_at ? '<span class="tag-verificado">Verificado</span>' : ''}${m.tipo === 'abono' && !m.verificado_at && esCentral() ? `<button class="link-chico" data-cc="${m.id}" data-abono="${m.referencia_id}">Marcar verificado</button>` : ''}</td>
+      <td>${escapeHtml(m.concepto)}${estadoHtml}</td>
       <td class="cargo">${m.tipo === 'cargo' ? fmtCOP(m.monto) : ''}</td>
       <td class="abono">${m.tipo === 'abono' ? fmtCOP(m.monto) : ''}</td>
       <td>${fmtCOP(m.saldoAcumulado)}</td>
     </tr>
-  `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text2);">Sin movimientos todavía.</td></tr>';
+  `;
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text2);">Sin movimientos en este periodo.</td></tr>';
 
-  document.getElementById('tbodyDetalle').querySelectorAll('.link-chico[data-abono]').forEach(btn => {
+  const pendientes = abonosCache.filter(abono =>
+    abono.tienda_codigo === codigo && !abono.verificado_at
+  );
+  const panelPendientes = document.getElementById('panelAbonosPendientes');
+  panelPendientes.style.display = pendientes.length ? 'block' : 'none';
+  document.getElementById('tbodyAbonosPendientes').innerHTML = pendientes.map(abono => {
+    const movimientoExiste = movimientosCC.some(movimiento =>
+      movimiento.referencia_tipo === 'abono' && movimiento.referencia_id === abono.id
+    );
+    const estado = cuentaDomain.estadoAbono(abono, movimientoExiste);
+    const etiqueta = estado === 'legacy_pendiente'
+      ? '<span class="tag-legacy">Ya aplicado · por revisar</span>'
+      : '<span class="tag-pendiente">Pendiente · aún no afecta saldo</span>';
+    return `
+      <tr>
+        <td>${new Date(abono.created_at).toLocaleDateString('es-CO')}</td>
+        <td>${fmtCOP(abono.monto)}</td>
+        <td>${etiqueta}</td>
+        <td>
+          <button class="link-chico btn-ver-soporte" data-path="${escapeHtml(abono.soporte_path)}">Ver soporte</button>
+          ${esGerencia() ? `<button class="link-chico btn-verificar-abono" data-abono="${abono.id}">Verificar</button>` : ''}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('modalDetalle').querySelectorAll('.btn-verificar-abono').forEach(btn => {
     btn.addEventListener('click', () => marcarAbonoVerificado(btn.dataset.abono));
+  });
+  document.getElementById('tbodyAbonosPendientes').querySelectorAll('.btn-ver-soporte').forEach(btn => {
+    btn.addEventListener('click', () => abrirSoporteAbono(btn.dataset.path));
   });
 
   document.getElementById('modalDetalle').classList.add('show');
@@ -375,10 +455,24 @@ function abrirDetalleTienda(codigo, nombre) {
 
 async function marcarAbonoVerificado(abonoId) {
   if (!abonoId || abonoId === 'null') return;
-  const { error } = await sb.from('abonos').update({ verificado_por: currentUser.id, verificado_at: new Date().toISOString() }).eq('id', abonoId);
-  if (error) { alert('No se pudo marcar como verificado: ' + error.message); return; }
+  if (!confirm('¿Confirmas que revisaste el soporte y deseas aplicar este abono al saldo?')) return;
+  const { error } = await sb.rpc('verificar_abono_y_aplicar', { p_abono_id: abonoId });
+  if (error) { alert('No se pudo verificar el abono: ' + error.message); return; }
   await cargarMovimientosCC();
   abrirDetalleTienda(tiendaDetalleActual.codigo, tiendaDetalleActual.nombre);
+  mostrarBanner('✅ Abono verificado y aplicado al saldo.');
+}
+
+async function abrirSoporteAbono(path) {
+  if (!path) return;
+  const ventana = window.open('about:blank', '_blank');
+  const { data, error } = await sb.storage.from('soportes').createSignedUrl(path, 60);
+  if (error || !data?.signedUrl) {
+    if (ventana) ventana.close();
+    alert('No se pudo abrir el soporte: ' + (error?.message || 'enlace no disponible'));
+    return;
+  }
+  if (ventana) ventana.location.href = data.signedUrl;
 }
 
 // ─── Registrar abono ─────────────────────────────────────────────────
@@ -424,9 +518,11 @@ async function guardarAbono() {
     return;
   }
 
-  const { data: abono, error: errAbono } = await sb.from('abonos').insert({
-    tienda_codigo: codigo, monto, soporte_path: path, registrado_por: currentUser.id,
-  }).select().maybeSingle();
+  const { error: errAbono } = await sb.rpc('registrar_abono_pendiente', {
+    p_tienda_codigo: codigo,
+    p_monto: monto,
+    p_soporte_path: path,
+  });
 
   if (errAbono) {
     btn.disabled = false; btn.textContent = 'Guardar abono';
@@ -435,17 +531,10 @@ async function guardarAbono() {
     return;
   }
 
-  const { error: errCC } = await sb.from('cuenta_corriente').insert({
-    tienda_codigo: codigo, tipo: 'abono', concepto: 'Consignación', monto,
-    referencia_tipo: 'abono', referencia_id: abono.id, usuario: currentUser.id,
-  });
-
   btn.disabled = false; btn.textContent = 'Guardar abono';
 
-  if (errCC) { err.textContent = 'El abono se guardó, pero no se pudo reflejar en cuenta corriente: ' + errCC.message; err.classList.add('show'); return; }
-
   document.getElementById('modalAbono').classList.remove('show');
-  mostrarBanner(`✅ Abono de ${fmtCOP(monto)} registrado correctamente.`);
+  mostrarBanner(`✅ Abono de ${fmtCOP(monto)} registrado. Queda pendiente de verificación y todavía no afecta el saldo.`);
   await cargarMovimientosCC();
   if (tiendaDetalleActual) abrirDetalleTienda(tiendaDetalleActual.codigo, tiendaDetalleActual.nombre);
 }

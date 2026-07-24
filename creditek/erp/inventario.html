@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="sidebar.js"></script>
+<script src="inventario-domain.js"></script>
 <style>
 :root {
   --azul: #0B1E3D; --turquesa: #00C4CC; --bg: #F5F5F7; --surface: #FFFFFF;
@@ -156,7 +157,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
       </div>
       <div class="tabla-wrap">
         <table>
-          <thead><tr><th>IMEI</th><th>Producto</th><th>Estado</th><th>Tienda</th><th>Costo</th><th>Fecha ingreso</th></tr></thead>
+          <thead><tr><th>IMEI</th><th>Producto</th><th>Estado</th><th>Tienda</th><th id="thCostoCel">Mi costo</th><th>Fecha ingreso</th></tr></thead>
           <tbody id="tbodyCelulares"></tbody>
         </table>
         <div class="empty-state" id="emptyCelulares" style="display:none;">Cargando...</div>
@@ -171,7 +172,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
       </div>
       <div class="tabla-wrap">
         <table>
-          <thead><tr><th>Producto</th><th>Tienda</th><th>Cantidad</th><th>Costo promedio</th><th>Valor total</th></tr></thead>
+          <thead><tr><th>Producto</th><th>Tienda</th><th>Cantidad</th><th id="thCostoAcc">Mi costo unitario</th><th>Valor total</th></tr></thead>
           <tbody id="tbodyAccesorios"></tbody>
         </table>
         <div class="empty-state" id="emptyAccesorios" style="display:none;">Cargando...</div>
@@ -194,6 +195,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const inventarioDomain = window.CreditekInventarioDomain;
 
 let currentUser = null;
 let currentPerfil = null;
@@ -263,14 +265,18 @@ function initPagina() {
     document.getElementById('filtroTiendaCel').style.display = '';
     document.getElementById('filtroTiendaAcc').style.display = '';
   }
+  actualizarEtiquetasCosto();
 
   document.getElementById('tabCelulares').addEventListener('click', () => cambiarTab('celulares'));
   document.getElementById('tabAccesorios').addEventListener('click', () => cambiarTab('accesorios'));
 
-  ['filtroTiendaCel', 'filtroEstadoCel', 'filtroProductoCel'].forEach(id => document.getElementById(id).addEventListener('change', renderCelulares));
+  document.getElementById('filtroTiendaCel').addEventListener('change', cambiarTiendaDesdePantalla);
+  document.getElementById('filtroTiendaAcc').addEventListener('change', cambiarTiendaDesdePantalla);
+  ['filtroEstadoCel', 'filtroProductoCel'].forEach(id => document.getElementById(id).addEventListener('change', renderCelulares));
   document.getElementById('filtroImei').addEventListener('input', renderCelulares);
-  ['filtroTiendaAcc', 'filtroCategoriaAcc'].forEach(id => document.getElementById(id).addEventListener('change', renderAccesorios));
+  document.getElementById('filtroCategoriaAcc').addEventListener('change', renderAccesorios);
   document.getElementById('chkAgotados').addEventListener('change', renderAccesorios);
+  window.addEventListener('creditek:tienda-cambiada', aplicarTiendaSidebar);
 
   document.getElementById('btnCerrarHistorial').addEventListener('click', () => document.getElementById('modalHistorial').classList.remove('show'));
 
@@ -283,6 +289,46 @@ function cambiarTab(tab) {
   document.getElementById('tabAccesorios').classList.toggle('active', tab === 'accesorios');
   document.getElementById('vistaCelulares').style.display = tab === 'celulares' ? 'block' : 'none';
   document.getElementById('vistaAccesorios').style.display = tab === 'accesorios' ? 'block' : 'none';
+}
+
+function actualizarEtiquetasCosto() {
+  document.getElementById('thCostoCel').textContent = esCentral() ? 'Costo interno Creditek' : 'Mi costo';
+  document.getElementById('thCostoAcc').textContent = esCentral() ? 'Costo interno unitario' : 'Mi costo unitario';
+}
+
+function tiendaActiva() {
+  if (!esCentral()) return currentPerfil?.tienda_codigo || '';
+  return document.getElementById('filtroTiendaCel').value;
+}
+
+function fijarTiendaEnFiltros(tiendaCodigo) {
+  const codigo = tiendaCodigo || '';
+  const filtroCel = document.getElementById('filtroTiendaCel');
+  const filtroAcc = document.getElementById('filtroTiendaAcc');
+  const opcionExiste = [...filtroCel.options].some(opcion => opcion.value === codigo);
+  const valor = opcionExiste ? codigo : '';
+  filtroCel.value = valor;
+  filtroAcc.value = valor;
+  return valor;
+}
+
+function aplicarTiendaSidebar(evento) {
+  if (!esCentral()) return;
+  fijarTiendaEnFiltros(evento?.detail?.tiendaCodigo || '');
+  renderResumen();
+  renderCelulares();
+  renderAccesorios();
+}
+
+function cambiarTiendaDesdePantalla(evento) {
+  if (!esCentral()) return;
+  const valor = fijarTiendaEnFiltros(evento.target.value);
+  localStorage.setItem('creditek_sidebar_tienda', valor);
+  const selectorSidebar = document.getElementById('sidebarTiendaSel');
+  if (selectorSidebar) selectorSidebar.value = valor;
+  renderResumen();
+  renderCelulares();
+  renderAccesorios();
 }
 
 async function cargarTodo() {
@@ -298,6 +344,7 @@ async function cargarTodo() {
   document.getElementById('filtroTiendaAcc').innerHTML = opcionesTienda;
   document.getElementById('filtroProductoCel').innerHTML = '<option value="">Todos los productos</option>' + productosCache.filter(p => p.tipo === 'serializado').map(p => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('');
   document.getElementById('filtroCategoriaAcc').innerHTML = '<option value="">Todas las categorías</option>' + CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (esCentral()) fijarTiendaEnFiltros(localStorage.getItem('creditek_sidebar_tienda') || '');
 
   await Promise.all([cargarCelulares(), cargarAccesorios()]);
   renderResumen();
@@ -310,7 +357,7 @@ async function cargarCelulares() {
   // real de Oscar ya está en unidades.costo_remision (guardado al momento de la
   // compra), que se trae con el * y funciona sin joins extra.
   const { data, error } = await sb.from('unidades')
-    .select('*, productos(nombre, categoria), tiendas:tienda_actual(nombre)')
+    .select(inventarioDomain.columnasUnidades(esCentral()))
     .order('created_at', { ascending: false });
   if (error) { document.getElementById('emptyCelulares').style.display = 'block'; document.getElementById('emptyCelulares').textContent = 'Error: ' + error.message; return; }
   unidadesCache = data || [];
@@ -319,7 +366,7 @@ async function cargarCelulares() {
 
 async function cargarAccesorios() {
   const { data, error } = await sb.from('stock_cantidad')
-    .select('*, productos(nombre, categoria), tiendas:tienda_codigo(nombre)')
+    .select(inventarioDomain.columnasStock(esCentral()))
     .order('updated_at', { ascending: false });
   if (error) { document.getElementById('emptyAccesorios').style.display = 'block'; document.getElementById('emptyAccesorios').textContent = 'Error: ' + error.message; return; }
   stockCache = data || [];
@@ -327,35 +374,23 @@ async function cargarAccesorios() {
 }
 
 function renderResumen() {
-  // FIX 23-jul-2026 · "Inventario en vivo" = solo lo físicamente presente
-  // (estado='disponible'). Vendidos, en_traslado, garantia_proveedor y otros
-  // ya no cuentan como inventario: se convirtieron en caja o dejaron el sistema.
-  const disponibles = unidadesCache.filter(u => u.estado === 'disponible');
-  const totalUnidadesDisponibles = disponibles.length;
-
-  // Valor visto por la TIENDA: precio_tienda (lo que le costó la remisión).
-  // Fallback a costo_remision para unidades legacy sin precio_tienda seteado.
-  const valorRemisionSerializados = disponibles.reduce(
-    (s, u) => s + Number(u.precio_tienda ?? u.costo_remision ?? 0), 0);
-  const valorAccesorios = stockCache.reduce(
-    (s, r) => s + Number(r.cantidad || 0) * Number(r.precio_tienda ?? r.costo_promedio ?? 0), 0);
-  const valorTotalRemision = valorRemisionSerializados + valorAccesorios;
+  const resumen = inventarioDomain.resumirInventario({
+    unidades: unidadesCache,
+    stock: stockCache,
+    tiendaCodigo: tiendaActiva(),
+    esCentral: esCentral(),
+  });
 
   let cards = `
-    <div class="resumen-card"><div class="label">Celulares disponibles</div><div class="valor">${totalUnidadesDisponibles}</div></div>
-    <div class="resumen-card"><div class="label">Valor inventario (costo tienda)</div><div class="valor">${fmtCOP(valorTotalRemision)}</div></div>
+    <div class="resumen-card"><div class="label">Celulares disponibles</div><div class="valor">${resumen.celularesDisponibles}</div></div>
+    <div class="resumen-card"><div class="label">Accesorios disponibles</div><div class="valor">${resumen.accesoriosDisponibles}</div></div>
+    <div class="resumen-card"><div class="label">${esCentral() ? 'Valor asignado a tienda' : 'Valor inventario (mi costo)'}</div><div class="valor">${fmtCOP(resumen.valorTienda)}</div></div>
   `;
   if (esCentral()) {
-    // FIX 23-jul-2026 · costo Oscar directo desde u.costo_remision (que ya
-    // es el costo real que Oscar pagó al proveedor, guardado en la unidad
-    // al momento de la compra). Antes se leía vía join anidado
-    // remision_items→remision_margenes que retornaba null en muchos casos.
-    const valorOscarSerializados = disponibles.reduce(
-      (s, u) => s + Number(u.costo_remision || 0), 0);
-    const valorOscarAccesorios = stockCache.reduce(
-      (s, r) => s + Number(r.cantidad || 0) * Number(r.costo_promedio || 0), 0);
-    const valorOscarTotal = valorOscarSerializados + valorOscarAccesorios;
-    cards += `<div class="resumen-card"><div class="label">Valor a costo Oscar (inventario total)</div><div class="valor">${fmtCOP(valorOscarTotal)}</div></div>`;
+    cards += `<div class="resumen-card"><div class="label">Costo interno Creditek</div><div class="valor">${fmtCOP(resumen.valorInterno)}</div></div>`;
+  }
+  if (resumen.preciosPendientes > 0) {
+    cards += `<div class="resumen-card"><div class="label">Precios de tienda pendientes</div><div class="valor">${resumen.preciosPendientes}</div></div>`;
   }
   document.getElementById('resumenCards').innerHTML = cards;
 }
@@ -384,7 +419,7 @@ function renderCelulares() {
       <td>${escapeHtml(u.productos?.nombre || '—')}</td>
       <td><span class="badge ${u.estado}">${u.estado}</span></td>
       <td>${escapeHtml(u.tiendas?.nombre || u.tienda_actual || '—')}</td>
-      <td>${fmtCOP(u.costo_remision)}</td>
+      <td>${inventarioDomain.valorVisibleUnidad(u, esCentral()) === null ? 'Pendiente' : fmtCOP(inventarioDomain.valorVisibleUnidad(u, esCentral()))}</td>
       <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('es-CO') : '—'}</td>
     </tr>
   `).join('');
@@ -410,13 +445,14 @@ function renderAccesorios() {
   empty.style.display = 'none';
   tbody.innerHTML = filtrados.map(r => {
     const bajoStock = r.cantidad < 3;
+    const costoVisible = inventarioDomain.valorVisibleStock(r, esCentral());
     return `
       <tr class="${bajoStock ? 'fila-bajo-stock' : ''}">
         <td>${escapeHtml(r.productos?.nombre || '—')}</td>
         <td>${escapeHtml(r.tiendas?.nombre || r.tienda_codigo || '—')}</td>
         <td>${r.cantidad}${bajoStock ? ' ⚠️' : ''}</td>
-        <td>${fmtCOP(r.costo_promedio)}</td>
-        <td>${fmtCOP(r.cantidad * r.costo_promedio)}</td>
+        <td>${costoVisible === null ? 'Pendiente' : fmtCOP(costoVisible)}</td>
+        <td>${costoVisible === null ? 'Pendiente' : fmtCOP(r.cantidad * costoVisible)}</td>
       </tr>
     `;
   }).join('');

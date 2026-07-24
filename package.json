@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "node scripts/build-public.mjs && node scripts/verify-public-artifact.mjs",
-    "test": "node --test tests/security/*.test.mjs",
+    "test": "node --test tests/security/*.test.mjs tests/erp/*.test.mjs",
+    "test:erp": "node --test tests/erp/*.test.mjs",
     "test:live": "node --test tests/security/live-smoke.test.mjs",
     "preview:upload": "npm run build && wrangler versions upload",
     "deploy": "npm run build && wrangler deploy"

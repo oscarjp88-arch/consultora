@@ -131,6 +131,10 @@
         <span id="contador" class="text-xs text-gray-500 ml-auto"></span>
       </div>
 
+      <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        Para consultar compras anteriores, usa <b>Ver compras</b> en la fila del proveedor.
+      </div>
+
       <!-- Tabla de proveedores -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table class="w-full text-sm">
@@ -142,7 +146,7 @@
               <th class="px-4 py-3 font-semibold">Teléfono</th>
               <th class="px-4 py-3 font-semibold text-right">Saldo pendiente</th>
               <th class="px-4 py-3 font-semibold text-center">Estado</th>
-              <th class="px-4 py-3 font-semibold text-center w-20">Acciones</th>
+              <th class="px-4 py-3 font-semibold text-center">Acciones</th>
             </tr>
           </thead>
           <tbody id="tbody-proveedores">
@@ -320,8 +324,9 @@ function render() {
         <td class="px-4 py-3 text-center">
           <span class="inline-block w-3 h-3 rounded-full ${semaforo}" title="${p.activo ? 'Activo' : 'Inactivo'}"></span>
         </td>
-        <td class="px-4 py-3 text-center">
-          <button data-editar="${p.id}" class="text-blue-600 hover:text-blue-800 text-xs">Editar</button>
+        <td class="px-4 py-3 text-center whitespace-nowrap">
+          <button data-facturas="${p.id}" class="text-blue-600 hover:text-blue-800 text-xs font-semibold mr-3">Ver compras</button>
+          <button data-editar="${p.id}" class="text-gray-600 hover:text-gray-800 text-xs">Editar</button>
         </td>
       </tr>
     `;
@@ -368,7 +373,9 @@ async function mostrarFacturas(provId) {
     }).join('');
   }
 
-  document.getElementById('panel-facturas').classList.remove('hidden');
+  const panel = document.getElementById('panel-facturas');
+  panel.classList.remove('hidden');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ============================================================
@@ -444,6 +451,11 @@ document.getElementById('filtro-texto').addEventListener('input', render);
 document.getElementById('filtro-estado').addEventListener('change', render);
 
 document.getElementById('tbody-proveedores').addEventListener('click', e => {
+  const btnFacturas = e.target.closest('[data-facturas]');
+  if (btnFacturas) {
+    mostrarFacturas(btnFacturas.getAttribute('data-facturas'));
+    return;
+  }
   const btnEditar = e.target.closest('[data-editar]');
   if (btnEditar) {
     const id = btnEditar.getAttribute('data-editar');
