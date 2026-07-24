@@ -6,10 +6,30 @@
  * Proyecto Supabase: creditek-erp (jfkmiyvcdfbsbwchyvol) — distinto del de Sofía.
  */
 
-interface Env {
-  SUPABASE_SERVICE_KEY: string;
+import { resolveRegistrationContext } from './registro-context';
+import {
+  isSecureOtpSendRequest,
+  isSecureOtpVerifyRequest,
+  sendSecureOtp,
+  verifySecureOtp,
+  type SecureOtpEnv,
+} from './registro-otp';
+import {
+  isSecureRegistrationRequest,
+  submitSecureRegistration,
+  type SecureRegistrationEnv,
+} from './registro-submit';
+import {
+  uploadSecureDocument,
+  type SecureDocumentsEnv,
+} from './registro-documents';
+
+interface Env extends SecureOtpEnv, SecureRegistrationEnv, SecureDocumentsEnv {
   WHATSAPP_TOKEN: string;
   PHONE_NUMBER_ID: string;
+  TURNSTILE_SITE_KEY: string;
+  ALLOWED_ORIGIN: string;
+  ALLOW_LEGACY_REGISTRATION_LINKS: string;
 }
 
 const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
@@ -25,18 +45,40 @@ const OTP_TEMPLATE_NAME = 'codigo_verificacion_creditek';
 // "template not found" hasta que se ajuste este valor.
 const OTP_TEMPLATE_LANG = 'es_CO';
 
-// FIX CORS v23 de creditek-bot (mismo patrón, aplicado desde el día 1 aquí
-// porque el propio documento de este entregable señala que este olvido ya
-// rompió el Panel de Respuestas dos veces).
-const cors: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-};
-
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), { status, headers: cors });
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function corsHeaders(request: Request, env: Env): Headers {
+  const headers = new Headers({
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    Vary: 'Origin',
+  });
+  const requestOrigin = request.headers.get('Origin');
+  if (
+    requestOrigin &&
+    env.ALLOWED_ORIGIN &&
+    requestOrigin === env.ALLOWED_ORIGIN
+  ) {
+    headers.set('Access-Control-Allow-Origin', requestOrigin);
+  }
+  return headers;
+}
+
+function withCors(response: Response, request: Request, env: Env): Response {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of corsHeaders(request, env)) {
+    headers.set(name, value);
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 function sbHeaders(env: Env, extra: Record<string, string> = {}): Record<string, string> {
@@ -60,29 +102,47 @@ function codigoValido(v: unknown): v is string {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders(request, env),
+      });
+    }
 
     const url = new URL(request.url);
+    const respond = (response: Response): Response =>
+      withCors(response, request, env);
     try {
+      if (url.pathname === '/api/registro/contexto' && request.method === 'GET') {
+        return respond(await handleRegistroContexto(url, env));
+      }
+      if (url.pathname === '/api/registro/config' && request.method === 'GET') {
+        return respond(json({
+          turnstile_site_key: env.TURNSTILE_SITE_KEY ?? '',
+        }));
+      }
       if (url.pathname === '/api/origenes' && request.method === 'GET') {
-        return await handleOrigenes(env);
+        return respond(await handleOrigenes(env));
       }
       if (url.pathname === '/api/otp/enviar' && request.method === 'POST') {
-        return await handleOtpEnviar(request, env);
+        return respond(await handleOtpEnviarRoute(request, env));
       }
       if (url.pathname === '/api/otp/verificar' && request.method === 'POST') {
-        return await handleOtpVerificar(request, env);
+        return respond(await handleOtpVerificarRoute(request, env));
       }
       if (url.pathname === '/api/registro' && request.method === 'POST') {
-        return await handleRegistro(request, env);
+        return respond(await handleRegistroRoute(request, env));
+      }
+      if (url.pathname === '/api/documentos' && request.method === 'POST') {
+        return respond(await handleDocumentosRoute(request, env));
       }
       if (url.pathname === '/api/subir-cedula' && request.method === 'POST') {
-        return await handleSubirCedula(request, env);
+        return respond(await handleSubirCedula(request, env));
       }
-      return json({ ok: false, error: 'Ruta no encontrada' }, 404);
+      return respond(json({ ok: false, error: 'Ruta no encontrada' }, 404));
     } catch (e) {
       console.error('[creditek-clientes] Error no controlado:', e);
-      return json({ ok: false, error: 'Error interno' }, 500);
+      return respond(json({ ok: false, error: 'Error interno' }, 500));
     }
   },
 
@@ -94,6 +154,109 @@ export default {
     }));
   },
 };
+
+// ─── GET /api/registro/contexto ─────────────────────────────────────────
+async function handleRegistroContexto(url: URL, env: Env): Promise<Response> {
+  try {
+    const context = await resolveRegistrationContext(
+      url.searchParams.get('t') ?? '',
+      env,
+    );
+    return json({ ok: true, contexto: context });
+  } catch (contextError) {
+    const code =
+      contextError instanceof Error ? contextError.message : '';
+    if (
+      code === 'enlace_invalido' ||
+      code === 'origen_invalido' ||
+      code === 'captador_invalido'
+    ) {
+      return json(
+        { ok: false, error: 'Enlace inválido o vencido' },
+        404,
+      );
+    }
+
+    console.error('[REGISTRO-CONTEXTO] Servicio no disponible');
+    return json(
+      { ok: false, error: 'No se pudo cargar el enlace de registro' },
+      503,
+    );
+  }
+}
+
+async function requestJson(request: Request): Promise<unknown> {
+  return request.clone().json().catch(() => null);
+}
+
+async function handleOtpEnviarRoute(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const body = await requestJson(request);
+  if (isSecureOtpSendRequest(body)) {
+    const secureResult = await sendSecureOtp(
+      body,
+      request.headers.get('CF-Connecting-IP'),
+      env,
+      {
+        fetcher: fetch,
+        sendOtp: (celular, codigo) =>
+          enviarPlantillaOtp(celular, codigo, env),
+      },
+    );
+    return json(secureResult.body, secureResult.status);
+  }
+
+  if (env.ALLOW_LEGACY_REGISTRATION_LINKS === 'true') {
+    return handleOtpEnviar(request, env);
+  }
+  return json({ ok: false, error: 'Flujo de registro legado deshabilitado' }, 410);
+}
+
+async function handleOtpVerificarRoute(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const body = await requestJson(request);
+  if (isSecureOtpVerifyRequest(body)) {
+    const secureResult = await verifySecureOtp(body, env, {
+      fetcher: fetch,
+    });
+    return json(secureResult.body, secureResult.status);
+  }
+
+  if (env.ALLOW_LEGACY_REGISTRATION_LINKS === 'true') {
+    return handleOtpVerificar(request, env);
+  }
+  return json({ ok: false, error: 'Flujo de registro legado deshabilitado' }, 410);
+}
+
+async function handleRegistroRoute(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const body = await requestJson(request);
+  if (isSecureRegistrationRequest(body)) {
+    const secureResult = await submitSecureRegistration(body, env, { fetcher: fetch });
+    return json(secureResult.body, secureResult.status);
+  }
+
+  if (env.ALLOW_LEGACY_REGISTRATION_LINKS === 'true') {
+    return handleRegistro(request, env);
+  }
+  return json({ ok: false, error: 'Flujo de registro legado deshabilitado' }, 410);
+}
+
+async function handleDocumentosRoute(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const secureResult = await uploadSecureDocument(await requestJson(request), env, {
+    fetcher: fetch,
+  });
+  return json(secureResult.body, secureResult.status);
+}
 
 // ─── GET /api/origenes ──────────────────────────────────────────────────
 // No está en la lista original de endpoints del documento (que solo pedía
@@ -352,6 +515,9 @@ const COLUMNA_POR_TIPO: Record<string, string> = {
 };
 
 async function handleSubirCedula(request: Request, env: Env): Promise<Response> {
+  if (env.ALLOW_LEGACY_REGISTRATION_LINKS !== 'true') {
+    return json({ ok: false, error: 'Flujo de registro legado deshabilitado' }, 410);
+  }
   const body = (await request.json().catch(() => null)) as any;
   const cedula = body?.cedula;
   const tipo = body?.tipo;

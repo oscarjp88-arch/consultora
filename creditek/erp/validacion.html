@@ -249,7 +249,7 @@ async function cargarSolicitudes() {
   const fecha = document.getElementById('filtroFecha').value;
 
   let query = sb.from('solicitudes')
-    .select('*, clientes(*, referencias(*)), origenes(nombre, tipo)')
+    .select('*, clientes(*, referencias(*)), origenes(nombre, tipo), documentos_solicitud(*)')
     .order('created_at', { ascending: true });
 
   if (estado !== 'todos') query = query.eq('estado_validacion', estado);
@@ -279,14 +279,21 @@ function renderList() {
   solicitudesCache.forEach(sol => list.appendChild(renderCard(sol)));
 }
 
-function renderFotoSlot(label, path) {
-  if (!path) {
+function resolverFotoSolicitud(sol, tipo, legacyPath) {
+  const documentos = sol.documentos_solicitud || [];
+  const documentoActual = documentos
+    .find(documento => documento.tipo === tipo);
+  return documentoActual?.storage_path || legacyPath || null;
+}
+
+function renderFotoSlot(label, tipo, disponible) {
+  if (!disponible) {
     return `<div class="foto-slot"><div class="foto-slot-label">${label}</div><span style="font-size:12px;color:#94A3B8;">No subida</span></div>`;
   }
   return `
     <div class="foto-slot">
       <div class="foto-slot-label">${label}</div>
-      <button class="foto-btn" data-path="${escapeHtml(path)}">Ver</button>
+      <button class="foto-btn" data-tipo="${tipo}">Ver</button>
       <br><img class="foto-preview" />
     </div>
   `;
@@ -299,8 +306,28 @@ function renderCard(sol) {
   const ref2 = referencias[1] || {};
   const checklist = sol.checklist || {};
   const resuelta = sol.estado_validacion !== 'pendiente';
+  const fotoPaths = {
+    frente: resolverFotoSolicitud(
+      sol,
+      'frente',
+      cliente.foto_cedula_frente_path,
+    ),
+    reverso: resolverFotoSolicitud(
+      sol,
+      'reverso',
+      cliente.foto_cedula_reverso_path,
+    ),
+    selfie: resolverFotoSolicitud(
+      sol,
+      'selfie',
+      cliente.selfie_cedula_path,
+    ),
+  };
   // AJUSTES v26, 20-jul-2026 — Paquete 2: no se puede aprobar sin las 3 fotos.
-  const faltanFotos = !cliente.foto_cedula_frente_path || !cliente.foto_cedula_reverso_path || !cliente.selfie_cedula_path;
+  const faltanFotos =
+    !fotoPaths.frente ||
+    !fotoPaths.reverso ||
+    !fotoPaths.selfie;
 
   const div = document.createElement('div');
   div.className = 'card';
@@ -325,9 +352,9 @@ function renderCard(sol) {
         <div class="value">${escapeHtml(sol.financiera || 'No indicada')}</div>
         <div class="label">Fotos del cliente</div>
         <div class="fotos-row">
-          ${renderFotoSlot('Frente', cliente.foto_cedula_frente_path)}
-          ${renderFotoSlot('Selfie', cliente.selfie_cedula_path)}
-          ${renderFotoSlot('Reverso', cliente.foto_cedula_reverso_path)}
+          ${renderFotoSlot('Frente', 'frente', !!fotoPaths.frente)}
+          ${renderFotoSlot('Selfie', 'selfie', !!fotoPaths.selfie)}
+          ${renderFotoSlot('Reverso', 'reverso', !!fotoPaths.reverso)}
         </div>
       </div>
       <div class="info-block">
@@ -396,7 +423,11 @@ function renderCard(sol) {
   // trae la suya propia (AJUSTES_Registro_v2, Cambio 3).
   div.querySelectorAll('.foto-btn').forEach(fotoBtn => {
     fotoBtn.addEventListener('click', async () => {
-      const path = fotoBtn.dataset.path;
+      const path = fotoPaths[fotoBtn.dataset.tipo];
+      if (!path) {
+        alert('No hay una foto disponible.');
+        return;
+      }
       fotoBtn.textContent = 'Cargando...';
       const { data, error } = await sb.storage.from('cedulas').createSignedUrl(path, 300);
       fotoBtn.textContent = 'Ver';
