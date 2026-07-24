@@ -16,3 +16,7 @@ test('consume los campos nuevos con compatibilidad hacia atrás', () => {
   assert.match(html, /d\.leads_pendientes\s*\?\?\s*d\.leads/);
   assert.match(html, /getElementById\('s-transferidos'\)\.textContent=d\.transferidos\s*\?\?\s*0/);
 });
+
+test('aclara que Hoy cuenta clientes nuevos y no chats con actividad', () => {
+  assert.match(html, /id="s-convs"[\s\S]*Clientes nuevos hoy/);
+});
