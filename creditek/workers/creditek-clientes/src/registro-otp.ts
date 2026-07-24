@@ -13,9 +13,6 @@ const TURNSTILE_HOSTNAME = 'registro.crediteksas.com';
 const TURNSTILE_ACTION = 'registro-cliente';
 const OTP_TTL_MS = 5 * 60_000;
 const SESSION_TTL_MS = 30 * 60_000;
-const RATE_WINDOW_MS = 60 * 60_000;
-const MAX_PHONE_SENDS_PER_WINDOW = 3;
-const MAX_LINK_SENDS_PER_WINDOW = 60;
 
 type Fetcher = (
   input: RequestInfo | URL,
@@ -69,6 +66,10 @@ interface OtpRow {
   id: string;
   codigo_hash: string;
   intentos: number;
+}
+
+interface OtpReservationRow {
+  otp_id: string;
 }
 
 function result(
@@ -151,6 +152,16 @@ function isOtpRow(value: unknown): value is OtpRow {
     Number.isInteger(value.intentos) &&
     value.intentos >= 0 &&
     value.intentos < 3
+  );
+}
+
+function isOtpReservationRow(
+  value: unknown,
+): value is OtpReservationRow {
+  return (
+    isRecord(value) &&
+    typeof value.otp_id === 'string' &&
+    value.otp_id.length > 0
   );
 }
 
@@ -240,38 +251,109 @@ export async function verifyTurnstile(
   }
 }
 
-async function countRecentOtps(
-  filterName: 'celular' | 'enlace_registro_id',
-  filterValue: string,
-  since: string,
+async function reserveOtp(
+  input: SecureOtpSendInput,
+  enlaceId: string,
+  codigoHash: string,
+  expiraAt: string,
   env: SecureOtpEnv,
   fetcher: Fetcher,
-): Promise<number | null> {
-  const url = otpUrl({
-    [filterName]: `eq.${filterValue}`,
-    created_at: `gte.${since}`,
-    select: 'id',
-  });
-
+): Promise<
+  | { ok: true; otpId: string }
+  | { ok: false; quota: boolean }
+> {
   let response: Response;
   try {
-    response = await fetcher(url, {
-      headers: supabaseHeaders(env, {
-        Prefer: 'count=exact',
-        'Range-Unit': 'items',
-        Range: '0-0',
-      }),
-    });
+    response = await fetcher(
+      `${SUPABASE_URL}/rest/v1/rpc/reservar_otp_registro_seguro`,
+      {
+        method: 'POST',
+        headers: supabaseHeaders(env),
+        body: JSON.stringify({
+          p_cedula: input.cedula,
+          p_celular: input.celular,
+          p_enlace_registro_id: enlaceId,
+          p_codigo_hash: codigoHash,
+          p_expira_at: expiraAt,
+        }),
+      },
+    );
   } catch {
-    return null;
+    return { ok: false, quota: false };
   }
-  if (!response.ok) return null;
 
-  const contentRange = response.headers.get('Content-Range');
-  const match = contentRange?.match(/\/(\d+)$/);
-  if (!match) return null;
-  const total = Number(match[1]);
-  return Number.isSafeInteger(total) ? total : null;
+  let responseText: string;
+  try {
+    responseText = await response.text();
+  } catch {
+    return { ok: false, quota: false };
+  }
+  if (!response.ok) {
+    return {
+      ok: false,
+      quota:
+        responseText.includes('otp_limite_celular') ||
+        responseText.includes('otp_limite_enlace'),
+    };
+  }
+
+  try {
+    const value: unknown = JSON.parse(responseText);
+    if (
+      !Array.isArray(value) ||
+      value.length !== 1 ||
+      !isOtpReservationRow(value[0])
+    ) {
+      return { ok: false, quota: false };
+    }
+    return { ok: true, otpId: value[0].otp_id };
+  } catch {
+    return { ok: false, quota: false };
+  }
+}
+
+function deliveryFilters(
+  input: SecureOtpSendInput,
+  enlaceId: string,
+  otpId: string,
+): Record<string, string> {
+  return {
+    id: `eq.${otpId}`,
+    cedula: `eq.${input.cedula}`,
+    celular: `eq.${input.celular}`,
+    enlace_registro_id: `eq.${enlaceId}`,
+    entregado_at: 'is.null',
+    envio_fallido_at: 'is.null',
+  };
+}
+
+function isExactUpdatedRow(
+  rows: unknown[] | null,
+  expectedId: string,
+): boolean {
+  return (
+    rows !== null &&
+    rows.length === 1 &&
+    isRecord(rows[0]) &&
+    rows[0].id === expectedId
+  );
+}
+
+async function closeDelivery(
+  filters: Record<string, string>,
+  field: 'entregado_at' | 'envio_fallido_at',
+  timestamp: string,
+  expectedId: string,
+  env: SecureOtpEnv,
+  fetcher: Fetcher,
+): Promise<boolean> {
+  const rows = await patchOtp(
+    filters,
+    { [field]: timestamp },
+    env,
+    fetcher,
+  );
+  return isExactUpdatedRow(rows, expectedId);
 }
 
 export async function sendSecureOtp(
@@ -302,35 +384,6 @@ export async function sendSecureOtp(
   if (!resolved.ok) return resolved.response;
 
   const now = (dependencies.now ?? Date.now)();
-  const since = new Date(now - RATE_WINDOW_MS).toISOString();
-  const phoneCount = await countRecentOtps(
-    'celular',
-    input.celular,
-    since,
-    env,
-    dependencies.fetcher,
-  );
-  if (phoneCount === null) {
-    return result(503, 'No se pudo validar el límite de envíos');
-  }
-  if (phoneCount >= MAX_PHONE_SENDS_PER_WINDOW) {
-    return result(429, 'Límite de códigos alcanzado');
-  }
-
-  const linkCount = await countRecentOtps(
-    'enlace_registro_id',
-    resolved.enlaceId,
-    since,
-    env,
-    dependencies.fetcher,
-  );
-  if (linkCount === null) {
-    return result(503, 'No se pudo validar el límite de envíos');
-  }
-  if (linkCount >= MAX_LINK_SENDS_PER_WINDOW) {
-    return result(429, 'Límite de códigos alcanzado');
-  }
-
   const codigo = (dependencies.generateCode ?? generateOtp)();
   let codigoHash: string;
   try {
@@ -342,26 +395,18 @@ export async function sendSecureOtp(
     return result(503, 'No se pudo generar el código');
   }
 
-  let insertResponse: Response;
-  try {
-    insertResponse = await dependencies.fetcher(otpUrl(), {
-      method: 'POST',
-      headers: supabaseHeaders(env, { Prefer: 'return=minimal' }),
-      body: JSON.stringify({
-        cedula: input.cedula,
-        celular: input.celular,
-        enlace_registro_id: resolved.enlaceId,
-        codigo_hash: codigoHash,
-        expira_at: new Date(now + OTP_TTL_MS).toISOString(),
-        intentos: 0,
-        verificado: false,
-      }),
-    });
-  } catch {
-    return result(503, 'No se pudo generar el código');
-  }
-  if (!insertResponse.ok) {
-    return result(503, 'No se pudo generar el código');
+  const reservation = await reserveOtp(
+    input,
+    resolved.enlaceId,
+    codigoHash,
+    new Date(now + OTP_TTL_MS).toISOString(),
+    env,
+    dependencies.fetcher,
+  );
+  if (!reservation.ok) {
+    return reservation.quota
+      ? result(429, 'Límite de códigos alcanzado')
+      : result(503, 'No se pudo reservar el código');
   }
 
   let sent = false;
@@ -370,8 +415,37 @@ export async function sendSecureOtp(
   } catch {
     sent = false;
   }
+
+  const timestamp = new Date(now).toISOString();
+  const filters = deliveryFilters(
+    input,
+    resolved.enlaceId,
+    reservation.otpId,
+  );
   if (!sent) {
-    return result(502, 'No se pudo enviar el código por WhatsApp');
+    const failureRecorded = await closeDelivery(
+      filters,
+      'envio_fallido_at',
+      timestamp,
+      reservation.otpId,
+      env,
+      dependencies.fetcher,
+    );
+    return failureRecorded
+      ? result(502, 'No se pudo enviar el código por WhatsApp')
+      : result(503, 'No se pudo cerrar el envío fallido');
+  }
+
+  const deliveryRecorded = await closeDelivery(
+    filters,
+    'entregado_at',
+    timestamp,
+    reservation.otpId,
+    env,
+    dependencies.fetcher,
+  );
+  if (!deliveryRecorded) {
+    return result(503, 'No se pudo confirmar la entrega del código');
   }
 
   return result(200);
@@ -400,6 +474,8 @@ function boundOtpFilters(
     enlace_registro_id: `eq.${enlaceId}`,
     verificado: 'eq.false',
     registro_consumido_at: 'is.null',
+    entregado_at: 'not.is.null',
+    envio_fallido_at: 'is.null',
     expira_at: `gt.${nowIso}`,
   };
 }

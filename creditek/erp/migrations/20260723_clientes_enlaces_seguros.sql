@@ -151,6 +151,10 @@ alter table public.otp_codigos
   add column if not exists codigo_hash text null;
 alter table public.otp_codigos
   add column if not exists registro_consumido_at timestamptz null;
+alter table public.otp_codigos
+  add column if not exists entregado_at timestamptz null;
+alter table public.otp_codigos
+  add column if not exists envio_fallido_at timestamptz null;
 
 do $migration$
 begin
@@ -200,6 +204,88 @@ revoke all on function public.proteger_otp_registro_seguro()
   from public, anon, authenticated;
 grant execute on function public.proteger_otp_registro_seguro()
   to service_role;
+
+create index if not exists otp_codigos_celular_cuota_segura_idx
+  on public.otp_codigos (celular, created_at)
+  where enlace_registro_id is not null
+    and envio_fallido_at is null;
+
+create index if not exists otp_codigos_enlace_cuota_segura_idx
+  on public.otp_codigos (enlace_registro_id, created_at)
+  where enlace_registro_id is not null
+    and envio_fallido_at is null;
+
+create or replace function public.reservar_otp_registro_seguro(
+  p_cedula text,
+  p_celular text,
+  p_enlace_registro_id uuid,
+  p_codigo_hash text,
+  p_expira_at timestamptz
+) returns table(otp_id uuid)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_envios_celular integer;
+  v_envios_enlace integer;
+  v_otp_id uuid;
+begin
+  if p_cedula !~ '^[0-9]{6,12}$'
+    or p_celular !~ '^3[0-9]{9}$'
+    or p_codigo_hash !~ '^[A-Za-z0-9_-]{43}$'
+    or p_expira_at <= now() then
+    raise exception 'otp_reserva_invalida';
+  end if;
+
+  -- Todos los callers toman los locks en el mismo orden. Las reservas
+  -- concurrentes para un mismo celular o enlace quedan serializadas dentro
+  -- de la transacción que cuenta e inserta el OTP.
+  perform pg_advisory_xact_lock(
+    hashtextextended('otp:celular:' || p_celular, 0)
+  );
+  perform pg_advisory_xact_lock(
+    hashtextextended('otp:enlace:' || p_enlace_registro_id::text, 0)
+  );
+
+  select count(*) into v_envios_celular
+  from public.otp_codigos
+  where celular = p_celular
+    and enlace_registro_id is not null
+    and created_at >= now() - interval '1 hour'
+    and envio_fallido_at is null;
+  if v_envios_celular >= 3 then
+    raise exception 'otp_limite_celular';
+  end if;
+
+  select count(*) into v_envios_enlace
+  from public.otp_codigos
+  where enlace_registro_id = p_enlace_registro_id
+    and created_at >= now() - interval '1 hour'
+    and envio_fallido_at is null;
+  if v_envios_enlace >= 60 then
+    raise exception 'otp_limite_enlace';
+  end if;
+
+  insert into public.otp_codigos (
+    cedula, celular, enlace_registro_id, codigo_hash,
+    expira_at, intentos, verificado
+  ) values (
+    p_cedula, p_celular, p_enlace_registro_id, p_codigo_hash,
+    p_expira_at, 0, false
+  )
+  returning id into v_otp_id;
+
+  return query select v_otp_id;
+end;
+$$;
+
+revoke all on function public.reservar_otp_registro_seguro(
+  text, text, uuid, text, timestamptz
+) from public, anon, authenticated;
+grant execute on function public.reservar_otp_registro_seguro(
+  text, text, uuid, text, timestamptz
+) to service_role;
 
 create unique index if not exists solicitudes_id_cliente_uidx
   on public.solicitudes (id, cliente_id);
@@ -282,6 +368,8 @@ begin
     and enlace_registro_id = p_enlace_registro_id
     and verificado = true
     and registro_consumido_at is null
+    and entregado_at is not null
+    and envio_fallido_at is null
     and expira_at > now()
   returning id into v_otp_id;
   if v_otp_id is null then

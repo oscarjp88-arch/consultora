@@ -123,7 +123,7 @@ test('RLS, RPC grants, and atomic OTP consumption remain explicit', async () => 
   );
   assert.match(
     normalized,
-    /update public\.otp_codigos set registro_consumido_at = now\(\) where id = p_otp_id and cedula = p_cedula and celular = p_celular and enlace_registro_id = p_enlace_registro_id and verificado = true and registro_consumido_at is null and expira_at > now\(\) returning id into v_otp_id/,
+    /update public\.otp_codigos set registro_consumido_at = now\(\) where id = p_otp_id and cedula = p_cedula and celular = p_celular and enlace_registro_id = p_enlace_registro_id and verificado = true and registro_consumido_at is null and entregado_at is not null and envio_fallido_at is null and expira_at > now\(\) returning id into v_otp_id/,
   );
 });
 
@@ -163,4 +163,49 @@ test('preflight accepts only usable immediate cedula indexes', async () => {
   );
 
   assert.deepEqual(missingFlags, []);
+});
+
+test('secure OTP reservation serializes quotas and records delivery state additively', async () => {
+  const normalized = (await readFile(path, 'utf8'))
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+  assert.match(
+    normalized,
+    /alter table public\.otp_codigos add column if not exists entregado_at timestamptz null/,
+  );
+  assert.match(
+    normalized,
+    /alter table public\.otp_codigos add column if not exists envio_fallido_at timestamptz null/,
+  );
+  assert.match(
+    normalized,
+    /create or replace function public\.reservar_otp_registro_seguro\(/,
+  );
+  assert.match(
+    normalized,
+    /pg_advisory_xact_lock\(\s*hashtextextended\('otp:celular:' \|\| p_celular, 0\)\s*\)/,
+  );
+  assert.match(
+    normalized,
+    /pg_advisory_xact_lock\(\s*hashtextextended\('otp:enlace:' \|\| p_enlace_registro_id::text, 0\)\s*\)/,
+  );
+  assert.match(
+    normalized,
+    /celular = p_celular and enlace_registro_id is not null and created_at >= now\(\) - interval '1 hour' and envio_fallido_at is null/,
+  );
+  assert.match(normalized, /if v_envios_celular >= 3 then/);
+  assert.match(
+    normalized,
+    /enlace_registro_id = p_enlace_registro_id and created_at >= now\(\) - interval '1 hour' and envio_fallido_at is null/,
+  );
+  assert.match(normalized, /if v_envios_enlace >= 60 then/);
+  assert.match(
+    normalized,
+    /insert into public\.otp_codigos \( cedula, celular, enlace_registro_id, codigo_hash, expira_at, intentos, verificado \)/,
+  );
+  assert.match(
+    normalized,
+    /grant execute on function public\.reservar_otp_registro_seguro\([\s\S]*\) to service_role/,
+  );
 });

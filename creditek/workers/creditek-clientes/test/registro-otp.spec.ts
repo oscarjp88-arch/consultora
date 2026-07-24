@@ -51,12 +51,6 @@ function contextResponse(request: Request): Response | null {
   return null;
 }
 
-function countResponse(total: number): Response {
-  return Response.json([], {
-    headers: { 'Content-Range': `0-0/${total}` },
-  });
-}
-
 describe('Turnstile validation', () => {
   it('accepts only the expected hostname and action', async () => {
     const requests: Request[] = [];
@@ -172,16 +166,16 @@ describe('secure OTP send', () => {
       const context = contextResponse(request);
       if (context) return context;
       if (
-        request.url.includes('/otp_codigos?') &&
-        request.method === 'GET'
-      ) {
-        return countResponse(0);
-      }
-      if (
-        request.url.endsWith('/rest/v1/otp_codigos') &&
+        request.url.endsWith('/rest/v1/rpc/reservar_otp_registro_seguro') &&
         request.method === 'POST'
       ) {
-        return new Response(null, { status: 201 });
+        return Response.json([{ otp_id: 'otp-new' }]);
+      }
+      if (
+        request.url.includes('/rest/v1/otp_codigos?') &&
+        request.method === 'PATCH'
+      ) {
+        return Response.json([{ id: 'otp-new' }]);
       }
       throw new Error(`Unexpected request: ${request.method} ${request.url}`);
     }, requests);
@@ -208,45 +202,50 @@ describe('secure OTP send', () => {
 
     expect(result).toEqual({ status: 200, body: { ok: true } });
     expect(deliveredCode).toBe('123456');
-    const insert = requests.find(
+    const reservation = requests.find(
       (request) =>
-        request.url.endsWith('/rest/v1/otp_codigos') &&
+        request.url.endsWith('/rest/v1/rpc/reservar_otp_registro_seguro') &&
         request.method === 'POST',
     );
-    expect(insert).toBeDefined();
-    const payload = await insert!.json() as Record<string, unknown>;
+    expect(reservation).toBeDefined();
+    const payload = await reservation!.json() as Record<string, unknown>;
     expect(payload).toMatchObject({
-      cedula: '1066184151',
-      celular: '3200000000',
-      enlace_registro_id: CONTEXT_ROWS.enlace.id,
-      intentos: 0,
-      verificado: false,
-      expira_at: new Date(NOW + 5 * 60_000).toISOString(),
+      p_cedula: '1066184151',
+      p_celular: '3200000000',
+      p_enlace_registro_id: CONTEXT_ROWS.enlace.id,
+      p_expira_at: new Date(NOW + 5 * 60_000).toISOString(),
     });
-    expect(payload.codigo_hash).toBe(
+    expect(payload.p_codigo_hash).toBe(
       await hashOpaqueToken('otp:123456', ENV.TOKEN_HASH_SECRET),
     );
-    expect(payload.codigo_hash).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(payload).not.toHaveProperty('codigo');
+    expect(payload.p_codigo_hash).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(JSON.stringify(payload)).not.toContain('"codigo":');
+    expect(
+      requests.some((request) =>
+        request.method === 'GET' &&
+        request.url.includes('/otp_codigos?')),
+    ).toBe(false);
+    expect(
+      requests.some((request) =>
+        request.method === 'POST' &&
+        request.url.endsWith('/rest/v1/otp_codigos')),
+    ).toBe(false);
 
-    const countUrls = requests
-      .filter((request) =>
-        request.url.includes('/otp_codigos?') &&
-        request.method === 'GET')
-      .map((request) => request.url);
-    expect(countUrls).toHaveLength(2);
-    expect(countUrls.some((url) =>
-      url.includes('celular=eq.3200000000'))).toBe(true);
-    expect(countUrls.some((url) =>
-      url.includes(`enlace_registro_id=eq.${CONTEXT_ROWS.enlace.id}`))).toBe(true);
+    const deliveryPatch = requests.find(
+      (request) =>
+        request.method === 'PATCH' &&
+        request.url.includes('/otp_codigos?'),
+    )!;
+    expect(new URL(deliveryPatch.url).searchParams.get('id')).toBe(
+      'eq.otp-new',
+    );
+    expect(await deliveryPatch.json()).toEqual({
+      entregado_at: new Date(NOW).toISOString(),
+    });
   });
 
-  it('limits phone sends at 3/hour and shared-link sends at 60/hour', async () => {
-    async function limitedResult(
-      phoneTotal: number,
-      linkTotal: number,
-    ): Promise<number> {
-      let countIndex = 0;
+  it('maps atomic phone and shared-link quota failures to 429', async () => {
+    async function limitedResult(errorCode: string): Promise<number> {
       const result = await sendSecureOtp(
         {
           enlace_token: TOKEN,
@@ -267,15 +266,14 @@ describe('secure OTP send', () => {
             }
             const context = contextResponse(request);
             if (context) return context;
-            if (request.url.includes('/otp_codigos?')) {
-              const total = countIndex++ === 0 ? phoneTotal : linkTotal;
-              return countResponse(total);
-            }
             if (
-              request.url.endsWith('/rest/v1/otp_codigos') &&
+              request.url.endsWith('/rest/v1/rpc/reservar_otp_registro_seguro') &&
               request.method === 'POST'
             ) {
-              return new Response(null, { status: 201 });
+              return Response.json(
+                { message: errorCode },
+                { status: 409 },
+              );
             }
             throw new Error(`Unexpected request: ${request.url}`);
           }),
@@ -287,13 +285,11 @@ describe('secure OTP send', () => {
       return result.status;
     }
 
-    await expect(limitedResult(3, 0)).resolves.toBe(429);
-    await expect(limitedResult(0, 3)).resolves.toBe(200);
-    await expect(limitedResult(0, 60)).resolves.toBe(429);
+    await expect(limitedResult('otp_limite_celular')).resolves.toBe(429);
+    await expect(limitedResult('otp_limite_enlace')).resolves.toBe(429);
   });
 
-  it('fails closed when either rate-limit count fails', async () => {
-    let countIndex = 0;
+  it('fails closed when the atomic reservation RPC fails', async () => {
     const result = await sendSecureOtp(
       {
         enlace_token: TOKEN,
@@ -314,11 +310,10 @@ describe('secure OTP send', () => {
           }
           const context = contextResponse(request);
           if (context) return context;
-          if (request.url.includes('/otp_codigos?')) {
-            countIndex += 1;
-            return countIndex === 1
-              ? countResponse(0)
-              : new Response('down', { status: 503 });
+          if (
+            request.url.endsWith('/rest/v1/rpc/reservar_otp_registro_seguro')
+          ) {
+            return new Response('down', { status: 503 });
           }
           throw new Error(`Unexpected request: ${request.url}`);
         }),
@@ -329,6 +324,56 @@ describe('secure OTP send', () => {
     );
 
     expect(result.status).toBe(503);
+  });
+
+  it('marks failed delivery so it is excluded from future quota', async () => {
+    const requests: Request[] = [];
+    const result = await sendSecureOtp(
+      {
+        enlace_token: TOKEN,
+        cedula: '1066184151',
+        celular: '3200000000',
+        turnstile_token: 'valid-token',
+      },
+      null,
+      ENV,
+      {
+        fetcher: fetcherFrom((request) => {
+          if (request.url.includes('challenges.cloudflare.com')) {
+            return Response.json({
+              success: true,
+              hostname: 'registro.crediteksas.com',
+              action: 'registro-cliente',
+            });
+          }
+          const context = contextResponse(request);
+          if (context) return context;
+          if (
+            request.url.endsWith('/rest/v1/rpc/reservar_otp_registro_seguro')
+          ) {
+            return Response.json([{ otp_id: 'otp-failed' }]);
+          }
+          if (
+            request.url.includes('/rest/v1/otp_codigos?') &&
+            request.method === 'PATCH'
+          ) {
+            return Response.json([{ id: 'otp-failed' }]);
+          }
+          throw new Error(`Unexpected request: ${request.url}`);
+        }, requests),
+        sendOtp: async () => false,
+        now: () => NOW,
+        generateCode: () => '123456',
+      },
+    );
+
+    expect(result.status).toBe(502);
+    const failedPatch = requests.find(
+      (request) => request.method === 'PATCH',
+    )!;
+    expect(await failedPatch.json()).toEqual({
+      envio_fallido_at: new Date(NOW).toISOString(),
+    });
   });
 });
 
@@ -426,6 +471,8 @@ describe('secure OTP verification', () => {
       );
       expect(url.searchParams.get('verificado')).toBe('eq.false');
       expect(url.searchParams.get('registro_consumido_at')).toBe('is.null');
+      expect(url.searchParams.get('entregado_at')).toBe('not.is.null');
+      expect(url.searchParams.get('envio_fallido_at')).toBe('is.null');
       expect(url.searchParams.get('expira_at')).toBe(
         `gt.${new Date(NOW).toISOString()}`,
       );
