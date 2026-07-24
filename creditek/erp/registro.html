@@ -88,6 +88,19 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
 .success-screen .check { font-size: 52px; margin-bottom: 14px; }
 .success-screen h2 { font-family: 'Montserrat', sans-serif; font-size: 20px; margin-bottom: 8px; }
 .success-screen p { font-size: 14px; color: var(--text2); }
+.blocked-screen {
+  display: none; background: white; border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 44px 24px; margin-top: 12px; text-align: center;
+}
+.blocked-screen.show { display: block; }
+.blocked-screen .lock { font-size: 42px; margin-bottom: 12px; }
+.blocked-screen h2 { font-family: 'Montserrat', sans-serif; font-size: 19px; margin-bottom: 8px; }
+.blocked-screen p { color: var(--text2); font-size: 13.5px; }
+.locked-context {
+  border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 14px;
+  background: #F1F5F9; font-size: 14px; font-weight: 600;
+}
+#turnstileContainer { min-height: 66px; margin-top: 12px; }
 .form-hidden { display: none; }
 </style>
 </head>
@@ -98,10 +111,24 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
     <div id="tiendaTag" class="tienda-tag" style="display:none;"></div>
   </header>
 
-  <form id="formRegistro">
-    <div class="field" id="origenSelectorField" style="display:none;">
-      <label>Tienda o aliado que registra <span class="req">*</span></label>
-      <select id="origenSelect"><option value="">Cargando...</option></select>
+  <div class="blocked-screen" id="linkBlockedScreen" role="alert">
+    <div class="lock">🔒</div>
+    <h2>No se puede abrir este registro</h2>
+    <p id="linkBlockedMessage">Enlace de registro inválido o vencido.</p>
+  </div>
+
+  <form id="formRegistro" class="form-hidden">
+    <div class="field">
+      <label>Tienda o aliado</label>
+      <div class="locked-context" id="origenBloqueado">Validando enlace...</div>
+    </div>
+
+    <div class="field">
+      <label>Captador que registra <span class="req">*</span></label>
+      <select id="captadorSelect" disabled>
+        <option value="">Cargando...</option>
+      </select>
+      <div class="help" id="captadorHelp">Solo aparecen captadores activos de esta tienda.</div>
     </div>
 
     <div class="field">
@@ -125,6 +152,7 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
         <input type="text" id="codigoOtp" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos">
         <button type="button" class="btn-secondary" id="btnVerificarOtp">Verificar</button>
       </div>
+      <div id="turnstileContainer"></div>
     </div>
 
     <div class="field">
@@ -135,6 +163,11 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
     <div class="field">
       <label>Ciudad <span class="req">*</span></label>
       <input type="text" id="ciudad" placeholder="Ciudad donde vive" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Dirección <span class="req">*</span></label>
+      <input type="text" id="direccion" placeholder="Dirección donde vive" autocomplete="street-address">
     </div>
 
     <div class="field">
@@ -180,11 +213,6 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
     </div>
 
     <div class="field">
-      <label>Vendedor que registra <span class="req">*</span></label>
-      <input type="text" id="vendedorNombre" placeholder="Tu nombre" autocomplete="off">
-    </div>
-
-    <div class="field">
       <label>Cédula — frente <span class="req">*</span></label>
       <div class="file-input-wrap">
         <input type="file" id="fotoFrente" accept="image/*" capture="environment">
@@ -225,7 +253,7 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
     <h2>¡Registro completo!</h2>
     <p>Gracias, ya quedaste registrado en Creditek. Tu asesor continúa el proceso contigo.</p>
     <div id="fotoWarning" style="display:none; margin-top:16px;">
-      <p style="color:var(--rojo); font-size:13px; margin-bottom:10px;">El registro ya quedó guardado, pero una o más fotos no se subieron (conexión lenta). Intenta de nuevo sin salir de esta pantalla.</p>
+      <p id="fotoWarningText" style="color:var(--rojo); font-size:13px; margin-bottom:10px;">El registro ya quedó guardado, pero una o más fotos no se subieron. Intenta de nuevo sin salir de esta pantalla.</p>
       <button type="button" class="btn-submit" id="btnReintentarFotos" style="width:auto; padding:10px 20px;">Reintentar subir fotos</button>
     </div>
   </div>
@@ -237,87 +265,196 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
 // porque el Worker "creditek-clientes" aún no existe / no está desplegado.
 // CONFIRMAR esta URL con Oscar apenas haga el primer `wrangler deploy`.
 const API = 'https://creditek-clientes.comercial-853.workers.dev';
-
 const AUT_VERSION = 'v1-jul2026';
+const enlaceToken = new URLSearchParams(location.search).get('t');
 
-// Catálogo de tiendas propias conocido al momento de construir este formulario
-// (fallback si /api/origenes no responde). La fuente de verdad es el Worker.
-const ORIGENES_FALLBACK = [
-  {codigo:'CK-01', nombre:'Creditek Tolú'},
-  {codigo:'CK-02', nombre:'Creditek Corozal 01'},
-  {codigo:'CK-03', nombre:'Creditek Corozal 02'},
-  {codigo:'CK-04', nombre:'Creditek Corozal 03'},
-  {codigo:'CK-05', nombre:'Creditek Chinú 1'},
-  {codigo:'CK-06', nombre:'Creditek Chinú 2'},
-  {codigo:'CK-07', nombre:'Creditek Chinú 3'},
-  {codigo:'CK-08', nombre:'Creditek Ciénaga de Oro 1'},
-  {codigo:'CK-09', nombre:'Creditek Ciénaga de Oro 2'},
-  {codigo:'CK-10', nombre:'Creditek Tolú 02'},
-  {codigo:'CK-11', nombre:'Creditek Coveñas'},
-];
-
-let origenCodigo = null;
-let origenValido = false;
+let contextoValido = false;
 let otpVerificado = false;
-let celularVerificado = null; // guarda el celular exacto que quedó verificado
+let celularVerificado = null;
+let cedulaVerificada = null;
 let ultimoEnvioOtp = 0;
+let turnstileToken = null;
+let turnstileWidgetId = null;
+let registroSession = null;
+let documentosSession = null;
+let registroEnCurso = false;
+let subidaFotosEnCurso = false;
 
-// ─── Pre-llenar vendedor desde ?v=luis-alex ─────────────────────────────
-function initVendedor() {
-  const params = new URLSearchParams(location.search);
-  const v = params.get('v');
-  if (!v) return;
-  const input = document.getElementById('vendedorNombre');
-  input.value = v;
-  input.readOnly = true;
-  input.style.background = '#F1F5F9';
-  evaluarSubmit();
+const form = document.getElementById('formRegistro');
+const captadorSelect = document.getElementById('captadorSelect');
+const tiendaTag = document.getElementById('tiendaTag');
+const btnSubmit = document.getElementById('btnSubmit');
+const msgBox = document.getElementById('msgBox');
+
+function mostrarBloqueoEnlace(
+  mensaje = 'Enlace de registro inválido o vencido.',
+) {
+  contextoValido = false;
+  form.classList.add('form-hidden');
+  document.getElementById('linkBlockedMessage').textContent = mensaje;
+  document.getElementById('linkBlockedScreen').classList.add('show');
 }
 
-// ─── Resolver origen desde ?origen=CK-01 ───────────────────────────────
-async function initOrigen() {
-  const params = new URLSearchParams(location.search);
-  const codigo = params.get('origen');
-  const tag = document.getElementById('tiendaTag');
-  const selectorField = document.getElementById('origenSelectorField');
-  const select = document.getElementById('origenSelect');
+function agregarOpcionCaptador(id, nombre) {
+  const option = document.createElement('option');
+  option.value = id;
+  option.textContent = nombre;
+  captadorSelect.appendChild(option);
+}
 
-  let lista = ORIGENES_FALLBACK;
-  try {
-    const res = await fetch(`${API}/api/origenes`);
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data.origenes) && data.origenes.length) lista = data.origenes;
-    }
-  } catch (e) { /* usa fallback silenciosamente */ }
+function renderCaptadores(contexto) {
+  const captadores = Array.isArray(contexto.captadores)
+    ? contexto.captadores
+    : [];
+  captadorSelect.replaceChildren();
+  const help = document.getElementById('captadorHelp');
 
-  if (codigo) {
-    const match = lista.find(o => o.codigo.toUpperCase() === codigo.toUpperCase());
-    if (match) {
-      origenCodigo = match.codigo;
-      origenValido = true;
-      tag.style.display = 'inline-block';
-      tag.innerHTML = `Registrando para: <b>${match.nombre}</b>`;
-      selectorField.style.display = 'none';
-      evaluarSubmit();
-      return;
-    }
+  if (captadores.length === 0) {
+    agregarOpcionCaptador('', 'No hay captadores activos');
+    captadorSelect.disabled = true;
+    help.textContent =
+      'No hay captadores activos para este enlace. Comunícate con el administrador de la tienda.';
+    help.style.color = 'var(--rojo)';
+    contextoValido = false;
+    return;
   }
 
-  // No hay código válido en la URL → mostrar selector
-  selectorField.style.display = 'block';
-  select.innerHTML = '<option value="">Selecciona tienda o aliado</option>' +
-    lista.map(o => `<option value="${o.codigo}">${o.nombre}</option>`).join('');
-  select.addEventListener('change', () => {
-    origenCodigo = select.value || null;
-    origenValido = !!origenCodigo;
-    evaluarSubmit();
+  if (contexto.tipo === 'personal') {
+    agregarOpcionCaptador(captadores[0].id, captadores[0].nombre);
+    captadorSelect.disabled = true;
+    help.textContent = 'Este enlace está asignado a este captador.';
+  } else {
+    agregarOpcionCaptador('', 'Selecciona el captador');
+    captadores.forEach((captador) => {
+      agregarOpcionCaptador(captador.id, captador.nombre);
+    });
+    captadorSelect.disabled = false;
+    help.textContent = 'Solo aparecen captadores activos de esta tienda.';
+  }
+  contextoValido = true;
+}
+
+function cargarTurnstileApi() {
+  if (window.turnstile) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src =
+      'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async = true;
+    script.defer = true;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
   });
+}
+
+function reiniciarTurnstile() {
+  turnstileToken = null;
+  if (
+    turnstileWidgetId !== null &&
+    window.turnstile &&
+    typeof turnstile.reset === 'function'
+  ) {
+    turnstile.reset(turnstileWidgetId);
+  }
+  evaluarEnvioOtp();
+}
+
+async function initTurnstile() {
+  const configResponse = await fetch(`${API}/api/registro/config`);
+  if (!configResponse.ok) throw new Error('config_no_disponible');
+  const config = await configResponse.json();
+  const turnstileSiteKey = config.turnstile_site_key;
+  if (typeof turnstileSiteKey !== 'string' || !turnstileSiteKey) {
+    throw new Error('config_invalida');
+  }
+  await cargarTurnstileApi();
+  turnstileWidgetId = turnstile.render('#turnstileContainer', {
+    sitekey: turnstileSiteKey,
+    action: 'registro-cliente',
+    callback: (token) => {
+      turnstileToken = token;
+      evaluarEnvioOtp();
+    },
+    'expired-callback': reiniciarTurnstile,
+    'error-callback': () => {
+      turnstileToken = null;
+      mostrarErrorOtp(
+        'No se pudo completar la verificación de seguridad. Intenta de nuevo.',
+      );
+      evaluarEnvioOtp();
+    },
+  });
+}
+
+async function initRegistroSeguro() {
+  if (!enlaceToken) {
+    mostrarBloqueoEnlace();
+    return;
+  }
+
+  try {
+    const contextResponse = await fetch(
+      `${API}/api/registro/contexto?t=${encodeURIComponent(enlaceToken)}`,
+    );
+    if (!contextResponse.ok) {
+      mostrarBloqueoEnlace();
+      return;
+    }
+    const data = await contextResponse.json();
+    const contexto = data.contexto;
+    if (
+      !contexto ||
+      !contexto.origen ||
+      typeof contexto.origen.nombre !== 'string'
+    ) {
+      mostrarBloqueoEnlace();
+      return;
+    }
+
+    tiendaTag.textContent = `Registrando para: ${contexto.origen.nombre}`;
+    tiendaTag.style.display = 'inline-block';
+    document.getElementById('origenBloqueado').textContent =
+      contexto.origen.nombre;
+    renderCaptadores(contexto);
+    form.classList.remove('form-hidden');
+    document.getElementById('linkBlockedScreen').classList.remove('show');
+
+    try {
+      await initTurnstile();
+    } catch {
+      contextoValido = false;
+      mostrarErrorOtp(
+        'La verificación de seguridad no está disponible. Intenta recargar la página.',
+      );
+    }
+    evaluarSubmit();
+    evaluarEnvioOtp();
+  } catch {
+    mostrarBloqueoEnlace(
+      'No pudimos validar este enlace. Revisa tu conexión e intenta de nuevo.',
+    );
+  }
 }
 
 // ─── Validaciones ───────────────────────────────────────────────────────
 function celularValido(v) { return /^3\d{9}$/.test(v); }
 function cedulaValida(v) { return /^\d{6,12}$/.test(v); }
+function obtenerReferencias() {
+  return [1, 2].map((numero) => ({
+    nombre: document.getElementById(`ref${numero}Nombre`).value.trim(),
+    telefono: document.getElementById(`ref${numero}Telefono`).value,
+    parentesco:
+      document.getElementById(`ref${numero}Parentesco`).value.trim() || null,
+  })).filter((referencia) =>
+    referencia.nombre || referencia.telefono || referencia.parentesco
+  );
+}
+function referenciasValidas() {
+  return obtenerReferencias().every((referencia) =>
+    referencia.nombre.length >= 2 && celularValido(referencia.telefono)
+  );
+}
 
 const celularInput = document.getElementById('celular');
 const btnEnviarOtp = document.getElementById('btnEnviarOtp');
@@ -326,20 +463,43 @@ const codeRow = document.getElementById('codeRow');
 const btnVerificarOtp = document.getElementById('btnVerificarOtp');
 const codigoOtpInput = document.getElementById('codigoOtp');
 
+function mostrarErrorOtp(mensaje) {
+  otpStatus.className = 'otp-status err';
+  otpStatus.textContent = mensaje;
+}
+
+function invalidarSesionOtp() {
+  otpVerificado = false;
+  celularVerificado = null;
+  cedulaVerificada = null;
+  registroSession = null;
+  otpStatus.className = 'otp-status';
+  codeRow.classList.remove('show');
+}
+
+function evaluarEnvioOtp() {
+  btnEnviarOtp.disabled =
+    !contextoValido ||
+    !celularValido(celularInput.value) ||
+    !cedulaValida(document.getElementById('cedula').value) ||
+    !turnstileToken;
+}
+
 celularInput.addEventListener('input', () => {
   celularInput.value = celularInput.value.replace(/\D/g, '').slice(0, 10);
-  btnEnviarOtp.disabled = !celularValido(celularInput.value);
-  // si cambia el número tras haber verificado, hay que reverificar
   if (otpVerificado && celularInput.value !== celularVerificado) {
-    otpVerificado = false;
-    otpStatus.className = 'otp-status';
-    codeRow.classList.remove('show');
-    evaluarSubmit();
+    invalidarSesionOtp();
   }
+  evaluarEnvioOtp();
+  evaluarSubmit();
 });
 
 document.getElementById('cedula').addEventListener('input', (e) => {
   e.target.value = e.target.value.replace(/\D/g, '').slice(0, 12);
+  if (otpVerificado && e.target.value !== cedulaVerificada) {
+    invalidarSesionOtp();
+  }
+  evaluarEnvioOtp();
   evaluarSubmit();
 });
 ['ref1Telefono','ref2Telefono'].forEach(id => {
@@ -350,9 +510,15 @@ document.getElementById('cedula').addEventListener('input', (e) => {
 
 btnEnviarOtp.addEventListener('click', async () => {
   const celular = celularInput.value;
-  if (!celularValido(celular)) return;
+  const cedula = document.getElementById('cedula').value;
+  if (
+    !contextoValido ||
+    !celularValido(celular) ||
+    !cedulaValida(cedula) ||
+    !turnstileToken
+  ) return;
   const ahora = Date.now();
-  if (ahora - ultimoEnvioOtp < 15000) return; // evita doble-tap accidental
+  if (ahora - ultimoEnvioOtp < 15000) return;
   ultimoEnvioOtp = ahora;
   btnEnviarOtp.disabled = true;
   otpStatus.className = 'otp-status pending';
@@ -361,22 +527,35 @@ btnEnviarOtp.addEventListener('click', async () => {
     const res = await fetch(`${API}/api/otp/enviar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ celular }),
+      body: JSON.stringify({
+        enlace_token: enlaceToken,
+        cedula: cedula,
+        celular: celular,
+        turnstile_token: turnstileToken
+      }),
     });
     const data = await res.json().catch(() => ({}));
-    if (res.ok && data.ok !== false) {
+    if (res.ok && data.ok === true) {
       otpStatus.className = 'otp-status pending';
       otpStatus.textContent = 'Código enviado por WhatsApp. Puede tardar unos segundos.';
       codeRow.classList.add('show');
+    } else if (res.status === 404) {
+      mostrarBloqueoEnlace();
+    } else if (res.status === 429) {
+      mostrarErrorOtp(
+        'Alcanzaste el límite de códigos. Espera antes de intentarlo de nuevo.',
+      );
     } else {
-      otpStatus.className = 'otp-status err';
-      otpStatus.textContent = data.error || 'No se pudo enviar el código. Intenta de nuevo en un momento.';
+      mostrarErrorOtp(
+        'No se pudo enviar el código. Completa nuevamente la verificación de seguridad.',
+      );
     }
-  } catch (e) {
-    otpStatus.className = 'otp-status err';
-    otpStatus.textContent = 'Error de conexión. Revisa tu internet e intenta de nuevo.';
+  } catch {
+    mostrarErrorOtp(
+      'Error de conexión. Revisa tu internet e intenta de nuevo.',
+    );
   } finally {
-    btnEnviarOtp.disabled = !celularValido(celularInput.value);
+    reiniciarTurnstile();
   }
 });
 
@@ -393,22 +572,37 @@ btnVerificarOtp.addEventListener('click', async () => {
     const res = await fetch(`${API}/api/otp/verificar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ celular, codigo }),
+      body: JSON.stringify({
+        enlace_token: enlaceToken,
+        cedula: document.getElementById('cedula').value,
+        celular: celular,
+        codigo
+      }),
     });
     const data = await res.json().catch(() => ({}));
-    if (res.ok && data.ok) {
+    if (
+      res.ok &&
+      data.ok === true &&
+      typeof data.registro_session === 'string'
+    ) {
+      registroSession = data.registro_session;
       otpVerificado = true;
       celularVerificado = celular;
+      cedulaVerificada = document.getElementById('cedula').value;
       otpStatus.className = 'otp-status ok';
       otpStatus.textContent = '✓ Celular verificado';
       codeRow.classList.remove('show');
+    } else if (res.status === 404) {
+      mostrarBloqueoEnlace();
+    } else if (res.status === 429) {
+      mostrarErrorOtp(
+        'Se agotaron los intentos de este código. Solicita uno nuevo.',
+      );
     } else {
-      otpStatus.className = 'otp-status err';
-      otpStatus.textContent = data.error || 'Código incorrecto o vencido.';
+      mostrarErrorOtp('Código incorrecto, vencido o ya utilizado.');
     }
-  } catch (e) {
-    otpStatus.className = 'otp-status err';
-    otpStatus.textContent = 'Error de conexión. Intenta de nuevo.';
+  } catch {
+    mostrarErrorOtp('Error de conexión al verificar. Intenta de nuevo.');
   } finally {
     btnVerificarOtp.disabled = false;
     evaluarSubmit();
@@ -416,28 +610,36 @@ btnVerificarOtp.addEventListener('click', async () => {
 });
 
 // ─── Habilitar botón final ──────────────────────────────────────────────
-const form = document.getElementById('formRegistro');
-const btnSubmit = document.getElementById('btnSubmit');
-const msgBox = document.getElementById('msgBox');
-
 function evaluarSubmit() {
   const ok =
-    origenValido &&
+    contextoValido &&
+    !!captadorSelect.value &&
     cedulaValida(document.getElementById('cedula').value) &&
     document.getElementById('nombreCompleto').value.trim().length > 2 &&
     celularValido(celularInput.value) &&
     otpVerificado &&
+    registroSession !== null &&
+    celularInput.value === celularVerificado &&
+    document.getElementById('cedula').value === cedulaVerificada &&
     document.getElementById('ciudad').value.trim().length > 1 &&
+    document.getElementById('direccion').value.trim().length > 2 &&
     document.getElementById('productoInteres').value.trim().length > 1 &&
-    document.getElementById('vendedorNombre').value.trim().length > 1 &&
+    referenciasValidas() &&
     document.getElementById('autDatos').checked &&
     document.getElementById('fotoFrente').files.length > 0 &&
     document.getElementById('fotoReverso').files.length > 0 &&
-    document.getElementById('fotoSelfie').files.length > 0;
-  btnSubmit.disabled = !ok;
+    document.getElementById('fotoSelfie').files.length > 0 &&
+    !registroEnCurso;
+  btnSubmit.disabled = !ok || registroEnCurso;
 }
-form.addEventListener('input', evaluarSubmit);
-form.addEventListener('change', evaluarSubmit);
+form.addEventListener('input', () => {
+  evaluarSubmit();
+  evaluarEnvioOtp();
+});
+form.addEventListener('change', () => {
+  evaluarSubmit();
+  evaluarEnvioOtp();
+});
 
 // ─── Compresión + subida de las 3 fotos (después de un registro exitoso) ─
 // Las fotos de celular pesan 3-8 MB; se comprimen a JPEG ~0.7 de calidad con
@@ -475,79 +677,111 @@ function blobABase64(blob) {
   });
 }
 
-async function subirFoto(cedula, file, tipo) {
+function mostrarErrorDocumento(
+  mensaje = 'Una o más fotos no se pudieron subir.',
+) {
+  document.getElementById('fotoWarningText').textContent = mensaje;
+  document.getElementById('fotoWarning').style.display = 'block';
+}
+
+async function subirFoto(file, tipo) {
   try {
+    if (!documentosSession) return false;
     const comprimida = await comprimirImagen(file);
+    if (!comprimida) return false;
     const base64 = await blobABase64(comprimida);
-    const res = await fetch(`${API}/api/subir-cedula`, {
+    const res = await fetch(`${API}/api/documentos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cedula, tipo, foto_base64: base64, mime: 'image/jpeg' }),
+      body: JSON.stringify({
+        documentos_session: documentosSession,
+        tipo,
+        mime: 'image/jpeg',
+        foto_base64: base64
+      }),
     });
-    const data = await res.json().catch(() => ({}));
-    return res.ok && data.ok === true;
-  } catch (e) {
-    console.error(`Error subiendo foto ${tipo}:`, e);
+    return res.ok;
+  } catch {
     return false;
   }
 }
 
-async function subirTresFotos(cedula) {
+async function subirTresFotos() {
+  if (subidaFotosEnCurso) return false;
+  subidaFotosEnCurso = true;
   const frente = document.getElementById('fotoFrente').files[0];
   const reverso = document.getElementById('fotoReverso').files[0];
   const selfie = document.getElementById('fotoSelfie').files[0];
-  const resultados = await Promise.all([
-    subirFoto(cedula, frente, 'frente'),
-    subirFoto(cedula, reverso, 'reverso'),
-    subirFoto(cedula, selfie, 'selfie'),
-  ]);
-  return resultados.every(Boolean);
+  try {
+    const resultados = await Promise.all([
+      subirFoto(frente, 'frente'),
+      subirFoto(reverso, 'reverso'),
+      subirFoto(selfie, 'selfie'),
+    ]);
+    return resultados.every(Boolean);
+  } finally {
+    subidaFotosEnCurso = false;
+  }
 }
 
-let cedulaRegistrada = null;
-
-async function manejarFotosPostRegistro(cedula) {
-  cedulaRegistrada = cedula;
-  const ok = await subirTresFotos(cedula);
-  document.getElementById('fotoWarning').style.display = ok ? 'none' : 'block';
+async function manejarFotosPostRegistro() {
+  const ok = await subirTresFotos();
+  if (ok) {
+    document.getElementById('fotoWarning').style.display = 'none';
+  } else {
+    mostrarErrorDocumento(
+      'El registro quedó guardado, pero una o más fotos no se subieron. Revisa tu conexión e intenta de nuevo.',
+    );
+  }
 }
 
 document.getElementById('btnReintentarFotos').addEventListener('click', async (e) => {
   const btn = e.target;
+  if (subidaFotosEnCurso) return;
   btn.disabled = true;
   btn.textContent = 'Subiendo...';
-  const ok = await subirTresFotos(cedulaRegistrada);
+  const ok = await subirTresFotos();
   btn.disabled = false;
   btn.textContent = 'Reintentar subir fotos';
-  document.getElementById('fotoWarning').style.display = ok ? 'none' : 'block';
+  if (ok) {
+    document.getElementById('fotoWarning').style.display = 'none';
+  } else {
+    mostrarErrorDocumento(
+      'Las fotos siguen pendientes. Revisa tu conexión antes de reintentar.',
+    );
+  }
 });
 
 // ─── Submit ───────────────────────────────────────────────────────────
+function mostrarErrorRegistro(
+  mensaje = 'No se pudo completar el registro. Revisa los datos e intenta de nuevo.',
+) {
+  msgBox.className = 'msg-box err show';
+  msgBox.textContent = mensaje;
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (btnSubmit.disabled) return;
+  if (btnSubmit.disabled || registroEnCurso) return;
+  registroEnCurso = true;
   btnSubmit.disabled = true;
   btnSubmit.textContent = 'Enviando...';
   msgBox.className = 'msg-box';
 
   const payload = {
-    cedula: document.getElementById('cedula').value,
+    enlace_token: enlaceToken,
+    captador_id: captadorSelect.value,
+    registro_session: registroSession,
     nombre_completo: document.getElementById('nombreCompleto').value.trim(),
-    celular: celularInput.value,
-    ciudad: document.getElementById('ciudad').value.trim(),
-    origen_codigo: origenCodigo,
-    vendedor_nombre: document.getElementById('vendedorNombre').value.trim(),
     email: document.getElementById('email').value.trim() || null,
+    ciudad: document.getElementById('ciudad').value.trim(),
+    direccion: document.getElementById('direccion').value.trim(),
     producto_interes: document.getElementById('productoInteres').value.trim(),
     financiera: document.getElementById('financiera').value || null,
-    referencias: [
-      { nombre: document.getElementById('ref1Nombre').value.trim(), telefono: document.getElementById('ref1Telefono').value, parentesco: document.getElementById('ref1Parentesco').value.trim() || null },
-      { nombre: document.getElementById('ref2Nombre').value.trim(), telefono: document.getElementById('ref2Telefono').value, parentesco: document.getElementById('ref2Parentesco').value.trim() || null },
-    ],
+    referencias: obtenerReferencias(),
     autorizacion_datos: document.getElementById('autDatos').checked,
     autorizacion_comercial: document.getElementById('autComercial').checked,
-    autorizacion_version: AUT_VERSION,
-    otp_ok: otpVerificado,
+    autorizacion_version: AUT_VERSION
   };
 
   try {
@@ -557,26 +791,36 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify(payload),
     });
     const data = await res.json().catch(() => ({}));
-    if (res.ok && data.ok) {
+    if (
+      res.ok &&
+      data.ok === true &&
+      typeof data.documentos_session === 'string'
+    ) {
+      documentosSession = data.documentos_session;
       form.classList.add('form-hidden');
       document.getElementById('successScreen').classList.add('show');
-      await manejarFotosPostRegistro(payload.cedula);
+      await manejarFotosPostRegistro();
+    } else if (res.status === 400) {
+      mostrarErrorRegistro(
+        'La sesión o el enlace ya no son válidos. Verifica el celular nuevamente.',
+      );
+      invalidarSesionOtp();
     } else {
-      msgBox.className = 'msg-box err show';
-      msgBox.textContent = data.error || 'No se pudo completar el registro. Revisa los datos e intenta de nuevo.';
-      btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Enviar registro';
+      mostrarErrorRegistro();
     }
-  } catch (e) {
-    msgBox.className = 'msg-box err show';
-    msgBox.textContent = 'Error de conexión. Intenta de nuevo.';
-    btnSubmit.disabled = false;
-    btnSubmit.textContent = 'Enviar registro';
+  } catch {
+    mostrarErrorRegistro('Error de conexión al registrar. Intenta de nuevo.');
+  } finally {
+    if (!documentosSession) {
+      registroEnCurso = false;
+      btnSubmit.textContent = 'Enviar registro';
+      evaluarSubmit();
+    }
   }
 });
 
-initOrigen();
-initVendedor();
+captadorSelect.addEventListener('change', evaluarSubmit);
+initRegistroSeguro();
 </script>
 </body>
 </html>
