@@ -52,7 +52,7 @@ begin
       ('audit_log', 'usuario', array['text', 'varchar']),
       ('audit_log', 'accion', array['text', 'varchar']),
       ('audit_log', 'tabla', array['text', 'varchar']),
-      ('audit_log', 'registro_id', array['uuid']),
+      ('audit_log', 'registro_id', array['text', 'varchar']),
       ('audit_log', 'detalle', array['jsonb'])
   ) as expected(table_name, column_name, allowed_udt_names)
   left join information_schema.columns as actual
@@ -446,7 +446,7 @@ begin
     usuario, accion, tabla, registro_id, detalle
   ) values (
     v_captador_nombre, 'registro_formulario_seguro', 'solicitudes',
-    v_solicitud_id,
+    v_solicitud_id::text,
     jsonb_build_object(
       'origen_codigo', p_origen_codigo,
       'captador_id', p_captador_id,
