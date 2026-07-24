@@ -1,5 +1,95 @@
 begin;
 
+do $preflight$
+declare
+  v_incompatibles text;
+begin
+  select string_agg(
+    format(
+      '%I.%I esperado %s, encontrado %s',
+      expected.table_name,
+      expected.column_name,
+      array_to_string(expected.allowed_udt_names, '/'),
+      coalesce(actual.udt_name, 'ausente')
+    ),
+    '; ' order by expected.table_name, expected.column_name
+  )
+  into v_incompatibles
+  from (
+    values
+      ('origenes', 'codigo', array['text', 'varchar']),
+      ('clientes', 'id', array['uuid']),
+      ('clientes', 'cedula', array['text', 'varchar']),
+      ('clientes', 'nombre_completo', array['text', 'varchar']),
+      ('clientes', 'celular', array['text', 'varchar']),
+      ('clientes', 'celular_verificado', array['bool']),
+      ('clientes', 'email', array['text', 'varchar']),
+      ('clientes', 'ciudad', array['text', 'varchar']),
+      ('clientes', 'direccion', array['text', 'varchar']),
+      ('clientes', 'origen_codigo', array['text', 'varchar']),
+      ('clientes', 'fuente', array['text', 'varchar']),
+      ('clientes', 'autorizacion_datos', array['bool']),
+      ('clientes', 'autorizacion_comercial', array['bool']),
+      ('clientes', 'autorizacion_timestamp', array['timestamptz']),
+      ('clientes', 'autorizacion_version', array['text', 'varchar']),
+      ('clientes', 'updated_at', array['timestamptz']),
+      ('referencias', 'cliente_id', array['uuid']),
+      ('referencias', 'nombre', array['text', 'varchar']),
+      ('referencias', 'telefono', array['text', 'varchar']),
+      ('referencias', 'parentesco', array['text', 'varchar']),
+      ('solicitudes', 'id', array['uuid']),
+      ('solicitudes', 'cliente_id', array['uuid']),
+      ('solicitudes', 'origen_codigo', array['text', 'varchar']),
+      ('solicitudes', 'vendedor_nombre', array['text', 'varchar']),
+      ('solicitudes', 'producto_interes', array['text', 'varchar']),
+      ('solicitudes', 'financiera', array['text', 'varchar']),
+      ('solicitudes', 'estado_validacion', array['text', 'varchar']),
+      ('otp_codigos', 'id', array['uuid']),
+      ('otp_codigos', 'celular', array['text', 'varchar']),
+      ('otp_codigos', 'codigo', array['text', 'varchar']),
+      ('otp_codigos', 'verificado', array['bool']),
+      ('otp_codigos', 'expira_at', array['timestamptz']),
+      ('audit_log', 'usuario', array['text', 'varchar']),
+      ('audit_log', 'accion', array['text', 'varchar']),
+      ('audit_log', 'tabla', array['text', 'varchar']),
+      ('audit_log', 'registro_id', array['uuid']),
+      ('audit_log', 'detalle', array['jsonb'])
+  ) as expected(table_name, column_name, allowed_udt_names)
+  left join information_schema.columns as actual
+    on actual.table_schema = 'public'
+    and actual.table_name = expected.table_name
+    and actual.column_name = expected.column_name
+  where actual.column_name is null
+    or not (actual.udt_name = any(expected.allowed_udt_names));
+
+  if v_incompatibles is not null then
+    raise exception 'preflight_esquema_incompatible:%', v_incompatibles;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_catalog.pg_index as index_definition
+    cross join lateral unnest(index_definition.indkey)
+      with ordinality as key_column(attnum, position)
+    join pg_catalog.pg_attribute as attribute_definition
+      on attribute_definition.attrelid = index_definition.indrelid
+      and attribute_definition.attnum = key_column.attnum
+    where index_definition.indrelid = to_regclass('public.clientes')
+      and index_definition.indisunique
+      and index_definition.indpred is null
+      and index_definition.indexprs is null
+      and key_column.position <= index_definition.indnkeyatts
+    group by index_definition.indexrelid
+    having array_agg(
+      attribute_definition.attname::text order by key_column.position
+    ) = array['cedula']::text[]
+  ) then
+    raise exception
+      'preflight_esquema_incompatible:clientes.cedula_sin_indice_unico';
+  end if;
+end;
+$preflight$;
+
 create extension if not exists pgcrypto;
 
 create table if not exists public.captadores (
@@ -9,7 +99,8 @@ create table if not exists public.captadores (
   tipo text not null check (tipo in ('empleado', 'tercero')),
   activo boolean not null default true,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (id, origen_codigo)
 );
 
 create unique index if not exists captadores_origen_nombre_uidx
@@ -18,14 +109,17 @@ create unique index if not exists captadores_origen_nombre_uidx
 create table if not exists public.enlaces_registro (
   id uuid primary key default gen_random_uuid(),
   token_hash text not null unique,
-  token_sufijo text not null,
+  token_sufijo text not null
+    check (token_sufijo ~ '^[A-Za-z0-9_-]{4,12}$'),
   origen_codigo text not null references public.origenes(codigo),
-  captador_id uuid null references public.captadores(id),
+  captador_id uuid null,
   activo boolean not null default true,
   created_at timestamptz not null default now(),
   revoked_at timestamptz null,
   ultima_utilizacion_at timestamptz null,
-  check (activo or revoked_at is not null)
+  foreign key (captador_id, origen_codigo)
+    references public.captadores (id, origen_codigo),
+  check (activo = (revoked_at is null))
 );
 
 create index if not exists enlaces_registro_origen_idx
@@ -48,16 +142,70 @@ alter table public.otp_codigos
 alter table public.otp_codigos
   add column if not exists registro_consumido_at timestamptz null;
 
+do $migration$
+begin
+  if not exists (
+    select 1
+    from pg_catalog.pg_constraint
+    where conrelid = 'public.otp_codigos'::regclass
+      and conname = 'otp_codigos_registro_seguro_check'
+  ) then
+    alter table public.otp_codigos
+      add constraint otp_codigos_registro_seguro_check check (
+        enlace_registro_id is null or (
+          codigo_hash is not null
+          and codigo_hash ~ '^[A-Za-z0-9_-]{43}$'
+          and codigo = '__HASHED__'
+        )
+      );
+  end if;
+end;
+$migration$;
+
+create or replace function public.proteger_otp_registro_seguro()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $function$
+begin
+  if new.enlace_registro_id is not null then
+    if new.codigo_hash is null
+      or new.codigo_hash !~ '^[A-Za-z0-9_-]{43}$' then
+      raise exception 'codigo_hash_invalido';
+    end if;
+    new.codigo := '__HASHED__';
+  end if;
+  return new;
+end;
+$function$;
+
+create or replace trigger otp_codigos_proteger_registro_seguro
+before insert or update of enlace_registro_id, codigo_hash, codigo
+on public.otp_codigos
+for each row
+execute function public.proteger_otp_registro_seguro();
+
+revoke all on function public.proteger_otp_registro_seguro()
+  from public, anon, authenticated;
+grant execute on function public.proteger_otp_registro_seguro()
+  to service_role;
+
+create unique index if not exists solicitudes_id_cliente_uidx
+  on public.solicitudes (id, cliente_id);
+
 create table if not exists public.documentos_solicitud (
   id uuid primary key default gen_random_uuid(),
-  solicitud_id uuid not null references public.solicitudes(id),
-  cliente_id uuid not null references public.clientes(id),
+  solicitud_id uuid not null,
+  cliente_id uuid not null,
   tipo text not null check (tipo in ('frente', 'reverso', 'selfie')),
   storage_path text not null,
   mime text not null check (mime in ('image/jpeg', 'image/png')),
   tamano_bytes integer not null check (tamano_bytes between 1 and 4194304),
   sha256 text not null,
   created_at timestamptz not null default now(),
+  foreign key (solicitud_id, cliente_id)
+    references public.solicitudes (id, cliente_id),
   unique (solicitud_id, tipo)
 );
 
