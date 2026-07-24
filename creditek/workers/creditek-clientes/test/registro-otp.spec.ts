@@ -1,5 +1,6 @@
 import { exports } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
+import worker from '../src/index';
 import { hashOpaqueToken, verifySession } from '../src/registro-security';
 import {
   sendSecureOtp,
@@ -589,6 +590,29 @@ describe('secure OTP verification', () => {
 });
 
 describe('OTP routes and compatibility', () => {
+  it('keeps a malformed secure registration request out of the legacy route', async () => {
+    const response = await exports.default.fetch(
+      new Request('https://worker.test/api/registro', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registro_session: 'not-a-session' }),
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ ok: false, error: 'Datos inválidos' });
+  });
+
+  it('returns 410 for legacy photo uploads when compatibility is disabled', async () => {
+    const response = await worker.fetch(
+      new Request('https://worker.test/api/subir-cedula', { method: 'POST' }),
+      { ALLOW_LEGACY_REGISTRATION_LINKS: 'false' } as never,
+    );
+    expect(response.status).toBe(410);
+    expect(await response.json()).toEqual({
+      ok: false,
+      error: 'Flujo de registro legado deshabilitado',
+    });
+  });
+
   it('returns only the public Turnstile site key with exact CORS', async () => {
     const response = await exports.default.fetch(
       new Request('https://worker.test/api/registro/config', {

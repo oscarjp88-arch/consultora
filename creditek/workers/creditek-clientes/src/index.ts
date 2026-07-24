@@ -14,8 +14,17 @@ import {
   verifySecureOtp,
   type SecureOtpEnv,
 } from './registro-otp';
+import {
+  isSecureRegistrationRequest,
+  submitSecureRegistration,
+  type SecureRegistrationEnv,
+} from './registro-submit';
+import {
+  uploadSecureDocument,
+  type SecureDocumentsEnv,
+} from './registro-documents';
 
-interface Env extends SecureOtpEnv {
+interface Env extends SecureOtpEnv, SecureRegistrationEnv, SecureDocumentsEnv {
   WHATSAPP_TOKEN: string;
   PHONE_NUMBER_ID: string;
   TURNSTILE_SITE_KEY: string;
@@ -122,7 +131,10 @@ export default {
         return respond(await handleOtpVerificarRoute(request, env));
       }
       if (url.pathname === '/api/registro' && request.method === 'POST') {
-        return respond(await handleRegistro(request, env));
+        return respond(await handleRegistroRoute(request, env));
+      }
+      if (url.pathname === '/api/documentos' && request.method === 'POST') {
+        return respond(await handleDocumentosRoute(request, env));
       }
       if (url.pathname === '/api/subir-cedula' && request.method === 'POST') {
         return respond(await handleSubirCedula(request, env));
@@ -218,6 +230,32 @@ async function handleOtpVerificarRoute(
     return handleOtpVerificar(request, env);
   }
   return json({ ok: false, error: 'Flujo de registro legado deshabilitado' }, 410);
+}
+
+async function handleRegistroRoute(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const body = await requestJson(request);
+  if (isSecureRegistrationRequest(body)) {
+    const secureResult = await submitSecureRegistration(body, env, { fetcher: fetch });
+    return json(secureResult.body, secureResult.status);
+  }
+
+  if (env.ALLOW_LEGACY_REGISTRATION_LINKS === 'true') {
+    return handleRegistro(request, env);
+  }
+  return json({ ok: false, error: 'Flujo de registro legado deshabilitado' }, 410);
+}
+
+async function handleDocumentosRoute(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const secureResult = await uploadSecureDocument(await requestJson(request), env, {
+    fetcher: fetch,
+  });
+  return json(secureResult.body, secureResult.status);
 }
 
 // ─── GET /api/origenes ──────────────────────────────────────────────────
@@ -477,6 +515,9 @@ const COLUMNA_POR_TIPO: Record<string, string> = {
 };
 
 async function handleSubirCedula(request: Request, env: Env): Promise<Response> {
+  if (env.ALLOW_LEGACY_REGISTRATION_LINKS !== 'true') {
+    return json({ ok: false, error: 'Flujo de registro legado deshabilitado' }, 410);
+  }
   const body = (await request.json().catch(() => null)) as any;
   const cedula = body?.cedula;
   const tipo = body?.tipo;
