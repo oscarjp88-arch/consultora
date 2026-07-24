@@ -124,11 +124,11 @@ input:focus, select:focus { border-color: var(--turquesa); box-shadow: 0 0 0 3px
     </div>
 
     <div class="field">
-      <label>Captador que registra <span class="req">*</span></label>
+      <label>Vendedor que registra <span class="req">*</span></label>
       <select id="captadorSelect" disabled>
         <option value="">Cargando...</option>
       </select>
-      <div class="help" id="captadorHelp">Solo aparecen captadores activos de esta tienda.</div>
+      <div class="help" id="captadorHelp">Solo aparecen vendedores activos de esta tienda.</div>
     </div>
 
     <div class="field">
@@ -310,10 +310,10 @@ function renderCaptadores(contexto) {
   const help = document.getElementById('captadorHelp');
 
   if (captadores.length === 0) {
-    agregarOpcionCaptador('', 'No hay captadores activos');
+    agregarOpcionCaptador('', 'No hay vendedores activos');
     captadorSelect.disabled = true;
     help.textContent =
-      'No hay captadores activos para este enlace. Comunícate con el administrador de la tienda.';
+      'No hay vendedores activos para esta tienda. Comunícate con el administrador.';
     help.style.color = 'var(--rojo)';
     contextoValido = false;
     return;
@@ -322,14 +322,14 @@ function renderCaptadores(contexto) {
   if (contexto.tipo === 'personal') {
     agregarOpcionCaptador(captadores[0].id, captadores[0].nombre);
     captadorSelect.disabled = true;
-    help.textContent = 'Este enlace está asignado a este captador.';
+    help.textContent = 'Este enlace está asignado a este vendedor.';
   } else {
-    agregarOpcionCaptador('', 'Selecciona el captador');
+    agregarOpcionCaptador('', 'Selecciona el vendedor');
     captadores.forEach((captador) => {
       agregarOpcionCaptador(captador.id, captador.nombre);
     });
     captadorSelect.disabled = false;
-    help.textContent = 'Solo aparecen captadores activos de esta tienda.';
+    help.textContent = 'Solo aparecen vendedores activos de esta tienda.';
   }
   contextoValido = true;
 }

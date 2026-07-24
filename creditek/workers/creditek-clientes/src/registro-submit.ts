@@ -129,7 +129,7 @@ export async function submitSecureRegistration(
   } catch (error) {
     const code = error instanceof Error ? error.message : '';
     return code === 'enlace_invalido' || code === 'origen_invalido' || code === 'captador_invalido'
-      ? result(400, 'Enlace o captador inválido')
+      ? result(400, 'Enlace o vendedor inválido')
       : result(503, 'No se pudo validar el enlace');
   }
   if (context.enlaceId !== session.enlaceId) {
