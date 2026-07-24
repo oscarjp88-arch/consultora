@@ -60,7 +60,13 @@ begin
     and actual.table_name = expected.table_name
     and actual.column_name = expected.column_name
   where actual.column_name is null
-    or not (actual.udt_name = any(expected.allowed_udt_names));
+    or not (actual.udt_name = any(expected.allowed_udt_names))
+    or (
+      expected.table_name = 'otp_codigos'
+      and expected.column_name = 'codigo'
+      and actual.character_maximum_length is not null
+      and actual.character_maximum_length < 6
+    );
 
   if v_incompatibles is not null then
     raise exception 'preflight_esquema_incompatible:%', v_incompatibles;
@@ -76,6 +82,10 @@ begin
       and attribute_definition.attnum = key_column.attnum
     where index_definition.indrelid = to_regclass('public.clientes')
       and index_definition.indisunique
+      and index_definition.indisvalid
+      and index_definition.indisready
+      and index_definition.indislive
+      and index_definition.indimmediate
       and index_definition.indpred is null
       and index_definition.indexprs is null
       and key_column.position <= index_definition.indnkeyatts
@@ -155,7 +165,7 @@ begin
         enlace_registro_id is null or (
           codigo_hash is not null
           and codigo_hash ~ '^[A-Za-z0-9_-]{43}$'
-          and codigo = '__HASHED__'
+          and codigo = 'HASHED'
         )
       );
   end if;
@@ -174,7 +184,7 @@ begin
       or new.codigo_hash !~ '^[A-Za-z0-9_-]{43}$' then
       raise exception 'codigo_hash_invalido';
     end if;
-    new.codigo := '__HASHED__';
+    new.codigo := 'HASHED';
   end if;
   return new;
 end;

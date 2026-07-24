@@ -48,7 +48,7 @@ test('secure OTP rows require hashes and scrub the legacy plaintext column', asy
 
   assert.match(
     normalized,
-    /constraint otp_codigos_registro_seguro_check check \( enlace_registro_id is null or \( codigo_hash is not null and codigo_hash ~ '\^\[A-Za-z0-9_-\]\{43\}\$' and codigo = '__HASHED__' \) \)/,
+    /constraint otp_codigos_registro_seguro_check check \( enlace_registro_id is null or \( codigo_hash is not null and codigo_hash ~ '\^\[A-Za-z0-9_-\]\{43\}\$' and codigo = 'HASHED' \) \)/,
   );
   assert.match(
     normalized,
@@ -58,7 +58,7 @@ test('secure OTP rows require hashes and scrub the legacy plaintext column', asy
     normalized,
     /if new\.enlace_registro_id is not null then/,
   );
-  assert.match(normalized, /new\.codigo := '__HASHED__'/);
+  assert.match(normalized, /new\.codigo := 'HASHED'/);
   assert.match(
     normalized,
     /create or replace trigger otp_codigos_proteger_registro_seguro before insert or update/,
@@ -135,4 +135,32 @@ test('migration carries a deterministic live-schema preflight contract', async (
   assert.match(normalized, /information_schema\.columns/);
   assert.match(normalized, /from pg_catalog\.pg_index/);
   assert.match(normalized, /raise exception 'preflight_esquema_incompatible:%'/);
+});
+
+test('preflight rejects legacy OTP code columns shorter than the sentinel', async () => {
+  const normalized = (await readFile(path, 'utf8'))
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+  assert.match(
+    normalized,
+    /expected\.table_name = 'otp_codigos' and expected\.column_name = 'codigo' and actual\.character_maximum_length is not null and actual\.character_maximum_length < 6/,
+  );
+});
+
+test('preflight accepts only usable immediate cedula indexes', async () => {
+  const normalized = (await readFile(path, 'utf8'))
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  const requiredFlags = [
+    'indisvalid',
+    'indisready',
+    'indislive',
+    'indimmediate',
+  ];
+  const missingFlags = requiredFlags.filter(
+    (flag) => !normalized.includes(`and index_definition.${flag}`),
+  );
+
+  assert.deepEqual(missingFlags, []);
 });
