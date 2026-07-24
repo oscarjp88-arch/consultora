@@ -53,6 +53,24 @@
   .btn-nav { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #e5e7eb; background: white; }
   .btn-nav.active { background: #1e40af; color: white; border-color: #1e40af; }
   .btn-nav:hover:not(.active) { background: #f3f4f6; }
+  /* Multi-select tiendas */
+  .multi-select { position: relative; display: inline-block; }
+  .multi-select-btn { background: white; border: 1px solid #d1d5db; border-radius: 6px; padding: 6px 30px 6px 12px; font-size: 13px; cursor: pointer; min-width: 180px; text-align: left; position: relative; }
+  .multi-select-btn::after { content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #6b7280; }
+  .multi-select-btn:hover { border-color: #9ca3af; }
+  .multi-select-btn.abierto { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+  .multi-select-panel { position: absolute; top: calc(100% + 4px); left: 0; z-index: 50; min-width: 240px; max-height: 320px; overflow-y: auto; background: white; border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0,0,0,.15); padding: 6px; display: none; }
+  .multi-select-panel.abierto { display: block; }
+  .multi-select-panel label { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+  .multi-select-panel label:hover { background: #f3f4f6; }
+  .multi-select-panel label.todas { border-bottom: 1px solid #e5e7eb; margin-bottom: 4px; padding-bottom: 8px; font-weight: 600; }
+  .multi-select-panel input[type=checkbox] { accent-color: #3b82f6; }
+  /* Date range personalizado */
+  .rango-personalizado { display: none; align-items: center; gap: 8px; margin-left: 8px; }
+  .rango-personalizado.abierto { display: inline-flex; }
+  .rango-personalizado input[type=date] { border: 1px solid #d1d5db; border-radius: 6px; padding: 5px 8px; font-size: 12px; font-family: inherit; }
+  .rango-personalizado button { background: #1e40af; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .rango-personalizado button:hover { background: #1e3a8a; }
 </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -76,19 +94,38 @@
   <div id="toast" class="hidden fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in"></div>
 
   <!-- FILTROS GLOBALES -->
-  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-3">
-    <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Período:</span>
-    <div class="flex gap-1 flex-wrap">
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold mr-1">Período:</span>
       <button class="btn-nav active" data-periodo="hoy">Hoy</button>
+      <button class="btn-nav" data-periodo="ayer">Ayer</button>
       <button class="btn-nav" data-periodo="semana">Esta semana</button>
+      <button class="btn-nav" data-periodo="semana_pasada">Semana pasada</button>
       <button class="btn-nav" data-periodo="mes">Este mes</button>
       <button class="btn-nav" data-periodo="mes_pasado">Mes pasado</button>
+      <button class="btn-nav" data-periodo="ult3m">Últimos 3 meses</button>
+      <button class="btn-nav" data-periodo="anio">Este año</button>
+      <button class="btn-nav" data-periodo="anio_pasado">Año pasado</button>
+      <button class="btn-nav" data-periodo="personalizado">Personalizado ▾</button>
+      <div class="rango-personalizado" id="rangoPersonalizado">
+        <label class="text-xs text-gray-500">Desde</label>
+        <input type="date" id="fechaDesde">
+        <label class="text-xs text-gray-500">Hasta</label>
+        <input type="date" id="fechaHasta">
+        <button id="btnAplicarRango">Aplicar</button>
+      </div>
     </div>
-    <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold ml-3">Tienda:</span>
-    <select id="filtro-tienda" class="border border-gray-300 rounded px-3 py-1.5 text-sm">
-      <option value="">Todas</option>
-    </select>
-    <span id="rango-visible" class="text-xs text-gray-500 ml-auto"></span>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold mr-1">Tiendas:</span>
+      <div class="multi-select" id="filtroTiendasWrap">
+        <button type="button" class="multi-select-btn" id="btnTiendas">Todas las tiendas</button>
+        <div class="multi-select-panel" id="panelTiendas">
+          <label class="todas"><input type="checkbox" id="chkTodasTiendas" checked> Todas las tiendas</label>
+          <div id="chkTiendasLista"></div>
+        </div>
+      </div>
+      <span id="rango-visible" class="text-xs text-gray-500 ml-auto"></span>
+    </div>
   </section>
 
   <!-- DASHBOARD KPIs -->
@@ -414,7 +451,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let currentPerfil = null;
 let periodoActual = 'hoy';
-let tiendaFiltro = '';
+let tiendasFiltro = [];        // vacío = "todas"; con códigos = filtro IN(...)
+let rangoPersonalizado = null; // {desde,hasta} cuando el usuario elige rango libre
 let tiendasCache = [];
 let charts = {}; // guardar referencias para destruir/recrear
 
@@ -439,17 +477,33 @@ function toast(msg, tipo = 'ok') {
 
 // Rango del período seleccionado
 function getPeriodo() {
-  const hoy = new Date();
-  hoy.setHours(0,0,0,0);
   const isoDia = d => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(d);
+  const hoy = new Date();
+  if (periodoActual === 'personalizado' && rangoPersonalizado) {
+    return { ...rangoPersonalizado };
+  }
   if (periodoActual === 'hoy') {
     const d = isoDia(new Date());
     return { desde: d, hasta: d };
   }
+  if (periodoActual === 'ayer') {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    const s = isoDia(d);
+    return { desde: s, hasta: s };
+  }
   if (periodoActual === 'semana') {
+    // Lunes de la semana actual → hoy
     const d = new Date();
-    d.setDate(d.getDate() - 6);
+    const dow = (d.getDay() + 6) % 7; // 0=Lun ... 6=Dom
+    d.setDate(d.getDate() - dow);
     return { desde: isoDia(d), hasta: isoDia(new Date()) };
+  }
+  if (periodoActual === 'semana_pasada') {
+    const d = new Date();
+    const dow = (d.getDay() + 6) % 7;
+    const finSem = new Date(d); finSem.setDate(finSem.getDate() - dow - 1);
+    const iniSem = new Date(finSem); iniSem.setDate(iniSem.getDate() - 6);
+    return { desde: isoDia(iniSem), hasta: isoDia(finSem) };
   }
   if (periodoActual === 'mes') {
     const d = new Date(); d.setDate(1);
@@ -461,6 +515,19 @@ function getPeriodo() {
     const ini = new Date(d.getFullYear(), d.getMonth() - 1, 1);
     return { desde: isoDia(ini), hasta: isoDia(fin) };
   }
+  if (periodoActual === 'ult3m') {
+    const ini = new Date(); ini.setMonth(ini.getMonth() - 3); ini.setDate(ini.getDate() + 1);
+    return { desde: isoDia(ini), hasta: isoDia(new Date()) };
+  }
+  if (periodoActual === 'anio') {
+    const ini = new Date(hoy.getFullYear(), 0, 1);
+    return { desde: isoDia(ini), hasta: isoDia(new Date()) };
+  }
+  if (periodoActual === 'anio_pasado') {
+    const ini = new Date(hoy.getFullYear() - 1, 0, 1);
+    const fin = new Date(hoy.getFullYear() - 1, 11, 31);
+    return { desde: isoDia(ini), hasta: isoDia(fin) };
+  }
   const d = isoDia(new Date());
   return { desde: d, hasta: d };
 }
@@ -468,6 +535,17 @@ function getPeriodo() {
 function labelPeriodo() {
   const { desde, hasta } = getPeriodo();
   return desde === hasta ? desde : `${desde} → ${hasta}`;
+}
+
+// ---------- Filtro por tiendas (multi-select) ----------
+// tiendasFiltro vacío = "todas" (sin filtro). Con 1+ códigos = usar .in()
+function aplicarFiltroTienda(query, col = 'tienda_codigo') {
+  if (!tiendasFiltro || tiendasFiltro.length === 0) return query;
+  if (tiendasFiltro.length === 1) return query.eq(col, tiendasFiltro[0]);
+  return query.in(col, tiendasFiltro);
+}
+function tiendaVisible(codigo) {
+  return !tiendasFiltro || tiendasFiltro.length === 0 || tiendasFiltro.includes(codigo);
 }
 
 // ============================================================================
@@ -487,16 +565,25 @@ async function verificarAuth() {
   document.getElementById('usuario-info').textContent = `${perfil.nombre || session.user.email} · ${perfil.rol}${perfil.tienda_codigo ? ' · ' + perfil.tienda_codigo : ''}`;
   document.getElementById('app').classList.remove('hidden');
 
-  // Cargar tiendas para el selector — RLS filtra automáticamente
+  // Cargar tiendas para el multi-select — RLS filtra automáticamente
   const { data: tiendas } = await sb.from('origenes').select('codigo, nombre').eq('tipo', 'propia').eq('activo', true).order('nombre');
   tiendasCache = tiendas || [];
-  const selTienda = document.getElementById('filtro-tienda');
-  selTienda.innerHTML = '<option value="">Todas</option>' +
-    tiendasCache.map(t => `<option value="${esc(t.codigo)}">${esc(t.nombre)}</option>`).join('');
+  const lista = document.getElementById('chkTiendasLista');
+  lista.innerHTML = tiendasCache.map(t =>
+    `<label><input type="checkbox" class="chkTienda" value="${esc(t.codigo)}"> ${esc(t.nombre)}</label>`
+  ).join('');
+
   if (!esCentral() && perfil.tienda_codigo) {
-    selTienda.value = perfil.tienda_codigo;
-    selTienda.disabled = true;
-    tiendaFiltro = perfil.tienda_codigo;
+    // admin_tienda / asesor: solo su tienda, multi-select bloqueado
+    tiendasFiltro = [perfil.tienda_codigo];
+    document.getElementById('chkTodasTiendas').checked = false;
+    lista.querySelectorAll('.chkTienda').forEach(chk => {
+      chk.checked = chk.value === perfil.tienda_codigo;
+      chk.disabled = true;
+    });
+    document.getElementById('chkTodasTiendas').disabled = true;
+    document.getElementById('filtroTiendasWrap').title = 'Solo tu tienda (por permisos)';
+    actualizarLabelTiendas();
   }
 
   // Ocultar bloques solo-central si no aplica
@@ -511,7 +598,7 @@ async function cargarKPIs() {
   const { desde, hasta } = getPeriodo();
   let qVentas = sb.from('ventas').select('total, tienda_codigo', { count: 'exact' })
     .gte('fecha', desde).lte('fecha', hasta).neq('anulada', true);
-  if (tiendaFiltro) qVentas = qVentas.eq('tienda_codigo', tiendaFiltro);
+  qVentas = aplicarFiltroTienda(qVentas);
   const vRes = await qVentas;
   const ventas = vRes.data || [];
   const totalV = ventas.reduce((s, v) => s + Number(v.total || 0), 0);
@@ -522,22 +609,22 @@ async function cargarKPIs() {
   document.getElementById('kpi-ventas-delta').textContent = `${ventas.length} operaciones`;
   document.getElementById('kpi-ticket-sub').textContent = '';
 
-  // Cartera
+  // Cartera (snapshot — no filtra por fecha)
   let qCC = sb.from('cuenta_corriente').select('tienda_codigo, tipo, monto');
-  if (tiendaFiltro) qCC = qCC.eq('tienda_codigo', tiendaFiltro);
+  qCC = aplicarFiltroTienda(qCC);
   const ccRes = await qCC;
   const cc = ccRes.data || [];
   const saldo = cc.reduce((s, r) => s + (r.tipo === 'cargo' ? Number(r.monto) : -Number(r.monto)), 0);
   document.getElementById('kpi-cartera').textContent = money(saldo);
   document.getElementById('kpi-cartera-sub').textContent = cc.length + ' movimientos totales';
 
-  // Inventario
+  // Inventario (snapshot — no filtra por fecha)
   let qUn = sb.from('unidades').select('precio_tienda, costo_remision, tienda_actual, estado').eq('estado', 'disponible');
-  if (tiendaFiltro) qUn = qUn.eq('tienda_actual', tiendaFiltro);
+  qUn = aplicarFiltroTienda(qUn, 'tienda_actual');
   const unRes = await qUn;
   const uns = unRes.data || [];
   let qStock = sb.from('stock_cantidad').select('cantidad, precio_tienda, costo_promedio, tienda_codigo');
-  if (tiendaFiltro) qStock = qStock.eq('tienda_codigo', tiendaFiltro);
+  qStock = aplicarFiltroTienda(qStock);
   const stRes = await qStock;
   const sts = stRes.data || [];
   const valorInv = uns.reduce((s, u) => s + Number(u.precio_tienda ?? u.costo_remision ?? 0), 0)
@@ -553,7 +640,7 @@ async function cargarVentas() {
   const { desde, hasta } = getPeriodo();
   let q = sb.from('ventas').select('id, total, tienda_codigo, origen:tienda_codigo(nombre), venta_items(cantidad, productos(tipo))')
     .gte('fecha', desde).lte('fecha', hasta).neq('anulada', true);
-  if (tiendaFiltro) q = q.eq('tienda_codigo', tiendaFiltro);
+  q = aplicarFiltroTienda(q);
   const { data, error } = await q;
   if (error) { document.getElementById('tbody-ventas').innerHTML = `<tr><td colspan="7" class="text-red-600 py-4 text-center">${esc(error.message)}</td></tr>`; return; }
 
@@ -614,7 +701,7 @@ async function cargarVentas() {
 // ============================================================================
 async function cargarCartera() {
   let q = sb.from('cuenta_corriente').select('tienda_codigo, tipo, monto, created_at, origen:tienda_codigo(nombre)').order('created_at', { ascending: false });
-  if (tiendaFiltro) q = q.eq('tienda_codigo', tiendaFiltro);
+  q = aplicarFiltroTienda(q);
   const { data, error } = await q;
   if (error) { document.getElementById('tbody-cartera').innerHTML = `<tr><td colspan="6" class="text-red-600 py-4 text-center">${esc(error.message)}</td></tr>`; return; }
 
@@ -665,7 +752,7 @@ async function cargarInventario() {
 
   const porTienda = {};
   (uRes.data || []).forEach(u => {
-    if (tiendaFiltro && u.tienda_actual !== tiendaFiltro) return;
+    if (!tiendaVisible(u.tienda_actual)) return;
     const cod = u.tienda_actual;
     if (!porTienda[cod]) porTienda[cod] = { nombre: u.origen?.nombre || cod, skus: new Set(), unidades: 0, valorTienda: 0, valorOscar: 0 };
     porTienda[cod].skus.add(u.producto_id);
@@ -674,7 +761,7 @@ async function cargarInventario() {
     porTienda[cod].valorOscar += Number(u.costo_remision ?? 0);
   });
   (sRes.data || []).forEach(s => {
-    if (tiendaFiltro && s.tienda_codigo !== tiendaFiltro) return;
+    if (!tiendaVisible(s.tienda_codigo)) return;
     const cod = s.tienda_codigo;
     if (!porTienda[cod]) porTienda[cod] = { nombre: s.origen?.nombre || cod, skus: new Set(), unidades: 0, valorTienda: 0, valorOscar: 0 };
     porTienda[cod].skus.add(s.producto_id);
@@ -725,7 +812,7 @@ async function cargarPresupuesto() {
   const diaMes = hoy.getDate();
   const diasTotal = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
 
-  const filas = pRes.data.filter(p => !tiendaFiltro || p.tienda_codigo === tiendaFiltro);
+  const filas = pRes.data.filter(p => tiendaVisible(p.tienda_codigo));
   document.getElementById('tbody-presupuesto').innerHTML = filas.map(p => {
     const real = ventasPorTienda[p.tienda_codigo] || 0;
     const meta = Number(p.meta_utilidad || 0);
@@ -758,7 +845,7 @@ async function cargarRentabilidadTienda() {
   ]);
   const porTienda = {};
   (vRes.data || []).forEach(v => {
-    if (tiendaFiltro && v.tienda_codigo !== tiendaFiltro) return;
+    if (!tiendaVisible(v.tienda_codigo)) return;
     if (!porTienda[v.tienda_codigo]) porTienda[v.tienda_codigo] = { nombre: v.origen?.nombre || v.tienda_codigo, ingresos: 0, costo: 0, gastos: 0 };
     porTienda[v.tienda_codigo].ingresos += Number(v.total || 0);
   });
@@ -797,7 +884,7 @@ async function cargarRentabilidadCategoria() {
 
   const porCat = {};
   (data || []).forEach(vi => {
-    if (tiendaFiltro && vi.ventas?.tienda_codigo !== tiendaFiltro) return;
+    if (!tiendaVisible(vi.ventas?.tienda_codigo)) return;
     const catCod = vi.productos?.categoria || 'SIN_CAT';
     const catNombre = vi.productos?.categorias_producto?.nombre || catCod;
     if (!porCat[catCod]) porCat[catCod] = { nombre: catNombre, uds: 0, ingresos: 0, costo: 0 };
@@ -834,7 +921,7 @@ async function cargarCrecimiento() {
   const desdeMes = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1);
   const iso = d => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(d);
   let q = sb.from('ventas').select('total, fecha, tienda_codigo').gte('fecha', iso(desdeMes)).neq('anulada', true);
-  if (tiendaFiltro) q = q.eq('tienda_codigo', tiendaFiltro);
+  q = aplicarFiltroTienda(q);
   const { data, error } = await q;
   if (error) { document.getElementById('tbody-crecimiento').innerHTML = `<tr><td colspan="3" class="text-red-600 py-4 text-center">${esc(error.message)}</td></tr>`; return; }
 
@@ -874,7 +961,7 @@ async function cargarTopProductos() {
     .gte('ventas.fecha', desde).lte('ventas.fecha', hasta).neq('ventas.anulada', true);
   const porProd = {};
   (vi || []).forEach(v => {
-    if (tiendaFiltro && v.ventas?.tienda_codigo !== tiendaFiltro) return;
+    if (!tiendaVisible(v.ventas?.tienda_codigo)) return;
     const pid = v.producto_id;
     if (!porProd[pid]) porProd[pid] = { nombre: v.productos?.nombre || pid, uds: 0, total: 0 };
     porProd[pid].uds += Number(v.cantidad || 0);
@@ -892,7 +979,7 @@ async function cargarTopProductos() {
   const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
   const iso = d => d.toISOString().slice(0, 10);
   let qUn = sb.from('unidades').select('producto_id, created_at, productos(nombre)').eq('estado', 'disponible').lte('created_at', iso(hace30));
-  if (tiendaFiltro) qUn = qUn.eq('tienda_actual', tiendaFiltro);
+  qUn = aplicarFiltroTienda(qUn, 'tienda_actual');
   const { data: uns } = await qUn;
   const slowMap = {};
   (uns || []).forEach(u => {
@@ -956,20 +1043,99 @@ async function refrescarTodo() {
 }
 
 // ============================================================================
-// EVENT LISTENERS
+// MULTI-SELECT TIENDAS
 // ============================================================================
-document.querySelectorAll('[data-periodo]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-periodo]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    periodoActual = btn.getAttribute('data-periodo');
+function actualizarLabelTiendas() {
+  const btn = document.getElementById('btnTiendas');
+  if (!tiendasFiltro || tiendasFiltro.length === 0) {
+    btn.textContent = 'Todas las tiendas';
+  } else if (tiendasFiltro.length === 1) {
+    const t = tiendasCache.find(x => x.codigo === tiendasFiltro[0]);
+    btn.textContent = t ? t.nombre : tiendasFiltro[0];
+  } else {
+    btn.textContent = `${tiendasFiltro.length} tiendas seleccionadas`;
+  }
+}
+
+function inicializarMultiSelect() {
+  const btn = document.getElementById('btnTiendas');
+  const panel = document.getElementById('panelTiendas');
+  const chkTodas = document.getElementById('chkTodasTiendas');
+  const chkIndiv = document.querySelectorAll('.chkTienda');
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.classList.toggle('abierto');
+    btn.classList.toggle('abierto');
+  });
+  document.addEventListener('click', (e) => {
+    if (!panel.contains(e.target) && e.target !== btn) {
+      panel.classList.remove('abierto');
+      btn.classList.remove('abierto');
+    }
+  });
+
+  chkTodas.addEventListener('change', () => {
+    if (chkTodas.checked) {
+      chkIndiv.forEach(c => { c.checked = false; });
+      tiendasFiltro = [];
+    } else {
+      // Sin ninguna marcada equivale a "Todas" — re-marca "Todas".
+      chkTodas.checked = true;
+      return;
+    }
+    actualizarLabelTiendas();
     refrescarTodo();
   });
-});
-document.getElementById('filtro-tienda').addEventListener('change', (e) => {
-  tiendaFiltro = e.target.value;
-  refrescarTodo();
-});
+  chkIndiv.forEach(chk => {
+    chk.addEventListener('change', () => {
+      const marcadas = Array.from(chkIndiv).filter(c => c.checked).map(c => c.value);
+      if (marcadas.length === 0) {
+        chkTodas.checked = true;
+        tiendasFiltro = [];
+      } else {
+        chkTodas.checked = false;
+        tiendasFiltro = marcadas;
+      }
+      actualizarLabelTiendas();
+      refrescarTodo();
+    });
+  });
+}
+
+// ============================================================================
+// PERÍODO — presets + rango personalizado
+// ============================================================================
+function inicializarPeriodo() {
+  document.querySelectorAll('[data-periodo]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-periodo]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      periodoActual = btn.getAttribute('data-periodo');
+      const rangoDiv = document.getElementById('rangoPersonalizado');
+      if (periodoActual === 'personalizado') {
+        rangoDiv.classList.add('abierto');
+        // Precargar con el rango actual visible o mes actual
+        const { desde, hasta } = getPeriodo();
+        if (!document.getElementById('fechaDesde').value) document.getElementById('fechaDesde').value = desde;
+        if (!document.getElementById('fechaHasta').value) document.getElementById('fechaHasta').value = hasta;
+        return; // no refresca hasta que apliquen
+      }
+      rangoDiv.classList.remove('abierto');
+      rangoPersonalizado = null;
+      refrescarTodo();
+    });
+  });
+  document.getElementById('btnAplicarRango').addEventListener('click', () => {
+    const desde = document.getElementById('fechaDesde').value;
+    const hasta = document.getElementById('fechaHasta').value;
+    if (!desde || !hasta) { toast('Selecciona ambas fechas', 'error'); return; }
+    if (desde > hasta) { toast('La fecha "Desde" debe ser anterior o igual a "Hasta"', 'error'); return; }
+    rangoPersonalizado = { desde, hasta };
+    periodoActual = 'personalizado';
+    refrescarTodo();
+  });
+}
 
 // ============================================================================
 // BOOT
@@ -977,6 +1143,8 @@ document.getElementById('filtro-tienda').addEventListener('change', (e) => {
 (async function () {
   const ok = await verificarAuth();
   if (!ok) return;
+  inicializarMultiSelect();
+  inicializarPeriodo();
   await refrescarTodo();
 })();
 </script>
