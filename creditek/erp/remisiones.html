@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="sidebar.js"></script>
+<script src="producto-foto.js"></script>
 <style>
 :root {
   --azul: #0B1E3D; --turquesa: #00C4CC; --bg: #F5F5F7; --surface: #FFFFFF;
@@ -140,6 +141,10 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 .scanner-overlay video { width: 100%; max-width: 480px; border-radius: 12px; }
 .scanner-overlay button { margin-top: 16px; background: white; color: var(--azul); border: none; border-radius: 999px; padding: 10px 20px; font-weight: 700; cursor: pointer; }
 .scanner-hint { color: white; font-size: 12.5px; margin-top: 10px; opacity: .8; }
+.foto-recepcion { margin: 9px 0 12px; padding: 10px; border-radius: var(--radius-sm); background: var(--bg); }
+.foto-recepcion label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+.foto-recepcion small { display: block; color: var(--text2); margin-top: 5px; }
+.foto-recepcion img { width: 58px; height: 58px; border-radius: 9px; object-fit: cover; border: 1px solid var(--border); }
 </style>
 </head>
 <body>
@@ -288,6 +293,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const productoFoto = window.CreditekProductoFoto;
 
 let currentUser = null;
 let currentPerfil = null;
@@ -385,7 +391,7 @@ function initPagina() {
 
 async function cargarDatosBase() {
   const [{ data: productos }, { data: tiendas }] = await Promise.all([
-    sb.from('productos').select('*').eq('activo', true).order('nombre'),
+    sb.from('productos').select('id,codigo,nombre,categoria,tipo,foto_url,activo').eq('activo', true).order('nombre'),
     sb.from('origenes').select('codigo, nombre').eq('tipo', 'propia').eq('activo', true).order('nombre'),
   ]);
   productosCache = productos || [];
@@ -454,7 +460,10 @@ function renderTablaRemisiones() {
     `;
   }).join('');
 
-  tbody.querySelectorAll('.btn-ver, .btn-editar').forEach(btn => btn.addEventListener('click', () => {
+  tbody.querySelectorAll('.btn-ver').forEach(btn => btn.addEventListener('click', () => {
+    location.href = `documento-remision.html?remision_id=${encodeURIComponent(btn.dataset.id)}`;
+  }));
+  tbody.querySelectorAll('.btn-editar').forEach(btn => btn.addEventListener('click', () => {
     const rem = remisionesCache.find(r => r.id === btn.dataset.id);
     if (rem) abrirModalRemision(rem);
   }));
@@ -659,7 +668,9 @@ async function guardarProductoInline() {
 let recepcionRemisionActual = null;
 
 async function abrirModalRecepcion(rem) {
-  const { data: items, error } = await sb.from('remision_items').select('*, productos(*)').eq('remision_id', rem.id);
+  const { data: items, error } = await sb.from('remision_items')
+    .select('id,remision_id,producto_id,cantidad,precio_remision,productos(id,codigo,nombre,categoria,tipo,foto_url)')
+    .eq('remision_id', rem.id);
   if (error) { alert('No se pudieron cargar los productos de la remisión: ' + error.message); return; }
   recepcionRemisionActual = { ...rem, items: items || [] };
 
@@ -669,6 +680,13 @@ async function abrirModalRecepcion(rem) {
   const cont = document.getElementById('recepcionItems');
   cont.innerHTML = recepcionRemisionActual.items.map((it, idx) => {
     const prod = it.productos;
+    const bloqueFoto = prod.foto_url
+      ? `<div class="foto-recepcion"><label>Foto del producto</label><img src="${escapeHtml(prod.foto_url)}" alt="${escapeHtml(prod.nombre)}"></div>`
+      : `<div class="foto-recepcion">
+          <label>Agrega la foto de este producto *</label>
+          <input type="file" class="foto-recepcion-input" data-item="${idx}" accept="image/jpeg,image/png,image/webp">
+          <small class="foto-recepcion-ayuda" data-item="${idx}">JPG, PNG o WEBP. Máximo 5 MB.</small>
+        </div>`;
     if (prod.tipo === 'serializado') {
       const imeis = Array.from({ length: it.cantidad }).map((_, i) => `
         <div class="imei-row">
@@ -678,11 +696,13 @@ async function abrirModalRecepcion(rem) {
       `).join('');
       return `<div class="item-recepcion" data-tipo="serializado" data-item="${idx}">
         <div class="nombre-prod">${escapeHtml(prod.nombre)} — se esperan ${it.cantidad} unidad(es)</div>
+        ${bloqueFoto}
         ${imeis}
       </div>`;
     } else {
       return `<div class="item-recepcion" data-tipo="cantidad" data-item="${idx}">
         <div class="nombre-prod">${escapeHtml(prod.nombre)} — se despacharon ${it.cantidad}</div>
+        ${bloqueFoto}
         <input type="number" min="0" class="cantidad-recibida-input" data-item="${idx}" value="${it.cantidad}">
         <div class="aviso-diferencia" id="aviso-${idx}">Esta diferencia generará un ajuste de inventario pendiente de revisión.</div>
       </div>`;
@@ -694,6 +714,14 @@ async function abrirModalRecepcion(rem) {
     const esperado = recepcionRemisionActual.items[idx].cantidad;
     inp.addEventListener('input', () => {
       document.getElementById('aviso-' + idx).classList.toggle('show', Number(inp.value) !== esperado);
+    });
+  });
+  cont.querySelectorAll('.foto-recepcion-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const ayuda = cont.querySelector(`.foto-recepcion-ayuda[data-item="${input.dataset.item}"]`);
+      const validacion = productoFoto.validarArchivo(input.files[0]);
+      ayuda.textContent = validacion || `Lista: ${input.files[0].name}`;
+      ayuda.style.color = validacion ? 'var(--rojo)' : 'var(--verde)';
     });
   });
 
@@ -711,6 +739,23 @@ async function confirmarRecepcion() {
   const err = document.getElementById('modalRecepcionErr');
   err.classList.remove('show');
   if (!recepcionRemisionActual) return;
+
+  const fotosPorSubir = [];
+  for (let idx = 0; idx < recepcionRemisionActual.items.length; idx++) {
+    const producto = recepcionRemisionActual.items[idx].productos;
+    if (producto.foto_url) continue;
+    const inputFoto = document.querySelector(`.foto-recepcion-input[data-item="${idx}"]`);
+    const archivo = inputFoto?.files[0];
+    const validacion = productoFoto.validarArchivo(archivo);
+    if (validacion) {
+      err.textContent = `Agrega una foto válida para "${producto.nombre}". ${validacion}`;
+      err.classList.add('show');
+      return;
+    }
+    if (!fotosPorSubir.some(pendiente => pendiente.producto.id === producto.id)) {
+      fotosPorSubir.push({ producto, archivo });
+    }
+  }
 
   const payload = [];
   for (let idx = 0; idx < recepcionRemisionActual.items.length; idx++) {
@@ -730,7 +775,28 @@ async function confirmarRecepcion() {
   }
 
   const btn = document.getElementById('btnConfirmarRecepcion');
-  btn.disabled = true; btn.textContent = 'Confirmando...';
+  btn.disabled = true;
+  try {
+    for (const pendiente of fotosPorSubir) {
+      btn.textContent = 'Subiendo fotos...';
+      pendiente.producto.foto_url = await productoFoto.subirFotoSegura({
+        sb,
+        productoId: pendiente.producto.id,
+        codigoProducto: pendiente.producto.codigo,
+        archivo: pendiente.archivo,
+      });
+      const productoCache = productosCache.find(p => p.id === pendiente.producto.id);
+      if (productoCache) productoCache.foto_url = pendiente.producto.foto_url;
+    }
+  } catch (errorFoto) {
+    btn.disabled = false;
+    btn.textContent = 'Confirmar recepción';
+    err.textContent = 'No se pudo guardar la foto: ' + errorFoto.message;
+    err.classList.add('show');
+    return;
+  }
+
+  btn.textContent = 'Confirmando...';
   const { data, error } = await sb.rpc('confirmar_recepcion_remision', {
     p_remision_id: recepcionRemisionActual.id,
     p_items: payload,

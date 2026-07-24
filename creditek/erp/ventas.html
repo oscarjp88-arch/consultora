@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="sidebar.js"></script>
+<script src="ventas-domain.js"></script>
 <style>
 :root {
   --azul: #0B1E3D; --turquesa: #00C4CC; --bg: #F5F5F7; --surface: #FFFFFF;
@@ -78,6 +79,9 @@ th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--bo
 th { background: rgba(11,30,61,0.02); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text2); font-weight: 700; }
 tr:last-child td { border-bottom: none; }
 tbody tr:hover { background: rgba(11,30,61,0.02); }
+#tbodyVentas tr { cursor: pointer; }
+#tbodyVentas tr:focus { outline: 2px solid var(--turquesa); outline-offset: -2px; }
+.link-detalle { color: var(--turquesa); font-weight: 800; background: none; border: none; cursor: pointer; font-family: inherit; }
 .tag { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
 .tag.contado { background: #DCFCE7; color: #166534; }
 .tag.credito { background: #DBEAFE; color: #1E40AF; }
@@ -155,6 +159,15 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 .scanner-overlay video { width: 100%; max-width: 480px; border-radius: 12px; }
 .scanner-overlay button { margin-top: 16px; background: white; color: var(--azul); border: none; border-radius: 999px; padding: 10px 20px; font-weight: 700; cursor: pointer; }
 .scanner-hint { color: white; font-size: 12.5px; margin-top: 10px; opacity: .8; }
+.detalle-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
+.detalle-meta div { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12.5px; }
+.detalle-meta b { display: block; color: var(--text2); font-size: 10.5px; text-transform: uppercase; margin-bottom: 3px; }
+.detalle-tabla { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.detalle-total { display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; padding: 14px 2px 4px; }
+.detalle-credito { margin-top: 14px; padding: 12px; background: #EFF6FF; border-radius: var(--radius-sm); font-size: 12.5px; line-height: 1.7; }
+.detalle-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+.detalle-actions button { border: none; border-radius: 999px; padding: 11px 20px; background: var(--azul); color: white; font-weight: 700; cursor: pointer; }
+@media (max-width: 560px) { .detalle-meta { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -213,6 +226,15 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
       <div class="empty-state" id="emptyState" style="display:none;">Cargando ventas...</div>
     </div>
   </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalDetalleVenta">
+  <div class="modal-box">
+    <h2 id="detalleVentaTitulo">Detalle de venta</h2>
+    <div id="detalleVentaContenido" class="empty-state">Cargando...</div>
+    <div class="modal-err" id="detalleVentaErr"></div>
+    <div class="detalle-actions"><button id="btnCerrarDetalleVenta">Cerrar</button></div>
   </div>
 </div>
 
@@ -302,6 +324,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const ventasDomain = window.CreditekVentasDomain;
 
 let currentUser = null;
 let currentPerfil = null;
@@ -389,13 +412,16 @@ function initPagina() {
   document.getElementById('btnAgregarCelular').addEventListener('click', agregarItemCelular);
   document.getElementById('btnAgregarAccesorio').addEventListener('click', agregarItemAccesorio);
   document.getElementById('btnCerrarScanner').addEventListener('click', cerrarScanner);
+  document.getElementById('btnCerrarDetalleVenta').addEventListener('click', () => {
+    document.getElementById('modalDetalleVenta').classList.remove('show');
+  });
 
   cargarDatosBase();
 }
 
 async function cargarDatosBase() {
   const [{ data: productos }, { data: tiendas }] = await Promise.all([
-    sb.from('productos').select('*').eq('activo', true).order('nombre'),
+    sb.from('productos').select('id,codigo,nombre,categoria,tipo,activo').eq('activo', true).order('nombre'),
     sb.from('origenes').select('codigo, nombre').eq('tipo', 'propia').eq('activo', true).order('nombre'),
   ]);
   productosCache = productos || [];
@@ -412,7 +438,7 @@ async function cargarVentas() {
   const fecha = document.getElementById('filtroFecha').value;
   const tienda = document.getElementById('filtroTienda').value;
 
-  let q = sb.from('ventas').select('*, clientes(nombre_completo, cedula), vendedor_perfil:vendedor(nombre), venta_items(cantidad, productos(nombre))').order('created_at', { ascending: false });
+  let q = sb.from('ventas').select(ventasDomain.columnasListaVentas()).order('created_at', { ascending: false });
   if (fecha) q = q.eq('fecha', fecha);
   if (tienda) q = q.eq('tienda_codigo', tienda);
 
@@ -436,8 +462,8 @@ function renderTablaVentas() {
     const cliente = v.clientes ? `${escapeHtml(v.clientes.nombre_completo)} (CC ${escapeHtml(v.clientes.cedula)})` : 'Cliente general';
     const productos = (v.venta_items || []).map(it => `${escapeHtml(it.productos?.nombre || '—')}${it.cantidad > 1 ? ' ×' + it.cantidad : ''}`).join(', ');
     return `
-      <tr>
-        <td>#${v.consecutivo}</td>
+      <tr data-id="${v.id}" tabindex="0" aria-label="Abrir detalle de venta ${v.consecutivo}">
+        <td><button class="link-detalle" type="button">#${v.consecutivo}</button></td>
         <td>${hora}</td>
         <td>${cliente}</td>
         <td><span class="tag ${v.tipo}">${v.tipo === 'credito' ? 'Crédito' : 'Contado'}</span></td>
@@ -447,6 +473,95 @@ function renderTablaVentas() {
       </tr>
     `;
   }).join('');
+
+  tbody.querySelectorAll('tr[data-id]').forEach(row => {
+    row.addEventListener('click', () => abrirDetalleVenta(row.dataset.id));
+    row.addEventListener('keydown', evento => {
+      if (evento.key === 'Enter' || evento.key === ' ') {
+        evento.preventDefault();
+        abrirDetalleVenta(row.dataset.id);
+      }
+    });
+  });
+}
+
+async function abrirDetalleVenta(ventaId) {
+  const ventaSeleccionada = ventasCache.find(registro => registro.id === ventaId);
+  if (!ventaSeleccionada) return;
+
+  const modal = document.getElementById('modalDetalleVenta');
+  const contenido = document.getElementById('detalleVentaContenido');
+  const err = document.getElementById('detalleVentaErr');
+  document.getElementById('detalleVentaTitulo').textContent = `Venta #${ventaSeleccionada.consecutivo}`;
+  contenido.className = 'empty-state';
+  contenido.textContent = 'Cargando detalle...';
+  err.classList.remove('show');
+  modal.classList.add('show');
+
+  const [resultadoItems, resultadoCredito] = await Promise.all([
+    sb.from('venta_items')
+      .select(ventasDomain.columnasDetalleItems())
+      .eq('venta_id', ventaId)
+      .order('id'),
+    sb.from('creditos')
+      .select('financiera,cuota_inicial,valor_esperado_financiera,plazo_meses,estado_conciliacion')
+      .eq('venta_id', ventaId)
+      .maybeSingle(),
+  ]);
+
+  if (resultadoItems.error) {
+    contenido.textContent = '';
+    err.textContent = 'No se pudo cargar el detalle: ' + resultadoItems.error.message;
+    err.classList.add('show');
+    return;
+  }
+
+  const detalle = ventasDomain.prepararDetalle({
+    venta: ventaSeleccionada,
+    items: resultadoItems.data || [],
+    credito: resultadoCredito.data || null,
+  });
+  const cliente = ventaSeleccionada.clientes
+    ? `${escapeHtml(ventaSeleccionada.clientes.nombre_completo)} · CC ${escapeHtml(ventaSeleccionada.clientes.cedula)}`
+    : 'Cliente general';
+  const fecha = ventaSeleccionada.created_at
+    ? new Date(ventaSeleccionada.created_at).toLocaleString('es-CO')
+    : '—';
+  const filas = detalle.items.map(item => `
+    <tr>
+      <td>${escapeHtml(item.codigo || '—')} · ${escapeHtml(item.nombre)}${item.imei ? `<br><small>IMEI ${escapeHtml(item.imei)}</small>` : ''}</td>
+      <td>${item.cantidad}</td>
+      <td>${fmtCOP(item.precioUnitario)}</td>
+      <td>${fmtCOP(item.subtotal)}</td>
+    </tr>
+  `).join('');
+  const creditoHtml = detalle.credito ? `
+    <div class="detalle-credito">
+      <b>Crédito</b><br>
+      Financiera: ${escapeHtml(detalle.credito.financiera || '—')} ·
+      Cuota inicial: ${fmtCOP(detalle.credito.cuotaInicial)} ·
+      Valor esperado: ${fmtCOP(detalle.credito.valorEsperado)} ·
+      Plazo: ${detalle.credito.plazoMeses || '—'} cuotas
+    </div>
+  ` : '';
+
+  contenido.className = '';
+  contenido.innerHTML = `
+    <div class="detalle-meta">
+      <div><b>Cliente</b>${cliente}</div>
+      <div><b>Fecha y hora</b>${fecha}</div>
+      <div><b>Tipo</b>${ventaSeleccionada.tipo === 'credito' ? 'Crédito' : 'Contado'}</div>
+      <div><b>Vendedor</b>${escapeHtml(ventaSeleccionada.vendedor_perfil?.nombre || '—')}</div>
+    </div>
+    <div class="detalle-tabla">
+      <table>
+        <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>
+    ${creditoHtml}
+    <div class="detalle-total"><span>Total</span><span>${fmtCOP(ventaSeleccionada.total)}</span></div>
+  `;
 }
 
 // ─── Wizard de nueva venta ──────────────────────────────────────────────
@@ -622,14 +737,13 @@ function agregarItemAccesorio() {
       btn.addEventListener('click', async () => {
         const prod = productosCache.find(p => p.id === btn.dataset.id);
         div.remove();
-        // FIX 23-jul-2026 · leer precio_tienda del stock de ESTA tienda (definido
-        // al recibir la remisión). Fallback a precio_guia del catálogo.
+        // El precio de la tienda es el único piso permitido; no usamos precio guía.
         const { data: stockTienda } = await sb.from('stock_cantidad')
           .select('precio_tienda')
           .eq('producto_id', prod.id)
           .eq('tienda_codigo', currentPerfil.tienda_codigo)
           .maybeSingle();
-        const precioAcc = stockTienda?.precio_tienda || prod.precio_guia || null;
+        const precioAcc = stockTienda?.precio_tienda || null;
         venta.items.push({
           tipoProducto: 'cantidad', producto_id: prod.id, unidad_id: null,
           cantidad: 1, precio_venta: precioAcc, nombreProducto: prod.nombre,
@@ -732,7 +846,10 @@ async function validarImei(idx, imei, silencioso) {
   if (!imei) { if (estadoDiv) estadoDiv.textContent = ''; return; }
   if (estadoDiv) { estadoDiv.textContent = 'Verificando...'; estadoDiv.className = 'imei-estado'; }
 
-  const { data: unidad, error } = await sb.from('unidades').select('*, productos(nombre, precio_guia)').eq('imei', imei).maybeSingle();
+  const { data: unidad, error } = await sb.from('unidades')
+    .select(ventasDomain.columnasUnidadVenta())
+    .eq('imei', imei)
+    .maybeSingle();
   if (error || !unidad) {
     if (estadoDiv) { estadoDiv.textContent = 'IMEI no registrado en inventario.'; estadoDiv.className = 'imei-estado error'; }
     return;
@@ -749,10 +866,8 @@ async function validarImei(idx, imei, silencioso) {
   venta.items[idx].unidad_id = unidad.id;
   venta.items[idx].producto_id = unidad.producto_id;
   venta.items[idx].nombreProducto = unidad.productos?.nombre || null;
-  // FIX 23-jul-2026 · precio sugerido = precio_tienda (remisión) por defecto,
-  // precio_guia como fallback si la unidad viejo no tiene precio_tienda seteado.
-  // Se guarda precio_minimo para bloquear ventas por debajo del piso de remisión.
-  const precioSugerido = unidad.precio_tienda || unidad.productos?.precio_guia || null;
+  // Precio sugerido y piso = precio_tienda definido en la remisión.
+  const precioSugerido = unidad.precio_tienda || null;
   if (!venta.items[idx].precio_venta) venta.items[idx].precio_venta = precioSugerido;
   venta.items[idx].precio_minimo = unidad.precio_tienda || 0;
   if (estadoDiv) { estadoDiv.textContent = `✓ ${unidad.productos?.nombre || 'Producto'} — disponible`; estadoDiv.className = 'imei-estado ok'; }

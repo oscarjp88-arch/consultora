@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="sidebar.js"></script>
+<script src="producto-foto.js"></script>
 <style>
 :root {
   --azul: #0B1E3D; --turquesa: #00C4CC; --bg: #F5F5F7; --surface: #FFFFFF;
@@ -96,6 +97,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
 .foto-cell .sin-foto { display: inline-flex; align-items: center; justify-content: center; background: var(--bg); color: var(--text2); font-size: 15px; }
 .campo small { display: block; margin-top: 5px; font-size: 11.5px; color: var(--text2); }
 #preview-foto img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
+.foto-modal-preview img { width: 96px; height: 96px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); }
 </style>
 </head>
 <body>
@@ -147,7 +149,7 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
           <!-- FIX 23-jul-2026 · "Margen" solo para gerencia/auditoria (clase solo-central).
                "Precio guía" se renombra a "Mi costo" — para tienda muestra precio_tienda
                (el precio de remisión que recibió); para central muestra precio_guia (referencial). -->
-          <tr><th>Foto</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th class="solo-central">Margen</th><th id="thPrecio">Mi costo</th><th id="thAcciones" style="display:none;">Acciones</th></tr>
+          <tr><th>Foto</th><th>Código</th><th>Nombre</th><th>Categoría</th><th>Tipo</th><th class="solo-central">Margen</th><th id="thPrecio" class="solo-tienda">Mi costo</th><th id="thAcciones" style="display:none;">Acciones</th></tr>
         </thead>
         <tbody id="tbodyProductos"></tbody>
       </table>
@@ -205,10 +207,31 @@ tbody tr:hover { background: rgba(11,30,61,0.02); }
   </div>
 </div>
 
+<div class="modal-bg" id="modalFotoProducto">
+  <div class="modal-box">
+    <h2>Foto del producto</h2>
+    <input type="hidden" id="fotoProductoId">
+    <input type="hidden" id="fotoProductoCodigo">
+    <div class="campo">
+      <label id="fotoProductoNombre">Producto</label>
+      <input type="file" id="fotoProductoArchivo" accept="image/jpeg,image/png,image/webp">
+      <small>JPG, PNG o WEBP. Máximo 5 MB.</small>
+    </div>
+    <div class="foto-modal-preview" id="fotoProductoPreview"></div>
+    <div class="modal-err" id="fotoProductoErr"></div>
+    <div class="modal-ok" id="fotoProductoOk">Foto guardada.</div>
+    <div class="modal-actions">
+      <button class="btn-cancelar" id="btnCancelarFoto">Cancelar</button>
+      <button class="btn-guardar" id="btnGuardarFoto">Guardar foto</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const productoFoto = window.CreditekProductoFoto;
 
 let currentUser = null;
 let currentPerfil = null;
@@ -285,11 +308,17 @@ function escapeHtml(str) {
 
 // ─── Página: Catálogo ─────────────────────────────────────────────────
 function initPagina() {
-  if (esCentral()) {
+  const permisos = productoFoto.permisosCatalogo(currentPerfil.rol);
+  if (permisos.puedeEditarProducto) {
     document.getElementById('btnNuevoProducto').style.display = 'inline-block';
-    document.getElementById('thAcciones').style.display = '';
   } else {
     document.querySelectorAll('.solo-central').forEach(el => el.style.display = 'none');
+  }
+  if (permisos.puedeGestionarFoto || permisos.puedeEditarProducto) {
+    document.getElementById('thAcciones').style.display = '';
+  }
+  if (esCentral()) {
+    document.querySelectorAll('.solo-tienda').forEach(el => el.style.display = 'none');
   }
 
   document.getElementById('filtroBusqueda').addEventListener('input', renderTabla);
@@ -301,6 +330,9 @@ function initPagina() {
   document.getElementById('btnGuardarProducto').addEventListener('click', guardarProducto);
   document.getElementById('prodCategoria').addEventListener('change', onCategoriaCambiada);
   document.getElementById('prodMargenTipo').addEventListener('change', actualizarLabelMargen);
+  document.getElementById('btnCancelarFoto').addEventListener('click', cerrarModalFoto);
+  document.getElementById('btnGuardarFoto').addEventListener('click', guardarFotoProducto);
+  document.getElementById('fotoProductoArchivo').addEventListener('change', previsualizarFotoTienda);
 
   cargarCategorias();
   cargarProductos();
@@ -336,8 +368,9 @@ function fmtMargen(tipo, valor) {
 }
 
 async function subirFotoProducto(codigoProducto, archivo) {
-  const ext = archivo.name.split('.').pop().toLowerCase();
-  const nombreArchivo = `${codigoProducto}_${Date.now()}.${ext}`;
+  const validacion = productoFoto.validarArchivo(archivo);
+  if (validacion) throw new Error(validacion);
+  const nombreArchivo = productoFoto.crearRutaFoto(codigoProducto, archivo);
 
   const { error } = await sb.storage
     .from('productos-fotos')
@@ -352,7 +385,10 @@ async function subirFotoProducto(codigoProducto, archivo) {
 async function cargarProductos() {
   document.getElementById('emptyState').style.display = 'block';
   document.getElementById('emptyState').textContent = 'Cargando productos...';
-  const { data, error } = await sb.from('productos').select('*').eq('activo', true).order('nombre');
+  const { data, error } = await sb.from('productos')
+    .select(productoFoto.columnasProductos(currentPerfil.rol))
+    .eq('activo', true)
+    .order('nombre');
   if (error) {
     document.getElementById('emptyState').textContent = 'Error cargando productos: ' + error.message;
     return;
@@ -377,12 +413,9 @@ async function cargarProductos() {
     (unidades.data || []).forEach(u => {
       if (!stockMap[u.producto_id]) stockMap[u.producto_id] = u.precio_tienda;
     });
-    productosCache.forEach(p => { p._precio_mostrar = stockMap[p.id] || p.precio_guia || null; });
+    productosCache.forEach(p => { p._precio_mostrar = stockMap[p.id] || null; });
   } else {
-    productosCache.forEach(p => { p._precio_mostrar = p.precio_guia; });
-    // Central ve el label original.
-    const th = document.getElementById('thPrecio');
-    if (th) th.textContent = 'Precio guía';
+    productosCache.forEach(p => { p._precio_mostrar = null; });
   }
 
   renderTabla();
@@ -416,19 +449,96 @@ function renderTabla() {
       <td>${escapeHtml(p.nombre)}</td>
       <td><span class="tag">${escapeHtml(nombreCategoria(p.categoria))}</span></td>
       <td><span class="tag ${p.tipo === 'cantidad' ? 'cantidad' : ''}">${p.tipo}</span></td>
-      <td class="solo-central">${fmtMargen(p.margen_tipo, p.margen_valor)}</td>
-      <td>${fmtCOP(p._precio_mostrar)}</td>
-      ${esCentral() ? `<td><button class="link-edit" data-id="${p.id}">Editar</button></td>` : ''}
+      ${esCentral() ? `<td>${fmtMargen(p.margen_tipo, p.margen_valor)}</td>` : ''}
+      ${esCentral() ? '' : `<td>${p._precio_mostrar == null ? 'Pendiente' : fmtCOP(p._precio_mostrar)}</td>`}
+      ${productoFoto.permisosCatalogo(currentPerfil.rol).puedeEditarProducto
+        ? `<td><button class="link-edit" data-id="${p.id}">Editar</button></td>`
+        : productoFoto.permisosCatalogo(currentPerfil.rol).puedeGestionarFoto
+          ? `<td><button class="link-edit btn-foto" data-id="${p.id}">${p.foto_url ? 'Cambiar foto' : 'Agregar foto'}</button></td>`
+          : ''}
     </tr>
   `).join('');
 
-  if (esCentral()) {
+  if (productoFoto.permisosCatalogo(currentPerfil.rol).puedeEditarProducto) {
     tbody.querySelectorAll('.link-edit').forEach(btn => {
       btn.addEventListener('click', () => {
         const prod = productosCache.find(p => p.id === btn.dataset.id);
         if (prod) abrirModalProducto(prod);
       });
     });
+  }
+  tbody.querySelectorAll('.btn-foto').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const prod = productosCache.find(p => p.id === btn.dataset.id);
+      if (prod) abrirModalFoto(prod);
+    });
+  });
+}
+
+function abrirModalFoto(prod) {
+  document.getElementById('fotoProductoId').value = prod.id;
+  document.getElementById('fotoProductoCodigo').value = prod.codigo;
+  document.getElementById('fotoProductoNombre').textContent = prod.nombre;
+  document.getElementById('fotoProductoArchivo').value = '';
+  document.getElementById('fotoProductoPreview').innerHTML = prod.foto_url
+    ? `<img src="${escapeHtml(prod.foto_url)}" alt="${escapeHtml(prod.nombre)}">`
+    : '';
+  document.getElementById('fotoProductoErr').classList.remove('show');
+  document.getElementById('fotoProductoOk').classList.remove('show');
+  document.getElementById('modalFotoProducto').classList.add('show');
+}
+
+function cerrarModalFoto() {
+  document.getElementById('modalFotoProducto').classList.remove('show');
+}
+
+function previsualizarFotoTienda() {
+  const archivo = document.getElementById('fotoProductoArchivo').files[0];
+  const error = productoFoto.validarArchivo(archivo);
+  const err = document.getElementById('fotoProductoErr');
+  err.classList.toggle('show', !!error);
+  err.textContent = error;
+  if (!error) {
+    document.getElementById('fotoProductoPreview').innerHTML =
+      `<img src="${URL.createObjectURL(archivo)}" alt="Vista previa">`;
+  }
+}
+
+async function guardarFotoProducto() {
+  const archivo = document.getElementById('fotoProductoArchivo').files[0];
+  const err = document.getElementById('fotoProductoErr');
+  const validacion = productoFoto.validarArchivo(archivo);
+  if (validacion) {
+    err.textContent = validacion;
+    err.classList.add('show');
+    return;
+  }
+
+  const productoId = document.getElementById('fotoProductoId').value;
+  const codigoProducto = document.getElementById('fotoProductoCodigo').value;
+  const btn = document.getElementById('btnGuardarFoto');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  err.classList.remove('show');
+
+  try {
+    const fotoUrl = await productoFoto.subirFotoSegura({
+      sb,
+      productoId,
+      codigoProducto,
+      archivo,
+    });
+    const producto = productosCache.find(p => p.id === productoId);
+    if (producto) producto.foto_url = fotoUrl;
+    renderTabla();
+    document.getElementById('fotoProductoOk').classList.add('show');
+    setTimeout(cerrarModalFoto, 700);
+  } catch (error) {
+    err.textContent = 'No se pudo guardar la foto: ' + error.message;
+    err.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Guardar foto';
   }
 }
 
@@ -512,7 +622,7 @@ async function guardarProducto() {
   }
 
   document.getElementById('modalOk').classList.add('show');
-  await cargarCategoriasExistentes();
+  await cargarCategorias();
   await cargarProductos();
   setTimeout(cerrarModalProducto, 700);
 }

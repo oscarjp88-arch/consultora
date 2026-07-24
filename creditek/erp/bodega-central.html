@@ -25,6 +25,7 @@
   <title>Bodega Central · Creditek</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="bodega-domain.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     .fade-in { animation: fadeIn 0.15s ease-out; }
@@ -297,6 +298,7 @@ const SB = (function () {
   };
   return window.supabase.createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
 })();
+const bodegaDomain = window.CreditekBodegaDomain;
 
 // ============================================================
 // HELPERS
@@ -353,25 +355,31 @@ let alertaData = [];
 // ============================================================
 // CARGA DE ALERTA_BODEGA_CENTRAL
 // ============================================================
-// SPEC v2 · mapa producto_id → [factura_ids con unidades en CENTRAL]
+// Mapa producto_id → facturas con stock vivo, tanto serializado como cantidad.
 // Se calcula en cargarAlerta y lo usa el filtro por factura.
 let facturasPorProducto = {};
 let facturasIndex = [];  // [{id, numero, fecha, proveedor_nombre}]
 
 async function cargarAlerta() {
-  const [alertaResp, unidadesFacturas, facturasResp] = await Promise.all([
+  const [alertaResp, unidadesFacturas, lotesResp, facturasResp] = await Promise.all([
     SB.from('alerta_bodega_central')
       .select('producto_id, nombre, categoria, tipo, stock_actual_central, descuadrado'),
-    // Solo unidades que aún están en CENTRAL — para poblar el filtro con facturas relevantes.
+    // Solo unidades realmente disponibles en CENTRAL.
     SB.from('unidades')
       .select('producto_id, factura_proveedor_id')
       .eq('tienda_actual', 'CENTRAL')
+      .eq('estado', 'disponible')
+      .is('imei', null)
       .not('factura_proveedor_id', 'is', null),
+    SB.rpc('obtener_lotes_cantidad_central'),
     SB.from('facturas_proveedor')
       .select('id, numero, fecha, proveedor:proveedor_id(nombre)')
       .order('fecha', { ascending: false }),
   ]);
   if (alertaResp.error) { toast('Error cargando alerta: ' + alertaResp.error.message, 'error'); return; }
+  if (unidadesFacturas.error) { toast('Error cargando facturas de equipos: ' + unidadesFacturas.error.message, 'error'); return; }
+  if (lotesResp.error) { toast('Error cargando lotes de accesorios: ' + lotesResp.error.message, 'error'); return; }
+  if (facturasResp.error) { toast('Error cargando facturas: ' + facturasResp.error.message, 'error'); return; }
 
   alertaData = alertaResp.data || [];
   alertaData.sort((a, b) => {
@@ -388,8 +396,13 @@ async function cargarAlerta() {
     facturasPorProducto[u.producto_id].add(u.factura_proveedor_id);
     facturaIdsConStock.add(u.factura_proveedor_id);
   });
+  (lotesResp.data || []).forEach(lote => {
+    if (!facturasPorProducto[lote.producto_id]) facturasPorProducto[lote.producto_id] = new Set();
+    facturasPorProducto[lote.producto_id].add(lote.factura_proveedor_id);
+    facturaIdsConStock.add(lote.factura_proveedor_id);
+  });
 
-  // Popular dropdown filtro-factura con solo las que tienen unidades vivas.
+  // Mostrar únicamente facturas que todavía tienen inventario disponible.
   facturasIndex = (facturasResp.data || []).filter(f => facturaIdsConStock.has(f.id));
   const selFactura = document.getElementById('filtro-factura');
   const actual = selFactura.value;
@@ -637,7 +650,7 @@ let productosDisponibles = []; // [{id, nombre, categoria, tipo, disponible, pre
 let despachoItems = [];        // [{tempId, producto_id, producto_nombre, tipo, cantidad, precio_remision, precio_override, stock_disponible}]
 
 async function cargarDataDespacho() {
-  const [tRes, uRes, sRes, pRes] = await Promise.all([
+  const [tRes, uRes, lotesRes, pRes] = await Promise.all([
     SB.from('tiendas_operativas').select('codigo, nombre').order('codigo'),
     // Unidades disponibles serializadas: agrupar por producto
     SB.from('unidades')
@@ -645,16 +658,13 @@ async function cargarDataDespacho() {
       .eq('tienda_actual', 'CENTRAL')
       .eq('estado', 'disponible')
       .is('imei', null),
-    // Stock cantidad en CENTRAL
-    SB.from('stock_cantidad')
-      .select('producto_id, cantidad, precio_tienda')
-      .eq('tienda_codigo', 'CENTRAL')
-      .gt('cantidad', 0),
+    // Lotes de productos por cantidad, conservando la factura.
+    SB.rpc('obtener_lotes_cantidad_central'),
     SB.from('productos').select('id, nombre, categoria, tipo').eq('activo', true),
   ]);
   if (tRes.error) { toast('Error tiendas: ' + tRes.error.message, 'error'); return; }
   if (uRes.error) { toast('Error unidades: ' + uRes.error.message, 'error'); return; }
-  if (sRes.error) { toast('Error stock: ' + sRes.error.message, 'error'); return; }
+  if (lotesRes.error) { toast('Error lotes: ' + lotesRes.error.message, 'error'); return; }
   if (pRes.error) { toast('Error productos: ' + pRes.error.message, 'error'); return; }
 
   tiendasDestino = tRes.data || [];
@@ -664,30 +674,12 @@ async function cargarDataDespacho() {
 
   // Consolidar disponibilidad por producto (respetando filtro de factura si aplica).
   const facturaFiltro = document.getElementById('filtro-factura').value;
-  const productoMap = {};
-  (pRes.data || []).forEach(p => {
-    productoMap[p.id] = { ...p, disponible: 0, precio_tienda: null };
+  productosDisponibles = bodegaDomain.consolidarDisponibilidad({
+    productos: pRes.data || [],
+    unidades: uRes.data || [],
+    lotes: lotesRes.data || [],
+    facturaId: facturaFiltro || null,
   });
-  // Serializados
-  (uRes.data || []).forEach(u => {
-    if (facturaFiltro && u.factura_proveedor_id !== facturaFiltro) return;
-    const p = productoMap[u.producto_id];
-    if (!p || p.tipo !== 'serializado') return;
-    p.disponible += 1;
-    // Usar el precio_tienda de la primera unidad disponible como referencia (FIFO real lo decide el RPC).
-    if (p.precio_tienda == null) p.precio_tienda = u.precio_tienda;
-  });
-  // Cantidad
-  (sRes.data || []).forEach(s => {
-    const p = productoMap[s.producto_id];
-    if (!p || p.tipo !== 'cantidad') return;
-    p.disponible += Number(s.cantidad || 0);
-    p.precio_tienda = s.precio_tienda;
-  });
-
-  productosDisponibles = Object.values(productoMap)
-    .filter(p => p.disponible > 0)
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 }
 
 function despachoNuevoTempId() { return crypto.randomUUID(); }
@@ -807,7 +799,7 @@ function renderDespachoBusqueda(q) {
     <button type="button" data-desp-prod="${esc(p.id)}" class="w-full text-left px-3 py-2 border-b border-gray-100 last:border-0 hover:bg-blue-50">
       <div class="flex items-center justify-between">
         <span class="font-medium text-gray-800">${esc(p.nombre)}</span>
-        <span class="text-xs text-gray-500">Disp: <b>${p.disponible}</b> · ${money(p.precio_tienda)}</span>
+        <span class="text-xs text-gray-500">Disp: <b>${p.disponible}</b> · ${money(p.precio_tienda)}${p.precios_varian ? ' · varía por factura' : ''}</span>
       </div>
       <div class="text-xs text-gray-500">${esc(p.categoria)} · ${p.tipo}</div>
     </button>
@@ -891,12 +883,11 @@ document.getElementById('btn-despachar').addEventListener('click', async () => {
     if (despachoItems.length === 0) throw new Error('Agrega al menos un producto');
 
     const payload = [];
+    const facturaFiltro = document.getElementById('filtro-factura').value || null;
     for (const it of despachoItems) {
       if (!it.cantidad || it.cantidad <= 0) throw new Error(`Cantidad inválida en "${it.producto_nombre}"`);
       if (it.cantidad > it.stock_disponible) throw new Error(`No hay suficiente stock de "${it.producto_nombre}" (disp: ${it.stock_disponible})`);
-      const item = { producto_id: it.producto_id, cantidad: it.cantidad };
-      if (it.precio_override_active) item.precio_override = it.precio_remision;
-      payload.push(item);
+      payload.push(bodegaDomain.crearItemPayload(it, facturaFiltro));
     }
 
     const { data, error } = await SB.rpc('despachar_remision_desde_central', {
@@ -927,7 +918,14 @@ document.getElementById('btn-despachar').addEventListener('click', async () => {
 });
 
 // Re-cargar productos disponibles cada vez que cambia el filtro-factura
-document.getElementById('filtro-factura').addEventListener('change', () => { cargarDataDespacho(); });
+document.getElementById('filtro-factura').addEventListener('change', () => {
+  if (despachoItems.length) {
+    despachoItems = [];
+    despachoRender();
+    toast('Se limpió el despacho para respetar la factura elegida');
+  }
+  cargarDataDespacho();
+});
 
 // ============================================================
 // BOOT
