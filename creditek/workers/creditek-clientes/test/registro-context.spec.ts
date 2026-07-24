@@ -84,6 +84,25 @@ describe('private registration context', () => {
     expect(requests).toHaveLength(3);
   });
 
+  it('allows a store link with no active captators', async () => {
+    const context = await resolveRegistrationContext(
+      TOKEN,
+      CONTEXT_ENV,
+      supabaseFetcher({
+        enlaces: STORE_ROWS.enlaces,
+        origenes: STORE_ROWS.origenes,
+        captadores: [],
+      }),
+    );
+
+    expect(context).toEqual({
+      enlaceId: 'link-1',
+      tipo: 'tienda',
+      origen: { codigo: 'CK-01', nombre: 'Creditek Centro' },
+      captadores: [],
+    });
+  });
+
   it('rejects a revoked token', async () => {
     await expect(
       resolveRegistrationContext(

@@ -173,7 +173,6 @@ export async function resolveRegistrationContext(
     fetcher,
   );
   if (
-    captadorRows.length === 0 ||
     !captadorRows.every(isCaptadorRow) ||
     (link.captador_id !== null &&
       (captadorRows.length !== 1 ||
