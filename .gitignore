@@ -12,3 +12,9 @@ node_modules/
 # Backups locales generados por `sed -i.bak` de scripts de migración.
 # Los archivos "reales" .bak no van al repo; si algún .bak legítimo hiciera falta versionar, agrégalo con `git add -f`.
 *.bak
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
