@@ -54,9 +54,30 @@ describe('secure registration primitives', () => {
 
   it('rejects sessions with a changed signature', async () => {
     const token = await signSession(payload, 'secreto');
-    const tampered = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
+    const [body, signature] = token.split('.');
+    const tamperedSignature = `${signature[0] === 'A' ? 'B' : 'A'}${signature.slice(1)}`;
 
-    await expect(verifySession(tampered, 'secreto')).rejects.toThrow('sesion_invalida');
+    await expect(verifySession(`${body}.${tamperedSignature}`, 'secreto')).rejects.toThrow(
+      'sesion_invalida',
+    );
+  });
+
+  it('rejects signatures with non-canonical base64url padding bits', async () => {
+    const token = await signSession(payload, 'secreto');
+    const [body, signature] = token.split('.');
+    const alphabet =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    const finalCharacter = signature.at(-1)!;
+    const finalIndex = alphabet.indexOf(finalCharacter);
+
+    expect(finalIndex).toBeGreaterThanOrEqual(0);
+    expect(finalIndex % 4).toBe(0);
+
+    const tamperedSignature =
+      `${signature.slice(0, -1)}${alphabet[finalIndex + 1]}`;
+    await expect(verifySession(`${body}.${tamperedSignature}`, 'secreto')).rejects.toThrow(
+      'sesion_invalida',
+    );
   });
 
   it('normalizes malformed session inputs to a controlled error', async () => {

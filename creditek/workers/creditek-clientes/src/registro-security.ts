@@ -39,7 +39,14 @@ function fromBase64url(value: string): Uint8Array {
 
   try {
     const binary = atob(padded);
-    return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const bytes = Uint8Array.from(
+      binary,
+      (char) => char.charCodeAt(0),
+    );
+    if (base64url(bytes) !== value) {
+      throw new Error('sesion_invalida');
+    }
+    return bytes;
   } catch {
     throw new Error('sesion_invalida');
   }
