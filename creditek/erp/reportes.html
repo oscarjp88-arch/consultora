@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<!--
+  reportes.html · Creditek ERP · Módulo de Reportes e Informes
+  SPEC_Modulo_Reportes_ERP_v1_23jul2026 — Fase 1 completa + shell Fase 2-4.
+
+  Estructura:
+    - Header con selector de período (Hoy/Semana/Mes/Mes pasado/Personalizado)
+    - Selector de tienda (deshabilitado para admin_tienda — solo ve su tienda por RLS)
+    - Secciones plegables por reporte, cada una con su propio "Cargar" lazy
+    - Chart.js CDN para gráficas
+
+  RLS heredada:
+    - ventas / cuenta_corriente / unidades / stock_cantidad / gastos:
+      admin_tienda solo ve su tienda (policy tienda_codigo=tienda_actual())
+    - remision_margenes: es_central() only → costo_oscar oculto para tienda
+    - facturas_proveedor / pagos_proveedor: es_central() only
+
+  Decisiones de arquitectura:
+    - Se conserva `presupuestos` (tabla existente con meta_creditos + meta_unidades_contado + meta_utilidad),
+      NO se crea presupuestos_tienda propuesto por el SPEC.
+    - utilidad-creditek.html sigue existiendo como link — no se duplica aquí.
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reportes · Creditek</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .fade-in { animation: fadeIn 0.15s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .semaforo-verde { background: #10b981; }
+  .semaforo-amarillo { background: #f59e0b; }
+  .semaforo-rojo { background: #ef4444; }
+  .barra { height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden; }
+  .barra > div { height: 100%; background: #3b82f6; transition: width .3s ease; }
+  .barra.warning > div { background: #f59e0b; }
+  .barra.error > div { background: #ef4444; }
+  .barra.success > div { background: #10b981; }
+  section.reporte { transition: all .2s ease; }
+  section.reporte details[open] > summary { border-bottom: 1px solid #e5e7eb; }
+  section.reporte summary { cursor: pointer; user-select: none; }
+  .chart-wrapper { position: relative; height: 260px; }
+  .kpi-card { padding: 16px 20px; border-radius: 12px; }
+  .kpi-card .label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+  .kpi-card .valor { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .kpi-card .delta { font-size: 11px; margin-top: 4px; }
+  .delta-up { color: #059669; }
+  .delta-down { color: #dc2626; }
+  .btn-nav { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #e5e7eb; background: white; }
+  .btn-nav.active { background: #1e40af; color: white; border-color: #1e40af; }
+  .btn-nav:hover:not(.active) { background: #f3f4f6; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<header class="bg-white border-b border-gray-200 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <a href="app.html" class="text-blue-600 hover:text-blue-800 text-sm">&larr; Volver</a>
+      <h1 class="text-xl font-bold text-gray-800">📊 Reportes e informes</h1>
+    </div>
+    <div id="usuario-info" class="text-sm text-gray-600"></div>
+  </div>
+</header>
+
+<div id="auth-guard" class="hidden max-w-7xl mx-auto mt-6 p-4 bg-red-50 border border-red-200 rounded">
+  <p class="text-red-800 font-semibold">No autorizado.</p>
+  <p class="text-red-700 text-sm">Debes iniciar sesión para ver reportes.</p>
+</div>
+
+<main id="app" class="hidden max-w-7xl mx-auto px-4 py-6 space-y-4">
+  <div id="toast" class="hidden fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in"></div>
+
+  <!-- FILTROS GLOBALES -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-wrap items-center gap-3">
+    <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Período:</span>
+    <div class="flex gap-1 flex-wrap">
+      <button class="btn-nav active" data-periodo="hoy">Hoy</button>
+      <button class="btn-nav" data-periodo="semana">Esta semana</button>
+      <button class="btn-nav" data-periodo="mes">Este mes</button>
+      <button class="btn-nav" data-periodo="mes_pasado">Mes pasado</button>
+    </div>
+    <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold ml-3">Tienda:</span>
+    <select id="filtro-tienda" class="border border-gray-300 rounded px-3 py-1.5 text-sm">
+      <option value="">Todas</option>
+    </select>
+    <span id="rango-visible" class="text-xs text-gray-500 ml-auto"></span>
+  </section>
+
+  <!-- DASHBOARD KPIs -->
+  <section class="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div class="kpi-card bg-white border border-gray-200"><div class="label">Ventas del período</div><div class="valor font-mono" id="kpi-ventas">—</div><div class="delta" id="kpi-ventas-delta">—</div></div>
+    <div class="kpi-card bg-white border border-gray-200"><div class="label">Ticket promedio</div><div class="valor font-mono" id="kpi-ticket">—</div><div class="delta" id="kpi-ticket-sub">—</div></div>
+    <div class="kpi-card bg-white border border-gray-200"><div class="label">Cartera pendiente</div><div class="valor font-mono" id="kpi-cartera">—</div><div class="delta" id="kpi-cartera-sub">—</div></div>
+    <div class="kpi-card bg-white border border-gray-200"><div class="label">Inventario (costo tienda)</div><div class="valor font-mono" id="kpi-inventario">—</div><div class="delta" id="kpi-inventario-sub">—</div></div>
+  </section>
+
+  <!-- ==================== 1.1 CUADRO DIARIO VENTAS ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200">
+    <details open>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">💰 1.1 Cuadro de ventas por tienda</h2>
+          <p class="text-xs text-gray-500">Ventas del período, agrupadas por tienda con comparación semanal.</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100">
+        <div class="chart-wrapper mb-4"><canvas id="chart-ventas"></canvas></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-700">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Tienda</th>
+                <th class="px-3 py-2 text-right font-semibold"># Ventas</th>
+                <th class="px-3 py-2 text-right font-semibold">Total vendido</th>
+                <th class="px-3 py-2 text-right font-semibold">Ticket promedio</th>
+                <th class="px-3 py-2 text-right font-semibold">Celulares</th>
+                <th class="px-3 py-2 text-right font-semibold">Accesorios</th>
+                <th class="px-3 py-2 text-right font-semibold">vs sem. pasada</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-ventas"><tr><td colspan="7" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== 1.2 CARTERA POR TIENDA ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200">
+    <details>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">🏦 1.2 Cartera pendiente por tienda</h2>
+          <p class="text-xs text-gray-500">Cuánto debe cada tienda a Creditek + semáforo por días sin abonar.</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-700">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Tienda</th>
+                <th class="px-3 py-2 text-right font-semibold">Saldo actual</th>
+                <th class="px-3 py-2 text-right font-semibold">Último abono</th>
+                <th class="px-3 py-2 text-left font-semibold">Fecha</th>
+                <th class="px-3 py-2 text-right font-semibold">Días sin abonar</th>
+                <th class="px-3 py-2 text-center font-semibold">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-cartera"><tr><td colspan="6" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
+            <tfoot>
+              <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
+                <td class="px-3 py-2">TOTAL CARTERA</td>
+                <td class="px-3 py-2 text-right font-mono" id="cartera-total">—</td>
+                <td colspan="4"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== 1.3 INVENTARIO VALORIZADO ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200">
+    <details>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">📦 1.3 Inventario valorizado por tienda</h2>
+          <p class="text-xs text-gray-500">SKUs, unidades y valor a precio tienda (+ costo Oscar para gerencia).</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-700">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Tienda</th>
+                <th class="px-3 py-2 text-right font-semibold"># SKUs</th>
+                <th class="px-3 py-2 text-right font-semibold"># Unidades</th>
+                <th class="px-3 py-2 text-right font-semibold">Valor (costo tienda)</th>
+                <th class="px-3 py-2 text-right font-semibold solo-central">Valor (costo Oscar)</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-inventario"><tr><td colspan="5" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== 2.1 CUMPLIMIENTO DE PRESUPUESTO ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200">
+    <details>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">🎯 2.1 Cumplimiento de presupuesto</h2>
+          <p class="text-xs text-gray-500">Real vs meta del mes por tienda (usa tabla `presupuestos` existente).</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100">
+        <div id="msg-presupuestos" class="hidden mb-3 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800"></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-700">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Tienda</th>
+                <th class="px-3 py-2 text-right font-semibold">Meta utilidad</th>
+                <th class="px-3 py-2 text-right font-semibold">Real ventas</th>
+                <th class="px-3 py-2 text-left font-semibold w-64">Cumplimiento</th>
+                <th class="px-3 py-2 text-right font-semibold">Run-rate</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-presupuesto"><tr><td colspan="5" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== 2.2 RENTABILIDAD POR TIENDA ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200 solo-central">
+    <details>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">💵 2.2 Rentabilidad por tienda (P&L)</h2>
+          <p class="text-xs text-gray-500">Ingresos − costo mercancía − gastos = utilidad. Solo gerencia/auditoría.</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-700">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Tienda</th>
+                <th class="px-3 py-2 text-right font-semibold">Ingresos</th>
+                <th class="px-3 py-2 text-right font-semibold">Costo mercancía</th>
+                <th class="px-3 py-2 text-right font-semibold">Margen bruto</th>
+                <th class="px-3 py-2 text-right font-semibold">Gastos</th>
+                <th class="px-3 py-2 text-right font-semibold">Utilidad</th>
+                <th class="px-3 py-2 text-right font-semibold">% rent.</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-rent-tienda"><tr><td colspan="7" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== 2.3 RENTABILIDAD POR CATEGORÍA ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200 solo-central">
+    <details>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">🏷️ 2.3 Rentabilidad por categoría</h2>
+          <p class="text-xs text-gray-500">Margen bruto por línea de producto. Solo gerencia/auditoría.</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="chart-wrapper"><canvas id="chart-categorias"></canvas></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-700">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Categoría</th>
+                <th class="px-3 py-2 text-right font-semibold">Uds</th>
+                <th class="px-3 py-2 text-right font-semibold">Ingresos</th>
+                <th class="px-3 py-2 text-right font-semibold">Costo</th>
+                <th class="px-3 py-2 text-right font-semibold">Margen</th>
+                <th class="px-3 py-2 text-right font-semibold">%</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-rent-categoria"><tr><td colspan="6" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== 2.4 UTILIDAD CREDITEK ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200 solo-central">
+    <details>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">🏭 2.4 Utilidad Creditek — panel completo</h2>
+          <p class="text-xs text-gray-500">Ya existe una pantalla dedicada con desglose mensual + gráfica. Se enlaza para no duplicar.</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100">
+        <a href="utilidad-creditek.html" class="inline-block bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-medium text-sm">Ir al panel de utilidad Creditek →</a>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== 3.1 CRECIMIENTO MES A MES ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200">
+    <details>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">📈 3.1 Crecimiento mes a mes</h2>
+          <p class="text-xs text-gray-500">Tendencia de ventas por mes. Requiere al menos 2-3 meses de historial.</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100">
+        <div class="chart-wrapper mb-4"><canvas id="chart-crecimiento"></canvas></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-700">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Mes</th>
+                <th class="px-3 py-2 text-right font-semibold">Ventas</th>
+                <th class="px-3 py-2 text-right font-semibold">Δ vs mes anterior</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-crecimiento"><tr><td colspan="3" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== 3.2 TOP PRODUCTOS ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200">
+    <details>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">🔥 3.2 Top productos y slow movers</h2>
+          <p class="text-xs text-gray-500">Los 10 más vendidos + los 10 con más días sin movimiento.</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h3 class="font-semibold text-emerald-700 mb-2">🏆 Top 10 más vendidos</h3>
+          <table class="w-full text-xs">
+            <thead class="bg-gray-50 text-gray-700"><tr><th class="px-2 py-1.5 text-left">Producto</th><th class="px-2 py-1.5 text-right">Uds</th><th class="px-2 py-1.5 text-right">Total</th></tr></thead>
+            <tbody id="tbody-top-vendidos"><tr><td colspan="3" class="text-center py-4 text-gray-400">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+        <div>
+          <h3 class="font-semibold text-red-700 mb-2">🐌 Slow movers (con stock &gt; 30 días sin venta)</h3>
+          <table class="w-full text-xs">
+            <thead class="bg-gray-50 text-gray-700"><tr><th class="px-2 py-1.5 text-left">Producto</th><th class="px-2 py-1.5 text-right">Uds en stock</th><th class="px-2 py-1.5 text-right">Días</th></tr></thead>
+            <tbody id="tbody-slow-movers"><tr><td colspan="3" class="text-center py-4 text-gray-400">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== 3.4 ANÁLISIS PROVEEDORES ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-gray-200 solo-central">
+    <details>
+      <summary class="p-4 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800">🏢 3.4 Análisis de proveedores</h2>
+          <p class="text-xs text-gray-500">Facturas, saldos y compras acumuladas por proveedor. Solo gerencia/auditoría.</p>
+        </div>
+        <span class="text-xs text-gray-400">▾</span>
+      </summary>
+      <div class="p-4 border-t border-gray-100">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-700">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Proveedor</th>
+                <th class="px-3 py-2 text-right font-semibold"># Facturas</th>
+                <th class="px-3 py-2 text-right font-semibold">Total comprado</th>
+                <th class="px-3 py-2 text-right font-semibold">Saldo pendiente</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-proveedores"><tr><td colspan="4" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== FUTUROS ==================== -->
+  <section class="reporte bg-white rounded-lg shadow-sm border border-dashed border-gray-300">
+    <div class="p-4">
+      <h2 class="text-sm font-semibold text-gray-700">Próximamente</h2>
+      <p class="text-xs text-gray-500">Los siguientes reportes requieren más historial de datos (2-3 meses):</p>
+      <ul class="text-xs text-gray-500 mt-2 space-y-1 list-disc pl-4">
+        <li>3.3 Rotación de inventario (días promedio en inventario por categoría)</li>
+        <li>3.5 Comisiones — base de cálculo para admin (10%) y asesor (6%)</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<script>
+// ============================================================================
+// CONFIG
+// ============================================================================
+const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impma21peXZjZGZic2J3Y2h5dm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzA5NjgsImV4cCI6MjA5OTcwNjk2OH0.kpAjGLbDnycU-B1kc-AqOvj6X2xH-KHBiKB94V7prcQ';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let currentPerfil = null;
+let periodoActual = 'hoy';
+let tiendaFiltro = '';
+let tiendasCache = [];
+let charts = {}; // guardar referencias para destruir/recrear
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+const fmtCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+const fmtInt = new Intl.NumberFormat('es-CO');
+function money(n) { return n == null ? '—' : fmtCOP.format(Number(n)); }
+function num(n) { return n == null ? '—' : fmtInt.format(Number(n)); }
+function pct(n, base) { if (!base) return '—'; return (100 * Number(n) / Number(base)).toFixed(1) + '%'; }
+function esc(s) { if (s == null) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function esCentral() { return !!currentPerfil && (currentPerfil.rol === 'gerencia' || currentPerfil.rol === 'auditoria'); }
+function toast(msg, tipo = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white text-sm z-50 fade-in ' +
+    (tipo === 'error' ? 'bg-red-600' : 'bg-emerald-600');
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 3200);
+}
+
+// Rango del período seleccionado
+function getPeriodo() {
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  const isoDia = d => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(d);
+  if (periodoActual === 'hoy') {
+    const d = isoDia(new Date());
+    return { desde: d, hasta: d };
+  }
+  if (periodoActual === 'semana') {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return { desde: isoDia(d), hasta: isoDia(new Date()) };
+  }
+  if (periodoActual === 'mes') {
+    const d = new Date(); d.setDate(1);
+    return { desde: isoDia(d), hasta: isoDia(new Date()) };
+  }
+  if (periodoActual === 'mes_pasado') {
+    const d = new Date();
+    const fin = new Date(d.getFullYear(), d.getMonth(), 0);
+    const ini = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    return { desde: isoDia(ini), hasta: isoDia(fin) };
+  }
+  const d = isoDia(new Date());
+  return { desde: d, hasta: d };
+}
+
+function labelPeriodo() {
+  const { desde, hasta } = getPeriodo();
+  return desde === hasta ? desde : `${desde} → ${hasta}`;
+}
+
+// ============================================================================
+// AUTH
+// ============================================================================
+async function verificarAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { location.href = 'app.html'; return false; }
+  currentUser = session.user;
+  const { data: perfil } = await sb.from('perfiles').select('*').eq('id', session.user.id).maybeSingle();
+  if (!perfil || !perfil.activo) {
+    document.getElementById('auth-guard').classList.remove('hidden');
+    document.getElementById('auth-guard').querySelector('p.text-red-700').textContent = 'Tu perfil no está activo. Contacta al administrador.';
+    return false;
+  }
+  currentPerfil = perfil;
+  document.getElementById('usuario-info').textContent = `${perfil.nombre || session.user.email} · ${perfil.rol}${perfil.tienda_codigo ? ' · ' + perfil.tienda_codigo : ''}`;
+  document.getElementById('app').classList.remove('hidden');
+
+  // Cargar tiendas para el selector — RLS filtra automáticamente
+  const { data: tiendas } = await sb.from('origenes').select('codigo, nombre').eq('tipo', 'propia').eq('activo', true).order('nombre');
+  tiendasCache = tiendas || [];
+  const selTienda = document.getElementById('filtro-tienda');
+  selTienda.innerHTML = '<option value="">Todas</option>' +
+    tiendasCache.map(t => `<option value="${esc(t.codigo)}">${esc(t.nombre)}</option>`).join('');
+  if (!esCentral() && perfil.tienda_codigo) {
+    selTienda.value = perfil.tienda_codigo;
+    selTienda.disabled = true;
+    tiendaFiltro = perfil.tienda_codigo;
+  }
+
+  // Ocultar bloques solo-central si no aplica
+  if (!esCentral()) document.querySelectorAll('.solo-central').forEach(el => el.style.display = 'none');
+  return true;
+}
+
+// ============================================================================
+// KPIs SUPERIORES
+// ============================================================================
+async function cargarKPIs() {
+  const { desde, hasta } = getPeriodo();
+  let qVentas = sb.from('ventas').select('total, tienda_codigo', { count: 'exact' })
+    .gte('fecha', desde).lte('fecha', hasta).neq('anulada', true);
+  if (tiendaFiltro) qVentas = qVentas.eq('tienda_codigo', tiendaFiltro);
+  const vRes = await qVentas;
+  const ventas = vRes.data || [];
+  const totalV = ventas.reduce((s, v) => s + Number(v.total || 0), 0);
+  const ticket = ventas.length > 0 ? totalV / ventas.length : 0;
+
+  document.getElementById('kpi-ventas').textContent = money(totalV);
+  document.getElementById('kpi-ticket').textContent = money(ticket);
+  document.getElementById('kpi-ventas-delta').textContent = `${ventas.length} operaciones`;
+  document.getElementById('kpi-ticket-sub').textContent = '';
+
+  // Cartera
+  let qCC = sb.from('cuenta_corriente').select('tienda_codigo, tipo, monto');
+  if (tiendaFiltro) qCC = qCC.eq('tienda_codigo', tiendaFiltro);
+  const ccRes = await qCC;
+  const cc = ccRes.data || [];
+  const saldo = cc.reduce((s, r) => s + (r.tipo === 'cargo' ? Number(r.monto) : -Number(r.monto)), 0);
+  document.getElementById('kpi-cartera').textContent = money(saldo);
+  document.getElementById('kpi-cartera-sub').textContent = cc.length + ' movimientos totales';
+
+  // Inventario
+  let qUn = sb.from('unidades').select('precio_tienda, costo_remision, tienda_actual, estado').eq('estado', 'disponible');
+  if (tiendaFiltro) qUn = qUn.eq('tienda_actual', tiendaFiltro);
+  const unRes = await qUn;
+  const uns = unRes.data || [];
+  let qStock = sb.from('stock_cantidad').select('cantidad, precio_tienda, costo_promedio, tienda_codigo');
+  if (tiendaFiltro) qStock = qStock.eq('tienda_codigo', tiendaFiltro);
+  const stRes = await qStock;
+  const sts = stRes.data || [];
+  const valorInv = uns.reduce((s, u) => s + Number(u.precio_tienda ?? u.costo_remision ?? 0), 0)
+    + sts.reduce((s, r) => s + Number(r.cantidad || 0) * Number(r.precio_tienda ?? r.costo_promedio ?? 0), 0);
+  document.getElementById('kpi-inventario').textContent = money(valorInv);
+  document.getElementById('kpi-inventario-sub').textContent = uns.length + ' celulares + ' + sts.length + ' líneas de accesorios';
+}
+
+// ============================================================================
+// 1.1 CUADRO DE VENTAS POR TIENDA
+// ============================================================================
+async function cargarVentas() {
+  const { desde, hasta } = getPeriodo();
+  let q = sb.from('ventas').select('id, total, tienda_codigo, origen:tienda_codigo(nombre), venta_items(cantidad, productos(tipo))')
+    .gte('fecha', desde).lte('fecha', hasta).neq('anulada', true);
+  if (tiendaFiltro) q = q.eq('tienda_codigo', tiendaFiltro);
+  const { data, error } = await q;
+  if (error) { document.getElementById('tbody-ventas').innerHTML = `<tr><td colspan="7" class="text-red-600 py-4 text-center">${esc(error.message)}</td></tr>`; return; }
+
+  // Agrupar por tienda
+  const porTienda = {};
+  (data || []).forEach(v => {
+    const cod = v.tienda_codigo;
+    if (!porTienda[cod]) porTienda[cod] = { nombre: v.origen?.nombre || cod, ventas: 0, total: 0, celulares: 0, accesorios: 0 };
+    porTienda[cod].ventas += 1;
+    porTienda[cod].total += Number(v.total || 0);
+    (v.venta_items || []).forEach(vi => {
+      if (vi.productos?.tipo === 'serializado') porTienda[cod].celulares += Number(vi.cantidad || 0);
+      else porTienda[cod].accesorios += Number(vi.cantidad || 0);
+    });
+  });
+
+  const filas = Object.values(porTienda).sort((a, b) => b.total - a.total);
+  const tbody = document.getElementById('tbody-ventas');
+  if (filas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-gray-400">Sin ventas en este período.</td></tr>';
+  } else {
+    tbody.innerHTML = filas.map(t => {
+      const ticket = t.ventas ? t.total / t.ventas : 0;
+      return `<tr>
+        <td class="px-3 py-2 font-medium">${esc(t.nombre)}</td>
+        <td class="px-3 py-2 text-right">${num(t.ventas)}</td>
+        <td class="px-3 py-2 text-right font-mono">${money(t.total)}</td>
+        <td class="px-3 py-2 text-right font-mono">${money(ticket)}</td>
+        <td class="px-3 py-2 text-right">${num(t.celulares)}</td>
+        <td class="px-3 py-2 text-right">${num(t.accesorios)}</td>
+        <td class="px-3 py-2 text-right text-gray-400 text-xs">—</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Chart
+  if (charts.ventas) charts.ventas.destroy();
+  const ctx = document.getElementById('chart-ventas');
+  charts.ventas = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: filas.map(f => f.nombre),
+      datasets: [{ label: 'Total vendido', data: filas.map(f => f.total), backgroundColor: '#3b82f6', borderRadius: 6 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => money(ctx.parsed.y) } },
+      },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => new Intl.NumberFormat('es-CO', { notation: 'compact' }).format(v) } } },
+    },
+  });
+}
+
+// ============================================================================
+// 1.2 CARTERA POR TIENDA
+// ============================================================================
+async function cargarCartera() {
+  let q = sb.from('cuenta_corriente').select('tienda_codigo, tipo, monto, created_at, origen:tienda_codigo(nombre)').order('created_at', { ascending: false });
+  if (tiendaFiltro) q = q.eq('tienda_codigo', tiendaFiltro);
+  const { data, error } = await q;
+  if (error) { document.getElementById('tbody-cartera').innerHTML = `<tr><td colspan="6" class="text-red-600 py-4 text-center">${esc(error.message)}</td></tr>`; return; }
+
+  const porTienda = {};
+  (data || []).forEach(m => {
+    const cod = m.tienda_codigo;
+    if (!porTienda[cod]) porTienda[cod] = { nombre: m.origen?.nombre || cod, saldo: 0, ultimoAbono: null, ultimoAbonoFecha: null };
+    porTienda[cod].saldo += (m.tipo === 'cargo' ? Number(m.monto) : -Number(m.monto));
+    if (m.tipo === 'abono' && !porTienda[cod].ultimoAbono) {
+      porTienda[cod].ultimoAbono = Number(m.monto);
+      porTienda[cod].ultimoAbonoFecha = m.created_at;
+    }
+  });
+
+  const ahora = Date.now();
+  const filas = Object.values(porTienda).filter(t => Math.abs(t.saldo) > 0.01).sort((a, b) => b.saldo - a.saldo);
+  let total = 0;
+  const tbody = document.getElementById('tbody-cartera');
+  if (filas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-gray-400">Cartera al día en todas las tiendas.</td></tr>';
+  } else {
+    tbody.innerHTML = filas.map(t => {
+      total += t.saldo;
+      const dias = t.ultimoAbonoFecha ? Math.floor((ahora - new Date(t.ultimoAbonoFecha).getTime()) / 86400000) : null;
+      const semaforo = dias == null ? 'semaforo-rojo' : dias <= 0 ? 'semaforo-verde' : dias <= 3 ? 'semaforo-amarillo' : 'semaforo-rojo';
+      const semLabel = dias == null ? 'Sin abonos' : dias <= 0 ? 'Al día' : dias <= 3 ? `${dias}d` : `${dias}d`;
+      return `<tr>
+        <td class="px-3 py-2 font-medium">${esc(t.nombre)}</td>
+        <td class="px-3 py-2 text-right font-mono ${t.saldo > 0 ? 'text-red-700 font-semibold' : 'text-gray-500'}">${money(t.saldo)}</td>
+        <td class="px-3 py-2 text-right font-mono">${t.ultimoAbono ? money(t.ultimoAbono) : '<span class="text-gray-400">—</span>'}</td>
+        <td class="px-3 py-2 text-xs text-gray-500">${t.ultimoAbonoFecha ? new Date(t.ultimoAbonoFecha).toLocaleDateString('es-CO') : '—'}</td>
+        <td class="px-3 py-2 text-right">${dias != null ? dias : '—'}</td>
+        <td class="px-3 py-2 text-center"><span class="inline-block w-3 h-3 rounded-full ${semaforo}" title="${semLabel}"></span></td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('cartera-total').textContent = money(total);
+}
+
+// ============================================================================
+// 1.3 INVENTARIO VALORIZADO POR TIENDA
+// ============================================================================
+async function cargarInventario() {
+  const [uRes, sRes] = await Promise.all([
+    sb.from('unidades').select('producto_id, tienda_actual, precio_tienda, costo_remision, estado, origen:tienda_actual(nombre)').eq('estado', 'disponible'),
+    sb.from('stock_cantidad').select('producto_id, tienda_codigo, cantidad, precio_tienda, costo_promedio, origen:tienda_codigo(nombre)').gt('cantidad', 0),
+  ]);
+
+  const porTienda = {};
+  (uRes.data || []).forEach(u => {
+    if (tiendaFiltro && u.tienda_actual !== tiendaFiltro) return;
+    const cod = u.tienda_actual;
+    if (!porTienda[cod]) porTienda[cod] = { nombre: u.origen?.nombre || cod, skus: new Set(), unidades: 0, valorTienda: 0, valorOscar: 0 };
+    porTienda[cod].skus.add(u.producto_id);
+    porTienda[cod].unidades += 1;
+    porTienda[cod].valorTienda += Number(u.precio_tienda ?? u.costo_remision ?? 0);
+    porTienda[cod].valorOscar += Number(u.costo_remision ?? 0);
+  });
+  (sRes.data || []).forEach(s => {
+    if (tiendaFiltro && s.tienda_codigo !== tiendaFiltro) return;
+    const cod = s.tienda_codigo;
+    if (!porTienda[cod]) porTienda[cod] = { nombre: s.origen?.nombre || cod, skus: new Set(), unidades: 0, valorTienda: 0, valorOscar: 0 };
+    porTienda[cod].skus.add(s.producto_id);
+    porTienda[cod].unidades += Number(s.cantidad || 0);
+    porTienda[cod].valorTienda += Number(s.cantidad || 0) * Number(s.precio_tienda ?? s.costo_promedio ?? 0);
+    porTienda[cod].valorOscar += Number(s.cantidad || 0) * Number(s.costo_promedio ?? 0);
+  });
+
+  const filas = Object.values(porTienda).sort((a, b) => b.valorTienda - a.valorTienda);
+  const tbody = document.getElementById('tbody-inventario');
+  if (filas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-400">Sin inventario disponible.</td></tr>';
+  } else {
+    tbody.innerHTML = filas.map(t => `<tr>
+      <td class="px-3 py-2 font-medium">${esc(t.nombre)}</td>
+      <td class="px-3 py-2 text-right">${num(t.skus.size)}</td>
+      <td class="px-3 py-2 text-right">${num(t.unidades)}</td>
+      <td class="px-3 py-2 text-right font-mono">${money(t.valorTienda)}</td>
+      <td class="px-3 py-2 text-right font-mono solo-central">${money(t.valorOscar)}</td>
+    </tr>`).join('');
+    if (!esCentral()) tbody.querySelectorAll('.solo-central').forEach(el => el.style.display = 'none');
+  }
+}
+
+// ============================================================================
+// 2.1 CUMPLIMIENTO DE PRESUPUESTO (usa tabla `presupuestos` existente)
+// ============================================================================
+async function cargarPresupuesto() {
+  const hoy = new Date();
+  const mesActual = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit' }).format(hoy) + '-01';
+  const [pRes, vRes] = await Promise.all([
+    sb.from('presupuestos').select('tienda_codigo, meta_utilidad, meta_creditos, meta_unidades_contado, origen:tienda_codigo(nombre)').eq('fecha', mesActual),
+    sb.from('ventas').select('tienda_codigo, total').gte('fecha', mesActual).neq('anulada', true),
+  ]);
+
+  const msgEl = document.getElementById('msg-presupuestos');
+  if (!pRes.data || pRes.data.length === 0) {
+    msgEl.textContent = `No hay presupuestos definidos para el mes ${mesActual.slice(0, 7)}. Configúralos desde presupuestos.html.`;
+    msgEl.classList.remove('hidden');
+    document.getElementById('tbody-presupuesto').innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin presupuesto configurado.</td></tr>';
+    return;
+  }
+  msgEl.classList.add('hidden');
+
+  const ventasPorTienda = {};
+  (vRes.data || []).forEach(v => { ventasPorTienda[v.tienda_codigo] = (ventasPorTienda[v.tienda_codigo] || 0) + Number(v.total || 0); });
+
+  const diaMes = hoy.getDate();
+  const diasTotal = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+
+  const filas = pRes.data.filter(p => !tiendaFiltro || p.tienda_codigo === tiendaFiltro);
+  document.getElementById('tbody-presupuesto').innerHTML = filas.map(p => {
+    const real = ventasPorTienda[p.tienda_codigo] || 0;
+    const meta = Number(p.meta_utilidad || 0);
+    const cumpl = meta ? (real / meta) * 100 : 0;
+    const runRate = diaMes > 0 ? (real / diaMes) * diasTotal : 0;
+    const barClass = cumpl >= 100 ? 'success' : cumpl >= 75 ? '' : cumpl >= 50 ? 'warning' : 'error';
+    return `<tr>
+      <td class="px-3 py-2 font-medium">${esc(p.origen?.nombre || p.tienda_codigo)}</td>
+      <td class="px-3 py-2 text-right font-mono">${money(meta)}</td>
+      <td class="px-3 py-2 text-right font-mono">${money(real)}</td>
+      <td class="px-3 py-2">
+        <div class="barra ${barClass}"><div style="width:${Math.min(100, cumpl).toFixed(1)}%"></div></div>
+        <div class="text-xs text-gray-500 mt-1">${cumpl.toFixed(1)}%</div>
+      </td>
+      <td class="px-3 py-2 text-right font-mono text-gray-600">${money(runRate)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" class="text-center py-4 text-gray-400">Sin datos para la tienda seleccionada.</td></tr>';
+}
+
+// ============================================================================
+// 2.2 RENTABILIDAD POR TIENDA
+// ============================================================================
+async function cargarRentabilidadTienda() {
+  if (!esCentral()) return;
+  const { desde, hasta } = getPeriodo();
+  const [vRes, viRes, gRes] = await Promise.all([
+    sb.from('ventas').select('id, tienda_codigo, total, origen:tienda_codigo(nombre)').gte('fecha', desde).lte('fecha', hasta).neq('anulada', true),
+    sb.from('venta_items').select('venta_id, cantidad, costo_congelado, ventas!inner(tienda_codigo, fecha, anulada)').gte('ventas.fecha', desde).lte('ventas.fecha', hasta).neq('ventas.anulada', true),
+    sb.from('gastos').select('tienda_codigo, monto').gte('fecha', desde).lte('fecha', hasta).eq('estado', 'aprobado'),
+  ]);
+  const porTienda = {};
+  (vRes.data || []).forEach(v => {
+    if (tiendaFiltro && v.tienda_codigo !== tiendaFiltro) return;
+    if (!porTienda[v.tienda_codigo]) porTienda[v.tienda_codigo] = { nombre: v.origen?.nombre || v.tienda_codigo, ingresos: 0, costo: 0, gastos: 0 };
+    porTienda[v.tienda_codigo].ingresos += Number(v.total || 0);
+  });
+  (viRes.data || []).forEach(vi => {
+    const tc = vi.ventas?.tienda_codigo;
+    if (!porTienda[tc]) return;
+    porTienda[tc].costo += Number(vi.cantidad || 0) * Number(vi.costo_congelado || 0);
+  });
+  (gRes.data || []).forEach(g => {
+    if (!porTienda[g.tienda_codigo]) return;
+    porTienda[g.tienda_codigo].gastos += Number(g.monto || 0);
+  });
+
+  const filas = Object.values(porTienda).map(t => ({ ...t, margen: t.ingresos - t.costo, utilidad: t.ingresos - t.costo - t.gastos })).sort((a, b) => b.utilidad - a.utilidad);
+  document.getElementById('tbody-rent-tienda').innerHTML = filas.length ? filas.map(t => `<tr>
+    <td class="px-3 py-2 font-medium">${esc(t.nombre)}</td>
+    <td class="px-3 py-2 text-right font-mono">${money(t.ingresos)}</td>
+    <td class="px-3 py-2 text-right font-mono text-orange-700">${money(t.costo)}</td>
+    <td class="px-3 py-2 text-right font-mono">${money(t.margen)}</td>
+    <td class="px-3 py-2 text-right font-mono text-red-700">${money(t.gastos)}</td>
+    <td class="px-3 py-2 text-right font-mono font-semibold ${t.utilidad >= 0 ? 'text-emerald-700' : 'text-red-700'}">${money(t.utilidad)}</td>
+    <td class="px-3 py-2 text-right">${pct(t.utilidad, t.ingresos)}</td>
+  </tr>`).join('') : '<tr><td colspan="7" class="text-center py-6 text-gray-400">Sin datos en el período.</td></tr>';
+}
+
+// ============================================================================
+// 2.3 RENTABILIDAD POR CATEGORÍA
+// ============================================================================
+async function cargarRentabilidadCategoria() {
+  if (!esCentral()) return;
+  const { desde, hasta } = getPeriodo();
+  const { data, error } = await sb.from('venta_items')
+    .select('cantidad, precio_venta, costo_congelado, productos(categoria, categorias_producto:categoria(nombre)), ventas!inner(tienda_codigo, fecha, anulada)')
+    .gte('ventas.fecha', desde).lte('ventas.fecha', hasta).neq('ventas.anulada', true);
+  if (error) { document.getElementById('tbody-rent-categoria').innerHTML = `<tr><td colspan="6" class="text-red-600 py-4 text-center">${esc(error.message)}</td></tr>`; return; }
+
+  const porCat = {};
+  (data || []).forEach(vi => {
+    if (tiendaFiltro && vi.ventas?.tienda_codigo !== tiendaFiltro) return;
+    const catCod = vi.productos?.categoria || 'SIN_CAT';
+    const catNombre = vi.productos?.categorias_producto?.nombre || catCod;
+    if (!porCat[catCod]) porCat[catCod] = { nombre: catNombre, uds: 0, ingresos: 0, costo: 0 };
+    porCat[catCod].uds += Number(vi.cantidad || 0);
+    porCat[catCod].ingresos += Number(vi.cantidad || 0) * Number(vi.precio_venta || 0);
+    porCat[catCod].costo += Number(vi.cantidad || 0) * Number(vi.costo_congelado || 0);
+  });
+
+  const filas = Object.values(porCat).map(c => ({ ...c, margen: c.ingresos - c.costo })).sort((a, b) => b.margen - a.margen);
+  document.getElementById('tbody-rent-categoria').innerHTML = filas.length ? filas.map(c => `<tr>
+    <td class="px-3 py-2 font-medium">${esc(c.nombre)}</td>
+    <td class="px-3 py-2 text-right">${num(c.uds)}</td>
+    <td class="px-3 py-2 text-right font-mono">${money(c.ingresos)}</td>
+    <td class="px-3 py-2 text-right font-mono text-orange-700">${money(c.costo)}</td>
+    <td class="px-3 py-2 text-right font-mono font-semibold text-emerald-700">${money(c.margen)}</td>
+    <td class="px-3 py-2 text-right">${pct(c.margen, c.ingresos)}</td>
+  </tr>`).join('') : '<tr><td colspan="6" class="text-center py-6 text-gray-400">Sin ventas en el período.</td></tr>';
+
+  if (charts.categorias) charts.categorias.destroy();
+  if (filas.length > 0) {
+    charts.categorias = new Chart(document.getElementById('chart-categorias'), {
+      type: 'doughnut',
+      data: { labels: filas.map(f => f.nombre), datasets: [{ data: filas.map(f => f.margen), backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#a855f7','#06b6d4','#84cc16'] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ctx.label + ': ' + money(ctx.parsed) } } } },
+    });
+  }
+}
+
+// ============================================================================
+// 3.1 CRECIMIENTO MES A MES (últimos 12 meses)
+// ============================================================================
+async function cargarCrecimiento() {
+  const hoy = new Date();
+  const desdeMes = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1);
+  const iso = d => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(d);
+  let q = sb.from('ventas').select('total, fecha, tienda_codigo').gte('fecha', iso(desdeMes)).neq('anulada', true);
+  if (tiendaFiltro) q = q.eq('tienda_codigo', tiendaFiltro);
+  const { data, error } = await q;
+  if (error) { document.getElementById('tbody-crecimiento').innerHTML = `<tr><td colspan="3" class="text-red-600 py-4 text-center">${esc(error.message)}</td></tr>`; return; }
+
+  const porMes = {};
+  (data || []).forEach(v => {
+    const key = v.fecha.slice(0, 7);
+    porMes[key] = (porMes[key] || 0) + Number(v.total || 0);
+  });
+  const claves = Object.keys(porMes).sort();
+  const filas = claves.map((k, i) => {
+    const delta = i > 0 && porMes[claves[i-1]] > 0 ? ((porMes[k] - porMes[claves[i-1]]) / porMes[claves[i-1]]) * 100 : null;
+    return { mes: k, total: porMes[k], delta };
+  });
+  document.getElementById('tbody-crecimiento').innerHTML = filas.length ? filas.map(f => `<tr>
+    <td class="px-3 py-2 font-medium">${f.mes}</td>
+    <td class="px-3 py-2 text-right font-mono">${money(f.total)}</td>
+    <td class="px-3 py-2 text-right ${f.delta == null ? 'text-gray-400' : f.delta >= 0 ? 'text-emerald-700' : 'text-red-700'}">${f.delta == null ? '—' : (f.delta >= 0 ? '↑' : '↓') + ' ' + Math.abs(f.delta).toFixed(1) + '%'}</td>
+  </tr>`).join('') : '<tr><td colspan="3" class="text-center py-6 text-gray-400">Sin datos de meses.</td></tr>';
+
+  if (charts.crecimiento) charts.crecimiento.destroy();
+  if (filas.length > 0) {
+    charts.crecimiento = new Chart(document.getElementById('chart-crecimiento'), {
+      type: 'line',
+      data: { labels: filas.map(f => f.mes), datasets: [{ label: 'Ventas mensuales', data: filas.map(f => f.total), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3, fill: true }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => money(ctx.parsed.y) } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => new Intl.NumberFormat('es-CO', { notation: 'compact' }).format(v) } } } },
+    });
+  }
+}
+
+// ============================================================================
+// 3.2 TOP PRODUCTOS y SLOW MOVERS
+// ============================================================================
+async function cargarTopProductos() {
+  const { desde, hasta } = getPeriodo();
+  const { data: vi } = await sb.from('venta_items')
+    .select('cantidad, precio_venta, producto_id, productos(nombre), ventas!inner(tienda_codigo, fecha, anulada)')
+    .gte('ventas.fecha', desde).lte('ventas.fecha', hasta).neq('ventas.anulada', true);
+  const porProd = {};
+  (vi || []).forEach(v => {
+    if (tiendaFiltro && v.ventas?.tienda_codigo !== tiendaFiltro) return;
+    const pid = v.producto_id;
+    if (!porProd[pid]) porProd[pid] = { nombre: v.productos?.nombre || pid, uds: 0, total: 0 };
+    porProd[pid].uds += Number(v.cantidad || 0);
+    porProd[pid].total += Number(v.cantidad || 0) * Number(v.precio_venta || 0);
+  });
+  const top = Object.values(porProd).sort((a, b) => b.uds - a.uds).slice(0, 10);
+  document.getElementById('tbody-top-vendidos').innerHTML = top.length ? top.map(p => `<tr>
+    <td class="px-2 py-1.5">${esc(p.nombre)}</td>
+    <td class="px-2 py-1.5 text-right font-mono">${num(p.uds)}</td>
+    <td class="px-2 py-1.5 text-right font-mono">${money(p.total)}</td>
+  </tr>`).join('') : '<tr><td colspan="3" class="text-center py-4 text-gray-400">Sin ventas.</td></tr>';
+
+  // Slow movers — unidades con created_at > 30 días sin venta.
+  // Simplificación: buscar unidades disponibles cuya created_at es mayor a 30 días.
+  const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
+  const iso = d => d.toISOString().slice(0, 10);
+  let qUn = sb.from('unidades').select('producto_id, created_at, productos(nombre)').eq('estado', 'disponible').lte('created_at', iso(hace30));
+  if (tiendaFiltro) qUn = qUn.eq('tienda_actual', tiendaFiltro);
+  const { data: uns } = await qUn;
+  const slowMap = {};
+  (uns || []).forEach(u => {
+    const pid = u.producto_id;
+    if (!slowMap[pid]) slowMap[pid] = { nombre: u.productos?.nombre || pid, uds: 0, mas_vieja: u.created_at };
+    slowMap[pid].uds += 1;
+    if (u.created_at < slowMap[pid].mas_vieja) slowMap[pid].mas_vieja = u.created_at;
+  });
+  const slows = Object.values(slowMap).map(s => ({ ...s, dias: Math.floor((Date.now() - new Date(s.mas_vieja).getTime()) / 86400000) })).sort((a, b) => b.dias - a.dias).slice(0, 10);
+  document.getElementById('tbody-slow-movers').innerHTML = slows.length ? slows.map(s => `<tr>
+    <td class="px-2 py-1.5">${esc(s.nombre)}</td>
+    <td class="px-2 py-1.5 text-right font-mono">${num(s.uds)}</td>
+    <td class="px-2 py-1.5 text-right font-mono">${s.dias}d</td>
+  </tr>`).join('') : '<tr><td colspan="3" class="text-center py-4 text-gray-400">Ningún producto con más de 30 días sin movimiento.</td></tr>';
+}
+
+// ============================================================================
+// 3.4 ANÁLISIS DE PROVEEDORES
+// ============================================================================
+async function cargarProveedores() {
+  if (!esCentral()) return;
+  const { data, error } = await sb.from('facturas_proveedor')
+    .select('proveedor_id, total, saldo, proveedores:proveedor_id(nombre)');
+  if (error) { document.getElementById('tbody-proveedores').innerHTML = `<tr><td colspan="4" class="text-red-600 py-4 text-center">${esc(error.message)}</td></tr>`; return; }
+
+  const porProv = {};
+  (data || []).forEach(f => {
+    const pid = f.proveedor_id;
+    if (!porProv[pid]) porProv[pid] = { nombre: f.proveedores?.nombre || pid, facturas: 0, total: 0, saldo: 0 };
+    porProv[pid].facturas += 1;
+    porProv[pid].total += Number(f.total || 0);
+    porProv[pid].saldo += Number(f.saldo || 0);
+  });
+
+  const filas = Object.values(porProv).sort((a, b) => b.total - a.total);
+  document.getElementById('tbody-proveedores').innerHTML = filas.length ? filas.map(p => `<tr>
+    <td class="px-3 py-2 font-medium">${esc(p.nombre)}</td>
+    <td class="px-3 py-2 text-right">${num(p.facturas)}</td>
+    <td class="px-3 py-2 text-right font-mono">${money(p.total)}</td>
+    <td class="px-3 py-2 text-right font-mono ${p.saldo > 0 ? 'text-orange-700 font-semibold' : 'text-gray-500'}">${money(p.saldo)}</td>
+  </tr>`).join('') : '<tr><td colspan="4" class="text-center py-6 text-gray-400">Sin proveedores registrados.</td></tr>';
+}
+
+// ============================================================================
+// ORCHESTRACIÓN
+// ============================================================================
+async function refrescarTodo() {
+  document.getElementById('rango-visible').textContent = labelPeriodo();
+  await Promise.all([
+    cargarKPIs(),
+    cargarVentas(),
+    cargarCartera(),
+    cargarInventario(),
+    cargarPresupuesto(),
+    cargarRentabilidadTienda(),
+    cargarRentabilidadCategoria(),
+    cargarCrecimiento(),
+    cargarTopProductos(),
+    cargarProveedores(),
+  ]);
+}
+
+// ============================================================================
+// EVENT LISTENERS
+// ============================================================================
+document.querySelectorAll('[data-periodo]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-periodo]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    periodoActual = btn.getAttribute('data-periodo');
+    refrescarTodo();
+  });
+});
+document.getElementById('filtro-tienda').addEventListener('change', (e) => {
+  tiendaFiltro = e.target.value;
+  refrescarTodo();
+});
+
+// ============================================================================
+// BOOT
+// ============================================================================
+(async function () {
+  const ok = await verificarAuth();
+  if (!ok) return;
+  await refrescarTodo();
+})();
+</script>
+</body>
+</html>

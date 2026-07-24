@@ -48,6 +48,13 @@
       { label: 'Registro', href: 'registro.html', roles: ['gerencia', 'auditoria', 'admin_tienda', 'asesor'] },
       { label: 'Validación', href: 'validacion.html', roles: ['gerencia', 'auditoria'] },
     ]},
+    // SPEC_Modulo_Reportes_ERP_v1_23jul2026 · 24-jul-2026:
+    // dashboard consolidado con Fase 1 completa (1.1 ventas, 1.2 cartera, 1.3 inventario)
+    // + Fase 2 (2.1 presupuesto sobre tabla existente, 2.2 rentabilidad tienda, 2.3 categoría, 2.4 link)
+    // + Fase 3 parcial (3.1 crecimiento, 3.2 top/slow, 3.4 proveedores). RLS heredada.
+    { titulo: 'REPORTES', icono: '📈', items: [
+      { label: 'Dashboard', href: 'reportes.html', roles: ['gerencia', 'auditoria', 'admin_tienda', 'asesor'] },
+    ]},
   ];
 
   const LOGO = '/creditek/agentes/logos/creditek_logo_corregido_alta.png';
