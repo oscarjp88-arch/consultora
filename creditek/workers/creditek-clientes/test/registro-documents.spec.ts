@@ -41,8 +41,6 @@ async function documentSession(overrides: Record<string, unknown> = {}): Promise
 function validInput(session: string) {
   return {
     documentos_session: session,
-    cliente_id: CLIENTE_ID,
-    solicitud_id: SOLICITUD_ID,
     tipo: 'frente',
     mime: 'image/jpeg',
     foto_base64: base64,
@@ -85,12 +83,11 @@ describe('request-scoped secure document upload', () => {
     expect(requests).toHaveLength(0);
   });
 
-  it('rejects malformed, expired, wrong-purpose, and differently bound upload sessions', async () => {
+  it('rejects malformed, expired, and wrong-purpose upload sessions', async () => {
     const expired = await documentSession({ exp: NOW - 1 });
     const wrongPurpose = await documentSession({ purpose: 'registro' });
-    const otherRequest = await documentSession({ solicitudId: '99999999-9999-4999-8999-999999999999' });
 
-    for (const documentos_session of ['malformed.session', expired, wrongPurpose, otherRequest]) {
+    for (const documentos_session of ['malformed.session', expired, wrongPurpose]) {
       await expect(uploadSecureDocument(validInput(documentos_session), ENV, {
         now: () => NOW,
         fetcher: fetcherFrom(() => new Response(null, { status: 500 })),
@@ -117,6 +114,29 @@ describe('request-scoped secure document upload', () => {
     for (const request of requests.filter((request) => request.url.includes('/rest/v1/'))) {
       expect(request.url).not.toContain('1066184151');
     }
+  });
+
+  it('ignores attacker-supplied client and request identifiers in favor of the signed session', async () => {
+    const requests: Request[] = [];
+    const result = await uploadSecureDocument({
+      ...validInput(await documentSession()),
+      cliente_id: '99999999-9999-4999-8999-999999999999',
+      solicitud_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    }, ENV, {
+      now: () => NOW,
+      randomUuid: () => '55555555-5555-4555-8555-555555555555',
+      fetcher: fetcherFrom((request) => successResponse(request), requests),
+    });
+
+    expect(result.status).toBe(200);
+    const storage = requests.find((request) => request.url.includes('/storage/v1/object/cedulas/'))!;
+    expect(storage.url).toContain(`${CLIENTE_ID}/${SOLICITUD_ID}/`);
+    expect(storage.url).not.toContain('99999999-9999-4999-8999-999999999999');
+    const documentRequest = requests.find((request) => request.url.includes('/rest/v1/documentos_solicitud'))!;
+    expect(await documentRequest.clone().json()).toMatchObject({
+      cliente_id: CLIENTE_ID,
+      solicitud_id: SOLICITUD_ID,
+    });
   });
 
   it('uploads before upserting one request document type and syncing its legacy client column', async () => {

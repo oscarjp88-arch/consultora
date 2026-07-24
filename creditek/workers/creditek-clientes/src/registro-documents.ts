@@ -11,12 +11,12 @@ export interface SecureDocumentsEnv { SUPABASE_SERVICE_KEY: string; REGISTRATION
 export interface SecureDocumentsDependencies { fetcher: Fetcher; now?: () => number; randomUuid?: () => string }
 export interface SecureDocumentsResult { status: number; body: Record<string, unknown> }
 
-interface DocumentInput { documentos_session: string; cliente_id: string; solicitud_id: string; tipo: keyof typeof TYPE_COLUMNS; mime: 'image/jpeg' | 'image/png'; foto_base64: string }
+interface DocumentInput { documentos_session: string; tipo: keyof typeof TYPE_COLUMNS; mime: 'image/jpeg' | 'image/png'; foto_base64: string }
 
 function result(status: number, error?: string): SecureDocumentsResult { return error ? { status, body: { ok: false, error } } : { status, body: { ok: true } }; }
 function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null && !Array.isArray(value); }
 function isInput(value: unknown): value is DocumentInput {
-  return isRecord(value) && typeof value.documentos_session === 'string' && typeof value.cliente_id === 'string' && typeof value.solicitud_id === 'string' &&
+  return isRecord(value) && typeof value.documentos_session === 'string' &&
     typeof value.tipo === 'string' && Object.prototype.hasOwnProperty.call(TYPE_COLUMNS, value.tipo) && (value.mime === 'image/jpeg' || value.mime === 'image/png') && typeof value.foto_base64 === 'string';
 }
 function headers(env: SecureDocumentsEnv, extra: Record<string, string> = {}): Record<string, string> { return { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`, ...extra }; }
@@ -33,7 +33,7 @@ export async function uploadSecureDocument(input: unknown, env: SecureDocumentsE
   if (!isInput(input)) return result(400, 'Datos inválidos');
   let session;
   try { session = await verifySession(input.documentos_session, env.REGISTRATION_SIGNING_SECRET, (dependencies.now ?? Date.now)()); } catch { return result(400, 'Sesión de documentos inválida o vencida'); }
-  if (session.purpose !== 'documentos' || !session.clienteId || !session.solicitudId || session.clienteId !== input.cliente_id || session.solicitudId !== input.solicitud_id) return result(400, 'Sesión de documentos inválida o vencida');
+  if (session.purpose !== 'documentos' || !session.clienteId || !session.solicitudId) return result(400, 'Sesión de documentos inválida o vencida');
   const bytes = decodeBase64(input.foto_base64);
   if (bytes === null) return decodedSize(input.foto_base64) > MAX_IMAGE_BYTES ? result(413, 'La imagen supera el tamaño permitido') : result(400, 'Imagen inválida');
   const detected = detectImage(bytes);
