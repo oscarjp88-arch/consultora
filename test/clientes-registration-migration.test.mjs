@@ -123,7 +123,7 @@ test('RLS, RPC grants, and atomic OTP consumption remain explicit', async () => 
   );
   assert.match(
     normalized,
-    /update public\.otp_codigos set registro_consumido_at = now\(\) where id = p_otp_id and cedula = p_cedula and celular = p_celular and enlace_registro_id = p_enlace_registro_id and verificado = true and registro_consumido_at is null and entregado_at is not null and envio_fallido_at is null and expira_at > now\(\) returning id into v_otp_id/,
+    /update public\.otp_codigos set registro_consumido_at = now\(\) where id = p_otp_id and cedula = p_cedula and celular = p_celular and enlace_registro_id = p_enlace_registro_id and verificado = true and registro_consumido_at is null and envio_aceptado_at is not null and envio_fallido_at is null returning id into v_otp_id/,
   );
 });
 
@@ -172,8 +172,9 @@ test('secure OTP reservation serializes quotas and records delivery state additi
 
   assert.match(
     normalized,
-    /alter table public\.otp_codigos add column if not exists entregado_at timestamptz null/,
+    /alter table public\.otp_codigos add column if not exists envio_aceptado_at timestamptz null/,
   );
+  assert.doesNotMatch(normalized, /\bentregado_at\b/);
   assert.match(
     normalized,
     /alter table public\.otp_codigos add column if not exists envio_fallido_at timestamptz null/,
@@ -192,12 +193,12 @@ test('secure OTP reservation serializes quotas and records delivery state additi
   );
   assert.match(
     normalized,
-    /celular = p_celular and enlace_registro_id is not null and created_at >= now\(\) - interval '1 hour' and envio_fallido_at is null/,
+    /celular = p_celular and enlace_registro_id is not null and envio_fallido_at is null and \(\s*\(\s*envio_aceptado_at is not null and created_at >= now\(\) - interval '1 hour'\s*\)\s*or\s*\(\s*envio_aceptado_at is null and created_at >= now\(\) - interval '10 minutes'\s*\)\s*\)/,
   );
   assert.match(normalized, /if v_envios_celular >= 3 then/);
   assert.match(
     normalized,
-    /enlace_registro_id = p_enlace_registro_id and created_at >= now\(\) - interval '1 hour' and envio_fallido_at is null/,
+    /enlace_registro_id = p_enlace_registro_id and envio_fallido_at is null and \(\s*\(\s*envio_aceptado_at is not null and created_at >= now\(\) - interval '1 hour'\s*\)\s*or\s*\(\s*envio_aceptado_at is null and created_at >= now\(\) - interval '10 minutes'\s*\)\s*\)/,
   );
   assert.match(normalized, /if v_envios_enlace >= 60 then/);
   assert.match(

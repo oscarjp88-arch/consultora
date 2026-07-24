@@ -322,7 +322,7 @@ function deliveryFilters(
     cedula: `eq.${input.cedula}`,
     celular: `eq.${input.celular}`,
     enlace_registro_id: `eq.${enlaceId}`,
-    entregado_at: 'is.null',
+    envio_aceptado_at: 'is.null',
     envio_fallido_at: 'is.null',
   };
 }
@@ -341,7 +341,7 @@ function isExactUpdatedRow(
 
 async function closeDelivery(
   filters: Record<string, string>,
-  field: 'entregado_at' | 'envio_fallido_at',
+  field: 'envio_aceptado_at' | 'envio_fallido_at',
   timestamp: string,
   expectedId: string,
   env: SecureOtpEnv,
@@ -438,7 +438,7 @@ export async function sendSecureOtp(
 
   const deliveryRecorded = await closeDelivery(
     filters,
-    'entregado_at',
+    'envio_aceptado_at',
     timestamp,
     reservation.otpId,
     env,
@@ -474,7 +474,7 @@ function boundOtpFilters(
     enlace_registro_id: `eq.${enlaceId}`,
     verificado: 'eq.false',
     registro_consumido_at: 'is.null',
-    entregado_at: 'not.is.null',
+    envio_aceptado_at: 'not.is.null',
     envio_fallido_at: 'is.null',
     expira_at: `gt.${nowIso}`,
   };

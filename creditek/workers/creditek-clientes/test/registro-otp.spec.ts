@@ -240,7 +240,7 @@ describe('secure OTP send', () => {
       'eq.otp-new',
     );
     expect(await deliveryPatch.json()).toEqual({
-      entregado_at: new Date(NOW).toISOString(),
+      envio_aceptado_at: new Date(NOW).toISOString(),
     });
   });
 
@@ -471,7 +471,8 @@ describe('secure OTP verification', () => {
       );
       expect(url.searchParams.get('verificado')).toBe('eq.false');
       expect(url.searchParams.get('registro_consumido_at')).toBe('is.null');
-      expect(url.searchParams.get('entregado_at')).toBe('not.is.null');
+      expect(url.searchParams.get('envio_aceptado_at')).toBe('not.is.null');
+      expect(url.searchParams.has('entregado_at')).toBe(false);
       expect(url.searchParams.get('envio_fallido_at')).toBe('is.null');
       expect(url.searchParams.get('expira_at')).toBe(
         `gt.${new Date(NOW).toISOString()}`,

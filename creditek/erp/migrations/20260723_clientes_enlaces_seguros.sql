@@ -152,7 +152,7 @@ alter table public.otp_codigos
 alter table public.otp_codigos
   add column if not exists registro_consumido_at timestamptz null;
 alter table public.otp_codigos
-  add column if not exists entregado_at timestamptz null;
+  add column if not exists envio_aceptado_at timestamptz null;
 alter table public.otp_codigos
   add column if not exists envio_fallido_at timestamptz null;
 
@@ -252,8 +252,17 @@ begin
   from public.otp_codigos
   where celular = p_celular
     and enlace_registro_id is not null
-    and created_at >= now() - interval '1 hour'
-    and envio_fallido_at is null;
+    and envio_fallido_at is null
+    and (
+      (
+        envio_aceptado_at is not null
+        and created_at >= now() - interval '1 hour'
+      )
+      or (
+        envio_aceptado_at is null
+        and created_at >= now() - interval '10 minutes'
+      )
+    );
   if v_envios_celular >= 3 then
     raise exception 'otp_limite_celular';
   end if;
@@ -261,8 +270,17 @@ begin
   select count(*) into v_envios_enlace
   from public.otp_codigos
   where enlace_registro_id = p_enlace_registro_id
-    and created_at >= now() - interval '1 hour'
-    and envio_fallido_at is null;
+    and envio_fallido_at is null
+    and (
+      (
+        envio_aceptado_at is not null
+        and created_at >= now() - interval '1 hour'
+      )
+      or (
+        envio_aceptado_at is null
+        and created_at >= now() - interval '10 minutes'
+      )
+    );
   if v_envios_enlace >= 60 then
     raise exception 'otp_limite_enlace';
   end if;
@@ -368,9 +386,8 @@ begin
     and enlace_registro_id = p_enlace_registro_id
     and verificado = true
     and registro_consumido_at is null
-    and entregado_at is not null
+    and envio_aceptado_at is not null
     and envio_fallido_at is null
-    and expira_at > now()
   returning id into v_otp_id;
   if v_otp_id is null then
     raise exception 'otp_invalido_o_consumido';
