@@ -7,15 +7,18 @@
  */
 
 import { resolveRegistrationContext } from './registro-context';
+import {
+  isSecureOtpSendRequest,
+  isSecureOtpVerifyRequest,
+  sendSecureOtp,
+  verifySecureOtp,
+  type SecureOtpEnv,
+} from './registro-otp';
 
-interface Env {
-  SUPABASE_SERVICE_KEY: string;
+interface Env extends SecureOtpEnv {
   WHATSAPP_TOKEN: string;
   PHONE_NUMBER_ID: string;
-  TOKEN_HASH_SECRET: string;
-  REGISTRATION_SIGNING_SECRET: string;
   TURNSTILE_SITE_KEY: string;
-  TURNSTILE_SECRET_KEY: string;
   ALLOWED_ORIGIN: string;
   ALLOW_LEGACY_REGISTRATION_LINKS: string;
 }
@@ -104,14 +107,19 @@ export default {
       if (url.pathname === '/api/registro/contexto' && request.method === 'GET') {
         return respond(await handleRegistroContexto(url, env));
       }
+      if (url.pathname === '/api/registro/config' && request.method === 'GET') {
+        return respond(json({
+          turnstile_site_key: env.TURNSTILE_SITE_KEY ?? '',
+        }));
+      }
       if (url.pathname === '/api/origenes' && request.method === 'GET') {
         return respond(await handleOrigenes(env));
       }
       if (url.pathname === '/api/otp/enviar' && request.method === 'POST') {
-        return respond(await handleOtpEnviar(request, env));
+        return respond(await handleOtpEnviarRoute(request, env));
       }
       if (url.pathname === '/api/otp/verificar' && request.method === 'POST') {
-        return respond(await handleOtpVerificar(request, env));
+        return respond(await handleOtpVerificarRoute(request, env));
       }
       if (url.pathname === '/api/registro' && request.method === 'POST') {
         return respond(await handleRegistro(request, env));
@@ -163,6 +171,53 @@ async function handleRegistroContexto(url: URL, env: Env): Promise<Response> {
       503,
     );
   }
+}
+
+async function requestJson(request: Request): Promise<unknown> {
+  return request.clone().json().catch(() => null);
+}
+
+async function handleOtpEnviarRoute(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const body = await requestJson(request);
+  if (isSecureOtpSendRequest(body)) {
+    const secureResult = await sendSecureOtp(
+      body,
+      request.headers.get('CF-Connecting-IP'),
+      env,
+      {
+        fetcher: fetch,
+        sendOtp: (celular, codigo) =>
+          enviarPlantillaOtp(celular, codigo, env),
+      },
+    );
+    return json(secureResult.body, secureResult.status);
+  }
+
+  if (env.ALLOW_LEGACY_REGISTRATION_LINKS === 'true') {
+    return handleOtpEnviar(request, env);
+  }
+  return json({ ok: false, error: 'Flujo de registro legado deshabilitado' }, 410);
+}
+
+async function handleOtpVerificarRoute(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const body = await requestJson(request);
+  if (isSecureOtpVerifyRequest(body)) {
+    const secureResult = await verifySecureOtp(body, env, {
+      fetcher: fetch,
+    });
+    return json(secureResult.body, secureResult.status);
+  }
+
+  if (env.ALLOW_LEGACY_REGISTRATION_LINKS === 'true') {
+    return handleOtpVerificar(request, env);
+  }
+  return json({ ok: false, error: 'Flujo de registro legado deshabilitado' }, 410);
 }
 
 // ─── GET /api/origenes ──────────────────────────────────────────────────

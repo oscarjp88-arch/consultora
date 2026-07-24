@@ -5,6 +5,7 @@ import {
   generateOtp,
   hashOpaqueToken,
   signSession,
+  verifyOpaqueToken,
   verifySession,
 } from '../src/registro-security';
 
@@ -34,6 +35,20 @@ describe('secure registration primitives', () => {
     expect(first).toMatch(/^[A-Za-z0-9_-]{43}$/);
     expect(same).toBe(first);
     expect(other).not.toBe(first);
+  });
+
+  it('verifies opaque HMAC values with Web Crypto', async () => {
+    const hash = await hashOpaqueToken('otp:123456', 'secreto');
+
+    await expect(
+      verifyOpaqueToken('otp:123456', hash, 'secreto'),
+    ).resolves.toBe(true);
+    await expect(
+      verifyOpaqueToken('otp:654321', hash, 'secreto'),
+    ).resolves.toBe(false);
+    await expect(
+      verifyOpaqueToken('otp:123456', 'no-es-base64url', 'secreto'),
+    ).resolves.toBe(false);
   });
 
   it('generates six-digit OTPs', () => {

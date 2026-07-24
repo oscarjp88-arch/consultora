@@ -110,6 +110,27 @@ export async function hashOpaqueToken(
   return base64url(await hmac(raw, secret));
 }
 
+export async function verifyOpaqueToken(
+  raw: string,
+  expectedHash: string,
+  secret: string,
+): Promise<boolean> {
+  try {
+    const signature = fromBase64url(expectedHash);
+    if (signature.length !== HMAC_LENGTH_BYTES) return false;
+
+    const key = await importHmacKey(secret);
+    return crypto.subtle.verify(
+      'HMAC',
+      key,
+      signature,
+      encoder.encode(raw),
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function generateOtp(): string {
   const values = new Uint32Array(1);
   let value: number;
