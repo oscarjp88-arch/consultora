@@ -5,12 +5,18 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 ENVIRONMENT = "production"
+ALLOWED_ORIGIN = "https://registro.crediteksas.com"
+ALLOW_LEGACY_REGISTRATION_LINKS = "true"
 
 # Secretos requeridos (Oscar los pone con `wrangler secret put <NOMBRE>`,
 # nunca en este archivo ni en el chat):
 #   SUPABASE_SERVICE_KEY  — service_role key del proyecto creditek-erp (jfkmiyvcdfbsbwchyvol)
 #   WHATSAPP_TOKEN        — mismo valor ya usado en creditek-bot
 #   PHONE_NUMBER_ID       — mismo valor ya usado en creditek-bot
+#   TOKEN_HASH_SECRET
+#   REGISTRATION_SIGNING_SECRET
+#   TURNSTILE_SECRET_KEY
+#   TURNSTILE_SITE_KEY
 
 # FEATURE 22-jul-2026 · Reportes diarios por WhatsApp a Oscar y Mayte.
 # Cron cada 5 min entre 11am y 7pm hora Colombia (UTC-5), traducido a UTC.

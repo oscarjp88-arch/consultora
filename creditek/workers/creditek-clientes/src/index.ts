@@ -6,10 +6,18 @@
  * Proyecto Supabase: creditek-erp (jfkmiyvcdfbsbwchyvol) — distinto del de Sofía.
  */
 
+import { resolveRegistrationContext } from './registro-context';
+
 interface Env {
   SUPABASE_SERVICE_KEY: string;
   WHATSAPP_TOKEN: string;
   PHONE_NUMBER_ID: string;
+  TOKEN_HASH_SECRET: string;
+  REGISTRATION_SIGNING_SECRET: string;
+  TURNSTILE_SITE_KEY: string;
+  TURNSTILE_SECRET_KEY: string;
+  ALLOWED_ORIGIN: string;
+  ALLOW_LEGACY_REGISTRATION_LINKS: string;
 }
 
 const SUPABASE_URL = 'https://jfkmiyvcdfbsbwchyvol.supabase.co';
@@ -25,18 +33,40 @@ const OTP_TEMPLATE_NAME = 'codigo_verificacion_creditek';
 // "template not found" hasta que se ajuste este valor.
 const OTP_TEMPLATE_LANG = 'es_CO';
 
-// FIX CORS v23 de creditek-bot (mismo patrón, aplicado desde el día 1 aquí
-// porque el propio documento de este entregable señala que este olvido ya
-// rompió el Panel de Respuestas dos veces).
-const cors: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-};
-
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), { status, headers: cors });
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function corsHeaders(request: Request, env: Env): Headers {
+  const headers = new Headers({
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    Vary: 'Origin',
+  });
+  const requestOrigin = request.headers.get('Origin');
+  if (
+    requestOrigin &&
+    env.ALLOWED_ORIGIN &&
+    requestOrigin === env.ALLOWED_ORIGIN
+  ) {
+    headers.set('Access-Control-Allow-Origin', requestOrigin);
+  }
+  return headers;
+}
+
+function withCors(response: Response, request: Request, env: Env): Response {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of corsHeaders(request, env)) {
+    headers.set(name, value);
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 function sbHeaders(env: Env, extra: Record<string, string> = {}): Record<string, string> {
@@ -60,29 +90,39 @@ function codigoValido(v: unknown): v is string {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders(request, env),
+      });
+    }
 
     const url = new URL(request.url);
+    const respond = (response: Response): Response =>
+      withCors(response, request, env);
     try {
+      if (url.pathname === '/api/registro/contexto' && request.method === 'GET') {
+        return respond(await handleRegistroContexto(url, env));
+      }
       if (url.pathname === '/api/origenes' && request.method === 'GET') {
-        return await handleOrigenes(env);
+        return respond(await handleOrigenes(env));
       }
       if (url.pathname === '/api/otp/enviar' && request.method === 'POST') {
-        return await handleOtpEnviar(request, env);
+        return respond(await handleOtpEnviar(request, env));
       }
       if (url.pathname === '/api/otp/verificar' && request.method === 'POST') {
-        return await handleOtpVerificar(request, env);
+        return respond(await handleOtpVerificar(request, env));
       }
       if (url.pathname === '/api/registro' && request.method === 'POST') {
-        return await handleRegistro(request, env);
+        return respond(await handleRegistro(request, env));
       }
       if (url.pathname === '/api/subir-cedula' && request.method === 'POST') {
-        return await handleSubirCedula(request, env);
+        return respond(await handleSubirCedula(request, env));
       }
-      return json({ ok: false, error: 'Ruta no encontrada' }, 404);
+      return respond(json({ ok: false, error: 'Ruta no encontrada' }, 404));
     } catch (e) {
       console.error('[creditek-clientes] Error no controlado:', e);
-      return json({ ok: false, error: 'Error interno' }, 500);
+      return respond(json({ ok: false, error: 'Error interno' }, 500));
     }
   },
 
@@ -94,6 +134,36 @@ export default {
     }));
   },
 };
+
+// ─── GET /api/registro/contexto ─────────────────────────────────────────
+async function handleRegistroContexto(url: URL, env: Env): Promise<Response> {
+  try {
+    const context = await resolveRegistrationContext(
+      url.searchParams.get('t') ?? '',
+      env,
+    );
+    return json({ ok: true, contexto: context });
+  } catch (contextError) {
+    const code =
+      contextError instanceof Error ? contextError.message : '';
+    if (
+      code === 'enlace_invalido' ||
+      code === 'origen_invalido' ||
+      code === 'captador_invalido'
+    ) {
+      return json(
+        { ok: false, error: 'Enlace inválido o vencido' },
+        404,
+      );
+    }
+
+    console.error('[REGISTRO-CONTEXTO] Servicio no disponible');
+    return json(
+      { ok: false, error: 'No se pudo cargar el enlace de registro' },
+      503,
+    );
+  }
+}
 
 // ─── GET /api/origenes ──────────────────────────────────────────────────
 // No está en la lista original de endpoints del documento (que solo pedía
