@@ -305,33 +305,30 @@ let imeisEscaneados = {};   // { item_id: [imeis], ... }
 let trazabilidadFacturas = {};   // {facturaId: {numero, fecha, proveedor}}
 let trazabilidadItemFacturas = {}; // {remision_item_id: [facturaId, ...]}
 
-// FIX 23-jul-2026 · resolver info de proveedor/factura para cada remision_item.
-// Los items de tipo cantidad no tienen factura_proveedor_id (stock agregado);
-// para esos se marca 'múltiples facturas' en el pie. Los serializados sí traen
-// factura por unidad. Sin acceso RLS a remision_margenes (admin_tienda),
-// simplemente no se dibuja el bloque de trazabilidad — no es un error.
-async function cargarTrazabilidad(margenes) {
+// La tienda obtiene únicamente proveedor, factura y fecha mediante un RPC
+// SECURITY DEFINER que valida que la remisión pertenezca a su tienda. El RPC
+// nunca retorna costo_oscar ni margen.
+async function cargarTrazabilidadRemision(remisionId) {
   trazabilidadFacturas = {};
   trazabilidadItemFacturas = {};
-  if (!margenes || margenes.length === 0) return;
-
-  const facturaIds = [...new Set(margenes.map(m => m.factura_proveedor_id).filter(Boolean))];
-  margenes.forEach(m => {
-    if (!m.factura_proveedor_id) return;
-    if (!trazabilidadItemFacturas[m.remision_item_id]) trazabilidadItemFacturas[m.remision_item_id] = new Set();
-    trazabilidadItemFacturas[m.remision_item_id].add(m.factura_proveedor_id);
+  const { data, error } = await SB.rpc('obtener_trazabilidad_remision', {
+    p_remision_id: remisionId
   });
-
-  if (facturaIds.length === 0) return;
-  const { data: facts } = await SB.from('facturas_proveedor')
-    .select('id, numero, fecha, proveedor:proveedor_id(nombre)')
-    .in('id', facturaIds);
-  (facts || []).forEach(f => {
-    trazabilidadFacturas[f.id] = {
+  if (error) {
+    console.warn('No se pudo cargar la trazabilidad de la remisión:', error.message);
+    return;
+  }
+  (data || []).forEach(f => {
+    if (!f.factura_id) return;
+    trazabilidadFacturas[f.factura_id] = {
       numero: f.numero,
       fecha: f.fecha,
-      proveedor: f.proveedor?.nombre || '—'
+      proveedor: f.proveedor || '—'
     };
+    if (!trazabilidadItemFacturas[f.remision_item_id]) {
+      trazabilidadItemFacturas[f.remision_item_id] = new Set();
+    }
+    trazabilidadItemFacturas[f.remision_item_id].add(f.factura_id);
   });
 }
 
@@ -397,18 +394,7 @@ async function cargarRemision() {
   items = rItems || [];
   tiendaNombre = origen ? origen.nombre : rem.tienda_codigo;
 
-  // FIX 23-jul-2026 · trazabilidad de factura por ítem (via remision_margenes).
-  // Los admin_tienda NO pueden leer remision_margenes (RLS es_central); en ese
-  // caso el bloque de trazabilidad queda oculto silenciosamente — el resto del
-  // documento sigue funcionando. No es un error.
-  let margenesData = [];
-  if (items.length > 0) {
-    const { data: m } = await SB.from('remision_margenes')
-      .select('remision_item_id, factura_proveedor_id')
-      .in('remision_item_id', items.map(it => it.id));
-    margenesData = m || [];
-  }
-  await cargarTrazabilidad(margenesData);
+  await cargarTrazabilidadRemision(REMISION_ID);
 
   document.getElementById('app').classList.remove('hidden');
   renderDocumento();

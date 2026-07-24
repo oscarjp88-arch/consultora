@@ -454,7 +454,10 @@ function renderTablaRemisiones() {
     `;
   }).join('');
 
-  tbody.querySelectorAll('.btn-ver, .btn-editar').forEach(btn => btn.addEventListener('click', () => {
+  tbody.querySelectorAll('.btn-ver').forEach(btn => btn.addEventListener('click', () => {
+    location.href = `documento-remision.html?remision_id=${encodeURIComponent(btn.dataset.id)}`;
+  }));
+  tbody.querySelectorAll('.btn-editar').forEach(btn => btn.addEventListener('click', () => {
     const rem = remisionesCache.find(r => r.id === btn.dataset.id);
     if (rem) abrirModalRemision(rem);
   }));
